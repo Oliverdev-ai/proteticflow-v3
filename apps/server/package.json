@@ -1,0 +1,38 @@
+{
+  "name": "@proteticflow/server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@proteticflow/shared": "workspace:*",
+    "@trpc/server": "^11.0.0",
+    "cors": "^2.8.5",
+    "drizzle-orm": "^0.36.0",
+    "express": "^5.0.0",
+    "pg": "^8.13.0",
+    "pino": "^9.0.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "drizzle-kit": "^0.28.0",
+    "tsx": "^4.0.0",
+    "typescript": "*",
+    "vitest": "^2.0.0"
+  }
+}
