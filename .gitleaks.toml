@@ -1,0 +1,7 @@
+title = "ProteticFlow — Gitleaks Config"
+
+[allowlist]
+  description = "Exemplos no .env.example são permitidos"
+  paths = [".env.example"]
+  regexTarget = "line"
+  regexes = ["password", "minioadmin", "ci-test-secret"]
