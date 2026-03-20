@@ -1,0 +1,62 @@
+# ProteticFlow v3 — .gitignore
+
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# Variáveis de ambiente (NUNCA commitar)
+.env
+.env.*
+!.env.example
+
+# Runtime
+*.pid
+*.seed
+*.log
+*.log.*
+
+# Banco local
+*.sqlite
+*.sqlite3
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Docker
+docker-compose.override.yml
+
+# Uploads locais
+uploads/
+media/
+
+# Misc
+*.tgz
+*.tar.gz
+*.zip
+.sentryclirc
