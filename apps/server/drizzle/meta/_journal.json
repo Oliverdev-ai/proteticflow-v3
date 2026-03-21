@@ -8,6 +8,13 @@
       "when": 1774074196360,
       "tag": "0000_young_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1742591400000,
+      "tag": "0002_tenancy_adjustments",
+      "breakpoints": true
     }
   ]
 }

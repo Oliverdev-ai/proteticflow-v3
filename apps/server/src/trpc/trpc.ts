@@ -27,6 +27,30 @@ const enforceAuth = t.middleware(({ ctx, next }) => {
 
 export const protectedProcedure = t.procedure.use(enforceAuth);
 
+// Garante que o usuário está autenticado E tem um tenant ativo.
+// REGRA FASE 3+: toda procedure de negócio usa tenantProcedure (ou adminProcedure/licensedProcedure).
+// NUNCA usar protectedProcedure diretamente em modules de negócio.
+const enforceTenant = t.middleware(({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+  if (!ctx.tenantId || ctx.tenantId === 0) {
+    throw new TRPCError({
+      code: 'PRECONDITION_FAILED',
+      message: 'Selecione um laboratório antes de continuar',
+    });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+      tenantId: ctx.tenantId, // non-nullable a partir daqui
+    },
+  });
+});
+
+export const tenantProcedure = t.procedure.use(enforceAuth).use(enforceTenant);
+
 const enforceAdmin = t.middleware(({ ctx, next }) => {
   if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
   if (!['superadmin', 'gerente'].includes(ctx.user.role)) {
@@ -35,11 +59,14 @@ const enforceAdmin = t.middleware(({ ctx, next }) => {
   return next({ ctx: { ...ctx, user: ctx.user, tenantId: ctx.tenantId } });
 });
 
-export const adminProcedure = t.procedure.use(enforceAuth).use(enforceAdmin);
+export const adminProcedure = tenantProcedure.use(enforceAdmin);
 
 const enforceLicense = t.middleware(({ ctx, next }) => {
   // TODO Fase 23: verificar limites do plano aqui
   return next({ ctx });
 });
 
-export const licensedProcedure = protectedProcedure.use(enforceLicense);
+export const licensedProcedure = tenantProcedure.use(enforceLicense);
+
+export { t };
+

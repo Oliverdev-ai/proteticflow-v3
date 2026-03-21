@@ -1,11 +1,13 @@
 import type { Request, Response } from 'express';
 import type { db } from '../db/index.js';
 import { verifyAccessToken } from '../core/auth.js';
+import { getActiveTenantForUser } from '../modules/tenants/service.js';
+import type { Role } from '@proteticflow/shared';
 
 export type TrpcUser = {
   id: number;
   tenantId: number;
-  role: string;
+  role: Role;    // role do tenant_members (5 roles PRD), não o global users.role
 };
 
 export type TrpcContext = {
@@ -16,35 +18,39 @@ export type TrpcContext = {
   tenantId: number | null;
 };
 
-export function createContext(
-  dbInstance: typeof db,
-) {
+export function createContext(dbInstance: typeof db) {
   return async ({ req, res }: { req: Request; res: Response }): Promise<TrpcContext> => {
-    let user = null;
-    let tenantId = null;
+    let user: TrpcUser | null = null;
+    let tenantId: number | null = null;
 
-    if (req.cookies && req.cookies.access_token) {
+    if (req.cookies?.access_token) {
       try {
         const payload = await verifyAccessToken(req.cookies.access_token);
-        if (payload) {
+
+        // Resolve o role REAL do tenant_members (não o do JWT que pode estar stale)
+        const membership = await getActiveTenantForUser(payload.sub);
+
+        if (membership) {
           user = {
             id: payload.sub,
-            tenantId: payload.tenantId,
-            role: payload.role,
+            tenantId: membership.tenantId,
+            role: membership.role,
           };
-          tenantId = payload.tenantId || null;
+          tenantId = membership.tenantId;
+        } else {
+          // Autenticado mas sem tenant ativo — redirecionar para onboarding no frontend
+          user = {
+            id: payload.sub,
+            tenantId: 0,
+            role: 'recepcao', // fallback — só funciona em protectedProcedure simples
+          };
+          tenantId = null;
         }
-      } catch (err) {
-        // silencia erro de token inválido/expirado
+      } catch {
+        // token inválido/expirado — user permanece null
       }
     }
 
-    return {
-      req,
-      res,
-      db: dbInstance,
-      user,
-      tenantId,
-    };
+    return { req, res, db: dbInstance, user, tenantId };
   };
 }

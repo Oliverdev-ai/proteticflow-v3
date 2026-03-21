@@ -1,10 +1,10 @@
 import { router } from './trpc.js';
-
 import { authRouter } from '../modules/auth/router.js';
+import { tenantRouter } from '../modules/tenants/router.js';
 
-// Routers de feature serão adicionados nas fases 4-14
 export const appRouter = router({
   auth: authRouter,
+  tenant: tenantRouter,
 });
 
 export type AppRouter = typeof appRouter;
