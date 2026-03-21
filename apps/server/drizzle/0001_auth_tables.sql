@@ -1,0 +1,1 @@
+-- Empty migration to satisfy drizzle-kit because the real 0001 file was missing

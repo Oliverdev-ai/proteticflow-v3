@@ -4,6 +4,7 @@ import { tenantRouter } from '../modules/tenants/router.js';
 import { clientRouter } from '../modules/clients/router.js';
 import { pricingRouter } from '../modules/pricing/router.js';
 import { jobRouter } from '../modules/jobs/router.js';
+import { financialRouter } from '../modules/financial/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -11,6 +12,7 @@ export const appRouter = router({
   client: clientRouter,
   pricing: pricingRouter,
   job: jobRouter,
+  financial: financialRouter,
 });
 
 export type AppRouter = typeof appRouter;

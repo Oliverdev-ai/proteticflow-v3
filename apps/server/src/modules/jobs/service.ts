@@ -9,6 +9,7 @@ import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import { canTransition, DEFAULT_STAGES } from '@proteticflow/shared';
 import { uploadBuffer, deleteObject } from '../../core/storage.js';
+import { autoCreateArFromJob } from '../financial/service.js';
 import type {
   createJobSchema,
   updateJobSchema,
@@ -158,6 +159,11 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
       toStatus: 'pending',
       notes: 'OS criada',
     });
+
+    if (jobTotalCents > 0) {
+      // 07.01: AR gerado automaticamente ao criar OS
+      await autoCreateArFromJob(tenantId, createdJob.id, input.clientId, jobTotalCents, new Date(input.deadline), tx);
+    }
 
     // 7. Atualizar contadores do cliente e tenant atomicamente (PAD-01)
     await tx.execute(sql`
