@@ -3,7 +3,7 @@ import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients, priceItems, priceTables } from '../../db/schema/clients.js';
-import { accountsReceivable, accountsPayable, cashbookEntries } from '../../db/schema/financials.js';
+import { accountsReceivable, accountsPayable, cashbookEntries, financialClosings } from '../../db/schema/financials.js';
 import { eq, and } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as financialService from './service.js';
@@ -27,6 +27,7 @@ async function createTestClient(tenantId: number, userId: number, name = 'Clíni
 }
 
 async function cleanup() {
+  await db.delete(financialClosings);
   await db.delete(cashbookEntries);
   await db.delete(accountsPayable);
   await db.delete(accountsReceivable);
@@ -214,5 +215,182 @@ describe('Financial Service — AP', () => {
     const cancelled = await financialService.cancelAp(tenant.id, { id: ap.id, cancelReason: 'Duplicado' }, user.id);
     expect(cancelled.status).toBe('cancelled');
     expect(cancelled.cancelReason).toBe('Duplicado');
+  });
+});
+
+describe('Financial Service — Fechamento', () => {
+  beforeEach(cleanup);
+  afterEach(cleanup);
+
+  it('14. Gerar fechamento mensal — totalAmount = soma ARs do período e 16. RECONCILIAÇÃO', async () => {
+    const user = await createTestUser('f14@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F14');
+    const client = await createTestClient(tenant.id, user.id);
+    
+    const now = new Date();
+    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    await financialService.createAr(tenant.id, {
+      clientId: client.id, jobId: 0, amountCents: 10000, dueDate: now.toISOString()
+    });
+    const ar2 = await financialService.createAr(tenant.id, {
+      clientId: client.id, jobId: 0, amountCents: 5000, dueDate: now.toISOString()
+    });
+    await financialService.markArPaid(tenant.id, { id: ar2.id, paymentMethod: 'PIX', notes: '' }, user.id);
+
+    const closing = await financialService.generateMonthlyClosing(tenant.id, { period }, user.id);
+
+    expect(closing.totalAmountCents).toBe(15000);
+    expect(closing.paidAmountCents).toBe(5000);
+    expect(closing.pendingAmountCents).toBe(10000);
+    expect(closing.totalJobs).toBe(0);
+  });
+
+  it('15. Fechamento por cliente — filtra corretamente', async () => {
+    const user = await createTestUser('f15@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F15');
+    const c1 = await createTestClient(tenant.id, user.id, 'C1');
+    const c2 = await createTestClient(tenant.id, user.id, 'C2');
+    
+    const now = new Date();
+    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    await financialService.createAr(tenant.id, { clientId: c1.id, jobId: 0, amountCents: 10000, dueDate: now.toISOString() });
+    await financialService.createAr(tenant.id, { clientId: c2.id, jobId: 0, amountCents: 20000, dueDate: now.toISOString() });
+
+    const closingC1 = await financialService.generateMonthlyClosing(tenant.id, { period, clientId: c1.id }, user.id);
+    expect(closingC1.totalAmountCents).toBe(10000);
+
+    const closingGlobal = await financialService.generateMonthlyClosing(tenant.id, { period }, user.id);
+    expect(closingGlobal.totalAmountCents).toBe(30000);
+  });
+});
+
+describe('Financial Service — Livro Caixa', () => {
+  beforeEach(cleanup);
+  afterEach(cleanup);
+  
+  it('17. Entrada manual e 18. Saldo acumulado', async () => {
+    const user = await createTestUser('f17@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F17');
+    
+    await financialService.createManualCashbookEntry(tenant.id, {
+      type: 'credit', amountCents: 5000, description: 'Depósito', referenceDate: new Date().toISOString()
+    }, user.id);
+    
+    await financialService.createManualCashbookEntry(tenant.id, {
+      type: 'debit', amountCents: 2000, description: 'Material', referenceDate: new Date().toISOString()
+    }, user.id);
+
+    const { balance } = await financialService.listCashbook(tenant.id, { page: 1, limit: 10 });
+    expect(balance.totalCredits).toBe(5000);
+    expect(balance.totalDebits).toBe(2000);
+    expect(balance.netBalance).toBe(3000);
+  });
+});
+
+describe('Financial Service — Relatórios', () => {
+  beforeEach(cleanup);
+  afterEach(cleanup);
+
+  it('20. Annual balance', async () => {
+    const user = await createTestUser('f20@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F20');
+    const client = await createTestClient(tenant.id, user.id);
+
+    await db.insert(accountsReceivable).values({
+      tenantId: tenant.id, jobId: 0, clientId: client.id, amountCents: 10000, dueDate: new Date(2026, 0, 15), status: 'paid', paidAt: new Date(2026, 0, 16)
+    });
+    
+    await db.insert(accountsPayable).values({
+      tenantId: tenant.id, description: 'Despesa', amountCents: 4000, dueDate: new Date(2026, 0, 15), status: 'paid', paidAt: new Date(2026, 0, 16)
+    });
+
+    const balance = await financialService.getAnnualBalance(tenant.id, { year: 2026 });
+    expect(balance.quarters[0]?.revenue).toBe(10000);
+    expect(balance.quarters[0]?.expenses).toBe(4000);
+    expect(balance.quarters[0]?.profit).toBe(6000);
+    expect(balance.quarters[0]?.margin).toBe(60);
+  });
+
+  it('21. Payer ranking', async () => {
+    const user = await createTestUser('f21@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F21');
+    const c1 = await createTestClient(tenant.id, user.id, 'C1');
+    const c2 = await createTestClient(tenant.id, user.id, 'C2');
+
+    await db.insert(accountsReceivable).values({
+      tenantId: tenant.id, jobId: 0, clientId: c1.id, amountCents: 20000, dueDate: new Date(2026, 0, 20), status: 'paid', paidAt: new Date(2026, 0, 19)
+    });
+    await db.insert(accountsReceivable).values({
+      tenantId: tenant.id, jobId: 0, clientId: c2.id, amountCents: 50000, dueDate: new Date(2026, 0, 20), status: 'paid', paidAt: new Date(2026, 0, 25)
+    });
+
+    const rank = await financialService.getPayerRanking(tenant.id, { limit: 10 });
+    expect(rank[0]?.clientId).toBe(c2.id);
+    expect(rank[0]?.totalPaidCents).toBe(50000);
+    expect(rank[0]?.onTimePercent).toBe(0);
+    
+    expect(rank[1]?.clientId).toBe(c1.id);
+    expect(rank[1]?.totalPaidCents).toBe(20000);
+    expect(rank[1]?.onTimePercent).toBe(100);
+  });
+  
+  it('22. Cash flow', async () => {
+    const user = await createTestUser('f22@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F22');
+    
+    await financialService.createManualCashbookEntry(tenant.id, {
+      type: 'credit', amountCents: 3000, description: 'Depósito', referenceDate: new Date('2026-03-10T12:00:00Z').toISOString()
+    }, user.id);
+
+    const cf = await financialService.getCashFlow(tenant.id, { dateFrom: new Date('2026-01-01').toISOString(), dateTo: new Date('2026-12-31').toISOString() });
+    
+    const mar = cf.months.find(m => m.month === '2026-03');
+    expect(mar).toBeDefined();
+    expect(mar?.credits).toBe(3000);
+  });
+});
+
+describe('Financial Service — Cron', () => {
+  beforeEach(cleanup);
+  afterEach(cleanup);
+
+  it('23. Overdue updater', async () => {
+    const user = await createTestUser('f23@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F23');
+    const client = await createTestClient(tenant.id, user.id);
+
+    const pastDate = new Date(Date.now() - 86400000);
+    const [ar] = await db.insert(accountsReceivable).values({
+      tenantId: tenant.id, jobId: 0, clientId: client.id, amountCents: 1000, dueDate: pastDate, status: 'pending'
+    }).returning();
+
+    const { overdueReminders } = await import('../../cron/overdue-reminders.js');
+    await overdueReminders();
+
+    const [updated] = await db.select().from(accountsReceivable).where(eq(accountsReceivable.id, ar.id));
+    expect(updated?.status).toBe('overdue');
+  });
+
+  it('24. Monthly closing automátivo via cron', async () => {
+    const user = await createTestUser('f24@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab F24');
+    const client = await createTestClient(tenant.id, user.id);
+
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    lastMonth.setDate(15);
+    
+    await db.insert(accountsReceivable).values({
+      tenantId: tenant.id, jobId: 0, clientId: client.id, amountCents: 1000, dueDate: lastMonth, status: 'pending'
+    });
+
+    const { monthlyClosing } = await import('../../cron/monthly-closing.js');
+    await monthlyClosing();
+
+    const closings = await db.select().from(financialClosings).where(eq(financialClosings.tenantId, tenant.id));
+    expect(closings.length).toBe(1);
+    expect(closings[0]?.totalAmountCents).toBe(1000);
   });
 });

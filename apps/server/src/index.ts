@@ -8,6 +8,7 @@ import { db } from './db/index.js';
 import { createContext } from './trpc/context.js';
 import { appRouter } from './trpc/router.js';
 import { healthRouter } from './routes/health.js';
+import { startCronJobs } from './cron/scheduler.js';
 
 const app = express();
 
@@ -29,4 +30,8 @@ app.use(
 
 app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'Server iniciado');
+  
+  if (env.NODE_ENV !== 'test') {
+    startCronJobs();
+  }
 });

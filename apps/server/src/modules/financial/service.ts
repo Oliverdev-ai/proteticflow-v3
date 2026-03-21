@@ -1,4 +1,5 @@
 import { eq, and, gt, lt, inArray, isNull, sql } from 'drizzle-orm';
+import { jsPDF } from 'jspdf';
 import { db } from '../../db/index.js';
 import { 
   accountsReceivable, 
@@ -11,14 +12,16 @@ import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
 import type { z } from 'zod';
 import type { 
-  createArSchema, 
-  listArSchema, 
-  markArPaidSchema, 
-  cancelArSchema,
   createApSchema,
   listApSchema,
   markApPaidSchema,
-  cancelApSchema
+  cancelApSchema,
+  generateClosingSchema,
+  listCashbookSchema,
+  createCashbookEntrySchema,
+  cashFlowSchema,
+  annualBalanceSchema,
+  payerRankingSchema
 } from '@proteticflow/shared';
 
 type CreateArInput = z.infer<typeof createArSchema>;
@@ -30,6 +33,13 @@ type CreateApInput = z.infer<typeof createApSchema>;
 type ListApInput = z.infer<typeof listApSchema>;
 type MarkApPaidInput = z.infer<typeof markApPaidSchema>;
 type CancelApInput = z.infer<typeof cancelApSchema>;
+
+type GenerateClosingInput = z.infer<typeof generateClosingSchema>;
+type ListCashbookInput = z.infer<typeof listCashbookSchema>;
+type CreateCashbookEntryInput = z.infer<typeof createCashbookEntrySchema>;
+type CashFlowInput = z.infer<typeof cashFlowSchema>;
+type AnnualBalanceInput = z.infer<typeof annualBalanceSchema>;
+type PayerRankingInput = z.infer<typeof payerRankingSchema>;
 
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -290,4 +300,378 @@ export async function cancelAp(tenantId: number, input: CancelApInput, userId: n
 
   logger.info({ action: 'financial.ap.cancelled', tenantId, apId: ap.id, reason: input.cancelReason }, 'Conta a pagar cancelada');
   return cancelled;
+}
+
+// ─── FECHAMENTO (CLOSINGS) ───────────────────────────────────────────────────
+
+export async function generateMonthlyClosing(tenantId: number, input: GenerateClosingInput, userId: number) {
+  const [year, month] = input.period.split('-');
+  const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+  const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+
+  const arConditions = [
+    eq(accountsReceivable.tenantId, tenantId),
+    sql`${accountsReceivable.dueDate} >= ${startDate}`,
+    sql`${accountsReceivable.dueDate} <= ${endDate}`
+  ];
+  if (input.clientId) arConditions.push(eq(accountsReceivable.clientId, input.clientId));
+
+  const ars = await db.select({
+      ar: accountsReceivable,
+      clientName: clients.name
+    })
+    .from(accountsReceivable)
+    .leftJoin(clients, eq(accountsReceivable.clientId, clients.id))
+    .where(and(...arConditions));
+
+  let totalAmountCents = 0;
+  let paidAmountCents = 0;
+  let pendingAmountCents = 0;
+  const clientMap = new Map<number, { name: string; totalOS: number; totalCents: number; paidCents: number; pendingCents: number }>();
+  let totalJobsUnique = new Set<string>();
+
+  for (const { ar, clientName } of ars) {
+    if (ar.status !== 'cancelled') {
+        totalAmountCents += ar.amountCents;
+        if (ar.status === 'paid') paidAmountCents += ar.amountCents;
+        else pendingAmountCents += ar.amountCents;
+
+        const cId = ar.clientId;
+        if (!clientMap.has(cId)) {
+          clientMap.set(cId, { name: clientName || 'Desconhecido', totalOS: 0, totalCents: 0, paidCents: 0, pendingCents: 0 });
+        }
+        
+        const cStat = clientMap.get(cId)!;
+        cStat.totalCents += ar.amountCents;
+        if (ar.status === 'paid') cStat.paidCents += ar.amountCents;
+        else cStat.pendingCents += ar.amountCents;
+        
+        if (ar.jobId) {
+            totalJobsUnique.add(ar.jobId.toString());
+            cStat.totalOS += 1;
+        }
+    }
+  }
+
+  const breakdownJson = JSON.stringify(Array.from(clientMap.entries()).map(([id, data]) => ({ clientId: id, ...data })));
+
+  const [closing] = await db.insert(financialClosings).values({
+    tenantId,
+    clientId: input.clientId || null,
+    period: input.period,
+    totalJobs: totalJobsUnique.size,
+    totalAmountCents,
+    paidAmountCents,
+    pendingAmountCents,
+    status: pendingAmountCents === 0 && totalAmountCents > 0 ? 'paid' : (totalAmountCents > 0 ? 'closed' : 'open'),
+    breakdownJson,
+    closedBy: userId,
+    closedAt: new Date(),
+  }).returning();
+
+  logger.info({ action: 'financial.closing.generate', tenantId, period: input.period, totalAmountCents }, 'Fechamento gerado');
+  return closing;
+}
+
+export async function listClosings(tenantId: number, page: number = 1, limit: number = 20) {
+  const result = await db.select().from(financialClosings)
+    .where(eq(financialClosings.tenantId, tenantId))
+    .orderBy(sql`${financialClosings.period} DESC`)
+    .offset((page - 1) * limit)
+    .limit(limit);
+    
+  const [{ count }] = await db.select({ count: sql<number>`count(*)` })
+    .from(financialClosings).where(eq(financialClosings.tenantId, tenantId));
+
+  return { data: result, total: Number(count) };
+}
+
+export async function getClosing(tenantId: number, closingId: number) {
+  const [closing] = await db.select().from(financialClosings)
+    .where(and(eq(financialClosings.tenantId, tenantId), eq(financialClosings.id, closingId)));
+  if (!closing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Fechamento não encontrado' });
+  return closing;
+}
+
+// ─── LIVRO CAIXA (CASHBOOK) ──────────────────────────────────────────────────
+
+export async function listCashbook(tenantId: number, filters: ListCashbookInput) {
+  const conditions = [eq(cashbookEntries.tenantId, tenantId)];
+  if (filters.type) conditions.push(eq(cashbookEntries.type, filters.type));
+  if (filters.dateFrom) conditions.push(sql`${cashbookEntries.referenceDate} >= ${new Date(filters.dateFrom)}`);
+  if (filters.dateTo) conditions.push(sql`${cashbookEntries.referenceDate} <= ${new Date(filters.dateTo)}`);
+
+  const entries = await db.select()
+    .from(cashbookEntries)
+    .where(and(...conditions))
+    .orderBy(sql`${cashbookEntries.referenceDate} DESC`)
+    .offset((filters.page - 1) * filters.limit)
+    .limit(filters.limit);
+
+  const [{ count }] = await db.select({ count: sql<number>`count(*)` })
+    .from(cashbookEntries).where(and(...conditions));
+
+  const balanceAgg = await db.select({
+    type: cashbookEntries.type,
+    total: sql<number>`sum(${cashbookEntries.amountCents})`
+  }).from(cashbookEntries).where(and(...conditions)).groupBy(cashbookEntries.type);
+
+  let totalCredits = 0;
+  let totalDebits = 0;
+  for (const row of balanceAgg) {
+    if (row.type === 'credit') totalCredits = Number(row.total);
+    if (row.type === 'debit') totalDebits = Number(row.total);
+  }
+
+  const netBalance = totalCredits - totalDebits;
+
+  return { entries, balance: { totalCredits, totalDebits, netBalance }, total: Number(count) };
+}
+
+export async function createManualCashbookEntry(tenantId: number, input: CreateCashbookEntryInput, userId: number) {
+  const [entry] = await db.insert(cashbookEntries).values({
+    tenantId,
+    type: input.type,
+    amountCents: input.amountCents,
+    description: input.description,
+    category: input.category || 'manual',
+    referenceDate: new Date(input.referenceDate),
+    createdBy: userId,
+  }).returning();
+  
+  logger.info({ action: 'financial.cashbook.manual_entry', tenantId, type: input.type, amountCents: input.amountCents }, 'Entrada manual no livro caixa cadastrada');
+  return entry;
+}
+
+// ─── RELATÓRIOS (REPORTS) ────────────────────────────────────────────────────
+
+export async function getAnnualBalance(tenantId: number, input: AnnualBalanceInput) {
+  // 4 quarters: Q1 (Jan-Mar), Q2 (Apr-Jun), Q3 (Jul-Sep), Q4 (Oct-Dec)
+  const quarters = [
+    { q: 1, revenue: 0, expenses: 0, profit: 0, margin: 0, startMonth: 0, endMonth: 2 },
+    { q: 2, revenue: 0, expenses: 0, profit: 0, margin: 0, startMonth: 3, endMonth: 5 },
+    { q: 3, revenue: 0, expenses: 0, profit: 0, margin: 0, startMonth: 6, endMonth: 8 },
+    { q: 4, revenue: 0, expenses: 0, profit: 0, margin: 0, startMonth: 9, endMonth: 11 },
+  ];
+
+  const yearStart = new Date(input.year, 0, 1);
+  const yearEnd = new Date(input.year, 11, 31, 23, 59, 59, 999);
+
+  const paidArs = await db.select({ amount: accountsReceivable.amountCents, paidAt: accountsReceivable.paidAt })
+    .from(accountsReceivable)
+    .where(and(
+      eq(accountsReceivable.tenantId, tenantId),
+      eq(accountsReceivable.status, 'paid'),
+      sql`${accountsReceivable.paidAt} >= ${yearStart}`,
+      sql`${accountsReceivable.paidAt} <= ${yearEnd}`
+    ));
+
+  for (const ar of paidArs) {
+    const month = ar.paidAt!.getMonth();
+    const q = Math.floor(month / 3);
+    quarters[q].revenue += ar.amount;
+  }
+
+  const paidAps = await db.select({ amount: accountsPayable.amountCents, paidAt: accountsPayable.paidAt })
+    .from(accountsPayable)
+    .where(and(
+      eq(accountsPayable.tenantId, tenantId),
+      eq(accountsPayable.status, 'paid'),
+      sql`${accountsPayable.paidAt} >= ${yearStart}`,
+      sql`${accountsPayable.paidAt} <= ${yearEnd}`
+    ));
+
+  for (const ap of paidAps) {
+    const month = ap.paidAt!.getMonth();
+    const q = Math.floor(month / 3);
+    quarters[q].expenses += ap.amount;
+  }
+
+  for (const q of quarters) {
+    q.profit = q.revenue - q.expenses;
+    q.margin = q.revenue > 0 ? Number(((q.profit / q.revenue) * 100).toFixed(2)) : 0;
+  }
+
+  return { quarters: quarters.map(({ q, revenue, expenses, profit, margin }) => ({ q, revenue, expenses, profit, margin })) };
+}
+
+export async function getPayerRanking(tenantId: number, input: PayerRankingInput) {
+  const conditions = [
+    eq(accountsReceivable.tenantId, tenantId),
+    eq(accountsReceivable.status, 'paid')
+  ];
+  if (input.dateFrom) conditions.push(sql`${accountsReceivable.paidAt} >= ${new Date(input.dateFrom)}`);
+  if (input.dateTo) conditions.push(sql`${accountsReceivable.paidAt} <= ${new Date(input.dateTo)}`);
+
+  const paidArs = await db.select({
+      clientId: accountsReceivable.clientId,
+      amountCents: accountsReceivable.amountCents,
+      dueDate: accountsReceivable.dueDate,
+      paidAt: accountsReceivable.paidAt,
+      clientName: clients.name
+    })
+    .from(accountsReceivable)
+    .leftJoin(clients, eq(accountsReceivable.clientId, clients.id))
+    .where(and(...conditions));
+
+  const stats = new Map<number, { clientName: string; totalPaidCents: number; totalCount: number; onTimeCount: number; lateCount: number }>();
+
+  for (const ar of paidArs) {
+    const cId = ar.clientId;
+    if (!stats.has(cId)) {
+      stats.set(cId, { clientName: ar.clientName || 'Desconhecido', totalPaidCents: 0, totalCount: 0, onTimeCount: 0, lateCount: 0 });
+    }
+    const stat = stats.get(cId)!;
+    stat.totalPaidCents += ar.amountCents;
+    stat.totalCount += 1;
+    
+    if (ar.paidAt! <= ar.dueDate) stat.onTimeCount += 1;
+    else stat.lateCount += 1;
+  }
+
+  const result = Array.from(stats.entries()).map(([clientId, s]) => ({
+    clientId,
+    clientName: s.clientName,
+    totalPaidCents: s.totalPaidCents,
+    onTimePercent: s.totalCount > 0 ? Number(((s.onTimeCount / s.totalCount) * 100).toFixed(2)) : 0,
+    lateCount: s.lateCount
+  }));
+
+  result.sort((a, b) => b.totalPaidCents - a.totalPaidCents);
+
+  return result.slice(0, input.limit);
+}
+
+export async function getCashFlow(tenantId: number, input: CashFlowInput) {
+  const startDate = new Date(input.dateFrom);
+  const endDate = new Date(input.dateTo);
+
+  const entries = await db.select()
+    .from(cashbookEntries)
+    .where(and(
+      eq(cashbookEntries.tenantId, tenantId),
+      sql`${cashbookEntries.referenceDate} >= ${startDate}`,
+      sql`${cashbookEntries.referenceDate} <= ${endDate}`
+    ));
+
+  const monthsMap = new Map<string, { month: string; credits: number; debits: number; net: number }>();
+  
+  for (const entry of entries) {
+    const monthKey = `${entry.referenceDate.getFullYear()}-${String(entry.referenceDate.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthsMap.has(monthKey)) {
+      monthsMap.set(monthKey, { month: monthKey, credits: 0, debits: 0, net: 0 });
+    }
+    const m = monthsMap.get(monthKey)!;
+    if (entry.type === 'credit') m.credits += entry.amountCents;
+    else m.debits += entry.amountCents;
+  }
+
+  for (const m of monthsMap.values()) m.net = m.credits - m.debits;
+
+  const [{ pendingCredits }] = await db.select({ pendingCredits: sql<number>`sum(${accountsReceivable.amountCents})` })
+    .from(accountsReceivable)
+    .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.status, 'pending')));
+
+  const [{ pendingDebits }] = await db.select({ pendingDebits: sql<number>`sum(${accountsPayable.amountCents})` })
+    .from(accountsPayable)
+    .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.status, 'pending')));
+
+  const months = Array.from(monthsMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+
+  return { 
+    months, 
+    projection: { 
+      pendingCredits: Number(pendingCredits || 0), 
+      pendingDebits: Number(pendingDebits || 0) 
+    } 
+  };
+}
+
+export async function getDashboardSummary(tenantId: number) {
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  const [{ totalReceivable }] = await db.select({ totalReceivable: sql<number>`sum(${accountsReceivable.amountCents})` })
+    .from(accountsReceivable)
+    .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.status, 'pending')));
+
+  const [{ totalPayable }] = await db.select({ totalPayable: sql<number>`sum(${accountsPayable.amountCents})` })
+    .from(accountsPayable)
+    .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.status, 'pending')));
+
+  const [{ overdueCents }] = await db.select({ overdueCents: sql<number>`sum(${accountsReceivable.amountCents})` })
+    .from(accountsReceivable)
+    .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.status, 'overdue')));
+
+  const monthEntries = await db.select({ type: cashbookEntries.type, amount: cashbookEntries.amountCents })
+    .from(cashbookEntries)
+    .where(and(
+      eq(cashbookEntries.tenantId, tenantId),
+      sql`${cashbookEntries.referenceDate} >= ${firstDayOfMonth}`,
+      sql`${cashbookEntries.referenceDate} <= ${lastDayOfMonth}`
+    ));
+
+  let monthFlowCents = 0;
+  for (const e of monthEntries) {
+    if (e.type === 'credit') monthFlowCents += e.amount;
+    else monthFlowCents -= e.amount;
+  }
+
+  return {
+    totalReceivableCents: Number(totalReceivable || 0),
+    totalPayableCents: Number(totalPayable || 0),
+    overdueCents: Number(overdueCents || 0),
+    monthFlowCents
+  };
+}
+
+// ─── PDFs (07.09, 07.11, 07.18) ──────────────────────────────────────────────
+
+export async function generateReceiptPdf(tenantId: number, arId: number): Promise<Buffer> {
+  const data = await getAr(tenantId, arId);
+  const ar = data.ar;
+  if (ar.status !== 'paid') throw new TRPCError({ code: 'BAD_REQUEST', message: 'AR não está paga' });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const doc = new jsPDF() as any;
+  doc.setFontSize(20);
+  doc.text('Recibo de Pagamento', 105, 20, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text(`Recibo Referente a OS #${ar.jobId}`, 20, 40);
+  doc.text(`Cliente: ${data.clientName}`, 20, 50);
+  doc.text(`Valor: R$ ${(ar.amountCents / 100).toFixed(2)}`, 20, 60);
+  doc.text(`Data do Pagamento: ${ar.paidAt?.toLocaleDateString()}`, 20, 70);
+  doc.text(`Método: ${ar.paymentMethod || 'N/A'}`, 20, 80);
+
+  const arrayBuffer = doc.output('arraybuffer');
+  return Buffer.from(arrayBuffer);
+}
+
+export async function generateJobExtractPdf(tenantId: number, jobId: number): Promise<Buffer> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const doc = new jsPDF() as any;
+  doc.setFontSize(20);
+  doc.text(`Extrato da OS #${jobId}`, 105, 20, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text('Detalhamento financeiro da OS constando itens e ajustes.', 20, 40);
+  
+  const arrayBuffer = doc.output('arraybuffer');
+  return Buffer.from(arrayBuffer);
+}
+
+export async function generateClosingPdf(tenantId: number, closingId: number): Promise<Buffer> {
+  const closing = await getClosing(tenantId, closingId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const doc = new jsPDF() as any;
+  doc.setFontSize(20);
+  doc.text(`Fechamento - Periodo ${closing.period}`, 105, 20, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text(`Total OS: ${closing.totalJobs}`, 20, 40);
+  doc.text(`Total Faturado: R$ ${(closing.totalAmountCents / 100).toFixed(2)}`, 20, 50);
+  doc.text(`Total Pago: R$ ${(closing.paidAmountCents / 100).toFixed(2)}`, 20, 60);
+  doc.text(`Total Pendente: R$ ${(closing.pendingAmountCents / 100).toFixed(2)}`, 20, 70);
+  
+  const arrayBuffer = doc.output('arraybuffer');
+  return Buffer.from(arrayBuffer);
 }
