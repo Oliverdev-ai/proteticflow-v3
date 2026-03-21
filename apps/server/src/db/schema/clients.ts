@@ -3,13 +3,10 @@ import {
   pgEnum,
   serial,
   varchar,
-  text,
   boolean,
   integer,
   timestamp,
-  numeric,
   index,
-  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { softDeleteColumns } from '@proteticflow/shared';
 
@@ -28,7 +25,7 @@ export const clients = pgTable('clients', {
   state: varchar('state', { length: 2 }),
   status: clientStatusEnum('status').default('active').notNull(),
   totalJobs: integer('total_jobs').default(0).notNull(),
-  totalRevenue: numeric('total_revenue', { precision: 12, scale: 2 }).default('0').notNull(),
+  totalRevenueCents: integer('total_revenue_cents').notNull().default(0),
   createdBy: integer('created_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -78,7 +75,8 @@ export const priceItems = pgTable('price_items', {
   category: varchar('category', { length: 128 }).notNull(),
   material: varchar('material', { length: 255 }),
   estimatedDays: integer('estimated_days').default(5).notNull(),
-  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  // AP-02: preço em centavos — snapshot copiado para job_items.unitPriceCents na criação da OS
+  priceCents: integer('price_cents').notNull().default(0),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

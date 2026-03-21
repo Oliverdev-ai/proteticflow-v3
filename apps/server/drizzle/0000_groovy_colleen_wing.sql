@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS "clients" (
 	"state" varchar(2),
 	"status" "client_status" DEFAULT 'active' NOT NULL,
 	"total_jobs" integer DEFAULT 0 NOT NULL,
-	"total_revenue" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"total_revenue_cents" integer DEFAULT 0 NOT NULL,
 	"created_by" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -153,12 +153,25 @@ CREATE TABLE IF NOT EXISTS "price_items" (
 	"category" varchar(128) NOT NULL,
 	"material" varchar(255),
 	"estimated_days" integer DEFAULT 5 NOT NULL,
-	"price" numeric(10, 2) NOT NULL,
+	"price_cents" integer DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
 	"deleted_by" integer
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "job_items" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"tenant_id" integer NOT NULL,
+	"job_id" integer NOT NULL,
+	"price_item_id" integer,
+	"service_name_snapshot" varchar(255) NOT NULL,
+	"quantity" integer DEFAULT 1 NOT NULL,
+	"unit_price_cents" integer NOT NULL,
+	"adjustment_percent" numeric(5, 2) DEFAULT '0' NOT NULL,
+	"total_cents" integer NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "job_logs" (
@@ -179,13 +192,12 @@ CREATE TABLE IF NOT EXISTS "jobs" (
 	"code" varchar(32) NOT NULL,
 	"order_number" integer,
 	"client_id" integer NOT NULL,
-	"price_item_id" integer,
 	"service_name" varchar(255) NOT NULL,
 	"patient_name" varchar(255),
 	"tooth" varchar(32),
 	"status" "job_status" DEFAULT 'pending' NOT NULL,
 	"progress" integer DEFAULT 0 NOT NULL,
-	"price" numeric(10, 2) NOT NULL,
+	"total_cents" integer DEFAULT 0 NOT NULL,
 	"deadline" timestamp with time zone NOT NULL,
 	"delivered_at" timestamp with time zone,
 	"notes" text,
@@ -388,6 +400,9 @@ CREATE INDEX IF NOT EXISTS "order_blocks_tenant_idx" ON "order_blocks" USING btr
 CREATE INDEX IF NOT EXISTS "order_blocks_client_idx" ON "order_blocks" USING btree ("client_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "order_blocks_start_idx" ON "order_blocks" USING btree ("block_start");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "price_items_tenant_idx" ON "price_items" USING btree ("tenant_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "job_items_tenant_idx" ON "job_items" USING btree ("tenant_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "job_items_job_idx" ON "job_items" USING btree ("job_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "job_items_price_item_idx" ON "job_items" USING btree ("price_item_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "job_logs_tenant_idx" ON "job_logs" USING btree ("tenant_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "job_logs_job_idx" ON "job_logs" USING btree ("job_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "job_logs_created_at_idx" ON "job_logs" USING btree ("created_at");--> statement-breakpoint

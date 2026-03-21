@@ -1,5 +1,5 @@
 {
-  "id": "282c0ad0-4d2d-44e5-aeda-ee83586e1af0",
+  "id": "10992eef-a332-49fd-8ac3-acf544323b1f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -937,12 +937,12 @@
           "notNull": true,
           "default": 0
         },
-        "total_revenue": {
-          "name": "total_revenue",
-          "type": "numeric(12, 2)",
+        "total_revenue_cents": {
+          "name": "total_revenue_cents",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "default": "'0'"
+          "default": 0
         },
         "created_by": {
           "name": "created_by",
@@ -1163,11 +1163,12 @@
           "notNull": true,
           "default": 5
         },
-        "price": {
-          "name": "price",
-          "type": "numeric(10, 2)",
+        "price_cents": {
+          "name": "price_cents",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": 0
         },
         "is_active": {
           "name": "is_active",
@@ -1209,6 +1210,128 @@
           "columns": [
             {
               "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.job_items": {
+      "name": "job_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_item_id": {
+          "name": "price_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_name_snapshot": {
+          "name": "service_name_snapshot",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "unit_price_cents": {
+          "name": "unit_price_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "adjustment_percent": {
+          "name": "adjustment_percent",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "total_cents": {
+          "name": "total_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "job_items_tenant_idx": {
+          "name": "job_items_tenant_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "job_items_job_idx": {
+          "name": "job_items_job_idx",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "job_items_price_item_idx": {
+          "name": "job_items_price_item_idx",
+          "columns": [
+            {
+              "expression": "price_item_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1375,12 +1498,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "price_item_id": {
-          "name": "price_item_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "service_name": {
           "name": "service_name",
           "type": "varchar(255)",
@@ -1414,11 +1531,12 @@
           "notNull": true,
           "default": 0
         },
-        "price": {
-          "name": "price",
-          "type": "numeric(10, 2)",
+        "total_cents": {
+          "name": "total_cents",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": 0
         },
         "deadline": {
           "name": "deadline",
