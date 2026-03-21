@@ -1,6 +1,6 @@
 import { createTRPCReact } from '@trpc/react-query';
 import { QueryClient } from '@tanstack/react-query';
-import type { AppRouter } from '@proteticflow/server/src/trpc/router.js';
+import type { AppRouter } from '@proteticflow/server/trpc';
 
 export const trpc = createTRPCReact<AppRouter>();
 

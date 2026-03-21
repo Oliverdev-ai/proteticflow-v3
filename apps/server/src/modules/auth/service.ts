@@ -12,7 +12,7 @@ import {
   verify2faCode,
   generateQrCode,
 } from '../../core/auth.js';
-import { logger } from '../../core/logger.js';
+import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import {
   registerSchema,
@@ -20,6 +20,7 @@ import {
   updateProfileSchema,
   createUserSchema,
   ROLES,
+  ROLE_PERMISSIONS,
 } from '@proteticflow/shared';
 
 // Infer types from schemas
@@ -54,6 +55,12 @@ export async function register(input: RegisterInput) {
   });
 
   const refreshToken = generateRefreshToken();
+
+  await db.insert(refreshTokens).values({
+    userId: user.id,
+    tokenHash: hashToken(refreshToken),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
 
   return { user, accessToken, refreshToken };
 }
@@ -175,7 +182,10 @@ export async function forgotPassword(email: string) {
     expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hora
   });
 
-  logger.info({ action: 'auth.password_reset_request', userId: user.id, token_stub: token }, 'Password reset requested');
+  logger.info({ action: 'auth.password_reset_request', userId: user.id }, 'Password reset requested');
+  if (process.env.NODE_ENV === 'development') {
+    logger.debug({ tokenPreview: token.slice(0, 8) + '...' }, 'Reset token (dev only)');
+  }
 }
 
 export async function resetPassword(token: string, newPassword: z.infer<typeof registerSchema>['password']) {
@@ -271,18 +281,16 @@ export async function revokeSession(userId: number, sessionId: number) {
 }
 
 export async function getPermissions(userId: number, tenantId: number) {
-  // Mock implementations for Phase 2, relying on the user role field since multi-tenant logic belongs to Phase 3
+  // Implementations for Phase 2
   const [user] = await db.select().from(users).where(eq(users.id, userId));
-  const key = Object.keys(ROLES).includes(user.role) ? user.role : 'recepcao';
-  // @ts-ignore
-  const roleRecord = ROLES[key];
-  return { role: user.role, modules: roleRecord.modules };
+  const permissions = ROLE_PERMISSIONS[user.role as keyof typeof ROLE_PERMISSIONS] ?? ROLE_PERMISSIONS.recepcao;
+  return { role: user.role, modules: permissions.modules };
 }
 
 export async function listUsers(tenantId: number) {
   // Stub for Phase 2: Memberships isolated by tenant are fully covered in Phase 3.
-  const allUsers = await db.select().from(users).limit(50);
-  return allUsers; 
+  logger.warn({ tenantId }, 'listUsers: stub — real implementation in Fase 3');
+  return []; 
 }
 
 export async function createUser(tenantId: number, input: CreateUserInput) {
@@ -292,8 +300,9 @@ export async function createUser(tenantId: number, input: CreateUserInput) {
     name: input.name,
     email: input.email,
     passwordHash: hashedPassword,
-    role: input.role,
+    role: 'user', // Role global. O role de 5 níveis é no tenant_members (Fase 3)
   }).returning();
+  // TODO Fase 3: criar tenant_member com input.role
   return user;
 }
 

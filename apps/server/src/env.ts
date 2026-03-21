@@ -10,7 +10,7 @@ const envSchema = z.object({
   MINIO_SECRET_KEY: z.string().default('minioadmin123'),
   MINIO_USE_SSL: z.coerce.boolean().default(false),
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  JWT_EXPIRES_IN: z.string().default('15m'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
 });

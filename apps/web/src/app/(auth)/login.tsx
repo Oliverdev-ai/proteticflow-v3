@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../../hooks/use-auth.js';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
-
-const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1) });
+import { loginSchema } from '@proteticflow/shared';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -19,11 +18,13 @@ export default function LoginPage() {
       setLoading(true);
       setError('');
       await login({ email, password });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         setError('Preencha os campos corretamente.');
+      } else if (err instanceof Error) {
+        setError(err.message);
       } else {
-        setError(err.message || 'Erro ao realizar login.');
+        setError('Erro inesperado.');
       }
       setLoading(false);
     }

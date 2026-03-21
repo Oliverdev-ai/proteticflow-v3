@@ -19,7 +19,9 @@ export const authRouter = router({
     return authService.register(input);
   }),
   login: publicProcedure.input(loginSchema).mutation(async ({ input, ctx }) => {
-    const meta = { ip: ctx.req?.ip, userAgent: ctx.req?.headers['user-agent'] };
+    const meta: { ip?: string; userAgent?: string } = {};
+    if (ctx.req?.ip) meta.ip = ctx.req.ip;
+    if (typeof ctx.req?.headers['user-agent'] === 'string') meta.userAgent = ctx.req.headers['user-agent'];
     const result = await authService.login(input, meta);
     
     if (ctx.res) {
@@ -111,14 +113,14 @@ export const authRouter = router({
   exportData: protectedProcedure.query(async ({ ctx }) => {
     return authService.exportUserData(ctx.user!.id);
   }),
-  setup2fa: adminProcedure.mutation(async ({ ctx }) => {
+  setup2fa: protectedProcedure.mutation(async ({ ctx }) => {
     return authService.setup2fa(ctx.user!.id);
   }),
-  verify2fa: adminProcedure.input(setup2faSchema.extend({ secret: z.string() })).mutation(async ({ input, ctx }) => {
+  verify2fa: protectedProcedure.input(setup2faSchema.extend({ secret: z.string() })).mutation(async ({ input, ctx }) => {
     await authService.verify2fa(ctx.user!.id, input.totpCode, input.secret);
     return { success: true };
   }),
-  disable2fa: adminProcedure.input(verify2faSchema).mutation(async ({ input, ctx }) => {
+  disable2fa: protectedProcedure.input(verify2faSchema).mutation(async ({ input, ctx }) => {
     await authService.disable2fa(ctx.user!.id, input.totpCode);
     return { success: true };
   }),

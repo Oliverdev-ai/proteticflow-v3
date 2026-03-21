@@ -3,12 +3,7 @@ import { trpc } from '../../../lib/trpc.js';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/use-auth.js';
-
-const registerSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-});
+import { registerSchema } from '@proteticflow/shared';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -38,11 +33,13 @@ export default function RegisterPage() {
       setLoading(true);
       setError('');
       await registerMutation.mutateAsync({ name, email, password });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         setError('Preencha os campos corretamente.');
+      } else if (err instanceof Error) {
+        setError(err.message);
       } else {
-        setError(err.message || 'Erro de validação.');
+        setError('Erro inesperado.');
       }
       setLoading(false);
     }
