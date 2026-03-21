@@ -1,5 +1,5 @@
 {
-  "id": "7ef4b3ba-2b9a-4259-8225-efb7b6fb41b7",
+  "id": "282c0ad0-4d2d-44e5-aeda-ee83586e1af0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1405,7 +1405,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'waiting'"
+          "default": "'pending'"
         },
         "progress": {
           "name": "progress",
@@ -2867,12 +2867,12 @@
       "name": "job_status",
       "schema": "public",
       "values": [
-        "waiting",
-        "in_production",
-        "review",
+        "pending",
+        "in_progress",
+        "quality_check",
         "ready",
         "delivered",
-        "overdue"
+        "cancelled"
       ]
     },
     "public.ap_status": {

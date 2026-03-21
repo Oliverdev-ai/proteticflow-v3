@@ -12,13 +12,15 @@ import {
 import { softDeleteColumns } from '@proteticflow/shared';
 
 // Enums
+// Alinhado ao PRD 04.03: pending→in_progress→quality_check→ready→delivered + cancelled
+// 'overdue' é estado derivado (deadline < now), não armazenado no banco
 export const jobStatusEnum = pgEnum('job_status', [
-  'waiting',
-  'in_production',
-  'review',
+  'pending',
+  'in_progress',
+  'quality_check',
   'ready',
   'delivered',
-  'overdue',
+  'cancelled',
 ]);
 
 // Tables
@@ -32,7 +34,7 @@ export const jobs = pgTable('jobs', {
   serviceName: varchar('service_name', { length: 255 }).notNull(),
   patientName: varchar('patient_name', { length: 255 }),
   tooth: varchar('tooth', { length: 32 }),
-  status: jobStatusEnum('status').default('waiting').notNull(),
+  status: jobStatusEnum('status').default('pending').notNull(),
   progress: integer('progress').default(0).notNull(),
   price: numeric('price', { precision: 10, scale: 2 }).notNull(),
   deadline: timestamp('deadline', { withTimezone: true }).notNull(),

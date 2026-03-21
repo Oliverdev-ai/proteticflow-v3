@@ -3,7 +3,7 @@ CREATE TYPE "public"."plan_tier" AS ENUM('trial', 'starter', 'pro', 'enterprise'
 CREATE TYPE "public"."tenant_member_role" AS ENUM('superadmin', 'gerente', 'producao', 'recepcao', 'contabil');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."client_status" AS ENUM('active', 'inactive');--> statement-breakpoint
-CREATE TYPE "public"."job_status" AS ENUM('waiting', 'in_production', 'review', 'ready', 'delivered', 'overdue');--> statement-breakpoint
+CREATE TYPE "public"."job_status" AS ENUM('pending', 'in_progress', 'quality_check', 'ready', 'delivered', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."ap_status" AS ENUM('pending', 'paid', 'overdue', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."ar_status" AS ENUM('pending', 'paid', 'overdue', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."closing_status" AS ENUM('open', 'closed', 'paid');--> statement-breakpoint
@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS "jobs" (
 	"service_name" varchar(255) NOT NULL,
 	"patient_name" varchar(255),
 	"tooth" varchar(32),
-	"status" "job_status" DEFAULT 'waiting' NOT NULL,
+	"status" "job_status" DEFAULT 'pending' NOT NULL,
 	"progress" integer DEFAULT 0 NOT NULL,
 	"price" numeric(10, 2) NOT NULL,
 	"deadline" timestamp with time zone NOT NULL,
