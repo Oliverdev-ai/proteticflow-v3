@@ -1,9 +1,9 @@
-export * from './constants/roles.js';
-export * from './constants/job-status.js';
-export * from './constants/plans.js';
-export * from './utils/errors.js';
-export * from './utils/format.js';
-export * from './db/mixins.js';
+export * from './constants/roles';
+export * from './constants/job-status';
+export * from './constants/plans';
+export * from './utils/errors';
+export * from './utils/format';
+export * from './db/mixins';
 
-export * from './validation/auth.schema.js';
-export * from './types/auth.js';
+export * from './validation/auth.schema';
+export * from './types/auth';
