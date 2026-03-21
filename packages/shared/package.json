@@ -11,7 +11,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/"
   },
+  "peerDependencies": {
+    "drizzle-orm": ">=0.36.0"
+  },
   "devDependencies": {
+    "drizzle-orm": "^0.36.0",
     "typescript": "*"
   }
 }
