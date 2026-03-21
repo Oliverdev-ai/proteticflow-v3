@@ -288,22 +288,14 @@ export async function getPermissions(userId: number, tenantId: number) {
 }
 
 export async function listUsers(tenantId: number) {
-  // Stub for Phase 2: Memberships isolated by tenant are fully covered in Phase 3.
-  logger.warn({ tenantId }, 'listUsers: stub — real implementation in Fase 3');
-  return []; 
+  // Real implementation using tenant_members (Fase 3)
+  const { listMembers } = await import('../tenants/service.js');
+  return listMembers(tenantId);
 }
 
 export async function createUser(tenantId: number, input: CreateUserInput) {
-  // Stub for Phase 2
-  const hashedPassword = await hashPassword('Provisoria123');
-  const [user] = await db.insert(users).values({
-    name: input.name,
-    email: input.email,
-    passwordHash: hashedPassword,
-    role: 'user', // Role global. O role de 5 níveis é no tenant_members (Fase 3)
-  }).returning();
-  // TODO Fase 3: criar tenant_member com input.role
-  return user;
+  const { createUser: createTenantUser } = await import('../tenants/service.js');
+  return createTenantUser(tenantId, input);
 }
 
 export async function exportUserData(userId: number) {

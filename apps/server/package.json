@@ -6,6 +6,11 @@
   "exports": {
     "./trpc": "./src/trpc/router.ts"
   },
+  "typesVersions": {
+    "*": {
+      "trpc": ["./src/trpc/router.ts"]
+    }
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

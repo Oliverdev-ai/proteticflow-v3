@@ -8,6 +8,7 @@ import {
   integer,
   timestamp,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 // Enums
@@ -36,6 +37,12 @@ export const tenants = pgTable('tenants', {
   isActive: boolean('is_active').default(true).notNull(),
   // PRD Fase 3: Multi-empresa — nullable self-reference FK
   parentTenantId: integer('parent_tenant_id'),
+  // Contadores de uso (enforcement na Fase 23 — licensedProcedure)
+  clientCount: integer('client_count').notNull().default(0),
+  jobCountThisMonth: integer('job_count_this_month').notNull().default(0),
+  userCount: integer('user_count').notNull().default(0),
+  priceTableCount: integer('price_table_count').notNull().default(0),
+  storageUsedMb: integer('storage_used_mb').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
@@ -52,7 +59,7 @@ export const tenantMembers = pgTable('tenant_members', {
   joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-  index('tm_tenant_user_idx').on(table.tenantId, table.userId),
+  uniqueIndex('tm_tenant_user_unique').on(table.tenantId, table.userId),
   index('tm_user_idx').on(table.userId),
   index('tm_tenant_idx').on(table.tenantId),
 ]);

@@ -6,4 +6,6 @@ export * from './utils/format';
 export * from './db/mixins';
 
 export * from './validation/auth.schema';
+export * from './validation/tenant.schema';
 export * from './types/auth';
+export * from './types/tenant';
