@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "check:tenant-isolation": "tsx ../../scripts/check-tenant-isolation.ts"
   },
   "dependencies": {
     "@proteticflow/shared": "workspace:*",
