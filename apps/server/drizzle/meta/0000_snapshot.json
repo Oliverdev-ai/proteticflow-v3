@@ -1,5 +1,5 @@
 {
-  "id": "03f1ce9b-df3f-4378-8e7d-26d95115dbc1",
+  "id": "7ef4b3ba-2b9a-4259-8225-efb7b6fb41b7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -28,11 +28,11 @@
         },
         "role": {
           "name": "role",
-          "type": "invite_role",
+          "type": "tenant_member_role",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'user'"
+          "default": "'recepcao'"
         },
         "token": {
           "name": "token",
@@ -112,7 +112,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'technician'"
+          "default": "'recepcao'"
         },
         "is_active": {
           "name": "is_active",
@@ -238,7 +238,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'free'"
+          "default": "'trial'"
         },
         "plan_expires_at": {
           "name": "plan_expires_at",
@@ -2817,14 +2817,6 @@
     }
   },
   "enums": {
-    "public.invite_role": {
-      "name": "invite_role",
-      "schema": "public",
-      "values": [
-        "user",
-        "admin"
-      ]
-    },
     "public.invite_status": {
       "name": "invite_status",
       "schema": "public",
@@ -2838,9 +2830,9 @@
       "name": "plan_tier",
       "schema": "public",
       "values": [
-        "free",
+        "trial",
         "starter",
-        "professional",
+        "pro",
         "enterprise"
       ]
     },
@@ -2848,9 +2840,11 @@
       "name": "tenant_member_role",
       "schema": "public",
       "values": [
-        "admin",
-        "technician",
-        "viewer"
+        "superadmin",
+        "gerente",
+        "producao",
+        "recepcao",
+        "contabil"
       ]
     },
     "public.user_role": {

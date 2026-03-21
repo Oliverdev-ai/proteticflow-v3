@@ -1,7 +1,6 @@
-CREATE TYPE "public"."invite_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."invite_status" AS ENUM('pending', 'accepted', 'expired');--> statement-breakpoint
-CREATE TYPE "public"."plan_tier" AS ENUM('free', 'starter', 'professional', 'enterprise');--> statement-breakpoint
-CREATE TYPE "public"."tenant_member_role" AS ENUM('admin', 'technician', 'viewer');--> statement-breakpoint
+CREATE TYPE "public"."plan_tier" AS ENUM('trial', 'starter', 'pro', 'enterprise');--> statement-breakpoint
+CREATE TYPE "public"."tenant_member_role" AS ENUM('superadmin', 'gerente', 'producao', 'recepcao', 'contabil');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."client_status" AS ENUM('active', 'inactive');--> statement-breakpoint
 CREATE TYPE "public"."job_status" AS ENUM('waiting', 'in_production', 'review', 'ready', 'delivered', 'overdue');--> statement-breakpoint
@@ -15,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "invites" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"tenant_id" integer NOT NULL,
 	"email" varchar(320) NOT NULL,
-	"role" "invite_role" DEFAULT 'user' NOT NULL,
+	"role" "tenant_member_role" DEFAULT 'recepcao' NOT NULL,
 	"token" varchar(128) NOT NULL,
 	"status" "invite_status" DEFAULT 'pending' NOT NULL,
 	"invited_by" integer NOT NULL,
@@ -28,7 +27,7 @@ CREATE TABLE IF NOT EXISTS "tenant_members" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"tenant_id" integer NOT NULL,
 	"user_id" integer NOT NULL,
-	"role" "tenant_member_role" DEFAULT 'technician' NOT NULL,
+	"role" "tenant_member_role" DEFAULT 'recepcao' NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"joined_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -38,7 +37,7 @@ CREATE TABLE IF NOT EXISTS "tenants" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"slug" varchar(128) NOT NULL,
-	"plan" "plan_tier" DEFAULT 'free' NOT NULL,
+	"plan" "plan_tier" DEFAULT 'trial' NOT NULL,
 	"plan_expires_at" timestamp with time zone,
 	"logo_url" text,
 	"cnpj" varchar(18),
