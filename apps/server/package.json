@@ -8,7 +8,9 @@
   },
   "typesVersions": {
     "*": {
-      "trpc": ["./src/trpc/router.ts"]
+      "trpc": [
+        "./src/trpc/router.ts"
+      ]
     }
   },
   "scripts": {
@@ -24,6 +26,8 @@
     "check:tenant-isolation": "tsx ../../scripts/check-tenant-isolation.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1014.0",
+    "@aws-sdk/s3-request-presigner": "^3.1014.0",
     "@proteticflow/shared": "workspace:*",
     "@trpc/server": "^11.0.0",
     "bcrypt": "^6.0.0",
@@ -33,6 +37,8 @@
     "express": "^5.0.0",
     "ioredis": "^5.10.1",
     "jose": "^6.2.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "otplib": "^13.4.0",
     "pg": "^8.13.0",
     "pino": "^9.0.0",

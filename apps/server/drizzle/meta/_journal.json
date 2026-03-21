@@ -29,6 +29,13 @@
       "when": 1742591800000,
       "tag": "0003_clientes_precos_adjustments",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1742592200000,
+      "tag": "0004_os_kanban",
+      "breakpoints": true
     }
   ]
 }

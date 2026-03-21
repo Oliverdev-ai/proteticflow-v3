@@ -17,6 +17,12 @@ import ClientEditPage from './app/(dashboard)/clientes/[id]';
 // Fase 5 — Tabelas de Preços
 import PricingTablesPage from './app/(dashboard)/precos/index';
 import PricingTableDetailPage from './app/(dashboard)/precos/[id]';
+// Fase 6 — Trabalhos / OS
+import JobListPage from './app/(dashboard)/trabalhos/index';
+import JobCreatePage from './app/(dashboard)/trabalhos/novo';
+import JobDetailPage from './app/(dashboard)/trabalhos/[id]';
+// Fase 7 — Kanban
+import KanbanPage from './app/(dashboard)/kanban';
 import './globals.css';
 
 function AppContent() {
@@ -48,6 +54,12 @@ function AppContent() {
           {/* Fase 5 — Tabelas de Preços */}
           <Route path="/precos" element={<PricingTablesPage />} />
           <Route path="/precos/:id" element={<PricingTableDetailPage />} />
+          {/* Fase 6 — Trabalhos / OS */}
+          <Route path="/trabalhos" element={<JobListPage />} />
+          <Route path="/trabalhos/novo" element={<JobCreatePage />} />
+          <Route path="/trabalhos/:id" element={<JobDetailPage />} />
+          {/* Fase 7 — Kanban */}
+          <Route path="/kanban" element={<KanbanPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
