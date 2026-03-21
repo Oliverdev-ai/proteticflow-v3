@@ -10,7 +10,7 @@ import {
   index,
   jsonb,
 } from 'drizzle-orm/pg-core';
-import { tenants } from './tenants.js';
+import { tenants } from './tenants';
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
