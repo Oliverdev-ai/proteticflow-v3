@@ -3,6 +3,7 @@ CREATE TYPE "public"."plan_tier" AS ENUM('trial', 'starter', 'pro', 'enterprise'
 CREATE TYPE "public"."tenant_member_role" AS ENUM('superadmin', 'gerente', 'producao', 'recepcao', 'contabil');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."client_status" AS ENUM('active', 'inactive');--> statement-breakpoint
+CREATE TYPE "public"."document_type" AS ENUM('cpf', 'cnpj');--> statement-breakpoint
 CREATE TYPE "public"."job_status" AS ENUM('pending', 'in_progress', 'quality_check', 'ready', 'delivered', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."ap_status" AS ENUM('pending', 'paid', 'overdue', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."ar_status" AS ENUM('pending', 'paid', 'overdue', 'cancelled');--> statement-breakpoint
@@ -121,8 +122,20 @@ CREATE TABLE IF NOT EXISTS "clients" (
 	"clinic" varchar(255),
 	"email" varchar(320),
 	"phone" varchar(32),
+	"phone2" varchar(32),
+	"document_type" "document_type",
+	"document" varchar(20),
+	"contact_person" varchar(255),
+	"street" varchar(255),
+	"address_number" varchar(20),
+	"complement" varchar(128),
+	"neighborhood" varchar(128),
 	"city" varchar(128),
 	"state" varchar(2),
+	"zip_code" varchar(10),
+	"technical_preferences" text,
+	"price_adjustment_percent" numeric(5, 2) DEFAULT '0' NOT NULL,
+	"pricing_table_id" integer,
 	"status" "client_status" DEFAULT 'active' NOT NULL,
 	"total_jobs" integer DEFAULT 0 NOT NULL,
 	"total_revenue_cents" integer DEFAULT 0 NOT NULL,
@@ -149,11 +162,25 @@ CREATE TABLE IF NOT EXISTS "order_blocks" (
 CREATE TABLE IF NOT EXISTS "price_items" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"tenant_id" integer NOT NULL,
+	"pricing_table_id" integer,
 	"name" varchar(255) NOT NULL,
 	"category" varchar(128) NOT NULL,
 	"material" varchar(255),
 	"estimated_days" integer DEFAULT 5 NOT NULL,
 	"price_cents" integer DEFAULT 0 NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_at" timestamp with time zone,
+	"deleted_by" integer
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "pricing_tables" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"tenant_id" integer NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"description" text,
+	"is_default" boolean DEFAULT false NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -396,10 +423,14 @@ CREATE INDEX IF NOT EXISTS "cpt_tenant_idx" ON "client_portal_tokens" USING btre
 CREATE INDEX IF NOT EXISTS "cpt_client_idx" ON "client_portal_tokens" USING btree ("client_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "cpt_active_idx" ON "client_portal_tokens" USING btree ("is_active");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "clients_tenant_idx" ON "clients" USING btree ("tenant_id");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "clients_tenant_document_idx" ON "clients" USING btree ("tenant_id","document");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "order_blocks_tenant_idx" ON "order_blocks" USING btree ("tenant_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "order_blocks_client_idx" ON "order_blocks" USING btree ("client_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "order_blocks_start_idx" ON "order_blocks" USING btree ("block_start");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "price_items_tenant_idx" ON "price_items" USING btree ("tenant_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "price_items_table_idx" ON "price_items" USING btree ("pricing_table_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "pricing_tables_tenant_idx" ON "pricing_tables" USING btree ("tenant_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "pricing_tables_default_idx" ON "pricing_tables" USING btree ("tenant_id","is_default");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "job_items_tenant_idx" ON "job_items" USING btree ("tenant_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "job_items_job_idx" ON "job_items" USING btree ("job_id");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "job_items_price_item_idx" ON "job_items" USING btree ("price_item_id");--> statement-breakpoint
