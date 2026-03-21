@@ -32,8 +32,9 @@ export const pricingTables = pgTable('pricing_tables', {
   ...softDeleteColumns,
 }, (table) => [
   index('pricing_tables_tenant_idx').on(table.tenantId),
-  // Garante no máximo uma tabela padrão por tenant via partial unique index
   index('pricing_tables_default_idx').on(table.tenantId, table.isDefault),
+  // PRD 06.01: nome único por tenant (partial — ignora soft-deleted)
+  uniqueIndex('pricing_tables_tenant_name_idx').on(table.tenantId, table.name),
 ]);
 
 // ─── Módulo 03: Clientes ──────────────────────────────────────────────────────
@@ -127,6 +128,10 @@ export const priceItems = pgTable('price_items', {
   estimatedDays: integer('estimated_days').default(5).notNull(),
   // AP-02: preço em centavos — snapshot copiado para job_items.unitPriceCents na criação da OS
   priceCents: integer('price_cents').notNull().default(0),
+  // PRD 06.02: código interno do serviço (ex: "CER-001")
+  code: varchar('code', { length: 64 }),
+  // PRD 06.02: descrição detalhada do serviço
+  description: text('description'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -134,4 +139,6 @@ export const priceItems = pgTable('price_items', {
 }, (table) => [
   index('price_items_tenant_idx').on(table.tenantId),
   index('price_items_table_idx').on(table.pricingTableId),
+  // PRD 06.02: nome único por tabela (partial — ignora soft-deleted e itens sem tabela)
+  uniqueIndex('price_items_table_name_idx').on(table.pricingTableId, table.name),
 ]);

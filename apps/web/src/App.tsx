@@ -10,6 +10,13 @@ import ForgotPasswordPage from './app/(auth)/forgot-password';
 import ResetPasswordPage from './app/(auth)/reset-password';
 import { DashboardLayout } from './app/(dashboard)/layout';
 import { OnboardingWizard } from './app/(dashboard)/onboarding';
+// Fase 4 — Clientes
+import ClientListPage from './app/(dashboard)/clientes/index';
+import ClientCreatePage from './app/(dashboard)/clientes/novo';
+import ClientEditPage from './app/(dashboard)/clientes/[id]';
+// Fase 5 — Tabelas de Preços
+import PricingTablesPage from './app/(dashboard)/precos/index';
+import PricingTableDetailPage from './app/(dashboard)/precos/[id]';
 import './globals.css';
 
 function AppContent() {
@@ -34,7 +41,13 @@ function AppContent() {
               <p className="text-neutral-500 text-sm">Dashboard (Fase 26)</p>
             </div>
           } />
-          {/* Fases 4+ adicionam rotas aqui */}
+          {/* Fase 4 — Clientes */}
+          <Route path="/clientes" element={<ClientListPage />} />
+          <Route path="/clientes/novo" element={<ClientCreatePage />} />
+          <Route path="/clientes/:id" element={<ClientEditPage />} />
+          {/* Fase 5 — Tabelas de Preços */}
+          <Route path="/precos" element={<PricingTablesPage />} />
+          <Route path="/precos/:id" element={<PricingTableDetailPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
