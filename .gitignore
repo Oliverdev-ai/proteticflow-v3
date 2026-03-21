@@ -9,6 +9,7 @@ dist/
 build/
 .turbo/
 *.tsbuildinfo
+*.timestamp*
 
 # Variáveis de ambiente (NUNCA commitar)
 .env

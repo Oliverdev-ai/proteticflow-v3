@@ -10,6 +10,13 @@
       "breakpoints": true
     },
     {
+      "idx": 1,
+      "version": "7",
+      "when": 1774074200000,
+      "tag": "0001_auth_tables",
+      "breakpoints": true
+    },
+    {
       "idx": 2,
       "version": "7",
       "when": 1742591400000,
