@@ -1,6 +1,5 @@
 import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import type { PgTransaction } from 'drizzle-orm/pg-core';
 import { jobs, jobItems, jobLogs, jobStages, jobPhotos, orderCounters } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
 import { priceItems } from '../../db/schema/clients.js';
@@ -32,9 +31,10 @@ type CreateStageInput  = z.infer<typeof createJobStageSchema>;
 type UploadPhotoInput  = z.infer<typeof uploadPhotoSchema>;
 
 // ─── PAD-04: Order Number com SELECT FOR UPDATE ───────────────────────────────
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 // DEVE estar dentro de uma transação já aberta (tx). NÃO usar COUNT(*)+1.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getNextOrderNumber(tx: PgTransaction<any, any, any>, tenantId: number): Promise<number> {
+export async function getNextOrderNumber(tx: DbTransaction, tenantId: number): Promise<number> {
   // Upsert do counter
   await tx.execute(sql`
     INSERT INTO order_counters (tenant_id, last_order_number)
@@ -584,8 +584,11 @@ export async function getKanbanMetrics(tenantId: number) {
 export async function generatePdf(tenantId: number, jobId: number): Promise<Buffer> {
   const jobData = await getJob(tenantId, jobId);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doc = new jsPDF() as any;
+  type JsPdfWithAutoTable = jsPDF & {
+    autoTable: (options: unknown) => void;
+    lastAutoTable?: { finalY: number };
+  };
+  const doc = new jsPDF() as JsPdfWithAutoTable;
 
   // Header
   doc.setFontSize(18);
@@ -617,7 +620,7 @@ export async function generatePdf(tenantId: number, jobId: number): Promise<Buff
     headStyles: { fillColor: [124, 58, 237] },
   });
 
-  const finalY = (doc as { lastAutoTable: { finalY: number } }).lastAutoTable?.finalY ?? 100;
+  const finalY = doc.lastAutoTable?.finalY ?? 100;
 
   doc.setFont('helvetica', 'bold');
   doc.text(`Total: R$ ${(jobData.totalCents / 100).toFixed(2)}`, 14, finalY + 10);

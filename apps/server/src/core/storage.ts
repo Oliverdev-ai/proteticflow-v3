@@ -5,7 +5,7 @@ import { env } from '../env.js';
 const BUCKET = env.MINIO_BUCKET ?? 'proteticflow';
 
 export const s3 = new S3Client({
-  endpoint: `http${env.MINIO_USE_SSL === 'true' ? 's' : ''}://${env.MINIO_ENDPOINT}:${env.MINIO_PORT}`,
+  endpoint: `http${env.MINIO_USE_SSL ? 's' : ''}://${env.MINIO_ENDPOINT}:${env.MINIO_PORT}`,
   region: 'us-east-1',
   credentials: {
     accessKeyId: env.MINIO_ACCESS_KEY,
@@ -38,6 +38,6 @@ export async function deleteObject(key: string): Promise<void> {
 }
 
 export function buildPublicUrl(key: string): string {
-  const protocol = env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
+  const protocol = env.MINIO_USE_SSL ? 'https' : 'http';
   return `${protocol}://${env.MINIO_ENDPOINT}:${env.MINIO_PORT}/${BUCKET}/${key}`;
 }
