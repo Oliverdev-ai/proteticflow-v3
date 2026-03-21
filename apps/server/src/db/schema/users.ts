@@ -18,17 +18,42 @@ export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 // Tables
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  name: text('name'),
-  email: varchar('email', { length: 320 }),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 320 }).notNull().unique(),
   phone: varchar('phone', { length: 32 }),
-  // JWT auth (Phase 2) — replaces legacy openId/loginMethod
-  passwordHash: varchar('password_hash', { length: 255 }),
+  avatarUrl: text('avatar_url'),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  twoFactorSecret: varchar('two_factor_secret', { length: 128 }),
+  twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
   role: userRoleEnum('role').default('user').notNull(),
   activeTenantId: integer('active_tenant_id'),
   isActive: boolean('is_active').default(true).notNull(),
-  lastSignedIn: timestamp('last_signed_in', { withTimezone: true }).defaultNow().notNull(),
+  lastSignedIn: timestamp('last_signed_in', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 255 }).notNull(), // sha256 hash
+  userAgent: varchar('user_agent', { length: 512 }),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('rt_user_idx').on(table.userId),
+  index('rt_token_hash_idx').on(table.tokenHash),
+]);
+
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 255 }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ─── API Keys (01.14) ───────────────────────────────────────

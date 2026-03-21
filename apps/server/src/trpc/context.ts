@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type { db } from '../db/index.js';
+import { verifyAccessToken } from '../core/auth.js';
 
 export type TrpcUser = {
   id: number;
@@ -12,15 +13,38 @@ export type TrpcContext = {
   res: Response;
   db: typeof db;
   user: TrpcUser | null;
+  tenantId: number | null;
 };
 
 export function createContext(
   dbInstance: typeof db,
-): (opts: { req: Request; res: Response }) => TrpcContext {
-  return ({ req, res }) => ({
-    req,
-    res,
-    db: dbInstance,
-    user: null, // preenchido pelo middleware JWT na Fase 2
-  });
+) {
+  return async ({ req, res }: { req: Request; res: Response }): Promise<TrpcContext> => {
+    let user = null;
+    let tenantId = null;
+
+    if (req.cookies && req.cookies.access_token) {
+      try {
+        const payload = await verifyAccessToken(req.cookies.access_token);
+        if (payload) {
+          user = {
+            id: payload.sub,
+            tenantId: payload.tenantId,
+            role: payload.role,
+          };
+          tenantId = payload.tenantId || null;
+        }
+      } catch (err) {
+        // silencia erro de token inválido/expirado
+      }
+    }
+
+    return {
+      req,
+      res,
+      db: dbInstance,
+      user,
+      tenantId,
+    };
+  };
 }

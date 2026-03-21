@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import { env } from './env.js';
 import { logger } from './logger.js';
@@ -12,6 +13,7 @@ const app = express();
 
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Health check (sem auth)
 app.use(healthRouter);
