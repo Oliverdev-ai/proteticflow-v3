@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
     tags: ['v*']
 
 concurrency:
@@ -16,7 +16,7 @@ env:
 jobs:
   deploy-staging:
     name: Deploy to Staging
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     environment: staging
     steps:

@@ -25,5 +25,4 @@ const enforceAuth = t.middleware(({ ctx, next }) => {
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const protectedProcedure: ReturnType<typeof t.procedure.use<any>> = t.procedure.use(enforceAuth);
+export const protectedProcedure = t.procedure.use(enforceAuth);
