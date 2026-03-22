@@ -63,31 +63,53 @@ describe('Financial Service — AR', () => {
     expect(ars[0]?.jobId).toBe(job.id);           // Test 2: vinculado à OS correta
   });
 
-  it('3. Listar AR — filtra por tenant e 4. filtra por status e 5. filtra por período', async () => {
+  it('3. Listar AR — filtra por tenant (isolamento)', async () => {
     const u1 = await createTestUser('f3a@test.com');
     const u2 = await createTestUser('f3b@test.com');
     const t1 = await createTestTenant(u1.id, 'Lab F3A');
     const t2 = await createTestTenant(u2.id, 'Lab F3B');
     const c1 = await createTestClient(t1.id, u1.id);
-    
-    await financialService.createAr(t1.id, {
-      clientId: c1.id,
-      jobId: 0,
-      amountCents: 5000,
-      dueDate: new Date(Date.now() + 86400000).toISOString()
-    });
-    
-    await financialService.createAr(t2.id, {
-      clientId: c1.id,
-      jobId: 0,
-      amountCents: 10000,
-      dueDate: new Date(Date.now() + 86400000).toISOString()
-    });
 
-    const { data } = await financialService.listAr(t1.id, { status: 'pending', limit: 20 });
-    // Deve retornar apenas o AR do t1
+    await financialService.createAr(t1.id, { clientId: c1.id, jobId: 0, amountCents: 5000, dueDate: new Date(Date.now() + 86400000).toISOString() });
+    await financialService.createAr(t2.id, { clientId: c1.id, jobId: 0, amountCents: 10000, dueDate: new Date(Date.now() + 86400000).toISOString() });
+
+    const { data } = await financialService.listAr(t1.id, { limit: 20 });
     expect(data.length).toBe(1);
     expect(data[0]?.ar.amountCents).toBe(5000);
+  });
+
+  it('4. Listar AR — filtra por status', async () => {
+    const u1 = await createTestUser('f4@test.com');
+    const t1 = await createTestTenant(u1.id, 'Lab F4');
+    const c1 = await createTestClient(t1.id, u1.id);
+
+    const ar = await financialService.createAr(t1.id, { clientId: c1.id, jobId: 0, amountCents: 5000, dueDate: new Date(Date.now() + 86400000).toISOString() });
+    await financialService.createAr(t1.id, { clientId: c1.id, jobId: 0, amountCents: 3000, dueDate: new Date(Date.now() + 86400000).toISOString() });
+    await financialService.markArPaid(t1.id, { id: ar.id }, u1.id);
+
+    const { data } = await financialService.listAr(t1.id, { status: 'pending', limit: 20 });
+    expect(data.length).toBe(1);
+    expect(data[0]?.ar.amountCents).toBe(3000);
+  });
+
+  it('5. Listar AR — filtra por período', async () => {
+    const u1 = await createTestUser('f5@test.com');
+    const t1 = await createTestTenant(u1.id, 'Lab F5');
+    const c1 = await createTestClient(t1.id, u1.id);
+    const now = new Date();
+    const nextYear = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+
+    await financialService.createAr(t1.id, { clientId: c1.id, jobId: 0, amountCents: 7000, dueDate: now.toISOString() });
+    await financialService.createAr(t1.id, { clientId: c1.id, jobId: 0, amountCents: 9000, dueDate: nextYear.toISOString() });
+
+    const { data } = await financialService.listAr(t1.id, {
+      dateTo: new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString(),
+      limit: 20,
+    });
+    expect(data.length).toBe(1);
+    expect(data[0]?.ar.amountCents).toBe(7000);
+  });
+
   });
 
   it('6 & 7 & 19. Marcar AR como pago — status paid, paidAt preenchido e credit cashbook na transacao', async () => {

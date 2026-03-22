@@ -2,9 +2,11 @@ import { db } from '../db/index.js';
 import { tenants } from '../db/schema/tenants.js';
 import { generateMonthlyClosing } from '../modules/financial/service.js';
 import { logger } from '../logger.js';
+import { eq } from 'drizzle-orm';
 
 export async function monthlyClosing() {
-  const allTenants = await db.select({ id: tenants.id }).from(tenants);
+  // Apenas tenants ativos — evitar fechamento para labs desativados
+  const allTenants = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.isActive, true));
 
   // Mês anterior
   const now = new Date();
