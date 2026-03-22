@@ -1,5 +1,5 @@
 import { eq, and, gt, lt, inArray, isNull, sql } from 'drizzle-orm';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import { db } from '../../db/index.js';
 import { 
   accountsReceivable, 
@@ -628,13 +628,19 @@ export async function getDashboardSummary(tenantId: number) {
 
 // ─── PDFs (07.09, 07.11, 07.18) ──────────────────────────────────────────────
 
+// Typed PDF document — avoids `any` while using jsPDF's output method
+type JsPdfDoc = jsPDF & {
+  output(type: 'arraybuffer'): ArrayBuffer;
+  setFontSize(size: number): void;
+  text(text: string, x: number, y: number, options?: { align?: string }): void;
+};
+
 export async function generateReceiptPdf(tenantId: number, arId: number): Promise<Buffer> {
   const data = await getAr(tenantId, arId);
   const ar = data.ar;
   if (ar.status !== 'paid') throw new TRPCError({ code: 'BAD_REQUEST', message: 'AR não está paga' });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF() as JsPdfDoc;
   doc.setFontSize(20);
   doc.text('Recibo de Pagamento', 105, 20, { align: 'center' });
   doc.setFontSize(12);
@@ -649,8 +655,7 @@ export async function generateReceiptPdf(tenantId: number, arId: number): Promis
 }
 
 export async function generateJobExtractPdf(tenantId: number, jobId: number): Promise<Buffer> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF() as JsPdfDoc;
   doc.setFontSize(20);
   doc.text(`Extrato da OS #${jobId}`, 105, 20, { align: 'center' });
   doc.setFontSize(12);
@@ -662,8 +667,7 @@ export async function generateJobExtractPdf(tenantId: number, jobId: number): Pr
 
 export async function generateClosingPdf(tenantId: number, closingId: number): Promise<Buffer> {
   const closing = await getClosing(tenantId, closingId);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF() as JsPdfDoc;
   doc.setFontSize(20);
   doc.text(`Fechamento - Periodo ${closing.period}`, 105, 20, { align: 'center' });
   doc.setFontSize(12);

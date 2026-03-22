@@ -57,8 +57,10 @@ describe('Financial Service — AR', () => {
     }, user.id);
 
     const ars = await db.select().from(accountsReceivable).where(eq(accountsReceivable.jobId, job.id));
-    expect(ars.length).toBe(1);
-    expect(ars[0]?.amountCents).toBe(15000); // 2. AR.amountCents = job.totalCents
+    expect(ars.length).toBe(1);                   // Test 1: AR criado
+    expect(ars[0]?.amountCents).toBe(15000);      // Test 2: AR.amountCents === job.totalCents (froz AP-02)
+    expect(ars[0]?.status).toBe('pending');       // Test 2: status inicial
+    expect(ars[0]?.jobId).toBe(job.id);           // Test 2: vinculado à OS correta
   });
 
   it('3. Listar AR — filtra por tenant e 4. filtra por status e 5. filtra por período', async () => {
@@ -88,7 +90,7 @@ describe('Financial Service — AR', () => {
     expect(data[0]?.ar.amountCents).toBe(5000);
   });
 
-  it('6 & 7. Marcar AR como pago — cria entrada no cashbook e atualiza status', async () => {
+  it('6 & 7 & 19. Marcar AR como pago — status paid, paidAt preenchido e credit cashbook na transacao', async () => {
     const user = await createTestUser('f6@test.com');
     const tenant = await createTestTenant(user.id, 'Lab F6');
     const client = await createTestClient(tenant.id, user.id);
@@ -101,14 +103,19 @@ describe('Financial Service — AR', () => {
     });
 
     const updated = await financialService.markArPaid(tenant.id, { id: ar.id, paymentMethod: 'PIX', notes: 'Pago' }, user.id);
+
+    // Test 7: status paid e paidAt preenchido
     expect(updated.status).toBe('paid');
     expect(updated.paidAt).not.toBeNull();
+    expect(updated.paymentMethod).toBe('PIX');
 
-    // Verifica cashbook
+    // Test 6 & 19: pagamento AR gera entrada credit no cashbook (AP-14)
     const cb = await db.select().from(cashbookEntries).where(eq(cashbookEntries.arId, ar.id));
-    expect(cb.length).toBe(1);
-    expect(cb[0]?.type).toBe('credit');
-    expect(cb[0]?.amountCents).toBe(12000);
+    expect(cb.length).toBe(1);                             // Test 19: entrada criada
+    expect(cb[0]?.type).toBe('credit');                   // Test 19: tipo credit
+    expect(cb[0]?.amountCents).toBe(12000);               // Test 6: valor idêntico ao AR
+    expect(cb[0]?.category).toBe('pagamento_os');         // Test 6: categoria correta
+    expect(cb[0]?.tenantId).toBe(tenant.id);              // Isolamento
   });
 
   it('8. Cancelar AR — exige motivo', async () => {

@@ -23,6 +23,13 @@ import JobCreatePage from './app/(dashboard)/trabalhos/novo';
 import JobDetailPage from './app/(dashboard)/trabalhos/[id]';
 // Fase 7 — Kanban
 import KanbanPage from './app/(dashboard)/kanban';
+// Fase 8 — Financeiro
+import FinancialDashboard from './app/(dashboard)/financeiro/index';
+import ContasReceberPage from './app/(dashboard)/financeiro/contas-receber';
+import ContasPagarPage from './app/(dashboard)/financeiro/contas-pagar';
+import FechamentoPage from './app/(dashboard)/financeiro/fechamento';
+import LivroCaixaPage from './app/(dashboard)/financeiro/livro-caixa';
+import FluxoCaixaPage from './app/(dashboard)/financeiro/fluxo-caixa';
 import './globals.css';
 
 function AppContent() {
@@ -60,6 +67,13 @@ function AppContent() {
           <Route path="/trabalhos/:id" element={<JobDetailPage />} />
           {/* Fase 7 — Kanban */}
           <Route path="/kanban" element={<KanbanPage />} />
+          {/* Fase 8 — Financeiro */}
+          <Route path="/financeiro" element={<FinancialDashboard />} />
+          <Route path="/financeiro/contas-receber" element={<ContasReceberPage />} />
+          <Route path="/financeiro/contas-pagar" element={<ContasPagarPage />} />
+          <Route path="/financeiro/fechamento" element={<FechamentoPage />} />
+          <Route path="/financeiro/livro-caixa" element={<LivroCaixaPage />} />
+          <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
