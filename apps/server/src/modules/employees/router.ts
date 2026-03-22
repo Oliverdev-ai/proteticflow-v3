@@ -41,7 +41,7 @@ export const employeeRouter = router({
     employeeService.assignJob(ctx.user!.tenantId, input)),
 
   listAssignments: tenantProcedure.input(z.object({ employeeId: z.number().optional(), jobId: z.number().optional() })).query(({ ctx, input }) =>
-    employeeService.listAssignments(ctx.user!.tenantId, input.employeeId || 0)), // Ajustar service se necessário ou passar 0
+    employeeService.listAssignments(ctx.user!.tenantId, input.employeeId)),
 
   calculateCommissions: adminProcedure.input(z.object({ dateFrom: z.string(), dateTo: z.string() })).mutation(({ ctx, input }) =>
     employeeService.calculateCommissions(ctx.user!.tenantId, input.dateFrom, input.dateTo)),

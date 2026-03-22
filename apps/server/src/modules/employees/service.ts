@@ -155,9 +155,12 @@ export async function assignJob(tenantId: number, input: z.infer<typeof createAs
   return assignment;
 }
 
-export async function listAssignments(tenantId: number, employeeId: number) {
+export async function listAssignments(tenantId: number, employeeId?: number) {
   return db.select().from(jobAssignments)
-    .where(and(eq(jobAssignments.tenantId, tenantId), eq(jobAssignments.employeeId, employeeId)))
+    .where(and(
+      eq(jobAssignments.tenantId, tenantId),
+      employeeId ? eq(jobAssignments.employeeId, employeeId) : undefined
+    ))
     .orderBy(desc(jobAssignments.createdAt));
 }
 

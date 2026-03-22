@@ -39,6 +39,15 @@ import MaterialsPage from './app/(dashboard)/estoque/materiais';
 import SuppliersPage from './app/(dashboard)/estoque/fornecedores';
 import PurchaseOrdersPage from './app/(dashboard)/estoque/ordens-compra';
 import PODetailPage from './app/(dashboard)/estoque/oc/[id]';
+// Fase 11 — Funcionários e Comissões
+import EmployeeListPage from './app/(dashboard)/funcionarios/index';
+import EmployeeCreatePage from './app/(dashboard)/funcionarios/novo';
+import EmployeeEditPage from './app/(dashboard)/funcionarios/[id]';
+import CommissionsPage from './app/(dashboard)/comissoes';
+// Fase 12 — Folha de Pagamento
+import PayrollListPage from './app/(dashboard)/payroll/index';
+import PayrollDetailPage from './app/(dashboard)/payroll/[id]';
+
 import './globals.css';
 
 function AppContent() {
@@ -60,7 +69,7 @@ function AppContent() {
         <Route element={<DashboardLayout />}>
           <Route path="/" element={
             <div className="flex items-center justify-center h-full">
-              <p className="text-neutral-500 text-sm">Dashboard (Fase 26)</p>
+              <p className="text-neutral-500 text-sm">Dashboard (Phase 11+12 Implementation)</p>
             </div>
           } />
           {/* Fase 4 — Clientes */}
@@ -92,6 +101,14 @@ function AppContent() {
           <Route path="/estoque/fornecedores" element={<SuppliersPage />} />
           <Route path="/estoque/ordens-compra" element={<PurchaseOrdersPage />} />
           <Route path="/estoque/oc/:id" element={<PODetailPage />} />
+          {/* Fase 11 — Funcionários */}
+          <Route path="/funcionarios" element={<EmployeeListPage />} />
+          <Route path="/funcionarios/novo" element={<EmployeeCreatePage />} />
+          <Route path="/funcionarios/:id" element={<EmployeeEditPage />} />
+          <Route path="/comissoes" element={<CommissionsPage />} />
+          {/* Fase 12 — Folha de Pagamento */}
+          <Route path="/payroll" element={<PayrollListPage />} />
+          <Route path="/payroll/:id" element={<PayrollDetailPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

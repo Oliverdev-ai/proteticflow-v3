@@ -4,6 +4,12 @@ import { eq, and, isNull, sql, desc, sum } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { logger } from '../../logger.js';
+import { updatePayrollEntrySchema } from '@proteticflow/shared';
+import { PgTransaction } from 'drizzle-orm/pg-core';
+import { PostgresJsQueryResultHKT } from 'drizzle-orm/postgres-js';
+
+type PayrollEntry = typeof payrollEntries.$inferSelect;
+type UpdatePayrollEntryInput = z.infer<typeof updatePayrollEntrySchema>;
 
 // ─── PERÍODOS (11.01) ────────────────────────────────────────────────────────
 
@@ -107,17 +113,17 @@ export async function generateEntries(tenantId: number, periodId: number, userId
   });
 }
 
-export async function updateEntry(tenantId: number, input: any, userId: number) {
+export async function updateEntry(tenantId: number, input: UpdatePayrollEntryInput, userId: number) {
   return db.transaction(async (tx) => {
-    const [entry] = await tx.select().from(payrollEntries).where(eq(payrollEntries.id, input.entryId));
+    const [entry] = await tx.select().from(payrollEntries).where(and(eq(payrollEntries.id, input.entryId), eq(payrollEntries.tenantId, tenantId)));
     if (!entry) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lançamento não encontrado' });
 
     const [period] = await tx.select().from(payrollPeriods).where(eq(payrollPeriods.id, entry.periodId));
     if (!period) throw new TRPCError({ code: 'NOT_FOUND', message: 'Período não encontrado' });
     if (period.status !== 'open') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Período fechado para edição' });
 
-    const grossCents = entry.baseSalaryCents + entry.commissionsCents + (input.overtimeValueCents || entry.overtimeValueCents) + (input.bonusCents || entry.bonusCents);
-    const netCents = grossCents - (input.discountsCents || entry.discountsCents);
+    const grossCents = entry.baseSalaryCents + entry.commissionsCents + (input.overtimeValueCents ?? entry.overtimeValueCents) + (input.bonusCents ?? entry.bonusCents);
+    const netCents = grossCents - (input.discountsCents ?? entry.discountsCents);
 
     const [updated] = await tx.update(payrollEntries)
       .set({
@@ -138,11 +144,11 @@ export async function updateEntry(tenantId: number, input: any, userId: number) 
   });
 }
 
-async function calculatePeriodTotals(tx: any, tenantId: number, periodId: number) {
+async function calculatePeriodTotals(tx: PgTransaction<PostgresJsQueryResultHKT, any, any>, tenantId: number, periodId: number) {
   const entries = await tx.select().from(payrollEntries).where(eq(payrollEntries.periodId, periodId));
-  const totalGrossCents = entries.reduce((acc: number, curr: any) => acc + curr.grossCents, 0);
-  const totalDiscountsCents = entries.reduce((acc: number, curr: any) => acc + curr.discountsCents, 0);
-  const totalNetCents = entries.reduce((acc: number, curr: any) => acc + curr.netCents, 0);
+  const totalGrossCents = entries.reduce((acc: number, curr: PayrollEntry) => acc + curr.grossCents, 0);
+  const totalDiscountsCents = entries.reduce((acc: number, curr: PayrollEntry) => acc + curr.discountsCents, 0);
+  const totalNetCents = entries.reduce((acc: number, curr: PayrollEntry) => acc + curr.netCents, 0);
 
   await tx.update(payrollPeriods)
     .set({
@@ -175,9 +181,71 @@ export async function closePeriod(tenantId: number, periodId: number, userId: nu
   return updated;
 }
 
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 export async function generatePayslipPdf(tenantId: number, periodId: number, employeeId: number) {
-  // Placeholder para 11.06
-  return Buffer.from('PDF Placeholder');
+  const [period] = await db.select().from(payrollPeriods).where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
+  if (!period) throw new TRPCError({ code: 'NOT_FOUND', message: 'Período não encontrado' });
+
+  const [entry] = await db.select({
+    baseSalaryCents: payrollEntries.baseSalaryCents,
+    commissionsCents: payrollEntries.commissionsCents,
+    overtimeValueCents: payrollEntries.overtimeValueCents,
+    bonusCents: payrollEntries.bonusCents,
+    discountsCents: payrollEntries.discountsCents,
+    grossCents: payrollEntries.grossCents,
+    netCents: payrollEntries.netCents,
+    employeeName: employees.name,
+    employeeCpf: employees.cpf,
+  })
+  .from(payrollEntries)
+  .innerJoin(employees, eq(employees.id, payrollEntries.employeeId))
+  .where(and(eq(payrollEntries.periodId, periodId), eq(payrollEntries.employeeId, employeeId)));
+
+  if (!entry) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lançamento não encontrado para este funcionário' });
+
+  type JsPdfWithAutoTable = jsPDF & {
+    autoTable: (options: unknown) => void;
+  };
+  const doc = new jsPDF() as JsPdfWithAutoTable;
+
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ProteticFlow — Holerite de Pagamento', 14, 20);
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Funcionário: ${entry.employeeName}`, 14, 30);
+  doc.text(`CPF: ${entry.employeeCpf || '—'}`, 14, 37);
+  doc.text(`Período: ${period.month}/${period.year}`, 14, 44);
+
+  const tableRows = [
+    ['Salário Base', `R$ ${(entry.baseSalaryCents / 100).toFixed(2)}`, ''],
+    ['Comissões', `R$ ${(entry.commissionsCents / 100).toFixed(2)}`, ''],
+    ['Horas Extras', `R$ ${(entry.overtimeValueCents / 100).toFixed(2)}`, ''],
+    ['Bônus/Premiações', `R$ ${(entry.bonusCents / 100).toFixed(2)}`, ''],
+    ['Descontos', '', `R$ ${(entry.discountsCents / 100).toFixed(2)}`],
+  ];
+
+  doc.autoTable({
+    startY: 55,
+    head: [['Descrição', 'Proventos', 'Descontos']],
+    body: tableRows,
+    styles: { fontSize: 10 },
+    headStyles: { fillColor: [31, 41, 55] },
+  });
+
+  const finalY = (doc as any).lastAutoTable?.finalY ?? 100;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Total Bruto: R$ ${(entry.grossCents / 100).toFixed(2)}`, 140, finalY + 10);
+  doc.text(`Total Líquido: R$ ${(entry.netCents / 100).toFixed(2)}`, 140, finalY + 17);
+
+  doc.setFontSize(8);
+  doc.text('Documento gerado eletronicamente via ProteticFlow.', 14, finalY + 30);
+
+  return Buffer.from(doc.output('arraybuffer') as ArrayBuffer);
 }
 
 // ─── RELATÓRIOS (11.04) ───────────────────────────────────────────────────

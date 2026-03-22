@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { router, tenantProcedure, adminProcedure } from '../../trpc/trpc.js';
 import * as payrollService from './service.js';
+import { updatePayrollEntrySchema } from '@proteticflow/shared';
 
 export const payrollRouter = router({
   createPeriod: adminProcedure.input(z.object({ year: z.number(), month: z.number() })).mutation(({ ctx, input }) =>
@@ -12,7 +13,7 @@ export const payrollRouter = router({
   generateEntries: adminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
     payrollService.generateEntries(ctx.user!.tenantId, input.periodId, ctx.user!.id)),
 
-  updateEntry: adminProcedure.input(z.any()).mutation(({ ctx, input }) =>
+  updateEntry: adminProcedure.input(updatePayrollEntrySchema).mutation(({ ctx, input }) =>
     payrollService.updateEntry(ctx.user!.tenantId, input, ctx.user!.id)),
 
   closePeriod: adminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
