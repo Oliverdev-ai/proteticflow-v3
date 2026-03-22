@@ -470,3 +470,13 @@ export async function importNfeXml(tenantId: number, xmlContent: string, userId:
   logger.info({ tenantId, poId: po.id, itemsParsed: poItems.length }, 'inventory.nfe.import');
   return po;
 }
+
+export async function updatePurchaseOrder(tenantId: number, poId: number, input: { supplierId?: number; notes?: string }) {
+  const [updated] = await db.update(purchaseOrders)
+    .set({ ...input, updatedAt: new Date() })
+    .where(and(eq(purchaseOrders.id, poId), eq(purchaseOrders.tenantId, tenantId)))
+    .returning();
+  if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'OC não encontrada' });
+  return updated;
+}
+

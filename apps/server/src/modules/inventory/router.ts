@@ -75,7 +75,7 @@ export const inventoryRouter = router({
     inventoryService.getPurchaseOrder(ctx.user.tenantId, input.id)),
   updatePO:       tenantProcedure.input(z.object({ id: z.number() }).merge(updatePurchaseOrderSchema)).mutation(({ ctx, input }) => {
     const { id, ...data } = input;
-    return inventoryService.updateSupplier(ctx.user.tenantId, id, data);
+    return inventoryService.updatePurchaseOrder(ctx.user.tenantId, id, data);
   }),
   changePOStatus: adminProcedure.input(changePurchaseOrderStatusSchema).mutation(({ ctx, input }) =>
     inventoryService.changePurchaseOrderStatus(ctx.user.tenantId, input, ctx.user.userId)),

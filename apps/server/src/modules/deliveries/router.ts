@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { router } from '../../trpc/trpc.js';
-import { tenantProcedure } from '../../trpc/middleware.js';
+import { tenantProcedure } from '../../trpc/trpc.js';
 import * as deliveryService from './service.js';
 import {
   createDeliveryScheduleSchema,
