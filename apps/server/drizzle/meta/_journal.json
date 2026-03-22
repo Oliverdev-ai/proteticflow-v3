@@ -50,6 +50,13 @@
       "when": 1742593000000,
       "tag": "0006_entregas_estoque",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1742593400000,
+      "tag": "0007_funcionarios_folha",
+      "breakpoints": true
     }
   ]
 }
