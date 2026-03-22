@@ -61,3 +61,6 @@ media/
 *.tar.gz
 *.zip
 .sentryclirc
+apply-migration.ts
+check-migrations.ts
+list-tables.ts
