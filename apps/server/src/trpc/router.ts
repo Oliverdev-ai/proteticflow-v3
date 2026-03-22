@@ -5,6 +5,8 @@ import { clientRouter } from '../modules/clients/router.js';
 import { pricingRouter } from '../modules/pricing/router.js';
 import { jobRouter } from '../modules/jobs/router.js';
 import { financialRouter } from '../modules/financial/router.js';
+import { deliveryRouter } from '../modules/deliveries/router.js';
+import { inventoryRouter } from '../modules/inventory/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -13,6 +15,8 @@ export const appRouter = router({
   pricing: pricingRouter,
   job: jobRouter,
   financial: financialRouter,
+  delivery: deliveryRouter,
+  inventory: inventoryRouter,
 });
 
 export type AppRouter = typeof appRouter;
