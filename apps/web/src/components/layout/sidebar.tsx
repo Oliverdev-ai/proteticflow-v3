@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Briefcase, Columns3, DollarSign,
   Package, UserCog, BarChart3, Settings, Stethoscope, FileSpreadsheet, Truck,
+  Coins,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
@@ -16,6 +17,7 @@ const MENU_ITEMS = [
   { label: 'Financeiro',        icon: DollarSign,       href: '/financeiro',     module: 'financial' },
   { label: 'Estoque',           icon: Package,          href: '/estoque',        module: 'inventory' },
   { label: 'Funcionários',      icon: UserCog,          href: '/funcionarios',   module: 'employees' },
+  { label: 'Comissões',         icon: Coins,            href: '/comissoes',      module: 'commissions' },
   { label: 'Folha de Pagamento', icon: DollarSign,       href: '/payroll',        module: 'payroll' },
   { label: 'Relatórios',        icon: BarChart3,        href: '/relatorios',     module: 'reports' },
   { label: 'Configurações',     icon: Settings,         href: '/configuracoes',  module: 'settings' },
