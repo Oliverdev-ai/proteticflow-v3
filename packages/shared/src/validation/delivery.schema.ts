@@ -1,0 +1,32 @@
+import { z } from 'zod';
+
+export const createDeliveryScheduleSchema = z.object({
+  date: z.string().datetime(),
+  driverName: z.string().max(255).optional(),
+  vehicle: z.string().max(128).optional(),
+  notes: z.string().optional(),
+  items: z.array(z.object({
+    jobId: z.number().int().positive(),
+    clientId: z.number().int().positive(),
+    sortOrder: z.number().int().min(0).default(0),
+    notes: z.string().optional(),
+  })).min(1, 'Roteiro deve ter pelo menos 1 OS'),
+});
+
+export const updateDeliveryItemStatusSchema = z.object({
+  itemId: z.number().int().positive(),
+  status: z.enum(['scheduled', 'in_transit', 'delivered', 'failed']),
+  failedReason: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const listDeliverySchedulesSchema = z.object({
+  dateFrom: z.string().datetime().optional(),
+  dateTo: z.string().datetime().optional(),
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+});
+
+export type CreateDeliveryScheduleInput = z.infer<typeof createDeliveryScheduleSchema>;
+export type UpdateDeliveryItemStatusInput = z.infer<typeof updateDeliveryItemStatusSchema>;
+export type ListDeliverySchedulesInput = z.infer<typeof listDeliverySchedulesSchema>;

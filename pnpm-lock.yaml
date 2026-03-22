@@ -59,6 +59,9 @@ importers:
       express:
         specifier: ^5.0.0
         version: 5.2.1
+      fast-xml-parser:
+        specifier: ^5.5.8
+        version: 5.5.8
       ioredis:
         specifier: ^5.10.1
         version: 5.10.1

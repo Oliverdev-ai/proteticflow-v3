@@ -11,5 +11,7 @@ export * from './validation/client.schema';
 export * from './validation/pricing.schema';
 export * from './validation/job.schema';
 export * from './validation/financial.schema';
+export * from './validation/delivery.schema';
+export * from './validation/inventory.schema';
 export * from './types/auth';
 export * from './types/tenant';
