@@ -10,11 +10,17 @@ export const payrollRouter = router({
     payrollService.listPeriods(ctx.user!.tenantId)),
 
   generateEntries: adminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
-    payrollService.generateEntries(ctx.user!.tenantId, input.periodId)),
+    payrollService.generateEntries(ctx.user!.tenantId, input.periodId, ctx.user!.id)),
+
+  updateEntry: adminProcedure.input(z.any()).mutation(({ ctx, input }) =>
+    payrollService.updateEntry(ctx.user!.tenantId, input, ctx.user!.id)),
 
   closePeriod: adminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
     payrollService.closePeriod(ctx.user!.tenantId, input.periodId, ctx.user!.id)),
 
   getPeriodReport: tenantProcedure.input(z.object({ periodId: z.number() })).query(({ ctx, input }) =>
     payrollService.getPeriodReport(ctx.user!.tenantId, input.periodId)),
+
+  generatePayslip: tenantProcedure.input(z.object({ periodId: z.number(), employeeId: z.number() })).query(({ ctx, input }) =>
+    payrollService.generatePayslipPdf(ctx.user!.tenantId, input.periodId, input.employeeId)),
 });

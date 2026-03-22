@@ -1,15 +1,12 @@
 import { db } from '../../db/index.js';
-import { employees, employeeSkills, jobAssignments, commissionPayments } from '../../db/schema/index.js';
-import { eq, and, ilike, or, sql, desc, count, isNull } from 'drizzle-orm';
-import { TRPCError } from '@trpc/server';
-import { 
-  createEmployeeSchema, updateEmployeeSchema, listEmployeesSchema,
-  createSkillSchema, createAssignmentSchema, createCommissionPaymentSchema,
-  productionReportSchema 
-} from '@proteticflow/shared';
-import { z } from 'zod';
-import { logger } from '../../logger.js';
+import { employees, employeeSkills, jobAssignments, commissionPayments } from '../../db/schema/employees.js';
+import { jobs } from '../../db/schema/jobs.js';
 import { cashbookEntries } from '../../db/schema/financials.js';
+import { eq, and, isNull, sql, desc, inArray, sum, count, ilike, or } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { createEmployeeSchema, updateEmployeeSchema, createSkillSchema, createAssignmentSchema, createCommissionPaymentSchema, productionReportSchema, listEmployeesSchema } from '@proteticflow/shared';
+import { logger } from '../../logger.js';
 
 type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
 type UpdateEmployeeInput = z.infer<typeof updateEmployeeSchema>;
@@ -164,39 +161,124 @@ export async function listAssignments(tenantId: number, employeeId: number) {
     .orderBy(desc(jobAssignments.createdAt));
 }
 
-// ─── COMISSÕES (10.11) ──────────────────────────────────────────────────────
+// ─── COMISSÕES (10.11–10.12) ───────────────────────────────────────────────
 
-export async function calculateCommissions(tenantId: number, input: z.infer<typeof productionReportSchema>) {
-  const { employeeId, dateFrom, dateTo } = input;
-  
-  const payments = await db.select().from(commissionPayments)
-    .where(and(
-      eq(commissionPayments.tenantId, tenantId),
-      employeeId ? eq(commissionPayments.employeeId, employeeId) : undefined,
-      sql`${commissionPayments.periodStart} >= ${new Date(dateFrom)}`,
-      sql`${commissionPayments.periodEnd} <= ${new Date(dateTo)}`
-    ));
-    
-  return payments;
+export async function calculateCommissions(tenantId: number, dateFrom: string, dateTo: string) {
+  return db.transaction(async (tx) => {
+    // 1. Buscar todos os assignments cujos jobs estão ready/delivered no período e sem comissão calculada
+    const assignmentsToCalculate = await tx
+      .select({
+        assignmentId: jobAssignments.id,
+        jobTotalCents: jobs.totalCents,
+        overridePercent: jobAssignments.commissionOverridePercent,
+        defaultPercent: employees.defaultCommissionPercent,
+      })
+      .from(jobAssignments)
+      .innerJoin(jobs, eq(jobs.id, jobAssignments.jobId))
+      .innerJoin(employees, eq(employees.id, jobAssignments.employeeId))
+      .where(and(
+        eq(jobAssignments.tenantId, tenantId),
+        inArray(jobs.status, ['ready', 'delivered']),
+        sql`${jobs.completedAt} >= ${new Date(dateFrom)}`,
+        sql`${jobs.completedAt} <= ${new Date(dateTo)}`,
+        isNull(jobAssignments.commissionCalculatedAt)
+      ));
+
+    let totalCalculated = 0;
+    let totalCentsCalculated = 0;
+
+    for (const row of assignmentsToCalculate) {
+      const percent = parseFloat(row.overridePercent || row.defaultPercent || '0');
+      const amountCents = Math.round((row.jobTotalCents * percent) / 100);
+
+      await tx.update(jobAssignments)
+        .set({
+          commissionAmountCents: amountCents,
+          commissionCalculatedAt: new Date(),
+        })
+        .where(eq(jobAssignments.id, row.assignmentId));
+      
+      totalCalculated++;
+      totalCentsCalculated += amountCents;
+    }
+
+    logger.info({ action: 'employee.commission.calculate', tenantId, totalCalculated, totalCentsCalculated }, 'Commissions calculated');
+    return { calculated: totalCalculated, totalCents: totalCentsCalculated };
+  });
 }
 
-export async function payCommissions(tenantId: number, input: z.infer<typeof createCommissionPaymentSchema>, userId: number) {
-  // Nota: totalCents deve vir do cálculo de produção (Fase 11.11)
-  // Por ora, usamos um valor fixo ou vindo do input se o schema permitir (o schema atual não tem totalCents)
-  // Vou assumir que o schema de validação deve ser atualizado ou passamos zero por ora.
-  const [payment] = await db.insert(commissionPayments).values({
-    tenantId,
-    employeeId: input.employeeId,
-    periodStart: new Date(input.periodStart),
-    periodEnd: new Date(input.periodEnd),
-    totalCents: 0, // TODO: Implementar cálculo real
-    paymentMethod: input.paymentMethod || null,
-    reference: input.reference || null,
-    status: 'paid',
-    paidAt: new Date(),
-    createdBy: userId,
-    notes: input.notes || null,
-  }).returning();
+export async function createCommissionPayment(tenantId: number, input: z.infer<typeof createCommissionPaymentSchema>, userId: number) {
+  return db.transaction(async (tx) => {
+    // 1. Somar comissões calculadas no período
+    const [row] = await tx.select({
+      total: sum(jobAssignments.commissionAmountCents)
+    })
+    .from(jobAssignments)
+    .where(and(
+      eq(jobAssignments.tenantId, tenantId),
+      eq(jobAssignments.employeeId, input.employeeId),
+      sql`${jobAssignments.commissionCalculatedAt} >= ${new Date(input.periodStart)}`,
+      sql`${jobAssignments.commissionCalculatedAt} <= ${new Date(input.periodEnd)}`
+    ));
 
-  return payment;
+    const totalCents = parseInt((row?.total as string) || '0');
+    if (totalCents <= 0) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Nenhuma comissão pendente no período' });
+
+    // 2. Criar pagamento
+    const [payment] = await tx.insert(commissionPayments).values({
+      tenantId,
+      employeeId: input.employeeId,
+      periodStart: new Date(input.periodStart),
+      periodEnd: new Date(input.periodEnd),
+      totalCents,
+      paymentMethod: input.paymentMethod || null,
+      reference: input.reference || null,
+      status: 'paid', // PRD pede 'pending' -> 'paid', mas plano diz "insere cashbook entry" (pago)
+      paidAt: new Date(),
+      createdBy: userId,
+      notes: input.notes || null,
+    }).returning();
+
+    // 3. Inserir no financeiro (PAD-02 / AP-14)
+    const [emp] = await tx.select({ name: employees.name }).from(employees).where(eq(employees.id, input.employeeId));
+    await tx.insert(cashbookEntries).values({
+      tenantId,
+      type: 'debit',
+      amountCents: totalCents,
+      description: `Comissão de ${emp?.name || 'Funcionário'}`,
+      category: 'comissao',
+      referenceDate: new Date(),
+      createdBy: userId,
+    });
+
+    logger.info({ action: 'employee.commission.paid', tenantId, employeeId: input.employeeId, totalCents }, 'Commission payment recorded');
+    return payment;
+  });
+}
+
+export async function getProductionReport(tenantId: number, input: z.infer<typeof productionReportSchema>) {
+  const { employeeId, dateFrom, dateTo } = input;
+
+  const query = db
+    .select({
+      employeeId: employees.id,
+      employeeName: employees.name,
+      jobsCompleted: count(jobs.id),
+      totalValueCents: sum(jobs.totalCents),
+      commissionsCents: sum(jobAssignments.commissionAmountCents),
+    })
+    .from(employees)
+    .innerJoin(jobAssignments, eq(jobAssignments.employeeId, employees.id))
+    .innerJoin(jobs, eq(jobs.id, jobAssignments.jobId))
+    .where(and(
+      eq(employees.tenantId, tenantId),
+      employeeId ? eq(employees.id, employeeId) : undefined,
+      inArray(jobs.status, ['ready', 'delivered']),
+      sql`${jobs.completedAt} >= ${new Date(dateFrom)}`,
+      sql`${jobs.completedAt} <= ${new Date(dateTo)}`
+    ))
+    .groupBy(employees.id, employees.name)
+    .orderBy(desc(sql`sum(${jobs.totalCents})`));
+
+  return query;
 }

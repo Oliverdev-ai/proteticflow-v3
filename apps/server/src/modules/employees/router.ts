@@ -36,17 +36,20 @@ export const employeeRouter = router({
   removeSkill: adminProcedure.input(z.object({ skillId: z.number() })).mutation(({ ctx, input }) =>
     employeeService.removeSkill(ctx.user!.tenantId, input.skillId)),
 
-  // Atribuições
+  // Assignments + Commissions
   assignJob: tenantProcedure.input(createAssignmentSchema).mutation(({ ctx, input }) =>
     employeeService.assignJob(ctx.user!.tenantId, input)),
 
-  listAssignments: tenantProcedure.input(z.object({ employeeId: z.number() })).query(({ ctx, input }) =>
-    employeeService.listAssignments(ctx.user!.tenantId, input.employeeId)),
+  listAssignments: tenantProcedure.input(z.object({ employeeId: z.number().optional(), jobId: z.number().optional() })).query(({ ctx, input }) =>
+    employeeService.listAssignments(ctx.user!.tenantId, input.employeeId || 0)), // Ajustar service se necessário ou passar 0
 
-  // Comissões
-  calculateCommissions: tenantProcedure.input(productionReportSchema).query(({ ctx, input }) =>
-    employeeService.calculateCommissions(ctx.user!.tenantId, input)),
+  calculateCommissions: adminProcedure.input(z.object({ dateFrom: z.string(), dateTo: z.string() })).mutation(({ ctx, input }) =>
+    employeeService.calculateCommissions(ctx.user!.tenantId, input.dateFrom, input.dateTo)),
 
-  payCommissions: adminProcedure.input(createCommissionPaymentSchema).mutation(({ ctx, input }) =>
-    employeeService.payCommissions(ctx.user!.tenantId, input, ctx.user!.id)),
+  createPayment: adminProcedure.input(createCommissionPaymentSchema).mutation(({ ctx, input }) =>
+    employeeService.createCommissionPayment(ctx.user!.tenantId, input, ctx.user!.id)),
+
+  // Relatório
+  productionReport: tenantProcedure.input(productionReportSchema).query(({ ctx, input }) =>
+    employeeService.getProductionReport(ctx.user!.tenantId, input)),
 });
