@@ -1,6 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+}
+
+body {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.input-field {
+  background-color: rgb(38 38 38);
+  border: 1px solid rgb(64 64 64);
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: #ffffff;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: rgb(124 58 237);
+}
+
+.input-field::placeholder {
+  color: rgb(115 115 115);
 }

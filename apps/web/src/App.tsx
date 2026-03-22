@@ -10,6 +10,26 @@ import ForgotPasswordPage from './app/(auth)/forgot-password';
 import ResetPasswordPage from './app/(auth)/reset-password';
 import { DashboardLayout } from './app/(dashboard)/layout';
 import { OnboardingWizard } from './app/(dashboard)/onboarding';
+// Fase 4 — Clientes
+import ClientListPage from './app/(dashboard)/clientes/index';
+import ClientCreatePage from './app/(dashboard)/clientes/novo';
+import ClientEditPage from './app/(dashboard)/clientes/[id]';
+// Fase 5 — Tabelas de Preços
+import PricingTablesPage from './app/(dashboard)/precos/index';
+import PricingTableDetailPage from './app/(dashboard)/precos/[id]';
+// Fase 6 — Trabalhos / OS
+import JobListPage from './app/(dashboard)/trabalhos/index';
+import JobCreatePage from './app/(dashboard)/trabalhos/novo';
+import JobDetailPage from './app/(dashboard)/trabalhos/[id]';
+// Fase 7 — Kanban
+import KanbanPage from './app/(dashboard)/kanban';
+// Fase 8 — Financeiro
+import FinancialDashboard from './app/(dashboard)/financeiro/index';
+import ContasReceberPage from './app/(dashboard)/financeiro/contas-receber';
+import ContasPagarPage from './app/(dashboard)/financeiro/contas-pagar';
+import FechamentoPage from './app/(dashboard)/financeiro/fechamento';
+import LivroCaixaPage from './app/(dashboard)/financeiro/livro-caixa';
+import FluxoCaixaPage from './app/(dashboard)/financeiro/fluxo-caixa';
 import './globals.css';
 
 function AppContent() {
@@ -34,7 +54,26 @@ function AppContent() {
               <p className="text-neutral-500 text-sm">Dashboard (Fase 26)</p>
             </div>
           } />
-          {/* Fases 4+ adicionam rotas aqui */}
+          {/* Fase 4 — Clientes */}
+          <Route path="/clientes" element={<ClientListPage />} />
+          <Route path="/clientes/novo" element={<ClientCreatePage />} />
+          <Route path="/clientes/:id" element={<ClientEditPage />} />
+          {/* Fase 5 — Tabelas de Preços */}
+          <Route path="/precos" element={<PricingTablesPage />} />
+          <Route path="/precos/:id" element={<PricingTableDetailPage />} />
+          {/* Fase 6 — Trabalhos / OS */}
+          <Route path="/trabalhos" element={<JobListPage />} />
+          <Route path="/trabalhos/novo" element={<JobCreatePage />} />
+          <Route path="/trabalhos/:id" element={<JobDetailPage />} />
+          {/* Fase 7 — Kanban */}
+          <Route path="/kanban" element={<KanbanPage />} />
+          {/* Fase 8 — Financeiro */}
+          <Route path="/financeiro" element={<FinancialDashboard />} />
+          <Route path="/financeiro/contas-receber" element={<ContasReceberPage />} />
+          <Route path="/financeiro/contas-pagar" element={<ContasPagarPage />} />
+          <Route path="/financeiro/fechamento" element={<FechamentoPage />} />
+          <Route path="/financeiro/livro-caixa" element={<LivroCaixaPage />} />
+          <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
