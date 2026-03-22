@@ -30,6 +30,15 @@ import ContasPagarPage from './app/(dashboard)/financeiro/contas-pagar';
 import FechamentoPage from './app/(dashboard)/financeiro/fechamento';
 import LivroCaixaPage from './app/(dashboard)/financeiro/livro-caixa';
 import FluxoCaixaPage from './app/(dashboard)/financeiro/fluxo-caixa';
+// Fase 9 — Entregas
+import DeliveryListPage from './app/(dashboard)/entregas/index';
+import DeliveryDetailPage from './app/(dashboard)/entregas/[id]';
+// Fase 10 — Estoque
+import InventoryDashboard from './app/(dashboard)/estoque/index';
+import MaterialsPage from './app/(dashboard)/estoque/materiais';
+import SuppliersPage from './app/(dashboard)/estoque/fornecedores';
+import PurchaseOrdersPage from './app/(dashboard)/estoque/ordens-compra';
+import PODetailPage from './app/(dashboard)/estoque/oc/[id]';
 import './globals.css';
 
 function AppContent() {
@@ -74,6 +83,15 @@ function AppContent() {
           <Route path="/financeiro/fechamento" element={<FechamentoPage />} />
           <Route path="/financeiro/livro-caixa" element={<LivroCaixaPage />} />
           <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
+          {/* Fase 9 — Entregas */}
+          <Route path="/entregas" element={<DeliveryListPage />} />
+          <Route path="/entregas/:id" element={<DeliveryDetailPage />} />
+          {/* Fase 10 — Estoque */}
+          <Route path="/estoque" element={<InventoryDashboard />} />
+          <Route path="/estoque/materiais" element={<MaterialsPage />} />
+          <Route path="/estoque/fornecedores" element={<SuppliersPage />} />
+          <Route path="/estoque/ordens-compra" element={<PurchaseOrdersPage />} />
+          <Route path="/estoque/oc/:id" element={<PODetailPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

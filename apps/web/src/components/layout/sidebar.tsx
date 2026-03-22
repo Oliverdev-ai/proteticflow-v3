@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Briefcase, Columns3, DollarSign,
-  Package, UserCog, BarChart3, Settings, Stethoscope, FileSpreadsheet,
+  Package, UserCog, BarChart3, Settings, Stethoscope, FileSpreadsheet, Truck,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
@@ -12,12 +12,14 @@ const MENU_ITEMS = [
   { label: 'Tabelas de Preços', icon: FileSpreadsheet,  href: '/precos',         module: 'pricing' },
   { label: 'Trabalhos',         icon: Briefcase,        href: '/trabalhos',      module: 'jobs' },
   { label: 'Kanban',            icon: Columns3,         href: '/kanban',         module: 'kanban' },
+  { label: 'Entregas',          icon: Truck,            href: '/entregas',       module: 'deliveries' },
   { label: 'Financeiro',        icon: DollarSign,       href: '/financeiro',     module: 'financial' },
   { label: 'Estoque',           icon: Package,          href: '/estoque',        module: 'inventory' },
   { label: 'Funcionários',      icon: UserCog,          href: '/funcionarios',   module: 'employees' },
   { label: 'Relatórios',        icon: BarChart3,        href: '/relatorios',     module: 'reports' },
   { label: 'Configurações',     icon: Settings,         href: '/configuracoes',  module: 'settings' },
 ] as const;
+
 
 export function Sidebar() {
   const { hasAccess } = usePermissions();
