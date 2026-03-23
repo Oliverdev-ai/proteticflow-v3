@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
-import { clients, priceItems, priceTables } from '../../db/schema/clients.js';
+import { clients, priceItems, pricingTables } from '../../db/schema/clients.js';
 import { accountsReceivable, accountsPayable, cashbookEntries, financialClosings } from '../../db/schema/financials.js';
 import { eq, and } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
@@ -13,7 +13,7 @@ async function createTestUser(email: string) {
   const [u] = await db.insert(users).values({
     name: 'Test', email, passwordHash: await hashPassword('Test123!'), role: 'user',
   }).returning();
-  return u;
+  return u!;
 }
 
 async function createTestTenant(userId: number, name: string) {
@@ -23,7 +23,9 @@ async function createTestTenant(userId: number, name: string) {
 
 async function createTestClient(tenantId: number, userId: number, name = 'Clínica Teste') {
   const { createClient } = await import('../clients/service.js');
-  return createClient(tenantId, { name, priceAdjustmentPercent: 0 }, userId);
+  const client = await createClient(tenantId, { name, priceAdjustmentPercent: 0 }, userId);
+  if (!client) throw new Error('Falha ao criar cliente de teste');
+  return client;
 }
 
 async function cleanup() {
@@ -35,6 +37,8 @@ async function cleanup() {
   await db.delete(jobItems);
   await db.delete(jobs);
   await db.delete(orderCounters);
+  await db.delete(priceItems);
+  await db.delete(pricingTables);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);
@@ -55,6 +59,7 @@ describe('Financial Service — AR', () => {
       deadline: new Date(Date.now() + 86400000).toISOString(),
       items: [{ serviceNameSnapshot: 'Item A', quantity: 1, unitPriceCents: 15000, adjustmentPercent: 0 }],
     }, user.id);
+    if (!job) throw new Error('Falha ao criar job de teste');
 
     const ars = await db.select().from(accountsReceivable).where(eq(accountsReceivable.jobId, job.id));
     expect(ars.length).toBe(1);                   // Test 1: AR criado
