@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { monthlyClosing } from './monthly-closing.js';
 import { overdueReminders } from './overdue-reminders.js';
+import { eventReminders } from './event-reminders.js';
 import { logger } from '../logger.js';
 
 export function startCronJobs() {
@@ -14,6 +15,12 @@ export function startCronJobs() {
   cron.schedule('0 8 * * *', async () => {
     logger.info({ action: 'cron.overdue_reminders.start' }, 'Verificando contas vencidas');
     await overdueReminders();
+  });
+
+  // 23.06: Lembretes de agenda - a cada 15 minutos
+  cron.schedule('*/15 * * * *', async () => {
+    logger.info({ action: 'cron.event_reminders.start' }, 'Processando lembretes de agenda');
+    await eventReminders();
   });
 
   logger.info('Cron jobs registrados');

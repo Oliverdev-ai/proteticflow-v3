@@ -51,6 +51,9 @@ import PayrollDetailPage from './app/(dashboard)/payroll/[id]';
 import ScanListPage from './app/(dashboard)/scans/index';
 import ScanUploadPage from './app/(dashboard)/scans/upload';
 import ScanDetailPage from './app/(dashboard)/scans/[id]';
+// Fase 14 - Agenda
+import AgendaPage from './app/(dashboard)/agenda/index';
+import EventCreatePage from './app/(dashboard)/agenda/novo';
 
 import './globals.css';
 
@@ -117,6 +120,9 @@ function AppContent() {
           <Route path="/scans" element={<ScanListPage />} />
           <Route path="/scans/upload" element={<ScanUploadPage />} />
           <Route path="/scans/:id" element={<ScanDetailPage />} />
+          {/* Fase 14 - Agenda */}
+          <Route path="/agenda" element={<AgendaPage />} />
+          <Route path="/agenda/novo" element={<EventCreatePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

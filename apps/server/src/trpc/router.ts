@@ -10,6 +10,7 @@ import { inventoryRouter } from '../modules/inventory/router.js';
 import { employeeRouter } from '../modules/employees/router.js';
 import { payrollRouter } from '../modules/payroll/router.js';
 import { scanRouter } from '../modules/scans/router.js';
+import { agendaRouter } from '../modules/agenda/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -23,6 +24,7 @@ export const appRouter = router({
   employee: employeeRouter,
   payroll: payrollRouter,
   scan: scanRouter,
+  agenda: agendaRouter,
 });
 
 export type AppRouter = typeof appRouter;
