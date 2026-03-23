@@ -1,11 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../db/index.js';
 import { employees, payrollPeriods, payrollEntries, jobAssignments, jobs, clients } from '../../db/schema/index.js';
 import { users } from '../../db/schema/users.js';
 import { tenants } from '../../db/schema/tenants.js';
 import * as payrollService from './service.js';
-import * as employeeService from '../employees/service.js';
 import { eq, and, sql } from 'drizzle-orm';
+
+function assertExists<T>(value: T | undefined, label: string): T {
+  if (!value) throw new Error(`${label} not found`);
+  return value;
+}
 
 describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
   let testTenantId: number;
@@ -33,41 +37,62 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
   beforeAll(async () => {
     await cleanup(undefined, 'test-payroll-p12');
 
-    const [tenant] = await db.insert(tenants).values({ name: 'Payroll Phase 12', slug: 'test-payroll-p12' }).returning();
+    const [tenantRow] = await db
+      .insert(tenants)
+      .values({ name: 'Payroll Phase 12', slug: 'test-payroll-p12' })
+      .returning();
+    const tenant = assertExists(tenantRow, 'payroll tenant');
     testTenantId = tenant.id;
 
-    const [user] = await db.insert(users).values({
-      activeTenantId: testTenantId,
-      name: 'Admin Payroll',
-      email: `admin-pay-${Date.now()}@test.com`,
-      passwordHash: 'hashed',
-      role: 'admin' as any,
-    }).returning();
+    const [userRow] = await db
+      .insert(users)
+      .values({
+        activeTenantId: testTenantId,
+        name: 'Admin Payroll',
+        email: `admin-pay-${Date.now()}@test.com`,
+        passwordHash: 'hashed',
+        role: 'admin' as any,
+      })
+      .returning();
+    const user = assertExists(userRow, 'payroll user');
     testUserId = user.id;
 
-    const [employee] = await db.insert(employees).values({
-      tenantId: testTenantId,
-      name: 'Salary Staff',
-      type: 'protesista' as any,
-      contractType: 'clt' as any,
-      isActive: true,
-      baseSalaryCents: 300000,
-      createdBy: testUserId,
-      defaultCommissionPercent: 10,
-    }).returning();
+    const [employeeRow] = await db
+      .insert(employees)
+      .values({
+        tenantId: testTenantId,
+        name: 'Salary Staff',
+        type: 'protesista' as any,
+        contractType: 'clt' as any,
+        isActive: true,
+        baseSalaryCents: 300000,
+        createdBy: testUserId,
+        defaultCommissionPercent: '10.00',
+      })
+      .returning();
+    const employee = assertExists(employeeRow, 'payroll employee');
     testEmployeeId = employee.id;
 
-    // Create a job and commission for testing consolidation (11.03)
-    const [client] = await db.insert(clients).values({ tenantId: testTenantId, name: 'Payroll Clinic' }).returning();
-    const [job] = await db.insert(jobs).values({
-      tenantId: testTenantId,
-      clientId: client.id,
-      code: 'PAY-JOB',
-      status: 'delivered',
-      completedAt: new Date(2024, 2, 15), // Month 3
-      deadline: new Date(),
-      totalCents: 100000,
-    }).returning();
+    const [clientRow] = await db
+      .insert(clients)
+      .values({ tenantId: testTenantId, name: 'Payroll Clinic' })
+      .returning();
+    const client = assertExists(clientRow, 'payroll client');
+
+    const [jobRow] = await db
+      .insert(jobs)
+      .values({
+        tenantId: testTenantId,
+        clientId: client.id,
+        code: 'PAY-JOB',
+        status: 'delivered',
+        completedAt: new Date(2024, 2, 15),
+        deadline: new Date(),
+        totalCents: 100000,
+      })
+      .returning();
+    const job = assertExists(jobRow, 'payroll job');
+
     await db.insert(jobAssignments).values({
       tenantId: testTenantId,
       jobId: job.id,
@@ -82,7 +107,8 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
   });
 
   it('1. Should create a payroll period', async () => {
-    const period = await payrollService.createPeriod(testTenantId, 2024, 3);
+    const periodRow = await payrollService.createPeriod(testTenantId, 2024, 3);
+    const period = assertExists(periodRow, 'created payroll period');
     expect(period.id).toBeDefined();
     expect(period.month).toBe(3);
     createdPeriodId = period.id;
@@ -95,40 +121,52 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
   it('3. Should generate entries using UPSERT', async () => {
     const result = await payrollService.generateEntries(testTenantId, createdPeriodId, testUserId);
     expect(result.generated).toBe(1);
-    
-    // Call again to verify UPSERT
+
     const result2 = await payrollService.generateEntries(testTenantId, createdPeriodId, testUserId);
     expect(result2.generated).toBe(1);
-    
+
     const entries = await db.select().from(payrollEntries).where(eq(payrollEntries.periodId, createdPeriodId));
     expect(entries.length).toBe(1);
   });
 
   it('4. Should consolidate commissions in generateEntries (11.03)', async () => {
-    const [entry] = await db.select().from(payrollEntries).where(and(eq(payrollEntries.periodId, createdPeriodId), eq(payrollEntries.employeeId, testEmployeeId)));
+    const [entryRow] = await db
+      .select()
+      .from(payrollEntries)
+      .where(and(eq(payrollEntries.periodId, createdPeriodId), eq(payrollEntries.employeeId, testEmployeeId)));
+    const entry = assertExists(entryRow, 'payroll entry');
     expect(entry.commissionsCents).toBe(10000);
   });
 
   it('5. Should calculate gross = salary + commissions + bonus', async () => {
-    const [entry] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
-    expect(entry.grossCents).toBe(310000); // 3000 + 100
+    const [entryRow] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
+    const entry = assertExists(entryRow, 'payroll entry');
+    expect(entry.grossCents).toBe(310000);
   });
 
   it('6. Should calculate net = gross - discounts', async () => {
-    const [entry] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
-    expect(entry.netCents).toBe(310000); // initial net = gross
+    const [entryRow] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
+    const entry = assertExists(entryRow, 'payroll entry');
+    expect(entry.netCents).toBe(310000);
   });
 
   it('7. Should update entry and recalcule totals (11.02)', async () => {
-    const [entry] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
-    const updated = await payrollService.updateEntry(testTenantId, {
-      entryId: entry.id,
-      bonusCents: 5000, // 50.00
-      discountsCents: 2000, // 20.00
-    }, testUserId);
-    
-    expect(updated.grossCents).toBe(315000); // 3100 + 50
-    expect(updated.netCents).toBe(313000); // 3150 - 20
+    const [entryRow] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
+    const entry = assertExists(entryRow, 'payroll entry');
+
+    const updatedRow = await payrollService.updateEntry(
+      testTenantId,
+      {
+        entryId: entry.id,
+        bonusCents: 5000,
+        discountsCents: 2000,
+      },
+      testUserId,
+    );
+    const updated = assertExists(updatedRow, 'updated payroll entry');
+
+    expect(updated.grossCents).toBe(315000);
+    expect(updated.netCents).toBe(313000);
   });
 
   it('8. Should generate payslip placeholder (11.06)', async () => {
@@ -138,13 +176,17 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
 
   it('9. Should close period and block edits (11.04)', async () => {
     await payrollService.closePeriod(testTenantId, createdPeriodId, testUserId);
-    const [entry] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
-    
-    await expect(payrollService.updateEntry(testTenantId, { entryId: entry.id, bonusCents: 1 }, testUserId)).rejects.toThrow();
+    const [entryRow] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
+    const entry = assertExists(entryRow, 'payroll entry');
+
+    await expect(
+      payrollService.updateEntry(testTenantId, { entryId: entry.id, bonusCents: 1 }, testUserId),
+    ).rejects.toThrow();
   });
 
   it('10. Should verify period totalizers (11.05)', async () => {
-    const [period] = await db.select().from(payrollPeriods).where(eq(payrollPeriods.id, createdPeriodId));
+    const [periodRow] = await db.select().from(payrollPeriods).where(eq(payrollPeriods.id, createdPeriodId));
+    const period = assertExists(periodRow, 'payroll period');
     expect(period.totalGrossCents).toBe(315000);
     expect(period.totalNetCents).toBe(313000);
   });
