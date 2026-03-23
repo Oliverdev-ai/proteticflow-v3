@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { eq, and, desc, isNull } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { users, refreshTokens, passwordResetTokens } from '../../db/schema/users.js';
+import { tenantMembers } from '../../db/schema/tenants.js';
+import { randomBytes } from 'crypto';
 import {
   hashPassword,
   verifyPassword,
@@ -19,7 +21,6 @@ import {
   loginSchema,
   updateProfileSchema,
   createUserSchema,
-  ROLES,
   ROLE_PERMISSIONS,
 } from '@proteticflow/shared';
 
@@ -43,6 +44,9 @@ export async function register(input: RegisterInput) {
     passwordHash: hashedPassword,
     role: 'user',
   }).returning();
+  if (!user) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao registrar usuario' });
+  }
 
   logger.info({ action: 'auth.register', userId: user.id }, 'User registered');
 
@@ -97,13 +101,15 @@ export async function login(input: LoginInput, meta: { userAgent?: string; ip?: 
   const refreshToken = generateRefreshToken();
   const tokenHash = hashToken(refreshToken);
 
-  await db.insert(refreshTokens).values({
+  const loginTokenData: typeof refreshTokens.$inferInsert = {
     userId: user.id,
     tokenHash,
-    userAgent: meta.userAgent,
-    ipAddress: meta.ip,
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  });
+  };
+  if (meta.userAgent !== undefined) loginTokenData.userAgent = meta.userAgent;
+  if (meta.ip !== undefined) loginTokenData.ipAddress = meta.ip;
+
+  await db.insert(refreshTokens).values(loginTokenData);
 
   await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
 
@@ -173,7 +179,7 @@ export async function forgotPassword(email: string) {
   const [user] = await db.select().from(users).where(eq(users.email, email));
   if (!user) return; // Silent return for security
 
-  const token = crypto.randomBytes(32).toString('hex');
+  const token = randomBytes(32).toString('hex');
   const tokenHash = hashToken(token);
 
   await db.insert(passwordResetTokens).values({
@@ -209,6 +215,7 @@ export async function resetPassword(token: string, newPassword: z.infer<typeof r
 
 export async function changePassword(userId: number, currentPass: string, newPass: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario nao encontrado' });
   const isValid = await verifyPassword(currentPass, user.passwordHash);
   if (!isValid) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Senha atual incorreta' });
 
@@ -224,6 +231,7 @@ export async function changePassword(userId: number, currentPass: string, newPas
 
 export async function setup2fa(userId: number) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user || !user.email) throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario nao encontrado' });
   const { secret, otpauthUrl } = generate2faSecret(user.email!);
   const qrCodeDataUrl = await generateQrCode(otpauthUrl);
   
@@ -241,6 +249,7 @@ export async function verify2fa(userId: number, code: string, secret: string) {
 
 export async function disable2fa(userId: number, code: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user || !user.twoFactorSecret) throw new TRPCError({ code: 'NOT_FOUND', message: '2FA nao configurado' });
   const isValid = verify2faCode(user.twoFactorSecret!, code);
   if (!isValid) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Código TOTP inválido' });
 
@@ -283,6 +292,7 @@ export async function revokeSession(userId: number, sessionId: number) {
 export async function getPermissions(userId: number, tenantId: number) {
   // Implementations for Phase 2
   const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario nao encontrado' });
   const permissions = ROLE_PERMISSIONS[user.role as keyof typeof ROLE_PERMISSIONS] ?? ROLE_PERMISSIONS.recepcao;
   return { role: user.role, modules: permissions.modules };
 }
@@ -294,8 +304,37 @@ export async function listUsers(tenantId: number) {
 }
 
 export async function createUser(tenantId: number, input: CreateUserInput) {
-  const { createUser: createTenantUser } = await import('../tenants/service.js');
-  return createTenantUser(tenantId, input);
+  const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, input.email));
+  if (existing.length > 0) {
+    throw new TRPCError({ code: 'CONFLICT', message: 'Email já registrado' });
+  }
+
+  const temporaryPassword = `Tmp${randomBytes(8).toString('hex')}A1`;
+  const passwordHash = await hashPassword(temporaryPassword);
+
+  const created = await db.transaction(async (tx) => {
+    const [newUser] = await tx.insert(users).values({
+      name: input.name,
+      email: input.email,
+      passwordHash,
+      role: 'user',
+      activeTenantId: tenantId,
+      isActive: true,
+    }).returning();
+    if (!newUser) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar usuario' });
+
+    await tx.insert(tenantMembers).values({
+      tenantId,
+      userId: newUser.id,
+      role: input.role,
+      isActive: true,
+    });
+
+    return newUser;
+  });
+
+  logger.info({ action: 'auth.user.create', tenantId, userId: created.id, role: input.role }, 'Usuario criado via modulo auth');
+  return created;
 }
 
 export async function exportUserData(userId: number) {
@@ -307,3 +346,6 @@ export async function exportUserData(userId: number) {
     exportDate: new Date().toISOString(),
   };
 }
+
+export { hashToken, verifyPassword };
+

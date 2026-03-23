@@ -33,6 +33,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
 
   it('3. Should hash passwords properly (not plaintext)', async () => {
     const [u] = await db.select().from(users).where(eq(users.id, createdUserId));
+    if (!u) throw new Error('User not found in test');
     expect(u.passwordHash).not.toBe(testPassword);
     expect(u.passwordHash.length).toBeGreaterThan(20); // bcrypt hashes are ~60 chars
   });
@@ -84,6 +85,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
     const activeSession = sessions.find(s => s.id === 0); // we can't search by hash easily in the output, but session is revoked.
     // the query `getSessions` only returns non-revoked ones.
     const [dbToken] = await db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
+    if (!dbToken) throw new Error('Refresh token not found in test');
     expect(dbToken.revokedAt).not.toBeNull();
   });
 
@@ -136,6 +138,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
   it('19. Should allow password change', async () => {
     await authService.changePassword(createdUserId, testPassword, 'NewPassword123!');
     const [u] = await db.select().from(users).where(eq(users.id, createdUserId));
+    if (!u) throw new Error('User not found in test');
     const isValid = await authService.verifyPassword('NewPassword123!', u.passwordHash);
     expect(isValid).toBe(true);
   });
