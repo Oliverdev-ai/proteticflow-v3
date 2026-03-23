@@ -11,7 +11,7 @@ async function createTestUser(email: string) {
   const [u] = await db.insert(users).values({
     name: 'Test', email, passwordHash: await hashPassword('Test123!'), role: 'user',
   }).returning();
-  return u;
+  return u!;
 }
 
 async function createTestTenant(userId: number, name: string) {
@@ -44,6 +44,7 @@ describe('Client Service — CRUD', () => {
     await clientService.createClient(tenant.id, { name: 'Cli A', priceAdjustmentPercent: 0 }, user.id);
     await clientService.createClient(tenant.id, { name: 'Cli B', priceAdjustmentPercent: 0 }, user.id);
     const [t] = await db.select().from(tenants).where(eq(tenants.id, tenant.id));
+    if (!t) throw new Error('Tenant not found in test');
     expect(t.clientCount).toBe(2);
   });
 
@@ -168,7 +169,16 @@ describe('Client Service — CRUD', () => {
     const tenant = await createTestTenant(user.id, 'Lab C15');
     const c = await clientService.createClient(tenant.id, { name: 'ComOS', priceAdjustmentPercent: 0 }, user.id);
     // Inserir job fake
-    await db.insert(jobs).values({ tenantId: tenant.id, clientId: c.id, number: '001', status: 'received', totalCents: 0, createdBy: user.id });
+    await db.insert(jobs).values({
+      tenantId: tenant.id,
+      clientId: c.id,
+      code: 'OS-001',
+      orderNumber: 1,
+      status: 'pending',
+      totalCents: 0,
+      deadline: new Date(Date.now() + 86400000),
+      createdBy: user.id,
+    });
     await expect(clientService.deleteClient(tenant.id, c.id, user.id)).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 

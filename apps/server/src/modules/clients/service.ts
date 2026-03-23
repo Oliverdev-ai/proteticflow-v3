@@ -20,28 +20,31 @@ type ListClientsInput = z.infer<typeof listClientsSchema>;
 
 export async function createClient(tenantId: number, input: CreateClientInput, createdBy: number) {
   const [client] = await db.transaction(async (tx) => {
-    const [c] = await tx.insert(clients).values({
+    const clientData: typeof clients.$inferInsert = {
       tenantId,
       createdBy,
       name: input.name,
-      clinic: input.clinic,
-      email: input.email || undefined,
-      phone: input.phone,
-      phone2: input.phone2,
-      documentType: input.documentType,
-      document: input.document,
-      contactPerson: input.contactPerson,
-      street: input.street,
-      addressNumber: input.addressNumber,
-      complement: input.complement,
-      neighborhood: input.neighborhood,
-      city: input.city,
-      state: input.state,
-      zipCode: input.zipCode,
-      technicalPreferences: input.technicalPreferences,
       priceAdjustmentPercent: input.priceAdjustmentPercent?.toString() ?? '0',
-      pricingTableId: input.pricingTableId,
-    }).returning();
+    };
+    if (input.clinic !== undefined) clientData.clinic = input.clinic;
+    if (input.email !== undefined) clientData.email = input.email;
+    if (input.phone !== undefined) clientData.phone = input.phone;
+    if (input.phone2 !== undefined) clientData.phone2 = input.phone2;
+    if (input.documentType !== undefined) clientData.documentType = input.documentType;
+    if (input.document !== undefined) clientData.document = input.document;
+    if (input.contactPerson !== undefined) clientData.contactPerson = input.contactPerson;
+    if (input.street !== undefined) clientData.street = input.street;
+    if (input.addressNumber !== undefined) clientData.addressNumber = input.addressNumber;
+    if (input.complement !== undefined) clientData.complement = input.complement;
+    if (input.neighborhood !== undefined) clientData.neighborhood = input.neighborhood;
+    if (input.city !== undefined) clientData.city = input.city;
+    if (input.state !== undefined) clientData.state = input.state;
+    if (input.zipCode !== undefined) clientData.zipCode = input.zipCode;
+    if (input.technicalPreferences !== undefined) clientData.technicalPreferences = input.technicalPreferences;
+    if (input.pricingTableId !== undefined) clientData.pricingTableId = input.pricingTableId;
+
+    const [c] = await tx.insert(clients).values(clientData).returning();
+    if (!c) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar cliente' });
 
     // Incrementar contador do tenant atomicamente
     await tx.update(tenants)
@@ -51,6 +54,7 @@ export async function createClient(tenantId: number, input: CreateClientInput, c
     return [c];
   });
 
+  if (!client) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar cliente' });
   logger.info({ action: 'client.create', tenantId, clientId: client.id, userId: createdBy }, 'Cliente criado');
   return client;
 }
@@ -101,15 +105,33 @@ export async function getClient(tenantId: number, clientId: number) {
 export async function updateClient(tenantId: number, clientId: number, input: UpdateClientInput, updatedBy: number) {
   await getClient(tenantId, clientId); // valida isolamento
 
+  const updates: Partial<typeof clients.$inferInsert> & { updatedAt: Date } = {
+    updatedAt: new Date(),
+  };
+  if (input.name !== undefined) updates.name = input.name;
+  if (input.clinic !== undefined) updates.clinic = input.clinic;
+  if (input.email !== undefined) updates.email = input.email;
+  if (input.phone !== undefined) updates.phone = input.phone;
+  if (input.phone2 !== undefined) updates.phone2 = input.phone2;
+  if (input.documentType !== undefined) updates.documentType = input.documentType;
+  if (input.document !== undefined) updates.document = input.document;
+  if (input.contactPerson !== undefined) updates.contactPerson = input.contactPerson;
+  if (input.street !== undefined) updates.street = input.street;
+  if (input.addressNumber !== undefined) updates.addressNumber = input.addressNumber;
+  if (input.complement !== undefined) updates.complement = input.complement;
+  if (input.neighborhood !== undefined) updates.neighborhood = input.neighborhood;
+  if (input.city !== undefined) updates.city = input.city;
+  if (input.state !== undefined) updates.state = input.state;
+  if (input.zipCode !== undefined) updates.zipCode = input.zipCode;
+  if (input.technicalPreferences !== undefined) updates.technicalPreferences = input.technicalPreferences;
+  if (input.priceAdjustmentPercent !== undefined) updates.priceAdjustmentPercent = input.priceAdjustmentPercent.toString();
+  if (input.pricingTableId !== undefined) updates.pricingTableId = input.pricingTableId;
+
   const [updated] = await db.update(clients)
-    .set({
-      ...input,
-      priceAdjustmentPercent: input.priceAdjustmentPercent?.toString(),
-      email: input.email || undefined,
-      updatedAt: new Date(),
-    })
+    .set(updates)
     .where(and(eq(clients.tenantId, tenantId), eq(clients.id, clientId)))
     .returning();
+  if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente nÃ£o encontrado' });
 
   logger.info({ action: 'client.update', tenantId, clientId, userId: updatedBy }, 'Cliente atualizado');
   return updated;
@@ -152,6 +174,7 @@ export async function toggleClientStatus(tenantId: number, clientId: number) {
     .set({ status: newStatus, updatedAt: new Date() })
     .where(and(eq(clients.tenantId, tenantId), eq(clients.id, clientId)))
     .returning();
+  if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente nÃ£o encontrado' });
 
   logger.info({ action: 'client.status_change', tenantId, clientId, newStatus }, 'Status do cliente alterado');
   return updated;
