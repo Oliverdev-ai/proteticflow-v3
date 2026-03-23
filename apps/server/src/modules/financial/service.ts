@@ -12,6 +12,10 @@ import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
 import type { z } from 'zod';
 import type { 
+  createArSchema,
+  listArSchema,
+  markArPaidSchema,
+  cancelArSchema,
   createApSchema,
   listApSchema,
   markApPaidSchema,
