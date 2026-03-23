@@ -117,23 +117,25 @@ async function regenerateFutureInstances(tenantId: number, parentEvent: typeof e
 }
 
 export async function createEvent(tenantId: number, input: CreateEventInput, userId: number) {
-  const [event] = await db.insert(events).values({
+  const eventData: typeof events.$inferInsert = {
     tenantId,
     title: input.title,
-    description: input.description,
     type: input.type,
     startAt: new Date(input.startAt),
     endAt: new Date(input.endAt),
     allDay: input.allDay,
-    jobId: input.jobId,
-    clientId: input.clientId,
-    employeeId: input.employeeId,
     recurrence: input.recurrence,
-    recurrenceEndDate: input.recurrenceEndDate ? new Date(input.recurrenceEndDate) : undefined,
     reminderMinutesBefore: input.reminderMinutesBefore,
-    color: input.color,
     createdBy: userId,
-  }).returning();
+  };
+  if (input.description !== undefined) eventData.description = input.description;
+  if (input.jobId !== undefined) eventData.jobId = input.jobId;
+  if (input.clientId !== undefined) eventData.clientId = input.clientId;
+  if (input.employeeId !== undefined) eventData.employeeId = input.employeeId;
+  if (input.recurrenceEndDate !== undefined) eventData.recurrenceEndDate = new Date(input.recurrenceEndDate);
+  if (input.color !== undefined) eventData.color = input.color;
+
+  const [event] = await db.insert(events).values(eventData).returning();
 
   if (!event) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar evento' });
 
@@ -192,22 +194,24 @@ export async function updateEvent(tenantId: number, eventId: number, input: Upda
   const recurrenceChanged = input.recurrence !== undefined && input.recurrence !== existing.recurrence;
   const isParent = existing.parentEventId === null;
 
-  const [updated] = await db.update(events).set({
-    title: input.title,
-    description: input.description,
-    type: input.type,
-    startAt: input.startAt ? new Date(input.startAt) : undefined,
-    endAt: input.endAt ? new Date(input.endAt) : undefined,
-    allDay: input.allDay,
-    jobId: input.jobId,
-    clientId: input.clientId,
-    employeeId: input.employeeId,
-    recurrence: input.recurrence,
-    recurrenceEndDate: input.recurrenceEndDate ? new Date(input.recurrenceEndDate) : undefined,
-    reminderMinutesBefore: input.reminderMinutesBefore,
-    color: input.color,
+  const updates: Partial<typeof events.$inferInsert> & { updatedAt: Date } = {
     updatedAt: new Date(),
-  }).where(and(eq(events.id, eventId), eq(events.tenantId, tenantId))).returning();
+  };
+  if (input.title !== undefined) updates.title = input.title;
+  if (input.description !== undefined) updates.description = input.description;
+  if (input.type !== undefined) updates.type = input.type;
+  if (input.startAt !== undefined) updates.startAt = new Date(input.startAt);
+  if (input.endAt !== undefined) updates.endAt = new Date(input.endAt);
+  if (input.allDay !== undefined) updates.allDay = input.allDay;
+  if (input.jobId !== undefined) updates.jobId = input.jobId;
+  if (input.clientId !== undefined) updates.clientId = input.clientId;
+  if (input.employeeId !== undefined) updates.employeeId = input.employeeId;
+  if (input.recurrence !== undefined) updates.recurrence = input.recurrence;
+  if (input.recurrenceEndDate !== undefined) updates.recurrenceEndDate = new Date(input.recurrenceEndDate);
+  if (input.reminderMinutesBefore !== undefined) updates.reminderMinutesBefore = input.reminderMinutesBefore;
+  if (input.color !== undefined) updates.color = input.color;
+
+  const [updated] = await db.update(events).set(updates).where(and(eq(events.id, eventId), eq(events.tenantId, tenantId))).returning();
 
   if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Evento nao encontrado' });
 
@@ -358,4 +362,3 @@ export const __testOnly = {
   addDays,
   recurrenceDays,
 };
-

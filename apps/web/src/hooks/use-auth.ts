@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { trpc } from '../lib/trpc.js';
+import { trpc } from '../lib/trpc';
 import { useNavigate } from 'react-router-dom';
 
 export function useAuth() {

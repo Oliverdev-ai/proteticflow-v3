@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { trpc } from '../../../lib/trpc.js';
+import { trpc } from '../../../lib/trpc';
 import { Link } from 'react-router-dom';
 
 export default function ForgotPasswordPage() {

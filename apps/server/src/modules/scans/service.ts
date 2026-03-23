@@ -24,15 +24,15 @@ type ScanPrintStatus = 'waiting' | 'sent' | 'printing' | 'completed' | 'error';
 type ScannerType = 'itero' | 'medit' | '3shape' | 'carestream' | 'outro';
 
 type ParsedScanData = {
-  orderId?: string;
-  dentist?: string;
-  cro?: string;
-  patient?: string;
-  procedure?: string;
-  date?: Date;
-  deadline?: Date;
-  address?: string;
-  notes?: string;
+  orderId: string | undefined;
+  dentist: string | undefined;
+  cro: string | undefined;
+  patient: string | undefined;
+  procedure: string | undefined;
+  date: Date | undefined;
+  deadline: Date | undefined;
+  address: string | undefined;
+  notes: string | undefined;
   rawMetadataJson: string;
 };
 
@@ -78,7 +78,17 @@ export function parseScannerXml(xmlContent: string, scannerType: string): Parsed
   const parsed = parser.parse(xmlContent) as Record<string, unknown>;
 
   const scanner = (scannerType as ScannerType) ?? 'outro';
-  let result: Omit<ParsedScanData, 'rawMetadataJson'> = {};
+  let result: Omit<ParsedScanData, 'rawMetadataJson'> = {
+    orderId: undefined,
+    dentist: undefined,
+    cro: undefined,
+    patient: undefined,
+    procedure: undefined,
+    date: undefined,
+    deadline: undefined,
+    address: undefined,
+    notes: undefined,
+  };
 
   if (scanner === 'itero') {
     const order = (parsed.iScanCaseOrder ?? parsed.IScanCaseOrder ?? {}) as Record<string, unknown>;
@@ -194,17 +204,20 @@ async function withDownloadUrl(keyOrUrl: string | null): Promise<string | null> 
 }
 
 export async function createScan(tenantId: number, input: CreateScanInput, userId: number) {
-  const [scan] = await db.insert(scans).values({
+  const scanData: typeof scans.$inferInsert = {
     tenantId,
-    jobId: input.jobId,
-    clientId: input.clientId,
     scannerType: input.scannerType,
-    notes: input.notes,
     uploadedBy: userId,
-  }).returning();
+  };
+  if (input.jobId !== undefined) scanData.jobId = input.jobId;
+  if (input.clientId !== undefined) scanData.clientId = input.clientId;
+  if (input.notes !== undefined) scanData.notes = input.notes;
 
-  logger.info({ action: 'scan.create', tenantId, scanId: scan!.id, scannerType: scan!.scannerType }, 'Scan criado');
-  return scan!;
+  const [scan] = await db.insert(scans).values(scanData).returning();
+  if (!scan) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar scan' });
+
+  logger.info({ action: 'scan.create', tenantId, scanId: scan.id, scannerType: scan.scannerType }, 'Scan criado');
+  return scan;
 }
 
 export async function uploadScanFile(
@@ -229,15 +242,15 @@ export async function uploadScanFile(
   if (fileType === 'xml') {
     const xmlContent = buffer.toString('utf-8');
     const parsedData = parseScannerXml(xmlContent, scan.scannerType);
-    updateData.parsedOrderId = parsedData.orderId;
-    updateData.parsedDentist = parsedData.dentist;
-    updateData.parsedCro = parsedData.cro;
-    updateData.parsedPatient = parsedData.patient;
-    updateData.parsedProcedure = parsedData.procedure;
-    updateData.parsedDate = parsedData.date;
-    updateData.parsedDeadline = parsedData.deadline;
-    updateData.parsedAddress = parsedData.address;
-    updateData.parsedNotes = parsedData.notes;
+    updateData.parsedOrderId = parsedData.orderId ?? null;
+    updateData.parsedDentist = parsedData.dentist ?? null;
+    updateData.parsedCro = parsedData.cro ?? null;
+    updateData.parsedPatient = parsedData.patient ?? null;
+    updateData.parsedProcedure = parsedData.procedure ?? null;
+    updateData.parsedDate = parsedData.date ?? null;
+    updateData.parsedDeadline = parsedData.deadline ?? null;
+    updateData.parsedAddress = parsedData.address ?? null;
+    updateData.parsedNotes = parsedData.notes ?? null;
     updateData.rawMetadataJson = parsedData.rawMetadataJson;
 
     logger.info({
@@ -252,9 +265,10 @@ export async function uploadScanFile(
     .set(updateData)
     .where(and(eq(scans.id, scanId), eq(scans.tenantId, tenantId)))
     .returning();
+  if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Scan nao encontrado' });
 
   logger.info({ action: 'scan.upload', tenantId, scanId, fileType, filename, userId }, 'Arquivo de scan enviado');
-  return updated!;
+  return updated;
 }
 
 export async function listScans(tenantId: number, filters: ListScansInput) {
@@ -276,9 +290,9 @@ export async function listScans(tenantId: number, filters: ListScansInput) {
     .limit(filters.limit)
     .offset(offset);
 
-  const [{ total }] = await db.select({ total: sql<number>`count(*)` }).from(scans).where(and(...conditions));
+  const [totalRow] = await db.select({ total: sql<number>`count(*)` }).from(scans).where(and(...conditions));
 
-  return { data, total: Number(total) };
+  return { data, total: Number(totalRow?.total ?? 0) };
 }
 
 export async function getScan(tenantId: number, scanId: number) {
@@ -306,11 +320,20 @@ export async function getScan(tenantId: number, scanId: number) {
 
 export async function updateScan(tenantId: number, scanId: number, input: UpdateScanInput) {
   await getScanOwnedByTenant(tenantId, scanId);
+  const updates: Partial<typeof scans.$inferInsert> & { updatedAt: Date } = {
+    updatedAt: new Date(),
+  };
+  if (input.jobId !== undefined) updates.jobId = input.jobId;
+  if (input.clientId !== undefined) updates.clientId = input.clientId;
+  if (input.scannerType !== undefined) updates.scannerType = input.scannerType;
+  if (input.notes !== undefined) updates.notes = input.notes;
+
   const [updated] = await db.update(scans)
-    .set({ ...input, updatedAt: new Date() })
+    .set(updates)
     .where(and(eq(scans.tenantId, tenantId), eq(scans.id, scanId)))
     .returning();
-  return updated!;
+  if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Scan nao encontrado' });
+  return updated;
 }
 
 export async function deleteScan(tenantId: number, scanId: number, userId: number) {
@@ -339,7 +362,7 @@ export async function changePrintStatus(tenantId: number, input: ChangePrintStat
   const updateData: Partial<typeof scans.$inferInsert> = {
     printStatus: to,
     printerIp: input.printerIp ?? scan.printerIp,
-    printError: to === 'error' ? input.printError : null,
+    printError: to === 'error' ? (input.printError ?? null) : null,
     printSentAt: to === 'sent' ? new Date() : scan.printSentAt,
     printCompletedAt: to === 'completed' ? new Date() : scan.printCompletedAt,
     updatedAt: new Date(),
@@ -349,6 +372,7 @@ export async function changePrintStatus(tenantId: number, input: ChangePrintStat
     .set(updateData)
     .where(and(eq(scans.id, input.scanId), eq(scans.tenantId, tenantId)))
     .returning();
+  if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Scan nao encontrado' });
 
   logger.info({
     action: 'scan.print.status',
@@ -359,7 +383,7 @@ export async function changePrintStatus(tenantId: number, input: ChangePrintStat
     userId,
   }, 'Status de impressao alterado');
 
-  return updated!;
+  return updated;
 }
 
 export async function sendToPrinter(tenantId: number, scanId: number, printerIp: string, userId: number) {
@@ -394,4 +418,3 @@ export async function sendToPrinter(tenantId: number, scanId: number, printerIp:
 export const __testOnly = {
   withDate,
 };
-

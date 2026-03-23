@@ -110,11 +110,6 @@ describe('Financial Service — AR', () => {
     expect(data[0]?.ar.amountCents).toBe(7000);
   });
 
-<<<<<<< Updated upstream
-=======
-  });
-
->>>>>>> Stashed changes
   it('6 & 7 & 19. Marcar AR como pago — status paid, paidAt preenchido e credit cashbook na transacao', async () => {
     const user = await createTestUser('f6@test.com');
     const tenant = await createTestTenant(user.id, 'Lab F6');
@@ -426,3 +421,4 @@ describe('Financial Service — Cron', () => {
     expect(closings[0]?.totalAmountCents).toBe(1000);
   });
 });
+

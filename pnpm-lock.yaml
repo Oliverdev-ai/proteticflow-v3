@@ -150,6 +150,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.71.2(react@19.2.4))
+      '@proteticflow/server':
+        specifier: workspace:*
+        version: link:../server
       '@proteticflow/shared':
         specifier: workspace:*
         version: link:../../packages/shared

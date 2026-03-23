@@ -53,24 +53,40 @@ export async function getActiveTenantForUser(userId: number): Promise<{ tenantId
 
 // ─── Tenant CRUD ─────────────────────────────────────────────────────────────
 
-export async function createTenant(userId: number, input: { name: string; cnpj?: string; phone?: string; email?: string; address?: string; city?: string; state?: string }) {
+export async function createTenant(
+  userId: number,
+  input: {
+    name: string;
+    cnpj?: string | undefined;
+    phone?: string | undefined;
+    email?: string | undefined;
+    address?: string | undefined;
+    city?: string | undefined;
+    state?: string | undefined;
+  },
+) {
   const slug = await generateUniqueSlug(input.name);
   const planExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
 
-  const [tenant] = await db.transaction(async (tx) => {
-    const [t] = await tx.insert(tenants).values({
+  const tenant = await db.transaction(async (tx) => {
+    const tenantData: typeof tenants.$inferInsert = {
       name: input.name,
       slug,
       plan: 'trial',
       planExpiresAt,
-      cnpj: input.cnpj,
-      phone: input.phone,
-      email: input.email,
-      address: input.address,
-      city: input.city,
-      state: input.state,
       userCount: 1,
-    }).returning();
+    };
+    if (input.cnpj !== undefined) tenantData.cnpj = input.cnpj;
+    if (input.phone !== undefined) tenantData.phone = input.phone;
+    if (input.email !== undefined) tenantData.email = input.email;
+    if (input.address !== undefined) tenantData.address = input.address;
+    if (input.city !== undefined) tenantData.city = input.city;
+    if (input.state !== undefined) tenantData.state = input.state;
+
+    const [t] = await tx.insert(tenants).values(tenantData).returning();
+    if (!t) {
+      throw new Error('Falha ao criar tenant');
+    }
 
     await tx.insert(tenantMembers).values({
       tenantId: t.id,
@@ -80,7 +96,7 @@ export async function createTenant(userId: number, input: { name: string; cnpj?:
 
     await tx.update(users).set({ activeTenantId: t.id }).where(eq(users.id, userId));
 
-    return [t];
+    return t;
   });
 
   logger.info({ action: 'tenant.create', tenantId: tenant.id, userId, slug }, 'Tenant criado');
@@ -127,10 +143,31 @@ export async function switchTenant(userId: number, tenantId: number): Promise<vo
   logger.info({ action: 'tenant.switch', tenantId, userId }, 'Tenant alternado');
 }
 
-export async function updateTenant(tenantId: number, userId: number, input: Partial<{ name: string; cnpj: string; phone: string; email: string; address: string; city: string; state: string }>) {
+export async function updateTenant(
+  tenantId: number,
+  userId: number,
+  input: {
+    name?: string | undefined;
+    cnpj?: string | undefined;
+    phone?: string | undefined;
+    email?: string | undefined;
+    address?: string | undefined;
+    city?: string | undefined;
+    state?: string | undefined;
+  },
+) {
+  const updates: Partial<typeof tenants.$inferInsert> & { updatedAt: Date } = { updatedAt: new Date() };
+  if (input.name !== undefined) updates.name = input.name;
+  if (input.cnpj !== undefined) updates.cnpj = input.cnpj;
+  if (input.phone !== undefined) updates.phone = input.phone;
+  if (input.email !== undefined) updates.email = input.email;
+  if (input.address !== undefined) updates.address = input.address;
+  if (input.city !== undefined) updates.city = input.city;
+  if (input.state !== undefined) updates.state = input.state;
+
   const [updated] = await db
     .update(tenants)
-    .set({ ...input, updatedAt: new Date() })
+    .set(updates)
     .where(eq(tenants.id, tenantId))
     .returning();
 
@@ -307,7 +344,7 @@ export async function removeMember(tenantId: number, memberId: number): Promise<
     // Se user removido tinha este tenant como ativo, limpar activeTenantId
     const [u] = await tx.select({ activeTenantId: users.activeTenantId }).from(users).where(eq(users.id, member.userId));
     if (u?.activeTenantId === tenantId) {
-      await tx.update(users).set({ activeTenantId: undefined }).where(eq(users.id, member.userId));
+      await tx.update(users).set({ activeTenantId: null }).where(eq(users.id, member.userId));
     }
   });
 
