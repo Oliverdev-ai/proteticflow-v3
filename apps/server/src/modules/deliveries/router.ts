@@ -10,19 +10,19 @@ import {
 
 export const deliveryRouter = router({
   createSchedule:   tenantProcedure.input(createDeliveryScheduleSchema).mutation(({ ctx, input }) =>
-    deliveryService.createSchedule(ctx.user.tenantId, input, ctx.user.userId)),
+    deliveryService.createSchedule(ctx.tenantId!, input, ctx.user!.id)),
   listSchedules:    tenantProcedure.input(listDeliverySchedulesSchema).query(({ ctx, input }) =>
-    deliveryService.listSchedules(ctx.user.tenantId, input)),
+    deliveryService.listSchedules(ctx.tenantId!, input)),
   getSchedule:      tenantProcedure.input(z.object({ id: z.number() })).query(({ ctx, input }) =>
-    deliveryService.getSchedule(ctx.user.tenantId, input.id)),
+    deliveryService.getSchedule(ctx.tenantId!, input.id)),
   updateItemStatus: tenantProcedure.input(updateDeliveryItemStatusSchema).mutation(({ ctx, input }) =>
-    deliveryService.updateItemStatus(ctx.user.tenantId, input, ctx.user.userId)),
+    deliveryService.updateItemStatus(ctx.tenantId!, input, ctx.user!.id)),
   markAllInTransit: tenantProcedure.input(z.object({ scheduleId: z.number() })).mutation(({ ctx, input }) =>
-    deliveryService.markAllInTransit(ctx.user.tenantId, input.scheduleId, ctx.user.userId)),
+    deliveryService.markAllInTransit(ctx.tenantId!, input.scheduleId, ctx.user!.id)),
   getReport:        tenantProcedure.input(z.object({ dateFrom: z.string(), dateTo: z.string() })).query(({ ctx, input }) =>
-    deliveryService.getDeliveryReport(ctx.user.tenantId, new Date(input.dateFrom), new Date(input.dateTo))),
+    deliveryService.getDeliveryReport(ctx.tenantId!, new Date(input.dateFrom), new Date(input.dateTo))),
   generatePdf:      tenantProcedure.input(z.object({ scheduleId: z.number() })).query(({ ctx, input }) =>
-    deliveryService.generateRoutePdf(ctx.user.tenantId, input.scheduleId)),
+    deliveryService.generateRoutePdf(ctx.tenantId!, input.scheduleId)),
   groupByArea:      tenantProcedure.input(z.object({ jobIds: z.array(z.number()) })).query(({ ctx, input }) =>
-    deliveryService.groupByNeighborhood(ctx.user.tenantId, input.jobIds)),
+    deliveryService.groupByNeighborhood(ctx.tenantId!, input.jobIds)),
 });

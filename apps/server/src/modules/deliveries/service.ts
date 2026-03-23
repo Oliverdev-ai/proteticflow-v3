@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
+import { eq, and, gte, lte, sql, desc, inArray } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { deliverySchedules, deliveryItems } from '../../db/schema/deliveries.js';
 import { jobs } from '../../db/schema/jobs.js';
@@ -6,14 +6,17 @@ import { clients } from '../../db/schema/clients.js';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import {
+import 'jspdf-autotable';
+import type {
   CreateDeliveryScheduleInput,
   UpdateDeliveryItemStatusInput,
   ListDeliverySchedulesInput,
 } from '@proteticflow/shared';
 
-type JsPdfDoc = jsPDF & { autoTable: typeof autoTable };
+type JsPdfDoc = jsPDF & {
+  autoTable: (options: unknown) => void;
+  output(type: 'arraybuffer'): ArrayBuffer;
+};
 
 // ─── Criar Roteiro de Entrega ─────────────────────────────────────────────────
 
@@ -26,28 +29,34 @@ export async function createSchedule(tenantId: number, input: CreateDeliverySche
       if (!job) throw new TRPCError({ code: 'BAD_REQUEST', message: `OS #${item.jobId} não pertence a este tenant` });
     }
 
-    const [schedule] = await tx.insert(deliverySchedules).values({
+    const scheduleData: typeof deliverySchedules.$inferInsert = {
       tenantId,
       date: new Date(input.date),
-      driverName: input.driverName,
-      vehicle: input.vehicle,
-      notes: input.notes,
       createdBy: userId,
-    }).returning();
+    };
+    if (input.driverName !== undefined) scheduleData.driverName = input.driverName;
+    if (input.vehicle !== undefined) scheduleData.vehicle = input.vehicle;
+    if (input.notes !== undefined) scheduleData.notes = input.notes;
 
-    const itemsInserted = await tx.insert(deliveryItems).values(
-      input.items.map(i => ({
+    const [schedule] = await tx.insert(deliverySchedules).values(scheduleData).returning();
+    if (!schedule) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar roteiro' });
+
+    const itemsData: Array<typeof deliveryItems.$inferInsert> = input.items.map((i) => {
+      const itemData: typeof deliveryItems.$inferInsert = {
         tenantId,
-        scheduleId: schedule!.id,
+        scheduleId: schedule.id,
         jobId: i.jobId,
         clientId: i.clientId,
         sortOrder: i.sortOrder ?? 0,
-        notes: i.notes,
-      }))
-    ).returning();
+      };
+      if (i.notes !== undefined) itemData.notes = i.notes;
+      return itemData;
+    });
 
-    logger.info({ tenantId, scheduleId: schedule!.id, itemCount: itemsInserted.length }, 'delivery.schedule.create');
-    return { schedule: schedule!, items: itemsInserted };
+    const itemsInserted = await tx.insert(deliveryItems).values(itemsData).returning();
+
+    logger.info({ tenantId, scheduleId: schedule.id, itemCount: itemsInserted.length }, 'delivery.schedule.create');
+    return { schedule, items: itemsInserted };
   });
 }
 
@@ -74,11 +83,11 @@ export async function listSchedules(tenantId: number, filters: ListDeliverySched
     : [];
 
   const countMap = Object.fromEntries(itemCounts.map(r => [r.scheduleId, Number(r.count)]));
-  const [{ total }] = await db.select({ total: sql<number>`count(*)` }).from(deliverySchedules).where(and(...conditions));
+  const [totalRow] = await db.select({ total: sql<number>`count(*)` }).from(deliverySchedules).where(and(...conditions));
 
   return {
     data: data.map(s => ({ ...s, itemCount: countMap[s.id] ?? 0 })),
-    total: Number(total),
+    total: Number(totalRow?.total ?? 0),
   };
 }
 
@@ -93,7 +102,7 @@ export async function getSchedule(tenantId: number, scheduleId: number) {
     item: deliveryItems,
     jobCode: jobs.orderNumber,
     clientName: clients.name,
-    clientAddress: clients.address,
+    clientAddress: clients.street,
     clientPhone: clients.phone,
     clientNeighborhood: clients.neighborhood,
   }).from(deliveryItems)
@@ -129,7 +138,7 @@ export async function updateItemStatus(tenantId: number, input: UpdateDeliveryIt
 
 // ─── Marcar Todos como Em Trânsito ────────────────────────────────────────────
 
-export async function markAllInTransit(tenantId: number, scheduleId: number, userId: number) {
+export async function markAllInTransit(tenantId: number, scheduleId: number, _userId: number) {
   await db.update(deliveryItems)
     .set({ status: 'in_transit' })
     .where(and(
@@ -153,7 +162,7 @@ export async function getDeliveryReport(tenantId: number, dateFrom: Date, dateTo
   if (scheduleIds.length === 0) return { totalSchedules: 0, totalItems: 0, delivered: 0, failed: 0, successRate: 0 };
 
   const items = await db.select({ status: deliveryItems.status }).from(deliveryItems)
-    .where(and(eq(deliveryItems.tenantId, tenantId)));
+    .where(and(eq(deliveryItems.tenantId, tenantId), inArray(deliveryItems.scheduleId, scheduleIds)));
 
   const delivered = items.filter(i => i.status === 'delivered').length;
   const failed = items.filter(i => i.status === 'failed').length;
@@ -174,9 +183,9 @@ export async function groupByNeighborhood(tenantId: number, jobIds: number[]) {
     clientName: clients.name,
   }).from(jobs)
     .leftJoin(clients, eq(jobs.clientId, clients.id))
-    .where(and(eq(jobs.tenantId, tenantId)));
+    .where(and(eq(jobs.tenantId, tenantId), inArray(jobs.id, jobIds)));
 
-  const relevant = rows.filter(r => jobIds.includes(r.jobId));
+  const relevant = rows;
   const grouped: Record<string, typeof relevant> = {};
   for (const r of relevant) {
     const key = r.neighborhood ?? 'Sem bairro';

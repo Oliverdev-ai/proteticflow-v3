@@ -226,6 +226,7 @@ describe('Delivery Service', () => {
     const c1 = await createClient(tenant.id, { name: 'C1', neighborhood: 'Centro', priceAdjustmentPercent: 0 }, user.id);
     const c2 = await createClient(tenant.id, { name: 'C2', neighborhood: 'Centro', priceAdjustmentPercent: 0 }, user.id);
     const c3 = await createClient(tenant.id, { name: 'C3', neighborhood: 'Jardins', priceAdjustmentPercent: 0 }, user.id);
+    if (!c1 || !c2 || !c3) throw new Error('Falha ao criar clientes de teste');
 
     const j1 = await createTestJob(tenant.id, c1.id, user.id);
     const j2 = await createTestJob(tenant.id, c2.id, user.id);
