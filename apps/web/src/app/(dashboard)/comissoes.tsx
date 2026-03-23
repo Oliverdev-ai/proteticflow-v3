@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { trpc } from '../lib/trpc';
+import { trpc } from '../../lib/trpc';
 import { 
   DollarSign, 
   Search, 
@@ -11,20 +11,31 @@ import {
   FileText
 } from 'lucide-react';
 
+type CommissionDetail = {
+  employeeId: number;
+  employeeName: string;
+  jobId: number;
+  jobCode: string;
+  task: string | null;
+  jobTotalCents: number;
+  commissionPercent: string;
+  commissionAmountCents: number | null;
+};
+
 export default function CommissionsPage() {
   const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [employeeId, setEmployeeId] = useState<number | undefined>(undefined);
 
-  const { data: report, isLoading } = trpc.employee.getProductionReport.useQuery({
+  const { data: report, isLoading } = trpc.employee.commissionDetails.useQuery({
     dateFrom: new Date(dateFrom).toISOString(),
     dateTo: new Date(dateTo).toISOString(),
     employeeId
   });
 
-  const { data: employees } = trpc.employee.listEmployees.useQuery({ isActive: true });
+  const { data: employees } = trpc.employee.list.useQuery({ isActive: true, page: 1, limit: 100 });
 
-  const totalCommissions = report?.reduce((sum, item) => sum + (item.commissionAmountCents || 0), 0) || 0;
+  const totalCommissions = (report as CommissionDetail[] | undefined)?.reduce((sum, item) => sum + (Number(item.commissionAmountCents) || 0), 0) || 0;
 
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto">
@@ -111,7 +122,7 @@ export default function CommissionsPage() {
                 </td>
               </tr>
             ) : (
-              report?.map((item, idx) => (
+              (report as CommissionDetail[]).map((item, idx) => (
                 <tr key={idx} className="hover:bg-neutral-800/30 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="text-sm font-semibold text-neutral-200 group-hover:text-violet-400 transition-colors">{item.employeeName}</div>

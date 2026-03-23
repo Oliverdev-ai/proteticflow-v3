@@ -2,7 +2,7 @@ import { db } from '../../db/index.js';
 import { employees, employeeSkills, jobAssignments, commissionPayments } from '../../db/schema/employees.js';
 import { jobs } from '../../db/schema/jobs.js';
 import { cashbookEntries } from '../../db/schema/financials.js';
-import { eq, and, isNull, sql, desc, inArray, sum, count, ilike, or } from 'drizzle-orm';
+import { eq, and, isNull, isNotNull, sql, desc, inArray, sum, count, ilike, or } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createEmployeeSchema, updateEmployeeSchema, createSkillSchema, createAssignmentSchema, createCommissionPaymentSchema, productionReportSchema, listEmployeesSchema } from '@proteticflow/shared';
@@ -15,15 +15,41 @@ type ListEmployeesInput = z.infer<typeof listEmployeesSchema>;
 // ─── CRUD (10.01–10.08) ──────────────────────────────────────────────────────
 
 export async function createEmployee(tenantId: number, input: CreateEmployeeInput, userId: number) {
-  const data = {
-    ...input,
-    birthDate: input.birthDate ? new Date(input.birthDate) : undefined,
-    admissionDate: input.admissionDate ? new Date(input.admissionDate) : undefined,
+  const data: typeof employees.$inferInsert = {
     tenantId,
+    name: input.name,
+    cpf: input.cpf ?? null,
+    rg: input.rg ?? null,
+    birthDate: input.birthDate ? new Date(input.birthDate) : null,
+    email: input.email ?? null,
+    phone: input.phone ?? null,
+    phone2: input.phone2 ?? null,
+    street: input.street ?? null,
+    addressNumber: input.addressNumber ?? null,
+    complement: input.complement ?? null,
+    neighborhood: input.neighborhood ?? null,
+    city: input.city ?? null,
+    state: input.state ?? null,
+    zipCode: input.zipCode ?? null,
+    admissionDate: input.admissionDate ? new Date(input.admissionDate) : null,
+    position: input.position ?? null,
+    department: input.department ?? null,
+    type: input.type,
+    contractType: input.contractType,
+    baseSalaryCents: input.baseSalaryCents,
+    transportAllowanceCents: input.transportAllowanceCents,
+    mealAllowanceCents: input.mealAllowanceCents,
+    healthInsuranceCents: input.healthInsuranceCents,
+    bankName: input.bankName ?? null,
+    bankAgency: input.bankAgency ?? null,
+    bankAccount: input.bankAccount ?? null,
+    defaultCommissionPercent: String(input.defaultCommissionPercent),
+    userId: input.userId ?? null,
+    notes: input.notes ?? null,
     createdBy: userId,
   };
 
-  const [employee] = await db.insert(employees).values(data as any).returning();
+  const [employee] = await db.insert(employees).values(data).returning();
   if (!employee) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar funcionário' });
 
   logger.info({ action: 'employee.create', tenantId, employeeId: employee.id }, 'Employee created');
@@ -69,15 +95,41 @@ export async function getEmployee(tenantId: number, id: number) {
 }
 
 export async function updateEmployee(tenantId: number, id: number, input: UpdateEmployeeInput, userId: number) {
-  const data = {
-    ...input,
-    birthDate: input.birthDate ? new Date(input.birthDate) : undefined,
-    admissionDate: input.admissionDate ? new Date(input.admissionDate) : undefined,
+  const data: Partial<typeof employees.$inferInsert> = {
     updatedAt: new Date(),
   };
+  if (input.name !== undefined) data.name = input.name;
+  if (input.cpf !== undefined) data.cpf = input.cpf;
+  if (input.rg !== undefined) data.rg = input.rg;
+  if (input.birthDate !== undefined) data.birthDate = input.birthDate ? new Date(input.birthDate) : null;
+  if (input.email !== undefined) data.email = input.email;
+  if (input.phone !== undefined) data.phone = input.phone;
+  if (input.phone2 !== undefined) data.phone2 = input.phone2;
+  if (input.street !== undefined) data.street = input.street;
+  if (input.addressNumber !== undefined) data.addressNumber = input.addressNumber;
+  if (input.complement !== undefined) data.complement = input.complement;
+  if (input.neighborhood !== undefined) data.neighborhood = input.neighborhood;
+  if (input.city !== undefined) data.city = input.city;
+  if (input.state !== undefined) data.state = input.state;
+  if (input.zipCode !== undefined) data.zipCode = input.zipCode;
+  if (input.admissionDate !== undefined) data.admissionDate = input.admissionDate ? new Date(input.admissionDate) : null;
+  if (input.position !== undefined) data.position = input.position;
+  if (input.department !== undefined) data.department = input.department;
+  if (input.type !== undefined) data.type = input.type;
+  if (input.contractType !== undefined) data.contractType = input.contractType;
+  if (input.baseSalaryCents !== undefined) data.baseSalaryCents = input.baseSalaryCents;
+  if (input.transportAllowanceCents !== undefined) data.transportAllowanceCents = input.transportAllowanceCents;
+  if (input.mealAllowanceCents !== undefined) data.mealAllowanceCents = input.mealAllowanceCents;
+  if (input.healthInsuranceCents !== undefined) data.healthInsuranceCents = input.healthInsuranceCents;
+  if (input.bankName !== undefined) data.bankName = input.bankName;
+  if (input.bankAgency !== undefined) data.bankAgency = input.bankAgency;
+  if (input.bankAccount !== undefined) data.bankAccount = input.bankAccount;
+  if (input.defaultCommissionPercent !== undefined) data.defaultCommissionPercent = String(input.defaultCommissionPercent);
+  if (input.userId !== undefined) data.userId = input.userId;
+  if (input.notes !== undefined) data.notes = input.notes;
 
   const [updated] = await db.update(employees)
-    .set(data as any)
+    .set(data)
     .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), isNull(employees.deletedAt)))
     .returning();
 
@@ -144,13 +196,15 @@ export async function assignJob(tenantId: number, input: z.infer<typeof createAs
     .where(and(eq(employees.id, input.employeeId), eq(employees.tenantId, tenantId)));
   if (!emp) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Funcionário inválido' });
 
-  const [assignment] = await db.insert(jobAssignments).values({
+  const assignmentData: typeof jobAssignments.$inferInsert = {
     tenantId,
     jobId: input.jobId,
     employeeId: input.employeeId,
     task: input.task ?? null,
     commissionOverridePercent: input.commissionOverridePercent ? String(input.commissionOverridePercent) : null,
-  } as any).returning();
+  };
+
+  const [assignment] = await db.insert(jobAssignments).values(assignmentData).returning();
 
   return assignment;
 }
@@ -284,4 +338,35 @@ export async function getProductionReport(tenantId: number, input: z.infer<typeo
     .orderBy(desc(sql`sum(${jobs.totalCents})`));
 
   return query;
+}
+
+export async function getCommissionDetails(tenantId: number, input: z.infer<typeof productionReportSchema>) {
+  const { employeeId, dateFrom, dateTo } = input;
+
+  const conditions = [
+    eq(jobAssignments.tenantId, tenantId),
+    isNotNull(jobAssignments.commissionAmountCents),
+    sql`${jobs.completedAt} >= ${new Date(dateFrom)}`,
+    sql`${jobs.completedAt} <= ${new Date(dateTo)}`,
+  ];
+  if (employeeId) conditions.push(eq(jobAssignments.employeeId, employeeId));
+
+  return db
+    .select({
+      employeeId: employees.id,
+      employeeName: employees.name,
+      jobId: jobs.id,
+      jobCode: jobs.code,
+      task: jobAssignments.task,
+      jobTotalCents: jobs.totalCents,
+      commissionPercent: sql<string>`
+        COALESCE(${jobAssignments.commissionOverridePercent}, ${employees.defaultCommissionPercent})
+      `,
+      commissionAmountCents: jobAssignments.commissionAmountCents,
+    })
+    .from(jobAssignments)
+    .innerJoin(employees, eq(employees.id, jobAssignments.employeeId))
+    .innerJoin(jobs, eq(jobs.id, jobAssignments.jobId))
+    .where(and(...conditions))
+    .orderBy(desc(jobs.completedAt));
 }

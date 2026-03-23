@@ -47,6 +47,13 @@ import CommissionsPage from './app/(dashboard)/comissoes';
 // Fase 12 — Folha de Pagamento
 import PayrollListPage from './app/(dashboard)/payroll/index';
 import PayrollDetailPage from './app/(dashboard)/payroll/[id]';
+// Fase 13 - Scans 3D
+import ScanListPage from './app/(dashboard)/scans/index';
+import ScanUploadPage from './app/(dashboard)/scans/upload';
+import ScanDetailPage from './app/(dashboard)/scans/[id]';
+// Fase 14 - Agenda
+import AgendaPage from './app/(dashboard)/agenda/index';
+import EventCreatePage from './app/(dashboard)/agenda/novo';
 
 import './globals.css';
 
@@ -109,6 +116,13 @@ function AppContent() {
           {/* Fase 12 — Folha de Pagamento */}
           <Route path="/payroll" element={<PayrollListPage />} />
           <Route path="/payroll/:id" element={<PayrollDetailPage />} />
+          {/* Fase 13 - Scans 3D */}
+          <Route path="/scans" element={<ScanListPage />} />
+          <Route path="/scans/upload" element={<ScanUploadPage />} />
+          <Route path="/scans/:id" element={<ScanDetailPage />} />
+          {/* Fase 14 - Agenda */}
+          <Route path="/agenda" element={<AgendaPage />} />
+          <Route path="/agenda/novo" element={<EventCreatePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
