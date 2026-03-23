@@ -57,6 +57,13 @@
       "when": 1742593400000,
       "tag": "0007_funcionarios_folha",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1742593800000,
+      "tag": "0008_scans_agenda",
+      "breakpoints": true
     }
   ]
 }

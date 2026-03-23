@@ -27,3 +27,9 @@ export * from './notifications';
 
 // Lab settings
 export * from './lab-settings';
+
+// Scans 3D
+export * from './scans';
+
+// Agenda
+export * from './agenda';
