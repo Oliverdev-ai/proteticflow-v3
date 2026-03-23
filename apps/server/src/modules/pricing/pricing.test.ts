@@ -10,6 +10,7 @@ async function createTestUser(email: string) {
   const [u] = await db.insert(users).values({
     name: 'Test', email, passwordHash: await hashPassword('Test123!'), role: 'user',
   }).returning();
+  if (!u) throw new Error('failed to create test user');
   return u;
 }
 
