@@ -198,6 +198,7 @@ export async function cancelAr(tenantId: number, input: CancelArInput, userId: n
     })
     .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.id, input.id)))
     .returning();
+  if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a receber nao encontrada' });
 
   logger.info({ action: 'financial.ar.cancelled', tenantId, arId: ar.id, reason: input.cancelReason }, 'Conta a receber cancelada');
   return cancelled;
@@ -324,6 +325,7 @@ export async function cancelAp(tenantId: number, input: CancelApInput, userId: n
     })
     .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.id, input.id)))
     .returning();
+  if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a pagar nao encontrada' });
 
   logger.info({ action: 'financial.ap.cancelled', tenantId, apId: ap.id, reason: input.cancelReason }, 'Conta a pagar cancelada');
   return cancelled;

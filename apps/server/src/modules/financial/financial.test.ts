@@ -397,6 +397,7 @@ describe('Financial Service — Cron', () => {
     const [ar] = await db.insert(accountsReceivable).values({
       tenantId: tenant.id, jobId: 0, clientId: client.id, amountCents: 1000, dueDate: pastDate, status: 'pending'
     }).returning();
+    if (!ar) throw new Error('Falha ao criar AR de teste');
 
     const { overdueReminders } = await import('../../cron/overdue-reminders.js');
     await overdueReminders();
