@@ -41,15 +41,15 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
       name: 'Admin Payroll',
       email: `admin-pay-${Date.now()}@test.com`,
       passwordHash: 'hashed',
-      role: 'admin' as any,
+      role: 'admin',
     }).returning();
     testUserId = user.id;
 
     const [employee] = await db.insert(employees).values({
       tenantId: testTenantId,
       name: 'Salary Staff',
-      type: 'protesista' as any,
-      contractType: 'clt' as any,
+      type: 'protesista',
+      contractType: 'clt',
       isActive: true,
       baseSalaryCents: 300000,
       createdBy: testUserId,
@@ -131,6 +131,11 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
     expect(updated.netCents).toBe(313000); // 3150 - 20
   });
 
+  it('8. Should generate payslip placeholder (11.06)', async () => {
+    const pdf = await payrollService.generatePayslipPdf(testTenantId, createdPeriodId, testEmployeeId);
+    expect(pdf).toBeDefined();
+  });
+
   it('9. Should close period and block edits (11.04)', async () => {
     await payrollService.closePeriod(testTenantId, createdPeriodId, testUserId);
     const [entry] = await db.select().from(payrollEntries).where(eq(payrollEntries.employeeId, testEmployeeId));
@@ -142,10 +147,5 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
     const [period] = await db.select().from(payrollPeriods).where(eq(payrollPeriods.id, createdPeriodId));
     expect(period.totalGrossCents).toBe(315000);
     expect(period.totalNetCents).toBe(313000);
-  });
-  
-  it('8. Should generate payslip placeholder (11.06)', async () => {
-    const pdf = await payrollService.generatePayslipPdf(testTenantId, createdPeriodId, testEmployeeId);
-    expect(pdf).toBeDefined();
   });
 });

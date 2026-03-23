@@ -16,15 +16,15 @@ export default function CommissionsPage() {
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [employeeId, setEmployeeId] = useState<number | undefined>(undefined);
 
-  const { data: report, isLoading } = trpc.employee.getProductionReport.useQuery({
+  const { data: report, isLoading } = trpc.employee.commissionDetails.useQuery({
     dateFrom: new Date(dateFrom).toISOString(),
     dateTo: new Date(dateTo).toISOString(),
     employeeId
   });
 
-  const { data: employees } = trpc.employee.listEmployees.useQuery({ isActive: true });
+  const { data: employees } = trpc.employee.list.useQuery({ isActive: true });
 
-  const totalCommissions = report?.reduce((sum, item) => sum + (item.commissionAmountCents || 0), 0) || 0;
+  const totalCommissions = report?.reduce((sum, item) => sum + (Number(item.commissionAmountCents) || 0), 0) || 0;
 
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto">

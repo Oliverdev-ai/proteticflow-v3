@@ -207,6 +207,7 @@ export async function generatePayslipPdf(tenantId: number, periodId: number, emp
 
   type JsPdfWithAutoTable = jsPDF & {
     autoTable: (options: unknown) => void;
+    lastAutoTable?: { finalY: number };
   };
   const doc = new jsPDF() as JsPdfWithAutoTable;
 
@@ -236,7 +237,7 @@ export async function generatePayslipPdf(tenantId: number, periodId: number, emp
     headStyles: { fillColor: [31, 41, 55] },
   });
 
-  const finalY = (doc as any).lastAutoTable?.finalY ?? 100;
+  const finalY = (doc as JsPdfWithAutoTable).lastAutoTable?.finalY ?? 100;
 
   doc.setFont('helvetica', 'bold');
   doc.text(`Total Bruto: R$ ${(entry.grossCents / 100).toFixed(2)}`, 140, finalY + 10);
