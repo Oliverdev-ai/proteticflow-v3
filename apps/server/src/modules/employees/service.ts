@@ -2,7 +2,7 @@ import { db } from '../../db/index.js';
 import { employees, employeeSkills, jobAssignments, commissionPayments } from '../../db/schema/employees.js';
 import { jobs } from '../../db/schema/jobs.js';
 import { cashbookEntries } from '../../db/schema/financials.js';
-import { eq, and, isNull, sql, desc, inArray, sum, count, ilike, or } from 'drizzle-orm';
+import { eq, and, isNull, isNotNull, sql, desc, inArray, sum, count, ilike, or } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createEmployeeSchema, updateEmployeeSchema, createSkillSchema, createAssignmentSchema, createCommissionPaymentSchema, productionReportSchema, listEmployeesSchema } from '@proteticflow/shared';
@@ -23,7 +23,7 @@ export async function createEmployee(tenantId: number, input: CreateEmployeeInpu
     createdBy: userId,
   };
 
-  const [employee] = await db.insert(employees).values(data as any).returning();
+  const [employee] = await db.insert(employees).values(data as typeof employees.$inferInsert).returning();
   if (!employee) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar funcionário' });
 
   logger.info({ action: 'employee.create', tenantId, employeeId: employee.id }, 'Employee created');
@@ -77,7 +77,7 @@ export async function updateEmployee(tenantId: number, id: number, input: Update
   };
 
   const [updated] = await db.update(employees)
-    .set(data as any)
+    .set(data as Partial<typeof employees.$inferInsert>)
     .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), isNull(employees.deletedAt)))
     .returning();
 
@@ -150,7 +150,7 @@ export async function assignJob(tenantId: number, input: z.infer<typeof createAs
     employeeId: input.employeeId,
     task: input.task ?? null,
     commissionOverridePercent: input.commissionOverridePercent ? String(input.commissionOverridePercent) : null,
-  } as any).returning();
+  } as typeof jobAssignments.$inferInsert).returning();
 
   return assignment;
 }
@@ -284,4 +284,33 @@ export async function getProductionReport(tenantId: number, input: z.infer<typeo
     .orderBy(desc(sql`sum(${jobs.totalCents})`));
 
   return query;
+}
+
+export async function getCommissionDetails(tenantId: number, input: z.infer<typeof productionReportSchema>) {
+  const { employeeId, dateFrom, dateTo } = input;
+
+  const conditions = [
+    eq(jobAssignments.tenantId, tenantId),
+    isNotNull(jobAssignments.commissionAmountCents),
+    sql`${jobs.completedAt} >= ${new Date(dateFrom)}`,
+    sql`${jobs.completedAt} <= ${new Date(dateTo)}`,
+  ];
+  if (employeeId) conditions.push(eq(jobAssignments.employeeId, employeeId));
+
+  return db
+    .select({
+      employeeId: employees.id,
+      employeeName: employees.name,
+      jobId: jobs.id,
+      jobCode: jobs.code,
+      task: jobAssignments.task,
+      jobTotalCents: jobs.totalCents,
+      commissionPercent: sql<string>`COALESCE(${jobAssignments.commissionOverridePercent}, ${employees.defaultCommissionPercent})`,
+      commissionAmountCents: jobAssignments.commissionAmountCents,
+    })
+    .from(jobAssignments)
+    .innerJoin(employees, eq(employees.id, jobAssignments.employeeId))
+    .innerJoin(jobs, eq(jobs.id, jobAssignments.jobId))
+    .where(and(...conditions))
+    .orderBy(desc(jobs.completedAt));
 }
