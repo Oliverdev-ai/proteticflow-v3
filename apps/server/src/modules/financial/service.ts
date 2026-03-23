@@ -50,15 +50,18 @@ type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 // ─── AR (ACCOUNTS RECEIVABLE) ────────────────────────────────────────────────
 
 export async function createAr(tenantId: number, input: CreateArInput) {
-  const [ar] = await db.insert(accountsReceivable).values({
+  const arData: typeof accountsReceivable.$inferInsert = {
     tenantId,
     jobId: input.jobId,
     clientId: input.clientId,
     amountCents: input.amountCents,
-    description: input.description,
     dueDate: new Date(input.dueDate),
     status: 'pending',
-  }).returning();
+  };
+  if (input.description !== undefined) arData.description = input.description;
+
+  const [ar] = await db.insert(accountsReceivable).values(arData).returning();
+  if (!ar) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar conta a receber' });
 
   logger.info({ action: 'financial.ar.create', tenantId, arId: ar.id, jobId: input.jobId, amountCents: input.amountCents }, 'Conta a receber criada');
   return ar;
@@ -76,6 +79,7 @@ export async function autoCreateArFromJob(tenantId: number, jobId: number, clien
     dueDate,
     status: 'pending',
   }).returning();
+  if (!ar) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar AR automatico' });
 
   logger.info({ action: 'financial.ar.auto_create', tenantId, arId: ar.id, jobId, amountCents: totalCents }, 'AR gerado automaticamente pela OS');
   return ar;
@@ -134,17 +138,25 @@ export async function markArPaid(tenantId: number, input: MarkArPaidInput, userI
   const now = new Date();
 
   const [updatedAr] = await db.transaction(async (tx) => {
+    const arUpdateData: Partial<typeof accountsReceivable.$inferInsert> & {
+      status: 'paid';
+      paidAt: Date;
+      updatedAt: Date;
+      notes: string | null;
+    } = {
+      status: 'paid',
+      paidAt: now,
+      notes: input.notes ? `${ar.notes || ''}\n[Pago]: ${input.notes}`.trim() : ar.notes,
+      updatedAt: now,
+    };
+    if (input.paymentMethod !== undefined) arUpdateData.paymentMethod = input.paymentMethod;
+
     // 1. Atualiza AR
     const [updated] = await tx.update(accountsReceivable)
-      .set({ 
-        status: 'paid', 
-        paidAt: now, 
-        paymentMethod: input.paymentMethod,
-        notes: input.notes ? `${ar.notes || ''}\n[Pago]: ${input.notes}`.trim() : ar.notes,
-        updatedAt: now
-      })
+      .set(arUpdateData)
       .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.id, input.id)))
       .returning();
+    if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a receber nao encontrada' });
 
     // 2. Insere Cashbook (AP-14)
     await tx.insert(cashbookEntries).values({
@@ -194,20 +206,23 @@ export async function cancelAr(tenantId: number, input: CancelArInput, userId: n
 // ─── AP (ACCOUNTS PAYABLE) ───────────────────────────────────────────────────
 
 export async function createAp(tenantId: number, input: CreateApInput, userId: number) {
-  const [ap] = await db.insert(accountsPayable).values({
+  const apData: typeof accountsPayable.$inferInsert = {
     tenantId,
     description: input.description,
-    supplierId: input.supplierId,
-    supplier: input.supplier,
-    category: input.category,
     amountCents: input.amountCents,
-    issuedAt: input.issuedAt ? new Date(input.issuedAt) : null,
     dueDate: new Date(input.dueDate),
-    reference: input.reference,
-    notes: input.notes,
     status: 'pending',
     createdBy: userId,
-  }).returning();
+  };
+  if (input.supplierId !== undefined) apData.supplierId = input.supplierId;
+  if (input.supplier !== undefined) apData.supplier = input.supplier;
+  if (input.category !== undefined) apData.category = input.category;
+  if (input.issuedAt !== undefined) apData.issuedAt = new Date(input.issuedAt);
+  if (input.reference !== undefined) apData.reference = input.reference;
+  if (input.notes !== undefined) apData.notes = input.notes;
+
+  const [ap] = await db.insert(accountsPayable).values(apData).returning();
+  if (!ap) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar conta a pagar' });
 
   logger.info({ action: 'financial.ap.create', tenantId, apId: ap.id, amountCents: input.amountCents }, 'Conta a pagar criada');
   return ap;
@@ -252,17 +267,25 @@ export async function markApPaid(tenantId: number, input: MarkApPaidInput, userI
   const now = new Date();
 
   const [updatedAp] = await db.transaction(async (tx) => {
+    const apUpdateData: Partial<typeof accountsPayable.$inferInsert> & {
+      status: 'paid';
+      paidAt: Date;
+      updatedAt: Date;
+      notes: string | null;
+    } = {
+      status: 'paid',
+      paidAt: now,
+      notes: input.notes ? `${ap.notes || ''}\n[Pago]: ${input.notes}`.trim() : ap.notes,
+      updatedAt: now,
+    };
+    if (input.paymentMethod !== undefined) apUpdateData.paymentMethod = input.paymentMethod;
+
     // 1. Atualiza AP
     const [updated] = await tx.update(accountsPayable)
-      .set({ 
-        status: 'paid', 
-        paidAt: now, 
-        paymentMethod: input.paymentMethod,
-        notes: input.notes ? `${ap.notes || ''}\n[Pago]: ${input.notes}`.trim() : ap.notes,
-        updatedAt: now
-      })
+      .set(apUpdateData)
       .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.id, input.id)))
       .returning();
+    if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a pagar nao encontrada' });
 
     // 2. Insere Cashbook (AP-14)
     await tx.insert(cashbookEntries).values({
@@ -309,9 +332,11 @@ export async function cancelAp(tenantId: number, input: CancelApInput, userId: n
 // ─── FECHAMENTO (CLOSINGS) ───────────────────────────────────────────────────
 
 export async function generateMonthlyClosing(tenantId: number, input: GenerateClosingInput, userId: number) {
-  const [year, month] = input.period.split('-');
-  const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-  const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+  const [yearRaw = '0', monthRaw = '1'] = input.period.split('-');
+  const year = Number.parseInt(yearRaw, 10);
+  const month = Number.parseInt(monthRaw, 10);
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
   const arConditions = [
     eq(accountsReceivable.tenantId, tenantId),
@@ -372,6 +397,7 @@ export async function generateMonthlyClosing(tenantId: number, input: GenerateCl
     closedBy: userId,
     closedAt: new Date(),
   }).returning();
+  if (!closing) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao gerar fechamento' });
 
   logger.info({ action: 'financial.closing.generate', tenantId, period: input.period, totalAmountCents }, 'Fechamento gerado');
   return closing;
@@ -384,10 +410,10 @@ export async function listClosings(tenantId: number, page: number = 1, limit: nu
     .offset((page - 1) * limit)
     .limit(limit);
     
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` })
+  const [countRow] = await db.select({ count: sql<number>`count(*)` })
     .from(financialClosings).where(eq(financialClosings.tenantId, tenantId));
 
-  return { data: result, total: Number(count) };
+  return { data: result, total: Number(countRow?.count ?? 0) };
 }
 
 export async function getClosing(tenantId: number, closingId: number) {
@@ -412,7 +438,7 @@ export async function listCashbook(tenantId: number, filters: ListCashbookInput)
     .offset((filters.page - 1) * filters.limit)
     .limit(filters.limit);
 
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` })
+  const [countRow] = await db.select({ count: sql<number>`count(*)` })
     .from(cashbookEntries).where(and(...conditions));
 
   const balanceAgg = await db.select({
@@ -429,7 +455,7 @@ export async function listCashbook(tenantId: number, filters: ListCashbookInput)
 
   const netBalance = totalCredits - totalDebits;
 
-  return { entries, balance: { totalCredits, totalDebits, netBalance }, total: Number(count) };
+  return { entries, balance: { totalCredits, totalDebits, netBalance }, total: Number(countRow?.count ?? 0) };
 }
 
 export async function createManualCashbookEntry(tenantId: number, input: CreateCashbookEntryInput, userId: number) {
@@ -473,7 +499,7 @@ export async function getAnnualBalance(tenantId: number, input: AnnualBalanceInp
   for (const ar of paidArs) {
     const month = ar.paidAt!.getMonth();
     const q = Math.floor(month / 3);
-    quarters[q].revenue += ar.amount;
+    if (quarters[q]) quarters[q].revenue += ar.amount;
   }
 
   const paidAps = await db.select({ amount: accountsPayable.amountCents, paidAt: accountsPayable.paidAt })
@@ -488,7 +514,7 @@ export async function getAnnualBalance(tenantId: number, input: AnnualBalanceInp
   for (const ap of paidAps) {
     const month = ap.paidAt!.getMonth();
     const q = Math.floor(month / 3);
-    quarters[q].expenses += ap.amount;
+    if (quarters[q]) quarters[q].expenses += ap.amount;
   }
 
   for (const q of quarters) {
@@ -572,11 +598,11 @@ export async function getCashFlow(tenantId: number, input: CashFlowInput) {
 
   for (const m of monthsMap.values()) m.net = m.credits - m.debits;
 
-  const [{ pendingCredits }] = await db.select({ pendingCredits: sql<number>`sum(${accountsReceivable.amountCents})` })
+  const [pendingCreditsRow] = await db.select({ pendingCredits: sql<number>`sum(${accountsReceivable.amountCents})` })
     .from(accountsReceivable)
     .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.status, 'pending')));
 
-  const [{ pendingDebits }] = await db.select({ pendingDebits: sql<number>`sum(${accountsPayable.amountCents})` })
+  const [pendingDebitsRow] = await db.select({ pendingDebits: sql<number>`sum(${accountsPayable.amountCents})` })
     .from(accountsPayable)
     .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.status, 'pending')));
 
@@ -585,8 +611,8 @@ export async function getCashFlow(tenantId: number, input: CashFlowInput) {
   return { 
     months, 
     projection: { 
-      pendingCredits: Number(pendingCredits || 0), 
-      pendingDebits: Number(pendingDebits || 0) 
+      pendingCredits: Number(pendingCreditsRow?.pendingCredits || 0), 
+      pendingDebits: Number(pendingDebitsRow?.pendingDebits || 0) 
     } 
   };
 }
@@ -596,15 +622,15 @@ export async function getDashboardSummary(tenantId: number) {
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
-  const [{ totalReceivable }] = await db.select({ totalReceivable: sql<number>`sum(${accountsReceivable.amountCents})` })
+  const [totalReceivableRow] = await db.select({ totalReceivable: sql<number>`sum(${accountsReceivable.amountCents})` })
     .from(accountsReceivable)
     .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.status, 'pending')));
 
-  const [{ totalPayable }] = await db.select({ totalPayable: sql<number>`sum(${accountsPayable.amountCents})` })
+  const [totalPayableRow] = await db.select({ totalPayable: sql<number>`sum(${accountsPayable.amountCents})` })
     .from(accountsPayable)
     .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.status, 'pending')));
 
-  const [{ overdueCents }] = await db.select({ overdueCents: sql<number>`sum(${accountsReceivable.amountCents})` })
+  const [overdueCentsRow] = await db.select({ overdueCents: sql<number>`sum(${accountsReceivable.amountCents})` })
     .from(accountsReceivable)
     .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.status, 'overdue')));
 
@@ -623,9 +649,9 @@ export async function getDashboardSummary(tenantId: number) {
   }
 
   return {
-    totalReceivableCents: Number(totalReceivable || 0),
-    totalPayableCents: Number(totalPayable || 0),
-    overdueCents: Number(overdueCents || 0),
+    totalReceivableCents: Number(totalReceivableRow?.totalReceivable || 0),
+    totalPayableCents: Number(totalPayableRow?.totalPayable || 0),
+    overdueCents: Number(overdueCentsRow?.overdueCents || 0),
     monthFlowCents
   };
 }
