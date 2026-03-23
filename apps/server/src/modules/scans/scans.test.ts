@@ -3,7 +3,7 @@ import { db } from '../../db/index.js';
 import { users } from '../../db/schema/users.js';
 import { tenants, tenantMembers } from '../../db/schema/tenants.js';
 import { scans } from '../../db/schema/scans.js';
-import { clients, priceItems, priceTables } from '../../db/schema/clients.js';
+import { clients, priceItems, pricingTables } from '../../db/schema/clients.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { hashPassword } from '../../core/auth.js';
 import { eq } from 'drizzle-orm';
@@ -27,15 +27,19 @@ async function createTestTenant(userId: number, name: string) {
 
 async function createTestClient(tenantId: number, userId: number, name: string) {
   const { createClient } = await import('../clients/service.js');
-  return createClient(tenantId, { name, priceAdjustmentPercent: 0 }, userId);
+  const client = await createClient(tenantId, { name, priceAdjustmentPercent: 0 }, userId);
+  if (!client) throw new Error('Falha ao criar cliente de teste');
+  return client;
 }
 
 async function createTestJob(tenantId: number, clientId: number, userId: number) {
-  return jobService.createJob(tenantId, {
+  const job = await jobService.createJob(tenantId, {
     clientId,
     deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     items: [{ serviceNameSnapshot: 'Coroa', quantity: 1, unitPriceCents: 10000, adjustmentPercent: 0 }],
   }, userId);
+  if (!job) throw new Error('Falha ao criar job de teste');
+  return job;
 }
 
 async function cleanup() {
@@ -45,7 +49,7 @@ async function cleanup() {
   await db.delete(jobs);
   await db.delete(orderCounters);
   await db.delete(priceItems);
-  await db.delete(priceTables);
+  await db.delete(pricingTables);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);
@@ -215,4 +219,3 @@ describe('Scans Service', () => {
     await expect(scanService.getScan(tenantB.id, created.id)).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
-
