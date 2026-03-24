@@ -10,6 +10,8 @@ import { generateReportPdf } from './pdf-engine.js';
 import { buildJobsByPeriodReport } from './adapters/jobs-report.js';
 import { buildProductivityReport } from './adapters/productivity-report.js';
 import { buildDeliveriesReport } from './adapters/deliveries-report.js';
+import { buildMonthlyClosingReport } from './adapters/monthly-closing-report.js';
+import { buildQuarterlyAnnualReport } from './adapters/quarterly-annual-report.js';
 
 type ReportFilters = {
   dateFrom: string;
@@ -97,6 +99,12 @@ async function resolvePreview(
   }
   if (type === 'deliveries') {
     return buildDeliveriesReport(tenantId, filters);
+  }
+  if (type === 'monthly_closing') {
+    return buildMonthlyClosingReport(tenantId, filters);
+  }
+  if (type === 'quarterly_annual') {
+    return buildQuarterlyAnnualReport(tenantId, filters);
   }
 
   return buildPlaceholderPreview(type);
