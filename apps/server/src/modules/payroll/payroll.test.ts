@@ -51,7 +51,7 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
         name: 'Admin Payroll',
         email: `admin-pay-${Date.now()}@test.com`,
         passwordHash: 'hashed',
-        role: 'admin' as any,
+        role: 'admin',
       })
       .returning();
     const user = assertExists(userRow, 'payroll user');
@@ -62,8 +62,8 @@ describe('Payroll Module - Phase 12 (Full 10 Tests)', () => {
       .values({
         tenantId: testTenantId,
         name: 'Salary Staff',
-        type: 'protesista' as any,
-        contractType: 'clt' as any,
+        type: 'protesista',
+        contractType: 'clt',
         isActive: true,
         baseSalaryCents: 300000,
         createdBy: testUserId,

@@ -49,7 +49,7 @@ export async function createEmployee(tenantId: number, input: CreateEmployeeInpu
     createdBy: userId,
   };
 
-  const [employee] = await db.insert(employees).values(data).returning();
+  const [employee] = await db.insert(employees).values(data as typeof employees.$inferInsert).returning();
   if (!employee) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar funcionário' });
 
   logger.info({ action: 'employee.create', tenantId, employeeId: employee.id }, 'Employee created');
@@ -129,7 +129,7 @@ export async function updateEmployee(tenantId: number, id: number, input: Update
   if (input.notes !== undefined) data.notes = input.notes;
 
   const [updated] = await db.update(employees)
-    .set(data)
+    .set(data as Partial<typeof employees.$inferInsert>)
     .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), isNull(employees.deletedAt)))
     .returning();
 
@@ -203,8 +203,10 @@ export async function assignJob(tenantId: number, input: z.infer<typeof createAs
     task: input.task ?? null,
     commissionOverridePercent: input.commissionOverridePercent ? String(input.commissionOverridePercent) : null,
   };
-
-  const [assignment] = await db.insert(jobAssignments).values(assignmentData).returning();
+  const [assignment] = await db
+    .insert(jobAssignments)
+    .values(assignmentData as typeof jobAssignments.$inferInsert)
+    .returning();
 
   return assignment;
 }
@@ -359,9 +361,7 @@ export async function getCommissionDetails(tenantId: number, input: z.infer<type
       jobCode: jobs.code,
       task: jobAssignments.task,
       jobTotalCents: jobs.totalCents,
-      commissionPercent: sql<string>`
-        COALESCE(${jobAssignments.commissionOverridePercent}, ${employees.defaultCommissionPercent})
-      `,
+      commissionPercent: sql<string>`COALESCE(${jobAssignments.commissionOverridePercent}, ${employees.defaultCommissionPercent})`,
       commissionAmountCents: jobAssignments.commissionAmountCents,
     })
     .from(jobAssignments)
