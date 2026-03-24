@@ -55,6 +55,7 @@ import ScanDetailPage from './app/(dashboard)/scans/[id]';
 import AgendaPage from './app/(dashboard)/agenda/index';
 import EventCreatePage from './app/(dashboard)/agenda/novo';
 import SettingsPage from './app/(dashboard)/configuracoes/index';
+import PublicPortalPage from './app/portal/[token]';
 
 import './globals.css';
 
@@ -69,6 +70,9 @@ function AppContent() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
+
+        {/* Fase 17 - Portal publico por token */}
+        <Route path="/portal/:token" element={<PublicPortalPage />} />
 
         {/* Onboarding — autenticado mas sem tenant */}
         <Route path="/onboarding" element={<OnboardingWizard />} />
