@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { updateClientSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import { ArrowLeft, Loader2, AlertCircle, ReceiptText, Pencil } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, ReceiptText, Pencil, Link2 } from 'lucide-react';
 
 type FormData = z.infer<typeof updateClientSchema>;
 
@@ -84,6 +84,14 @@ export default function ClientEditPage() {
             {client.status === 'active' ? 'Ativo' : 'Inativo'}
           </span>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate(`/clientes/${clientId}/portal`)}
+          className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-neutral-800 text-neutral-200 hover:bg-neutral-700"
+        >
+          <Link2 size={13} />
+          Portal do cliente
+        </button>
       </div>
 
       {/* Tabs */}

@@ -14,6 +14,7 @@ import { OnboardingWizard } from './app/(dashboard)/onboarding';
 import ClientListPage from './app/(dashboard)/clientes/index';
 import ClientCreatePage from './app/(dashboard)/clientes/novo';
 import ClientEditPage from './app/(dashboard)/clientes/[id]';
+import ClientPortalManagementPage from './app/(dashboard)/clientes/[id]/portal';
 // Fase 5 — Tabelas de Preços
 import PricingTablesPage from './app/(dashboard)/precos/index';
 import PricingTableDetailPage from './app/(dashboard)/precos/[id]';
@@ -88,6 +89,7 @@ function AppContent() {
           <Route path="/clientes" element={<ClientListPage />} />
           <Route path="/clientes/novo" element={<ClientCreatePage />} />
           <Route path="/clientes/:id" element={<ClientEditPage />} />
+          <Route path="/clientes/:id/portal" element={<ClientPortalManagementPage />} />
           {/* Fase 5 — Tabelas de Preços */}
           <Route path="/precos" element={<PricingTablesPage />} />
           <Route path="/precos/:id" element={<PricingTableDetailPage />} />
