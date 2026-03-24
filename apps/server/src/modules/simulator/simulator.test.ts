@@ -42,6 +42,26 @@ describe('Simulator Engine', () => {
     expect(result.estimatedMarginPercent).toBe(40);
   });
 
+  it('preserva snapshot de nome e preco por linha', () => {
+    const result = calculateSimulation({
+      clientAdjustmentPercent: 0,
+      scenarioDiscountPercent: 0,
+      lines: [
+        {
+          priceItemId: 77,
+          serviceNameSnapshot: 'Barra protocolo',
+          quantity: 3,
+          unitPriceCents: 2500,
+          estimatedUnitCostCents: 1000,
+        },
+      ],
+    });
+
+    expect(result.lines[0]?.priceItemId).toBe(77);
+    expect(result.lines[0]?.serviceNameSnapshot).toBe('Barra protocolo');
+    expect(result.lines[0]?.unitPriceCentsSnapshot).toBe(2500);
+  });
+
   it('compara mesma lista de servicos em tabelas diferentes', () => {
     const comparison = compareTables(
       [
@@ -58,4 +78,7 @@ describe('Simulator Engine', () => {
     expect(comparison.totalsByTable[10]).toBe(50000);
     expect(comparison.totalsByTable[11]).toBe(48000);
   });
+
+  it.todo('proibe dupla conversao da mesma simulacao');
+  it.todo('garante tenant isolation no fluxo de conversao');
 });
