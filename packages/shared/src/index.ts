@@ -17,5 +17,7 @@ export * from './validation/payroll.schema';
 export * from './validation/delivery.schema';
 export * from './validation/scan.schema';
 export * from './validation/event.schema';
+export * from './validation/simulation.schema';
 export * from './types/auth';
 export * from './types/tenant';
+export * from './types/simulation';
