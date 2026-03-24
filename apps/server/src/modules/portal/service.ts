@@ -7,6 +7,7 @@ import { clients } from '../../db/schema/clients.js';
 import { jobs, jobLogs, jobPhotos } from '../../db/schema/jobs.js';
 import { labSettings } from '../../db/schema/lab-settings.js';
 import { tenants } from '../../db/schema/tenants.js';
+import { logger } from '../../logger.js';
 import type {
   PublicPortalJob,
   PublicPortalPhoto,

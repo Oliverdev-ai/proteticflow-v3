@@ -3,6 +3,7 @@ import { monthlyClosing } from './monthly-closing.js';
 import { overdueReminders } from './overdue-reminders.js';
 import { eventReminders } from './event-reminders.js';
 import { deadlineAlerts } from './deadline-alerts.js';
+import { portalTokenCleanup } from '../modules/portal/tasks.js';
 import { logger } from '../logger.js';
 
 export function startCronJobs() {
@@ -28,6 +29,12 @@ export function startCronJobs() {
   cron.schedule('0 * * * *', async () => {
     logger.info({ action: 'cron.deadline_alerts.start' }, 'Processando alertas de prazo 24h');
     await deadlineAlerts();
+  });
+
+  // 17.xx: Higiene do portal do cliente - diario as 03:00
+  cron.schedule('0 3 * * *', async () => {
+    logger.info({ action: 'cron.portal_token_cleanup.start' }, 'Iniciando cleanup de tokens do portal');
+    await portalTokenCleanup();
   });
 
   logger.info('Cron jobs registrados');
