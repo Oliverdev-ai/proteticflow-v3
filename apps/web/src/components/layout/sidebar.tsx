@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Briefcase, Columns3, DollarSign,
   Package, UserCog, BarChart3, Settings, Stethoscope, FileSpreadsheet, Truck,
-  Coins, Scan, Calendar,
+  Coins, Scan, Calendar, Calculator,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
@@ -15,6 +15,7 @@ const MENU_ITEMS = [
   { label: 'Kanban',            icon: Columns3,         href: '/kanban',         module: 'kanban' },
   { label: 'Scans 3D',          icon: Scan,             href: '/scans',          module: 'scans' },
   { label: 'Agenda',            icon: Calendar,         href: '/agenda',         module: 'agenda' },
+  { label: 'Simulador',         icon: Calculator,       href: '/simulador',      module: 'pricing' },
   { label: 'Entregas',          icon: Truck,            href: '/entregas',       module: 'deliveries' },
   { label: 'Financeiro',        icon: DollarSign,       href: '/financeiro',     module: 'financial' },
   { label: 'Estoque',           icon: Package,          href: '/estoque',        module: 'inventory' },

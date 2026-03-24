@@ -54,6 +54,7 @@ import ScanDetailPage from './app/(dashboard)/scans/[id]';
 // Fase 14 - Agenda
 import AgendaPage from './app/(dashboard)/agenda/index';
 import EventCreatePage from './app/(dashboard)/agenda/novo';
+import SimulatorPage from './app/(dashboard)/simulador';
 
 import './globals.css';
 
@@ -123,6 +124,8 @@ function AppContent() {
           {/* Fase 14 - Agenda */}
           <Route path="/agenda" element={<AgendaPage />} />
           <Route path="/agenda/novo" element={<EventCreatePage />} />
+          {/* Fase 18 - Simulador */}
+          <Route path="/simulador" element={<SimulatorPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
