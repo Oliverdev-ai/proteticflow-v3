@@ -13,6 +13,7 @@ import { scanRouter } from '../modules/scans/router.js';
 import { agendaRouter } from '../modules/agenda/router.js';
 import { settingsRouter } from '../modules/settings/router.js';
 import { notificationRouter } from '../modules/notifications/router.js';
+import { portalRouter } from '../modules/portal/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -29,6 +30,7 @@ export const appRouter = router({
   agenda: agendaRouter,
   settings: settingsRouter,
   notification: notificationRouter,
+  portal: portalRouter,
 });
 
 export type AppRouter = typeof appRouter;
