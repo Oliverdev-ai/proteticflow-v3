@@ -23,3 +23,15 @@ export async function sendSimulationEmail(input: SendSimulationEmailInput) {
 
   return { success: true };
 }
+
+export type SendSimulationWhatsAppInput = {
+  tenantId: number;
+  simulationId: number;
+  phone: string;
+  message: string;
+  pdfBase64: string;
+};
+
+export async function sendViaWhatsApp(_input: SendSimulationWhatsAppInput) {
+  throw new Error('WhatsApp adapter desativado nesta fase (previsto para Fase 29).');
+}
