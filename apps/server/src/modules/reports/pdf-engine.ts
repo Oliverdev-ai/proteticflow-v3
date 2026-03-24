@@ -1,11 +1,6 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import type { ReportPreviewResult } from '@proteticflow/shared';
-
-type JsPdfWithAutoTable = jsPDF & {
-  autoTable: (options: unknown) => void;
-  lastAutoTable?: { finalY: number };
-};
 
 type ReportPdfInput = {
   report: ReportPreviewResult;
@@ -22,7 +17,7 @@ function toCellValue(value: string | number | boolean | null) {
 }
 
 export function generateReportPdf(input: ReportPdfInput): Buffer {
-  const doc = new jsPDF() as JsPdfWithAutoTable;
+  const doc = new jsPDF();
 
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
@@ -46,7 +41,7 @@ export function generateReportPdf(input: ReportPdfInput): Buffer {
     input.report.columns.map((column) => toCellValue(row[column] ?? null))
   ));
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: input.generatedBy || input.logoUrl ? 50 : 44,
     head: [input.report.columns],
     body: tableRows,
@@ -54,7 +49,7 @@ export function generateReportPdf(input: ReportPdfInput): Buffer {
     headStyles: { fillColor: [31, 41, 55] },
   });
 
-  const finalY = doc.lastAutoTable?.finalY ?? 70;
+  const finalY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 70;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.text('Resumo', 14, finalY + 10);
