@@ -7,6 +7,9 @@ import type {
 } from '@proteticflow/shared';
 import { reportRegistry, getReportDefinition } from './report-registry.js';
 import { generateReportPdf } from './pdf-engine.js';
+import { buildJobsByPeriodReport } from './adapters/jobs-report.js';
+import { buildProductivityReport } from './adapters/productivity-report.js';
+import { buildDeliveriesReport } from './adapters/deliveries-report.js';
 
 type ReportFilters = {
   dateFrom: string;
@@ -81,6 +84,24 @@ function buildPlaceholderPreview(type: ReportType): ReportPreviewResult {
   };
 }
 
+async function resolvePreview(
+  tenantId: number,
+  type: ReportType,
+  filters: ReportFilters,
+): Promise<ReportPreviewResult> {
+  if (type === 'jobs_by_period') {
+    return buildJobsByPeriodReport(tenantId, filters);
+  }
+  if (type === 'productivity') {
+    return buildProductivityReport(tenantId, filters);
+  }
+  if (type === 'deliveries') {
+    return buildDeliveriesReport(tenantId, filters);
+  }
+
+  return buildPlaceholderPreview(type);
+}
+
 export async function listDefinitions(_tenantId: number) {
   return reportRegistry;
 }
@@ -90,7 +111,7 @@ export async function preview(tenantId: number, type: ReportType, _filters: Repo
   assertRoleAccess(userRole, type);
   const definition = getReportDefinition(type);
   assertReportEnabledOrThrow(definition);
-  return buildPlaceholderPreview(type);
+  return resolvePreview(tenantId, type, _filters);
 }
 
 export async function generatePdf(
