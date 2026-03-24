@@ -7,6 +7,7 @@ import {
   clients,
   priceItems,
   pricingTables,
+  jobs,
 } from '../../db/schema/index.js';
 import { db } from '../../db/index.js';
 import {
@@ -17,6 +18,7 @@ import {
   listSimulationsSchema,
   approveSimulationAndCreateJobSchema,
 } from '@proteticflow/shared';
+import * as jobsService from '../jobs/service.js';
 
 export type SimulationEngineLineInput = {
   priceItemId: number | null;
@@ -575,9 +577,87 @@ export async function sendBudgetEmail(tenantId: number, simulationId: number, em
 }
 
 export async function approveAndCreateJob(
-  _tenantId: number,
-  _input: ApproveAndCreateJobInput,
-  _userId: number,
+  tenantId: number,
+  input: ApproveAndCreateJobInput,
+  userId: number,
 ) {
-  throw new TRPCError({ code: 'NOT_IMPLEMENTED', message: 'Conversao para OS sera implementada no bloco T18.4' });
+  const [simulation] = await db
+    .select()
+    .from(simulations)
+    .where(and(eq(simulations.tenantId, tenantId), eq(simulations.id, input.simulationId)));
+
+  if (!simulation) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Simulacao nao encontrada' });
+  }
+
+  if (simulation.convertedJobId) {
+    const [job] = await db
+      .select({ id: jobs.id, code: jobs.code })
+      .from(jobs)
+      .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, simulation.convertedJobId)));
+
+    return {
+      simulationId: simulation.id,
+      jobId: simulation.convertedJobId,
+      jobCode: job?.code ?? null,
+      alreadyConverted: true,
+    };
+  }
+
+  if (simulation.status === 'rejected') {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Simulacao rejeitada nao pode ser convertida' });
+  }
+
+  const rows = await db
+    .select()
+    .from(simulationItems)
+    .where(and(
+      eq(simulationItems.tenantId, tenantId),
+      eq(simulationItems.simulationId, simulation.id),
+    ))
+    .orderBy(simulationItems.id);
+
+  if (rows.length === 0) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Simulacao sem itens nao pode ser convertida' });
+  }
+
+  const scenarioDiscountPercent = toPercentNumber(simulation.scenarioDiscountPercent);
+
+  const createdJob = await jobsService.createJob(tenantId, {
+    clientId: simulation.clientId,
+    patientName: input.patientName ?? undefined,
+    prothesisType: input.prothesisType ?? undefined,
+    material: input.material ?? undefined,
+    color: input.color ?? undefined,
+    instructions: input.instructions ?? undefined,
+    notes: input.notes ?? simulation.notes ?? undefined,
+    deadline: input.deadline,
+    assignedTo: input.assignedTo ?? undefined,
+    items: rows.map((item) => ({
+      priceItemId: item.priceItemId ?? undefined,
+      serviceNameSnapshot: item.serviceNameSnapshot,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCentsSnapshot,
+      adjustmentPercent: scenarioDiscountPercent === 0 ? 0 : scenarioDiscountPercent * -1,
+    })),
+  }, userId);
+
+  await db
+    .update(simulations)
+    .set({
+      status: 'approved',
+      approvedAt: simulation.approvedAt ?? new Date(),
+      convertedJobId: createdJob.id,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(simulations.tenantId, tenantId), eq(simulations.id, simulation.id), isNull(simulations.convertedJobId)));
+
+  await jobsService.addSimulationConversionLog(tenantId, createdJob.id, simulation.id, userId);
+
+  return {
+    simulationId: simulation.id,
+    jobId: createdJob.id,
+    jobCode: createdJob.code,
+    alreadyConverted: false,
+  };
 }

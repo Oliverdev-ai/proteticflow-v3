@@ -348,6 +348,17 @@ export async function getLogs(tenantId: number, jobId: number) {
     .orderBy(sql`${jobLogs.createdAt} DESC`);
 }
 
+export async function addSimulationConversionLog(tenantId: number, jobId: number, simulationId: number, userId: number) {
+  await db.insert(jobLogs).values({
+    tenantId,
+    jobId,
+    userId,
+    fromStatus: null,
+    toStatus: 'pending',
+    notes: `OS criada a partir da simulacao #${simulationId}`,
+  });
+}
+
 // ─── Fotos ────────────────────────────────────────────────────────────────────
 
 export async function uploadPhoto(tenantId: number, input: UploadPhotoInput, uploadedBy: number) {
