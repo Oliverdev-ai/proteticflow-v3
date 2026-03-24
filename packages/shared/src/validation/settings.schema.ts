@@ -23,6 +23,7 @@ export const updateLabIdentitySchema = z.object({
   address: z.string().max(2000).optional(),
   city: z.string().max(128).optional(),
   state: z.string().length(2).optional(),
+  website: z.string().url().optional().or(z.literal('')),
 });
 
 export const updateLabBrandingSchema = z.object({
@@ -30,7 +31,6 @@ export const updateLabBrandingSchema = z.object({
   reportFooter: z.string().max(2000).optional(),
   primaryColor: z.string().regex(hexColorRegex, 'Cor primaria invalida (#RRGGBB)'),
   secondaryColor: z.string().regex(hexColorRegex, 'Cor secundaria invalida (#RRGGBB)'),
-  website: z.string().url().optional().or(z.literal('')),
 });
 
 export const updatePrinterSettingsSchema = z.object({
@@ -88,6 +88,7 @@ export const settingsOverviewSchema = z.object({
     address: z.string().nullable(),
     city: z.string().nullable(),
     state: z.string().nullable(),
+    website: z.string().nullable(),
     logoUrl: z.string().nullable(),
   }),
   branding: z.object({
@@ -95,7 +96,6 @@ export const settingsOverviewSchema = z.object({
     reportFooter: z.string().nullable(),
     primaryColor: z.string().regex(hexColorRegex),
     secondaryColor: z.string().regex(hexColorRegex),
-    website: z.string().nullable(),
   }),
   printer: z.object({
     printerHost: z.string().nullable(),

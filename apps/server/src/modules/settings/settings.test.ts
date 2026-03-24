@@ -1,8 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { labSettings, tenantMembers, tenants, users } from '../../db/schema/index.js';
 import { hashPassword } from '../../core/auth.js';
+import { logger } from '../../logger.js';
 import * as settingsService from './service.js';
 
 async function createUser(email: string) {
@@ -64,11 +65,14 @@ describe('settings module', () => {
       address: 'Rua A, 123',
       city: 'Sao Paulo',
       state: 'SP',
+      website: 'https://lab-identidade.com',
     });
 
     const [updatedTenant] = await db.select().from(tenants).where(eq(tenants.id, tenant.id));
+    const [updatedSettings] = await db.select().from(labSettings).where(eq(labSettings.tenantId, tenant.id));
     expect(updatedTenant?.name).toBe('Lab Atualizado');
     expect(updatedTenant?.cnpj).toBe('12345678000195');
+    expect(updatedSettings?.website).toBe('https://lab-identidade.com');
   });
 
   it('update branding altera apenas lab_settings', async () => {
@@ -80,7 +84,6 @@ describe('settings module', () => {
       secondaryColor: '#445566',
       reportHeader: 'Header X',
       reportFooter: 'Footer X',
-      website: 'https://lab-branding.com',
     });
 
     const [settings] = await db.select().from(labSettings).where(eq(labSettings.tenantId, tenant.id));
@@ -129,5 +132,46 @@ describe('settings module', () => {
       eq(tenantMembers.userId, member.id),
     ));
     expect(updatedMember?.role).toBe('producao');
+  });
+
+  it('nao vaza senha SMTP em logs estruturados', async () => {
+    const user = await createUser('settings-logs@test.com');
+    const tenant = await createTenantFor(user.id, 'Lab Logs');
+
+    const infoSpy = vi.spyOn(logger, 'info');
+
+    await settingsService.updateSmtpSettings(tenant.id, user.id, {
+      smtpMode: 'custom_smtp',
+      smtpHost: 'smtp.example.com',
+      smtpPort: 587,
+      smtpSecure: false,
+      smtpUsername: 'smtp-user',
+      smtpPassword: 'senha-super-secreta',
+      smtpFromEmail: 'noreply@example.com',
+      smtpFromName: 'Lab',
+    });
+
+    const callsDump = JSON.stringify(infoSpy.mock.calls);
+    expect(callsDump.includes('senha-super-secreta')).toBe(false);
+
+    infoSpy.mockRestore();
+  });
+
+  it('gera alerta quando teste SMTP falha', async () => {
+    const user = await createUser('settings-alert@test.com');
+    const tenant = await createTenantFor(user.id, 'Lab Alert');
+    await settingsService.updateSmtpSettings(tenant.id, user.id, {
+      smtpMode: 'custom_smtp',
+      smtpSecure: false,
+    });
+
+    const warnSpy = vi.spyOn(logger, 'warn');
+
+    await expect(settingsService.testSmtpConnection(tenant.id, user.id)).rejects.toBeDefined();
+    expect(warnSpy).toHaveBeenCalled();
+    const callsDump = JSON.stringify(warnSpy.mock.calls);
+    expect(callsDump.includes('settings.alert.smtp_test_failed')).toBe(true);
+
+    warnSpy.mockRestore();
   });
 });

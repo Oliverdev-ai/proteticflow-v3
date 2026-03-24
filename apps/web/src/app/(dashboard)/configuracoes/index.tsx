@@ -4,8 +4,8 @@ import { useSettings } from '../../../hooks/use-settings';
 import { SettingsTabs } from '../../../components/settings/settings-tabs';
 import { ProfileTab } from '../../../components/settings/profile-tab';
 import { LabTab } from '../../../components/settings/lab-tab';
-import { InfraTab } from '../../../components/settings/infra-tab';
-import { TeamTab } from '../../../components/settings/team-tab';
+import { EmployeesTab } from '../../../components/settings/employees-tab';
+import { AuthorizationsTab } from '../../../components/settings/authorizations-tab';
 import { PlansTab } from '../../../components/settings/plans-tab';
 
 export default function SettingsPage() {
@@ -35,8 +35,8 @@ export default function SettingsPage() {
       <SettingsTabs
         perfil={<ProfileTab />}
         laboratorio={<LabTab />}
-        infra={<InfraTab />}
-        equipe={<TeamTab />}
+        funcionarios={<EmployeesTab />}
+        autorizacoes={<AuthorizationsTab />}
         planos={<PlansTab />}
       />
     </div>

@@ -9,7 +9,6 @@ export function BrandingForm() {
   const [reportFooter, setReportFooter] = useState(branding?.reportFooter ?? '');
   const [primaryColor, setPrimaryColor] = useState(branding?.primaryColor ?? '#1a56db');
   const [secondaryColor, setSecondaryColor] = useState(branding?.secondaryColor ?? '#6b7280');
-  const [website, setWebsite] = useState(branding?.website ?? '');
 
   return (
     <div className="space-y-3">
@@ -25,10 +24,8 @@ export function BrandingForm() {
       </div>
       <input className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white" placeholder="Header de relatorios" value={reportHeader} onChange={(e) => setReportHeader(e.target.value)} />
       <input className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white" placeholder="Footer de relatorios" value={reportFooter} onChange={(e) => setReportFooter(e.target.value)} />
-      <input className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white" placeholder="Website" value={website} onChange={(e) => setWebsite(e.target.value)} />
-
       <button
-        onClick={() => updateBranding.mutate({ primaryColor, secondaryColor, reportHeader, reportFooter, website })}
+        onClick={() => updateBranding.mutate({ primaryColor, secondaryColor, reportHeader, reportFooter })}
         className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-sm"
       >
         Salvar branding

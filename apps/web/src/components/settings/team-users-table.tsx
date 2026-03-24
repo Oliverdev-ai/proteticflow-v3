@@ -1,7 +1,7 @@
 import { useSettings } from '../../hooks/use-settings';
 import { UserRoleDialog } from './user-role-dialog';
 
-export function TeamUsersTable() {
+export function TeamUsersTable({ showRoleActions = true }: { showRoleActions?: boolean }) {
   const { overview } = useSettings();
 
   const users = overview.data?.users ?? [];
@@ -18,7 +18,7 @@ export function TeamUsersTable() {
             <th className="text-left py-2">Nome</th>
             <th className="text-left py-2">Email</th>
             <th className="text-left py-2">Role</th>
-            <th className="text-left py-2">Acoes</th>
+            {showRoleActions && <th className="text-left py-2">Acoes</th>}
           </tr>
         </thead>
         <tbody>
@@ -27,7 +27,7 @@ export function TeamUsersTable() {
               <td className="py-2 text-white">{user.name}</td>
               <td className="py-2 text-neutral-300">{user.email}</td>
               <td className="py-2 text-neutral-300">{user.role}</td>
-              <td className="py-2"><UserRoleDialog user={user} /></td>
+              {showRoleActions && <td className="py-2"><UserRoleDialog user={user} /></td>}
             </tr>
           ))}
         </tbody>

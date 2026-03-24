@@ -1,20 +1,20 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
-type TabKey = 'perfil' | 'laboratorio' | 'infra' | 'equipe' | 'planos';
+type TabKey = 'perfil' | 'laboratorio' | 'funcionarios' | 'autorizacoes' | 'planos';
 
 export interface SettingsTabsProps {
-  perfil: React.ReactNode;
-  laboratorio: React.ReactNode;
-  infra: React.ReactNode;
-  equipe: React.ReactNode;
-  planos: React.ReactNode;
+  perfil: ReactNode;
+  laboratorio: ReactNode;
+  funcionarios: ReactNode;
+  autorizacoes: ReactNode;
+  planos: ReactNode;
 }
 
 const tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'perfil', label: 'Perfil' },
   { key: 'laboratorio', label: 'Laboratorio' },
-  { key: 'infra', label: 'Infra local' },
-  { key: 'equipe', label: 'Equipe' },
+  { key: 'funcionarios', label: 'Funcionarios' },
+  { key: 'autorizacoes', label: 'Autorizacoes' },
   { key: 'planos', label: 'Planos' },
 ];
 
@@ -40,8 +40,8 @@ export function SettingsTabs(props: SettingsTabsProps) {
       <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
         {active === 'perfil' && props.perfil}
         {active === 'laboratorio' && props.laboratorio}
-        {active === 'infra' && props.infra}
-        {active === 'equipe' && props.equipe}
+        {active === 'funcionarios' && props.funcionarios}
+        {active === 'autorizacoes' && props.autorizacoes}
         {active === 'planos' && props.planos}
       </div>
     </div>

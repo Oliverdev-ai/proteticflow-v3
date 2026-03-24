@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { db } from '../../db/index.js';
 import { labSettings, tenants } from '../../db/schema/index.js';
@@ -16,6 +16,17 @@ import type {
   UpdateUserRoleFromSettingsInput,
   UploadLogoInput,
 } from '@proteticflow/shared';
+
+function logSettingsMetric(tenantId: number, userId: number, metricName: string, section: string) {
+  logger.info({
+    action: 'settings.metric',
+    tenantId,
+    userId,
+    metricName,
+    section,
+    value: 1,
+  }, 'Metrica de negocio de configuracoes');
+}
 
 function normalizeOptional(value?: string): string | null {
   if (value === undefined) return null;
@@ -55,6 +66,7 @@ function mapOverview(tenant: typeof tenants.$inferSelect, settings: typeof labSe
       address: tenant.address,
       city: tenant.city,
       state: tenant.state,
+      website: settings.website,
       logoUrl: tenant.logoUrl,
     },
     branding: {
@@ -62,7 +74,6 @@ function mapOverview(tenant: typeof tenants.$inferSelect, settings: typeof labSe
       reportFooter: settings.reportFooter,
       primaryColor: settings.primaryColor,
       secondaryColor: settings.secondaryColor,
-      website: settings.website,
     },
     printer: {
       printerHost: settings.printerHost,
@@ -106,18 +117,39 @@ export async function getSettingsOverview(tenantId: number, includeUsers = false
 }
 
 export async function updateLabIdentity(tenantId: number, userId: number, input: LabIdentityInput) {
-  const [updatedTenant] = await db.update(tenants).set({
-    name: input.name,
-    cnpj: normalizeCnpj(input.cnpj),
-    phone: normalizeOptional(input.phone),
-    email: normalizeOptional(input.email),
-    address: normalizeOptional(input.address),
-    city: normalizeOptional(input.city),
-    state: normalizeOptional(input.state),
-    updatedAt: new Date(),
-  }).where(eq(tenants.id, tenantId)).returning();
+  const [updatedTenant] = await db.transaction(async (tx) => {
+    const [tenant] = await tx.update(tenants).set({
+      name: input.name,
+      cnpj: normalizeCnpj(input.cnpj),
+      phone: normalizeOptional(input.phone),
+      email: normalizeOptional(input.email),
+      address: normalizeOptional(input.address),
+      city: normalizeOptional(input.city),
+      state: normalizeOptional(input.state),
+      updatedAt: new Date(),
+    }).where(eq(tenants.id, tenantId)).returning();
+
+    const [existingSettings] = await tx.select().from(labSettings).where(eq(labSettings.tenantId, tenantId));
+    const settingsId = existingSettings
+      ? existingSettings.id
+      : (await tx.insert(labSettings).values({
+          tenantId,
+          labName: input.name,
+          primaryColor: '#1a56db',
+          secondaryColor: '#6b7280',
+          smtpMode: 'resend_fallback',
+        }).returning())[0]!.id;
+
+    await tx.update(labSettings).set({
+      website: normalizeOptional(input.website),
+      updatedAt: new Date(),
+    }).where(eq(labSettings.id, settingsId));
+
+    return [tenant];
+  });
 
   logger.info({ action: 'settings.identity.update', tenantId, userId }, 'Identidade do laboratorio atualizada');
+  logSettingsMetric(tenantId, userId, 'settings_updates_total', 'identity');
   return updatedTenant;
 }
 
@@ -128,11 +160,11 @@ export async function updateLabBranding(tenantId: number, userId: number, input:
     reportFooter: normalizeOptional(input.reportFooter),
     primaryColor: input.primaryColor,
     secondaryColor: input.secondaryColor,
-    website: normalizeOptional(input.website),
     updatedAt: new Date(),
   }).where(eq(labSettings.id, settings.id)).returning();
 
   logger.info({ action: 'settings.branding.update', tenantId, userId }, 'Branding do laboratorio atualizado');
+  logSettingsMetric(tenantId, userId, 'settings_updates_total', 'branding');
   return updated;
 }
 
@@ -149,6 +181,7 @@ export async function uploadLogo(tenantId: number, userId: number, input: Upload
   }).where(eq(tenants.id, tenantId)).returning();
 
   logger.info({ action: 'settings.logo.upload', tenantId, userId }, 'Logo atualizado');
+  logSettingsMetric(tenantId, userId, 'settings_updates_total', 'logo_upload');
   return { logoUrl: updated.logoUrl };
 }
 
@@ -164,6 +197,7 @@ export async function removeLogo(tenantId: number, userId: number) {
   }).where(eq(tenants.id, tenantId));
 
   logger.info({ action: 'settings.logo.remove', tenantId, userId }, 'Logo removido');
+  logSettingsMetric(tenantId, userId, 'settings_updates_total', 'logo_remove');
   return { success: true };
 }
 
@@ -177,6 +211,7 @@ export async function updatePrinterSettings(tenantId: number, userId: number, in
   }).where(eq(labSettings.id, settings.id)).returning();
 
   logger.info({ action: 'settings.printer.update', tenantId, userId }, 'Configuracao de impressora atualizada');
+  logSettingsMetric(tenantId, userId, 'settings_updates_total', 'printer');
   return updated;
 }
 
@@ -200,6 +235,7 @@ export async function updateSmtpSettings(tenantId: number, userId: number, input
   }).where(eq(labSettings.id, settings.id)).returning();
 
   logger.info({ action: 'settings.smtp.update', tenantId, userId }, 'Configuracao SMTP atualizada');
+  logSettingsMetric(tenantId, userId, 'settings_updates_total', 'smtp');
   return {
     smtpMode: updated.smtpMode,
     smtpHost: updated.smtpHost,
@@ -227,8 +263,13 @@ export async function testSmtpConnection(tenantId: number, userId: number) {
   }).where(eq(labSettings.id, settings.id));
 
   logger.info({ action: 'settings.smtp.test', tenantId, userId, status }, 'Teste SMTP executado');
+  logSettingsMetric(tenantId, userId, 'settings_smtp_tests_total', status);
 
   if (!canTest) {
+    logger.warn(
+      { action: 'settings.alert.smtp_test_failed', tenantId, userId },
+      'Alerta: teste SMTP falhou por configuracao incompleta',
+    );
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Configuracao SMTP incompleta para teste' });
   }
 
@@ -242,5 +283,6 @@ export async function listUsers(tenantId: number) {
 export async function updateUserRole(tenantId: number, userId: number, input: UpdateUserRoleFromSettingsInput) {
   await tenantService.updateMemberRole(tenantId, input.memberId, input.role);
   logger.info({ action: 'settings.user.role.update', tenantId, userId, targetUserId: input.memberId }, 'Role de usuario atualizada em Settings');
+  logSettingsMetric(tenantId, userId, 'settings_role_updates_total', 'roles');
   return { success: true };
 }

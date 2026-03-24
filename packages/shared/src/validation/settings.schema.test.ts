@@ -44,8 +44,8 @@ describe('settings.schema', () => {
   it('garante que output nao expoe senha', () => {
     const parsed = settingsOverviewSchema.parse({
       tenantId: 1,
-      identity: { name: 'Lab', cnpj: null, phone: null, email: null, address: null, city: null, state: null, logoUrl: null },
-      branding: { reportHeader: null, reportFooter: null, primaryColor: '#112233', secondaryColor: '#445566', website: null },
+      identity: { name: 'Lab', cnpj: null, phone: null, email: null, address: null, city: null, state: null, website: null, logoUrl: null },
+      branding: { reportHeader: null, reportFooter: null, primaryColor: '#112233', secondaryColor: '#445566' },
       printer: { printerHost: null, printerPort: null },
       smtp: {
         smtpMode: 'custom_smtp',

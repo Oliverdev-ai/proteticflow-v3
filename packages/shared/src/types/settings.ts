@@ -17,6 +17,7 @@ export interface LabIdentityInput {
   address?: string;
   city?: string;
   state?: string;
+  website?: string;
 }
 
 export interface LabBrandingInput {
@@ -24,7 +25,6 @@ export interface LabBrandingInput {
   reportFooter?: string;
   primaryColor: string;
   secondaryColor: string;
-  website?: string;
 }
 
 export interface PrinterSettingsInput {
@@ -53,6 +53,7 @@ export interface SettingsOverview {
     address: string | null;
     city: string | null;
     state: string | null;
+    website: string | null;
     logoUrl: string | null;
   };
   branding: {
@@ -60,7 +61,6 @@ export interface SettingsOverview {
     reportFooter: string | null;
     primaryColor: string;
     secondaryColor: string;
-    website: string | null;
   };
   printer: {
     printerHost: string | null;
