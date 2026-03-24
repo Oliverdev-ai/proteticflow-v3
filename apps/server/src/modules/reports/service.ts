@@ -12,6 +12,8 @@ import { buildProductivityReport } from './adapters/productivity-report.js';
 import { buildDeliveriesReport } from './adapters/deliveries-report.js';
 import { buildMonthlyClosingReport } from './adapters/monthly-closing-report.js';
 import { buildQuarterlyAnnualReport } from './adapters/quarterly-annual-report.js';
+import { buildInventoryReport } from './adapters/inventory-report.js';
+import { buildPurchasesReport } from './adapters/purchases-report.js';
 
 type ReportFilters = {
   dateFrom: string;
@@ -105,6 +107,12 @@ async function resolvePreview(
   }
   if (type === 'quarterly_annual') {
     return buildQuarterlyAnnualReport(tenantId, filters);
+  }
+  if (type === 'inventory') {
+    return buildInventoryReport(tenantId, filters);
+  }
+  if (type === 'purchases') {
+    return buildPurchasesReport(tenantId, filters);
   }
 
   return buildPlaceholderPreview(type);
