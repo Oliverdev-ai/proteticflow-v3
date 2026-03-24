@@ -33,3 +33,6 @@ export * from './scans';
 
 // Agenda
 export * from './agenda';
+
+// Portal do cliente
+export * from './portal';

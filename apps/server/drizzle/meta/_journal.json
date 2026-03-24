@@ -78,6 +78,13 @@
       "when": 1774380000000,
       "tag": "0010_phase16_notifications_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1774390000000,
+      "tag": "0011_portal_tokens",
+      "breakpoints": true
     }
   ]
 }
