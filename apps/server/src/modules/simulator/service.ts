@@ -8,6 +8,7 @@ import {
   priceItems,
   pricingTables,
   jobs,
+  tenants,
 } from '../../db/schema/index.js';
 import { db } from '../../db/index.js';
 import {
@@ -19,6 +20,8 @@ import {
   approveSimulationAndCreateJobSchema,
 } from '@proteticflow/shared';
 import * as jobsService from '../jobs/service.js';
+import { generateSimulationBudgetPdf } from './pdf-engine.js';
+import { sendSimulationEmail } from './email.js';
 
 export type SimulationEngineLineInput = {
   priceItemId: number | null;
@@ -551,29 +554,52 @@ export async function getSimulation(tenantId: number, simulationId: number) {
 }
 
 export async function sendBudgetEmail(tenantId: number, simulationId: number, email: string) {
-  const [simulation] = await db
-    .select()
-    .from(simulations)
-    .where(and(eq(simulations.tenantId, tenantId), eq(simulations.id, simulationId)));
+  const simulation = await formatSimulationById(tenantId, simulationId);
 
-  if (!simulation) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: 'Simulacao nao encontrada' });
-  }
+  const [tenant] = await db
+    .select({ name: tenants.name })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId));
+
+  const [client] = await db
+    .select({ name: clients.name })
+    .from(clients)
+    .where(and(eq(clients.tenantId, tenantId), eq(clients.id, simulation.clientId)));
+
+  const pdf = generateSimulationBudgetPdf({
+    simulationId: simulation.id,
+    tenantName: tenant?.name ?? 'Laboratorio',
+    clientName: client?.name ?? 'Cliente',
+    totalCents: simulation.totalCents,
+    createdAt: simulation.createdAt,
+    lines: simulation.items.map((item) => ({
+      serviceNameSnapshot: item.serviceNameSnapshot,
+      quantity: item.quantity,
+      unitPriceCentsSnapshot: item.unitPriceCentsSnapshot,
+      lineTotalCents: item.lineTotalCents,
+    })),
+  });
+
+  const pdfBase64 = pdf.toString('base64');
+
+  await sendSimulationEmail({
+    tenantId,
+    simulationId,
+    to: email,
+    subject: `Orcamento #${simulation.id}`,
+    pdfBase64,
+  });
 
   await db
     .update(simulations)
     .set({
       status: simulation.status === 'draft' ? 'sent' : simulation.status,
-      sentAt: simulation.sentAt ?? new Date(),
+      sentAt: simulation.sentAt ? new Date(simulation.sentAt) : new Date(),
       updatedAt: new Date(),
     })
     .where(and(eq(simulations.tenantId, tenantId), eq(simulations.id, simulationId)));
 
-  return {
-    success: true,
-    email,
-    simulationId,
-  };
+  return { success: true, email, simulationId, pdfBase64 };
 }
 
 export async function approveAndCreateJob(
