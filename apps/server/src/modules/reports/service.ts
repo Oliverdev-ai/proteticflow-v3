@@ -14,6 +14,8 @@ import { buildMonthlyClosingReport } from './adapters/monthly-closing-report.js'
 import { buildQuarterlyAnnualReport } from './adapters/quarterly-annual-report.js';
 import { buildInventoryReport } from './adapters/inventory-report.js';
 import { buildPurchasesReport } from './adapters/purchases-report.js';
+import { serializeReportCsv } from './csv.js';
+import { sendReportByEmail } from './email.js';
 
 type ReportFilters = {
   dateFrom: string;
@@ -155,24 +157,9 @@ export async function generatePdf(
   };
 }
 
-function toCsv(previewResult: ReportPreviewResult) {
-  const header = previewResult.columns.join(',');
-  const rows = previewResult.rows.map((row) => (
-    previewResult.columns
-      .map((column) => {
-        const value = row[column];
-        const normalized = value === null || value === undefined ? '' : String(value);
-        return `"${normalized.replace(/"/g, '""')}"`;
-      })
-      .join(',')
-  ));
-
-  return [header, ...rows].join('\n');
-}
-
 export async function exportCsv(tenantId: number, type: ReportType, filters: ReportFilters, userRole: string) {
   const previewResult = await preview(tenantId, type, filters, userRole);
-  const csv = toCsv(previewResult);
+  const csv = serializeReportCsv(previewResult);
   return {
     filename: `${type}.csv`,
     mimeType: 'text/csv',
@@ -194,14 +181,24 @@ export async function sendByEmail(
   assertRoleAccess(userRole, type);
 
   const attachments: string[] = [];
+  const payloadAttachments: Array<{ filename: string; mimeType: string; base64: string }> = [];
   if (sendPdf && definition.supportsPdf) {
-    attachments.push(`${type}.pdf`);
-    await generatePdf(tenantId, type, filters, userRole);
+    const pdf = await generatePdf(tenantId, type, filters, userRole);
+    attachments.push(pdf.filename);
+    payloadAttachments.push(pdf);
   }
   if (sendCsv && definition.supportsCsv) {
-    attachments.push(`${type}.csv`);
-    await exportCsv(tenantId, type, filters, userRole);
+    const csv = await exportCsv(tenantId, type, filters, userRole);
+    attachments.push(csv.filename);
+    payloadAttachments.push(csv);
   }
+
+  await sendReportByEmail({
+    tenantId,
+    reportType: type,
+    to,
+    attachments: payloadAttachments,
+  });
 
   return {
     success: true,
