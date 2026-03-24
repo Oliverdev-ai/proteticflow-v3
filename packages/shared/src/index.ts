@@ -18,3 +18,5 @@ export * from './validation/scan.schema';
 export * from './validation/event.schema';
 export * from './types/auth';
 export * from './types/tenant';
+export * from './validation/settings.schema';
+export * from './types/settings';
