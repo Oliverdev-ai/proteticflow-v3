@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { monthlyClosing } from './monthly-closing.js';
 import { overdueReminders } from './overdue-reminders.js';
 import { eventReminders } from './event-reminders.js';
+import { deadlineAlerts } from './deadline-alerts.js';
 import { logger } from '../logger.js';
 
 export function startCronJobs() {
@@ -21,6 +22,12 @@ export function startCronJobs() {
   cron.schedule('*/15 * * * *', async () => {
     logger.info({ action: 'cron.event_reminders.start' }, 'Processando lembretes de agenda');
     await eventReminders();
+  });
+
+  // 16.04: Alerta de prazo 24h - verificacao horaria
+  cron.schedule('0 * * * *', async () => {
+    logger.info({ action: 'cron.deadline_alerts.start' }, 'Processando alertas de prazo 24h');
+    await deadlineAlerts();
   });
 
   logger.info('Cron jobs registrados');

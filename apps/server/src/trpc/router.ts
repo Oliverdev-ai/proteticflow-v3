@@ -12,6 +12,7 @@ import { payrollRouter } from '../modules/payroll/router.js';
 import { scanRouter } from '../modules/scans/router.js';
 import { agendaRouter } from '../modules/agenda/router.js';
 import { settingsRouter } from '../modules/settings/router.js';
+import { notificationRouter } from '../modules/notifications/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -27,6 +28,7 @@ export const appRouter = router({
   scan: scanRouter,
   agenda: agendaRouter,
   settings: settingsRouter,
+  notification: notificationRouter,
 });
 
 export type AppRouter = typeof appRouter;

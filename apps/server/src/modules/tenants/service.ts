@@ -6,6 +6,7 @@ import { users } from '../../db/schema/index.js';
 import { logger } from '../../logger.js';
 import type { TenantInfo, TenantMember, PendingInvite } from '@proteticflow/shared';
 import type { Role } from '@proteticflow/shared';
+import { sendInviteEmail } from '../notifications/email.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -199,6 +200,8 @@ export async function inviteMember(tenantId: number, invitedBy: number, input: {
     invitedBy,
     expiresAt,
   }).returning();
+
+  await sendInviteEmail(input.email, token);
 
   logger.info({ action: 'tenant.invite', tenantId, email: input.email }, `Link de convite gerado (Fase 16: envio por email). Token: ${token.slice(0, 8)}...`);
   return invite;
