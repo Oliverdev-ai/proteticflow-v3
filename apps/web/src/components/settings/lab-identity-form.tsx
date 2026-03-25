@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSettings } from '../../hooks/use-settings';
 
 export function LabIdentityForm() {
@@ -13,6 +13,18 @@ export function LabIdentityForm() {
   const [city, setCity] = useState(identity?.city ?? '');
   const [state, setState] = useState(identity?.state ?? '');
   const [website, setWebsite] = useState(identity?.website ?? '');
+
+  useEffect(() => {
+    if (!identity) return;
+    setName(identity.name ?? '');
+    setCnpj(identity.cnpj ?? '');
+    setEmail(identity.email ?? '');
+    setPhone(identity.phone ?? '');
+    setAddress(identity.address ?? '');
+    setCity(identity.city ?? '');
+    setState(identity.state ?? '');
+    setWebsite(identity.website ?? '');
+  }, [identity]);
 
   return (
     <div className="space-y-3">

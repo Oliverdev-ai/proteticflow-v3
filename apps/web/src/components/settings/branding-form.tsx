@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSettings } from '../../hooks/use-settings';
 
 export function BrandingForm() {
@@ -9,6 +9,14 @@ export function BrandingForm() {
   const [reportFooter, setReportFooter] = useState(branding?.reportFooter ?? '');
   const [primaryColor, setPrimaryColor] = useState(branding?.primaryColor ?? '#1a56db');
   const [secondaryColor, setSecondaryColor] = useState(branding?.secondaryColor ?? '#6b7280');
+
+  useEffect(() => {
+    if (!branding) return;
+    setReportHeader(branding.reportHeader ?? '');
+    setReportFooter(branding.reportFooter ?? '');
+    setPrimaryColor(branding.primaryColor ?? '#1a56db');
+    setSecondaryColor(branding.secondaryColor ?? '#6b7280');
+  }, [branding]);
 
   return (
     <div className="space-y-3">

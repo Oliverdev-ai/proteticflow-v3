@@ -24,9 +24,12 @@ test.describe('settings flow', () => {
     await page.getByRole('button', { name: 'Laboratorio' }).click();
 
     const uniqueName = `Lab E2E ${Date.now()}`;
+    const primaryColor = '#123ABC';
+    const secondaryColor = '#334455';
+
     await page.getByPlaceholder('Nome').fill(uniqueName);
-    await page.getByPlaceholder('Cor primaria (#RRGGBB)').fill('#123ABC');
-    await page.getByPlaceholder('Cor secundaria (#RRGGBB)').fill('#334455');
+    await page.getByPlaceholder('Cor primaria (#RRGGBB)').fill(primaryColor);
+    await page.getByPlaceholder('Cor secundaria (#RRGGBB)').fill(secondaryColor);
 
     await page.getByRole('button', { name: 'Salvar identidade' }).click();
     await page.getByRole('button', { name: 'Salvar branding' }).click();
@@ -34,6 +37,10 @@ test.describe('settings flow', () => {
     await page.reload();
     await page.goto('/configuracoes');
     await expect(page.getByText('Configuracoes')).toBeVisible();
+    await page.getByRole('button', { name: 'Laboratorio' }).click();
+    await expect(page.getByPlaceholder('Nome')).toHaveValue(uniqueName);
+    await expect(page.getByPlaceholder('Cor primaria (#RRGGBB)')).toHaveValue(primaryColor);
+    await expect(page.getByPlaceholder('Cor secundaria (#RRGGBB)')).toHaveValue(secondaryColor);
 
     await page.getByRole('button', { name: 'Planos' }).click();
     await expect(page.getByText('Plano (somente leitura nesta fase)')).toBeVisible();
