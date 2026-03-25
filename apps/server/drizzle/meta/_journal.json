@@ -64,6 +64,13 @@
       "when": 1742593800000,
       "tag": "0008_scans_agenda",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1774369800000,
+      "tag": "0009_phase15_settings",
+      "breakpoints": true
     }
   ]
 }
