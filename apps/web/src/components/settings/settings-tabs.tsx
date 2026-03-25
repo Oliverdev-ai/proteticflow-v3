@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 
-type TabKey = 'perfil' | 'laboratorio' | 'funcionarios' | 'autorizacoes' | 'planos';
+type TabKey = 'perfil' | 'laboratorio' | 'funcionarios' | 'autorizacoes' | 'planos' | 'notificacoes';
 
 export interface SettingsTabsProps {
   perfil: ReactNode;
@@ -8,9 +8,10 @@ export interface SettingsTabsProps {
   funcionarios: ReactNode;
   autorizacoes: ReactNode;
   planos: ReactNode;
+  notificacoes?: ReactNode;
 }
 
-const tabs: Array<{ key: TabKey; label: string }> = [
+const BASE_TABS: Array<{ key: Exclude<TabKey, 'notificacoes'>; label: string }> = [
   { key: 'perfil', label: 'Perfil' },
   { key: 'laboratorio', label: 'Laboratorio' },
   { key: 'funcionarios', label: 'Funcionarios' },
@@ -20,6 +21,9 @@ const tabs: Array<{ key: TabKey; label: string }> = [
 
 export function SettingsTabs(props: SettingsTabsProps) {
   const [active, setActive] = useState<TabKey>('perfil');
+  const tabs = props.notificacoes
+    ? [...BASE_TABS, { key: 'notificacoes' as const, label: 'Notificacoes' }]
+    : BASE_TABS;
 
   return (
     <div className="space-y-4">
@@ -43,6 +47,7 @@ export function SettingsTabs(props: SettingsTabsProps) {
         {active === 'funcionarios' && props.funcionarios}
         {active === 'autorizacoes' && props.autorizacoes}
         {active === 'planos' && props.planos}
+        {active === 'notificacoes' && props.notificacoes}
       </div>
     </div>
   );

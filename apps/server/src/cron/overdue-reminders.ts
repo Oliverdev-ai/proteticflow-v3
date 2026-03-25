@@ -7,21 +7,17 @@ import { dispatchByPreference } from '../modules/notifications/service.js';
 
 export async function overdueReminders() {
   const now = new Date();
-  
-  const arsToUpdate = await db.select({ id: accountsReceivable.id, tenantId: accountsReceivable.tenantId })
-    .from(accountsReceivable)
+
+  const transitioned = await db
+    .update(accountsReceivable)
+    .set({ status: 'overdue', updatedAt: now })
     .where(and(
       eq(accountsReceivable.status, 'pending'),
-      lt(accountsReceivable.dueDate, now)
-    ));
+      lt(accountsReceivable.dueDate, now),
+    ))
+    .returning({ id: accountsReceivable.id, tenantId: accountsReceivable.tenantId });
 
-  let updatedCount = 0;
-
-  for (const ar of arsToUpdate) {
-    await db.update(accountsReceivable)
-      .set({ status: 'overdue', updatedAt: new Date() })
-      .where(eq(accountsReceivable.id, ar.id));
-
+  for (const ar of transitioned) {
     const tenantUsers = await db
       .select({ id: users.id })
       .from(users)
@@ -44,8 +40,7 @@ export async function overdueReminders() {
       { action: 'cron.overdue_reminders.notify', arId: ar.id, tenantId: ar.tenantId, users: tenantUsers.length },
       'Lembretes de atraso enviados por canal configurado',
     );
-    updatedCount++;
   }
 
-  logger.info({ action: 'cron.overdue_reminders.finish', updatedCount }, 'Atualização de overdue concluída');
+  logger.info({ action: 'cron.overdue_reminders.finish', updatedCount: transitioned.length }, 'Atualizacao de overdue concluida');
 }

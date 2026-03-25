@@ -1,0 +1,48 @@
+import { test, expect } from '@playwright/test';
+
+const managerEmail = process.env.E2E_MANAGER_EMAIL ?? '';
+const managerPassword = process.env.E2E_MANAGER_PASSWORD ?? '';
+
+async function login(page: import('@playwright/test').Page, email: string, password: string) {
+  await page.goto('/login');
+  await page.getByPlaceholder('E-mail').fill(email);
+  await page.getByPlaceholder('Senha').fill(password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+}
+
+test.describe('notifications flow', () => {
+  test('preferencias, permissao push e leitura no sino', async ({ page, context }) => {
+    test.skip(!managerEmail || !managerPassword, 'Defina E2E_MANAGER_EMAIL e E2E_MANAGER_PASSWORD');
+
+    await context.grantPermissions(['notifications']);
+    await login(page, managerEmail, managerPassword);
+
+    await page.goto('/configuracoes');
+    await page.getByRole('button', { name: 'Notificacoes' }).click();
+
+    const firstCheckbox = page.locator('tbody input[type="checkbox"]').first();
+    const before = await firstCheckbox.isChecked();
+    await firstCheckbox.click();
+    if (before) {
+      await expect(firstCheckbox).not.toBeChecked();
+    } else {
+      await expect(firstCheckbox).toBeChecked();
+    }
+
+    await page.getByRole('button', { name: 'Enviar Notificacao de Teste' }).click();
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Notificacoes' }).click();
+    await expect(page.getByText('Teste de notificacao')).toBeVisible();
+
+    const markAllBtn = page.getByRole('button', { name: 'Marcar todas como lidas' });
+    await markAllBtn.click();
+
+    await page.goto('/configuracoes');
+    await page.getByRole('button', { name: 'Notificacoes' }).click();
+    await expect(page.getByText('Preferencias de notificacoes por canal')).toBeVisible();
+
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await page.getByRole('button', { name: 'Habilitar Push (PWA)' }).click();
+  });
+});

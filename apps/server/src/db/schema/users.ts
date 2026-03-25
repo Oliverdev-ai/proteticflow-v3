@@ -8,6 +8,7 @@ import {
   integer,
   timestamp,
   index,
+  uniqueIndex,
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
@@ -90,6 +91,7 @@ export const deadlineNotifLog = pgTable('deadline_notif_log', {
   notifiedAt: timestamp('notified_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   index('deadline_notif_tenant_user_job_idx').on(table.tenantId, table.userId, table.jobId),
+  uniqueIndex('deadline_notif_tenant_user_job_unique').on(table.tenantId, table.userId, table.jobId),
 ]);
 
 export const pushSubscriptions = pgTable('push_subscriptions', {

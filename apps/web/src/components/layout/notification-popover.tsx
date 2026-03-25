@@ -2,8 +2,16 @@ import { useMemo, useState } from 'react';
 import { Bell, CheckCheck, Loader2 } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
 
-export function NotificationPopover() {
-  const [open, setOpen] = useState(false);
+type NotificationUiType = 'info' | 'warning' | 'error';
+
+const TYPE_UI: Record<NotificationUiType, { label: string; className: string }> = {
+  info: { label: 'Info', className: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
+  warning: { label: 'Warning', className: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+  error: { label: 'Error', className: 'bg-red-500/20 text-red-300 border-red-500/40' },
+};
+
+export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
 
   const { data: unreadCount = 0 } = trpc.notification.unreadCount.useQuery(undefined, {
     refetchInterval: 20_000,
@@ -73,6 +81,17 @@ export function NotificationPopover() {
                 <li key={item.id} className={`px-3 py-3 ${item.isRead ? 'bg-transparent' : 'bg-violet-500/5'}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
+                      {(() => {
+                        const type = (item.type ?? 'info') as NotificationUiType;
+                        const ui = TYPE_UI[type] ?? TYPE_UI.info;
+                        return (
+                      <span
+                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ui.className}`}
+                      >
+                        {ui.label}
+                      </span>
+                        );
+                      })()}
                       <p className="text-sm text-neutral-200 font-medium">{item.title}</p>
                       <p className="text-xs text-neutral-400 mt-1">{item.message}</p>
                     </div>

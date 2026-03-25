@@ -1,5 +1,6 @@
 import { logger } from '../../logger.js';
 import { env } from '../../env.js';
+import nodemailer from 'nodemailer';
 
 type EmailPayload = {
   to: string;
@@ -21,10 +22,27 @@ export async function sendEmail(payload: EmailPayload) {
     return { sent: false };
   }
 
-  // Stub de envio sem dependencia externa.
+  const transporter = nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_PORT === 465,
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: env.SMTP_FROM ?? env.SMTP_USER,
+    to: payload.to,
+    subject: payload.subject,
+    text: payload.text,
+    html: payload.html,
+  });
+
   logger.info(
-    { action: 'notifications.email.stub_send', to: payload.to, subject: payload.subject },
-    'Email transacional preparado para envio',
+    { action: 'notifications.email.sent', to: payload.to, subject: payload.subject },
+    'Email transacional enviado',
   );
 
   return { sent: true };

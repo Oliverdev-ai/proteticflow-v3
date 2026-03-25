@@ -71,6 +71,13 @@
       "when": 1774369800000,
       "tag": "0009_phase15_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1774380000000,
+      "tag": "0010_phase16_notifications_idempotency",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, gte, inArray, lte } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { jobs } from '../db/schema/jobs.js';
 import { deadlineNotifLog } from '../db/schema/users.js';
@@ -39,16 +39,19 @@ export async function deadlineAlerts() {
     const recipientUserId = job.assignedTo ?? job.createdBy;
     if (!recipientUserId) continue;
 
-    const [alreadySent] = await db
-      .select({ id: deadlineNotifLog.id })
-      .from(deadlineNotifLog)
-      .where(and(
-        eq(deadlineNotifLog.tenantId, job.tenantId),
-        eq(deadlineNotifLog.userId, recipientUserId),
-        eq(deadlineNotifLog.jobId, job.id),
-      ));
+    const inserted = await db
+      .insert(deadlineNotifLog)
+      .values({
+        tenantId: job.tenantId,
+        userId: recipientUserId,
+        jobId: job.id,
+      })
+      .onConflictDoNothing({
+        target: [deadlineNotifLog.tenantId, deadlineNotifLog.userId, deadlineNotifLog.jobId],
+      })
+      .returning({ id: deadlineNotifLog.id });
 
-    if (alreadySent) continue;
+    if (inserted.length === 0) continue;
 
     await dispatchByPreference({
       tenantId: job.tenantId,
@@ -60,12 +63,6 @@ export async function deadlineAlerts() {
       relatedJobId: job.id,
       emailSubject: `Prazo da OS ${job.code}`,
       emailText: `A OS ${job.code} tem prazo ate ${job.deadline.toISOString()}.`,
-    });
-
-    await db.insert(deadlineNotifLog).values({
-      tenantId: job.tenantId,
-      userId: recipientUserId,
-      jobId: job.id,
     });
 
     sent++;
