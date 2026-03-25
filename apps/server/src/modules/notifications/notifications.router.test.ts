@@ -19,13 +19,13 @@ vi.mock('./push.js', () => ({
 import { notificationRouter } from './router.js';
 import * as notificationService from './service.js';
 
-function createCtx(tenantId: number | null) {
+function createCtx(tenantId: number | null, role: 'superadmin' | 'gerente' | 'producao' | 'recepcao' | 'contabil' = 'recepcao') {
   return {
     req: { headers: {} } as never,
     res: {} as never,
     db: {} as never,
     tenantId,
-    user: { id: 10, tenantId: tenantId ?? 0, role: 'recepcao' as const },
+    user: { id: 10, tenantId: tenantId ?? 0, role },
   };
 }
 
@@ -48,5 +48,12 @@ describe('notification router', () => {
 
     await caller.listPreferences();
     expect(notificationService.listPreferences).toHaveBeenCalledWith(44, 10);
+  });
+
+  it('bloqueia testDispatch para role sem permissao com FORBIDDEN', async () => {
+    const caller = notificationRouter.createCaller(createCtx(44, 'recepcao'));
+
+    await expect(caller.testDispatch({ message: 'teste' })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect(notificationService.dispatchByPreference).not.toHaveBeenCalled();
   });
 });

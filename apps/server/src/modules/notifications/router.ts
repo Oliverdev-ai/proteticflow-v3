@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, tenantProcedure } from '../../trpc/trpc.js';
+import { adminProcedure, router, tenantProcedure } from '../../trpc/trpc.js';
 import {
   deletePushSubscriptionSchema,
   listNotificationsSchema,
@@ -46,7 +46,7 @@ export const notificationRouter = router({
   vapidPublicKey: tenantProcedure
     .query(() => ({ key: getPublicVapidKey() })),
 
-  testDispatch: tenantProcedure
+  testDispatch: adminProcedure
     .input(z.object({ message: z.string().min(1).max(200).default('Teste de notificacao') }))
     .mutation(async ({ ctx, input }) => {
       await notificationService.dispatchByPreference({

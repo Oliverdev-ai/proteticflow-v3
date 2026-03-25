@@ -41,8 +41,42 @@ test.describe('notifications flow', () => {
     await page.goto('/configuracoes');
     await page.getByRole('button', { name: 'Notificacoes' }).click();
     await expect(page.getByText('Preferencias de notificacoes por canal')).toBeVisible();
+    await page.reload();
+    await page.getByRole('button', { name: 'Notificacoes' }).click();
+    if (before) {
+      await expect(firstCheckbox).not.toBeChecked();
+    } else {
+      await expect(firstCheckbox).toBeChecked();
+    }
 
     page.once('dialog', (dialog) => dialog.dismiss());
     await page.getByRole('button', { name: 'Habilitar Push (PWA)' }).click();
+
+    const swActivated = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) return false;
+      const ready = await navigator.serviceWorker.ready;
+      return Boolean(ready.active);
+    });
+    expect(swActivated).toBeTruthy();
+
+    const subscriptionBeforeClose = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.getSubscription();
+      return Boolean(sub?.endpoint);
+    });
+    expect(subscriptionBeforeClose).toBeTruthy();
+
+    await page.close();
+    const reopened = await context.newPage();
+    await reopened.goto('/configuracoes');
+    await reopened.getByRole('button', { name: 'Notificacoes' }).click();
+
+    const subscriptionAfterReopen = await reopened.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.getSubscription();
+      return Boolean(sub?.endpoint);
+    });
+    expect(subscriptionAfterReopen).toBeTruthy();
   });
 });
