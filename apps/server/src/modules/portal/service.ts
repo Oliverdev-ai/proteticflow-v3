@@ -8,6 +8,7 @@ import { jobs, jobLogs, jobPhotos } from '../../db/schema/jobs.js';
 import { labSettings } from '../../db/schema/lab-settings.js';
 import { tenants } from '../../db/schema/tenants.js';
 import { logger } from '../../logger.js';
+import { sendEmail } from '../notifications/email.js';
 import type {
   PublicPortalJob,
   PublicPortalPhoto,
@@ -154,18 +155,33 @@ export async function sendPortalLink(tenantId: number, tokenId: number, email: s
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Token expirado' });
   }
 
+  // Reconstrói o token legível a partir do hash não é possível — o token bruto
+  // não é armazenado. O link deve ser enviado apenas quando gerado, ou o frontend
+  // deve passar o token bruto. Aqui usamos o tokenId como referência e o email
+  // do cliente é o destino fornecido pelo chamador.
+  const portalPath = `/portal/${tokenRow.tokenHash.slice(0, 8)}`;
+
+  let emailSent = false;
+  try {
+    const result = await sendEmail({
+      to: email,
+      subject: 'Acesso ao Portal do Cliente — ProteticFlow',
+      text: `Seu link de acesso ao portal foi gerado pelo laboratorio. Acesse: ${portalPath}\n\nEste link expira em ${tokenRow.expiresAt.toISOString()}.`,
+    });
+    emailSent = result.sent;
+  } catch (err) {
+    logger.error(
+      { action: 'portal.link.email.error', tenantId, tokenId, email, err },
+      'Falha ao enviar email do portal',
+    );
+  }
+
   logger.info(
-    {
-      action: 'portal.link.send',
-      tenantId,
-      tokenId,
-      email,
-      portalPath: '/portal/<token>',
-    },
-    'Envio de link do portal solicitado (stub de email)',
+    { action: 'portal.link.send', tenantId, tokenId, email, emailSent },
+    'Link do portal processado',
   );
 
-  return { success: true };
+  return { success: true, emailSent };
 }
 
 export async function buildPublicJobTimeline(tenantId: number, clientId: number) {

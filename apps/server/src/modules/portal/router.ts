@@ -1,4 +1,4 @@
-import { router, adminProcedure, licensedProcedure, publicProcedure, tenantProcedure } from '../../trpc/trpc.js';
+import { router, adminProcedure, publicProcedure, tenantProcedure } from '../../trpc/trpc.js';
 import {
   createPortalTokenSchema,
   getPortalByTokenSchema,
@@ -9,8 +9,8 @@ import {
 import * as portalService from './service.js';
 
 export const portalRouter = router({
-  // Internas
-  createToken: licensedProcedure
+  // Internas — restritas a superadmin/gerente
+  createToken: adminProcedure
     .input(createPortalTokenSchema)
     .mutation(({ ctx, input }) => portalService.createPortalToken(ctx.tenantId!, input, ctx.user!.id)),
 
