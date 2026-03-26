@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { TRPCError } from '@trpc/server';
 
 vi.mock('./service.js', () => ({
   createPortalToken: vi.fn(async () => ({ id: 1, token: 'tok', expiresAt: '', portalUrlPath: '/portal/tok' })),
@@ -27,10 +26,12 @@ async function callProcedure(procedureName: 'createToken' | 'revokeToken' | 'sen
   const inputs: Record<string, unknown> = {
     createToken: { clientId: 1, expiresInDays: 7 },
     revokeToken: { tokenId: 1 },
-    sendPortalLink: { tokenId: 1, email: 'a@b.com' },
+    sendPortalLink: { tokenId: 1, email: 'a@b.com', token: 'a'.repeat(64) },
   };
-  const caller = portalRouter.createCaller(ctx as never);
-  return (caller as Record<string, (input: unknown) => Promise<unknown>>)[procedureName](inputs[procedureName]);
+  const caller = portalRouter.createCaller(ctx as never) as Record<string, ((input: unknown) => Promise<unknown>) | undefined>;
+  const fn = caller[procedureName];
+  if (!fn) throw new Error(`Procedure ${procedureName} not found`);
+  return fn(inputs[procedureName]);
 }
 
 describe('portal router — RBAC', () => {

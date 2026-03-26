@@ -16,6 +16,7 @@ export const listPortalTokensByClientSchema = z.object({
 export const sendPortalLinkSchema = z.object({
   tokenId: z.number().int().positive(),
   email: z.string().email(),
+  token: z.string().min(64).max(64),
 });
 
 export const getPortalByTokenSchema = z.object({

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { portalTokens, tenantMembers, tenants, users } from '../../db/schema/index.js';
 import { clients } from '../../db/schema/clients.js';
@@ -127,23 +127,38 @@ describe('portal service', () => {
     await expect(portalService.getPortalSnapshotByToken('token-invalido-qualquer')).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
-  it('sendPortalLink retorna success e tenta enviar email', async () => {
+  it('sendPortalLink retorna success, link correto e tenta enviar email', async () => {
     const user = await createUser('portal-email@test.com');
     const tenant = await createTenantFor(user.id, 'Tenant Email');
     const client = await createClient(tenant.id, 'Cliente Email');
 
     const created = await portalService.createPortalToken(tenant.id, { clientId: client.id, expiresInDays: 1 }, user.id);
-    const result = await portalService.sendPortalLink(tenant.id, created.id, 'dest@example.com');
+    const result = await portalService.sendPortalLink(tenant.id, created.id, 'dest@example.com', created.token);
 
     expect(result.success).toBe(true);
-    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'dest@example.com' }));
+    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'dest@example.com',
+      text: expect.stringContaining(`/portal/${created.token}`),
+    }));
   });
 
-  it('sendPortalLink lanca NOT_FOUND para token inexistente', async () => {
+  it('sendPortalLink lanca NOT_FOUND para tokenId inexistente', async () => {
     const user = await createUser('portal-notfound@test.com');
     const tenant = await createTenantFor(user.id, 'Tenant NF');
+    const fakeToken = 'a'.repeat(64);
 
-    await expect(portalService.sendPortalLink(tenant.id, 9999, 'a@b.com')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(portalService.sendPortalLink(tenant.id, 9999, 'a@b.com', fakeToken)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('sendPortalLink lanca NOT_FOUND se token bruto nao corresponde ao hash do registro', async () => {
+    const user = await createUser('portal-mismatch@test.com');
+    const tenant = await createTenantFor(user.id, 'Tenant Mismatch');
+    const client = await createClient(tenant.id, 'Cliente Mismatch');
+
+    const created = await portalService.createPortalToken(tenant.id, { clientId: client.id, expiresInDays: 1 }, user.id);
+    const wrongToken = 'b'.repeat(64);
+
+    await expect(portalService.sendPortalLink(tenant.id, created.id, 'a@b.com', wrongToken)).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   it('sendPortalLink lanca BAD_REQUEST para token revogado', async () => {
@@ -154,7 +169,7 @@ describe('portal service', () => {
     const created = await portalService.createPortalToken(tenant.id, { clientId: client.id, expiresInDays: 1 }, user.id);
     await portalService.revokePortalToken(tenant.id, created.id);
 
-    await expect(portalService.sendPortalLink(tenant.id, created.id, 'a@b.com')).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(portalService.sendPortalLink(tenant.id, created.id, 'a@b.com', created.token)).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 
   it('revokePortalToken lanca NOT_FOUND para token de outro tenant', async () => {

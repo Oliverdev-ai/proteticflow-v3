@@ -24,7 +24,7 @@ export const portalRouter = router({
 
   sendPortalLink: adminProcedure
     .input(sendPortalLinkSchema)
-    .mutation(({ ctx, input }) => portalService.sendPortalLink(ctx.tenantId!, input.tokenId, input.email)),
+    .mutation(({ ctx, input }) => portalService.sendPortalLink(ctx.tenantId!, input.tokenId, input.email, input.token)),
 
   // Publica (sem login)
   getPortalByToken: publicProcedure

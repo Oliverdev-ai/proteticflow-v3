@@ -10,12 +10,20 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
   const [expiresInDays, setExpiresInDays] = useState(30);
   const [email, setEmail] = useState('');
   const [latestPortalUrl, setLatestPortalUrl] = useState<string | null>(null);
+  // Armazena token bruto por tokenId — disponível apenas na sessão de criação
+  const [rawTokenById, setRawTokenById] = useState<Map<number, string>>(new Map());
 
   const listQuery = trpc.portal.listTokensByClient.useQuery({ clientId });
 
   const createMutation = trpc.portal.createToken.useMutation({
     onSuccess: async (createdToken) => {
-      setLatestPortalUrl(`${window.location.origin}${createdToken.portalUrlPath}`);
+      const fullUrl = `${window.location.origin}${createdToken.portalUrlPath}`;
+      setLatestPortalUrl(fullUrl);
+      setRawTokenById((prev) => {
+        const next = new Map(prev);
+        next.set(createdToken.id, createdToken.token);
+        return next;
+      });
       await utils.portal.listTokensByClient.invalidate({ clientId });
     },
   });
@@ -63,43 +71,50 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
           </button>
         </div>
         {latestPortalUrl ? (
-          <p className="text-xs text-neutral-300 mt-3 break-all">{latestPortalUrl}</p>
+          <p className="text-xs text-neutral-300 mt-3 break-all" data-testid="portal-url">{latestPortalUrl}</p>
         ) : null}
       </section>
 
       <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
         <h2 className="text-white font-semibold mb-3">Tokens do cliente</h2>
         <div className="space-y-3">
-          {tokens.map((token) => (
-            <article key={token.id} className="rounded-xl border border-neutral-700 p-4">
-              <p className="text-sm text-neutral-200">Token #{token.id}</p>
-              <p className="text-xs text-neutral-400 mt-1">Expira em: {new Date(token.expiresAt).toLocaleString('pt-BR')}</p>
-              <p className="text-xs text-neutral-400">Status: {token.isActive ? 'Ativo' : 'Inativo'}</p>
-              <div className="flex flex-wrap gap-2 mt-3">
-                <button
-                  type="button"
-                  className="px-3 py-1.5 text-xs rounded bg-neutral-800 text-neutral-200 opacity-60 cursor-not-allowed"
-                  disabled
-                >
-                  Link visivel apenas na geracao
-                </button>
-                <button
-                  type="button"
-                  className="px-3 py-1.5 text-xs rounded bg-amber-700 text-amber-100 hover:bg-amber-600"
-                  onClick={() => revokeMutation.mutate({ tokenId: token.id })}
-                >
-                  Revogar
-                </button>
-                <button
-                  type="button"
-                  className="px-3 py-1.5 text-xs rounded bg-blue-700 text-blue-100 hover:bg-blue-600"
-                  onClick={() => email && sendMutation.mutate({ tokenId: token.id, email })}
-                >
-                  Reenviar link
-                </button>
-              </div>
-            </article>
-          ))}
+          {tokens.map((token) => {
+            const rawToken = rawTokenById.get(token.id);
+            return (
+              <article key={token.id} className="rounded-xl border border-neutral-700 p-4">
+                <p className="text-sm text-neutral-200">Token #{token.id}</p>
+                <p className="text-xs text-neutral-400 mt-1">Expira em: {new Date(token.expiresAt).toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-neutral-400">Status: {token.isActive ? 'Ativo' : 'Inativo'}</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {rawToken ? (
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 text-xs rounded bg-blue-700 text-blue-100 hover:bg-blue-600 disabled:opacity-50"
+                      disabled={!email || sendMutation.isPending}
+                      onClick={() => {
+                        if (email) {
+                          sendMutation.mutate({ tokenId: token.id, email, token: rawToken });
+                        }
+                      }}
+                    >
+                      Enviar link por email
+                    </button>
+                  ) : (
+                    <span className="px-3 py-1.5 text-xs rounded bg-neutral-800 text-neutral-500 cursor-not-allowed">
+                      Link visivel apenas na geracao
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 text-xs rounded bg-amber-700 text-amber-100 hover:bg-amber-600"
+                    onClick={() => revokeMutation.mutate({ tokenId: token.id })}
+                  >
+                    Revogar
+                  </button>
+                </div>
+              </article>
+            );
+          })}
           {tokens.length === 0 ? (
             <p className="text-sm text-neutral-500">Nenhum token gerado para este cliente.</p>
           ) : null}
@@ -115,7 +130,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
           placeholder="destinatario@exemplo.com"
           className="input-field w-full md:w-80"
         />
-        <p className="text-xs text-neutral-500 mt-2">Usado na acao de reenviar link.</p>
+        <p className="text-xs text-neutral-500 mt-2">Usado na acao de enviar link por email.</p>
       </section>
     </div>
   );

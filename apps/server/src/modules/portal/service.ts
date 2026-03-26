@@ -134,13 +134,17 @@ export async function listPortalTokensByClient(tenantId: number, clientId: numbe
   }));
 }
 
-export async function sendPortalLink(tenantId: number, tokenId: number, email: string) {
+export async function sendPortalLink(tenantId: number, tokenId: number, email: string, token: string) {
+  // Valida que o token bruto corresponde ao registro do banco antes de enviar
+  const tokenHash = hashToken(token);
+
   const [tokenRow] = await db
     .select()
     .from(portalTokens)
     .where(and(
       eq(portalTokens.tenantId, tenantId),
       eq(portalTokens.id, tokenId),
+      eq(portalTokens.tokenHash, tokenHash),
     ));
 
   if (!tokenRow) {
@@ -155,18 +159,14 @@ export async function sendPortalLink(tenantId: number, tokenId: number, email: s
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Token expirado' });
   }
 
-  // Reconstrói o token legível a partir do hash não é possível — o token bruto
-  // não é armazenado. O link deve ser enviado apenas quando gerado, ou o frontend
-  // deve passar o token bruto. Aqui usamos o tokenId como referência e o email
-  // do cliente é o destino fornecido pelo chamador.
-  const portalPath = `/portal/${tokenRow.tokenHash.slice(0, 8)}`;
+  const portalPath = `/portal/${token}`;
 
   let emailSent = false;
   try {
     const result = await sendEmail({
       to: email,
       subject: 'Acesso ao Portal do Cliente — ProteticFlow',
-      text: `Seu link de acesso ao portal foi gerado pelo laboratorio. Acesse: ${portalPath}\n\nEste link expira em ${tokenRow.expiresAt.toISOString()}.`,
+      text: `Voce recebeu um link de acesso ao portal do cliente. Acesse: ${portalPath}\n\nEste link expira em ${tokenRow.expiresAt.toLocaleString('pt-BR')}.`,
     });
     emailSent = result.sent;
   } catch (err) {
