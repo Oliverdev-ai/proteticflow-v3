@@ -21,11 +21,13 @@ describe('lab_settings schema', () => {
       email: 'schema-settings@test.com',
       passwordHash: await hashPassword('Test123!'),
     }).returning();
+    if (!user) throw new Error('Failed to create user');
 
     const [tenant] = await db.insert(tenants).values({
       name: 'Lab Schema',
       slug: 'lab-schema',
     }).returning();
+    if (!tenant) throw new Error('Failed to create tenant');
 
     await db.insert(tenantMembers).values({ tenantId: tenant.id, userId: user.id, role: 'superadmin' });
 
@@ -35,6 +37,7 @@ describe('lab_settings schema', () => {
       primaryColor: '#112233',
       secondaryColor: '#445566',
     }).returning();
+    if (!settings) throw new Error('Failed to create settings');
 
     expect(settings.tenantId).toBe(tenant.id);
     expect(settings.smtpMode).toBe('resend_fallback');

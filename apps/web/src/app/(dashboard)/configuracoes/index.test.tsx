@@ -12,6 +12,21 @@ vi.mock('../../../hooks/use-settings', () => ({
   }),
 }));
 
+vi.mock('../../../lib/trpc', () => {
+  const q = () => ({ data: undefined, isLoading: false, error: null, refetch: vi.fn() });
+  const m = () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false });
+  const createProxy = (): Record<string, unknown> =>
+    new Proxy({} as Record<string, unknown>, {
+      get: (_, k) => {
+        if (k === 'useQuery') return q;
+        if (k === 'useMutation') return m;
+        if (k === 'useUtils') return () => createProxy();
+        return createProxy();
+      },
+    });
+  return { trpc: createProxy() };
+});
+
 import SettingsPage from './index';
 
 describe('configuracoes/index', () => {

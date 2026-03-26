@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../../hooks/use-auth';
+import { useAuth } from '../../hooks/use-auth';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import { loginSchema } from '@proteticflow/shared';

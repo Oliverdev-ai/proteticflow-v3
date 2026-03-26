@@ -11,18 +11,18 @@ export interface SettingsUserItem {
 
 export interface LabIdentityInput {
   name: string;
-  cnpj?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  website?: string;
+  cnpj?: string | undefined;
+  phone?: string | undefined;
+  email?: string | undefined;
+  address?: string | undefined;
+  city?: string | undefined;
+  state?: string | undefined;
+  website?: string | undefined;
 }
 
 export interface LabBrandingInput {
-  reportHeader?: string;
-  reportFooter?: string;
+  reportHeader?: string | undefined;
+  reportFooter?: string | undefined;
   primaryColor: string;
   secondaryColor: string;
 }
@@ -34,13 +34,13 @@ export interface PrinterSettingsInput {
 
 export interface SmtpSettingsInput {
   smtpMode: 'resend_fallback' | 'custom_smtp';
-  smtpHost?: string;
-  smtpPort?: number;
+  smtpHost?: string | undefined;
+  smtpPort?: number | undefined;
   smtpSecure: boolean;
-  smtpUsername?: string;
-  smtpPassword?: string;
-  smtpFromName?: string;
-  smtpFromEmail?: string;
+  smtpUsername?: string | undefined;
+  smtpPassword?: string | undefined;
+  smtpFromName?: string | undefined;
+  smtpFromEmail?: string | undefined;
 }
 
 export interface SettingsOverview {

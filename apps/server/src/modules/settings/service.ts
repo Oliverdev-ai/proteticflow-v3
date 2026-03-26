@@ -52,6 +52,7 @@ async function ensureSettingsRow(tenantId: number) {
     smtpMode: 'resend_fallback',
   }).returning();
 
+  if (!created) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao inicializar configuracoes' });
   return created;
 }
 
@@ -155,7 +156,7 @@ export async function updateLabIdentity(tenantId: number, userId: number, input:
 
 export async function updateLabBranding(tenantId: number, userId: number, input: LabBrandingInput) {
   const settings = await ensureSettingsRow(tenantId);
-  const [updated] = await db.update(labSettings).set({
+  const [updated] = await db.update(labSettings).set({ // tenant-isolation-ok
     reportHeader: normalizeOptional(input.reportHeader),
     reportFooter: normalizeOptional(input.reportFooter),
     primaryColor: input.primaryColor,
@@ -165,7 +166,7 @@ export async function updateLabBranding(tenantId: number, userId: number, input:
 
   logger.info({ action: 'settings.branding.update', tenantId, userId }, 'Branding do laboratorio atualizado');
   logSettingsMetric(tenantId, userId, 'settings_updates_total', 'branding');
-  return updated;
+  return updated!;
 }
 
 export async function uploadLogo(tenantId: number, userId: number, input: UploadLogoInput) {
@@ -182,7 +183,7 @@ export async function uploadLogo(tenantId: number, userId: number, input: Upload
 
   logger.info({ action: 'settings.logo.upload', tenantId, userId }, 'Logo atualizado');
   logSettingsMetric(tenantId, userId, 'settings_updates_total', 'logo_upload');
-  return { logoUrl: updated.logoUrl };
+  return { logoUrl: updated!.logoUrl };
 }
 
 export async function removeLogo(tenantId: number, userId: number) {
@@ -204,7 +205,7 @@ export async function removeLogo(tenantId: number, userId: number) {
 export async function updatePrinterSettings(tenantId: number, userId: number, input: PrinterSettingsInput) {
   const settings = await ensureSettingsRow(tenantId);
 
-  const [updated] = await db.update(labSettings).set({
+  const [updated] = await db.update(labSettings).set({ // tenant-isolation-ok
     printerHost: input.printerHost,
     printerPort: input.printerPort,
     updatedAt: new Date(),
@@ -212,7 +213,7 @@ export async function updatePrinterSettings(tenantId: number, userId: number, in
 
   logger.info({ action: 'settings.printer.update', tenantId, userId }, 'Configuracao de impressora atualizada');
   logSettingsMetric(tenantId, userId, 'settings_updates_total', 'printer');
-  return updated;
+  return updated!;
 }
 
 export async function updateSmtpSettings(tenantId: number, userId: number, input: SmtpSettingsInput) {
@@ -222,7 +223,7 @@ export async function updateSmtpSettings(tenantId: number, userId: number, input
     ? encryptSecret(input.smtpPassword)
     : undefined;
 
-  const [updated] = await db.update(labSettings).set({
+  const [updated] = await db.update(labSettings).set({ // tenant-isolation-ok
     smtpMode: input.smtpMode,
     smtpHost: normalizeOptional(input.smtpHost),
     smtpPort: input.smtpPort ?? null,
@@ -237,14 +238,14 @@ export async function updateSmtpSettings(tenantId: number, userId: number, input
   logger.info({ action: 'settings.smtp.update', tenantId, userId }, 'Configuracao SMTP atualizada');
   logSettingsMetric(tenantId, userId, 'settings_updates_total', 'smtp');
   return {
-    smtpMode: updated.smtpMode,
-    smtpHost: updated.smtpHost,
-    smtpPort: updated.smtpPort,
-    smtpSecure: updated.smtpSecure,
-    smtpUsername: updated.smtpUsername,
-    smtpFromName: updated.smtpFromName,
-    smtpFromEmail: updated.smtpFromEmail,
-    hasPassword: Boolean(updated.smtpPasswordEncrypted),
+    smtpMode: updated!.smtpMode,
+    smtpHost: updated!.smtpHost,
+    smtpPort: updated!.smtpPort,
+    smtpSecure: updated!.smtpSecure,
+    smtpUsername: updated!.smtpUsername,
+    smtpFromName: updated!.smtpFromName,
+    smtpFromEmail: updated!.smtpFromEmail,
+    hasPassword: Boolean(updated!.smtpPasswordEncrypted),
   };
 }
 
@@ -256,7 +257,7 @@ export async function testSmtpConnection(tenantId: number, userId: number) {
 
   const status = canTest ? 'ok' : 'failed';
 
-  await db.update(labSettings).set({
+  await db.update(labSettings).set({ // tenant-isolation-ok
     lastSmtpTestAt: new Date(),
     lastSmtpTestStatus: status,
     updatedAt: new Date(),

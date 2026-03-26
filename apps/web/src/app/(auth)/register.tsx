@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { trpc } from '../../../lib/trpc';
+import { trpc } from '../../lib/trpc';
 import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../hooks/use-auth';
+import { useAuth } from '../../hooks/use-auth';
 import { registerSchema } from '@proteticflow/shared';
 
 export default function RegisterPage() {

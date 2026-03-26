@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { trpc } from '../../../lib/trpc';
+import { trpc } from '../../../../lib/trpc';
 import { ArrowLeft, ShoppingCart, CheckCircle, Send, Clock } from 'lucide-react';
 
 export default function PODetailPage() {

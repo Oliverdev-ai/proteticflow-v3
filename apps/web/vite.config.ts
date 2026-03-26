@@ -11,4 +11,7 @@ export default defineConfig({
       '/health': 'http://localhost:3001',
     },
   },
+  test: {
+    exclude: ['**/node_modules/**', '**/e2e/**'],
+  },
 });

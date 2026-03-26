@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { trpc } from '../../lib/trpc';
+import { trpc } from '../../../lib/trpc';
 import { 
   Plus, 
   Calendar, 

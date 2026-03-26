@@ -12,6 +12,7 @@ async function createUser(email: string) {
     email,
     passwordHash: await hashPassword('Test123!'),
   }).returning();
+  if (!user) throw new Error('Failed to create user');
   return user;
 }
 

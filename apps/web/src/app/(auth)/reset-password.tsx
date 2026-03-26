@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { trpc } from '../../../lib/trpc';
+import { trpc } from '../../lib/trpc';
 import { Link, useSearchParams } from 'react-router-dom';
 
 export default function ResetPasswordPage() {
