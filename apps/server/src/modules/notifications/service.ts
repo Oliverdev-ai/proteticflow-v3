@@ -281,11 +281,22 @@ export async function dispatchByPreference(args: {
       .where(eq(users.id, args.userId));
 
     if (user?.email) {
-      await sendEmail({
-        to: user.email,
-        subject: args.emailSubject ?? args.title,
-        text: args.emailText ?? args.message,
-      });
+      try {
+        const emailResult = await sendEmail({
+          to: user.email,
+          subject: args.emailSubject ?? args.title,
+          text: args.emailText ?? args.message,
+        });
+        logger.info(
+          { action: 'notifications.email.sent', tenantId: args.tenantId, userId: args.userId, eventKey: args.eventKey, sent: emailResult.sent },
+          'Email de notificacao processado',
+        );
+      } catch (err) {
+        logger.error(
+          { action: 'notifications.email.error', tenantId: args.tenantId, userId: args.userId, eventKey: args.eventKey, err },
+          'Falha ao enviar email de notificacao',
+        );
+      }
     }
   }
 
