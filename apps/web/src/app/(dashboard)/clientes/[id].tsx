@@ -20,15 +20,15 @@ export default function ClientEditPage() {
   const [tab, setTab] = useState<'dados' | 'extrato'>('dados');
   const utils = trpc.useUtils();
 
-  const { data: client, isLoading, error } = trpc.client.get.useQuery({ id: clientId });
-  const { data: extract } = trpc.client.getExtract.useQuery({ id: clientId }, { enabled: tab === 'extrato' });
+  const { data: client, isLoading, error } = trpc.clientes.get.useQuery({ id: clientId });
+  const { data: extract } = trpc.clientes.getExtract.useQuery({ id: clientId }, { enabled: tab === 'extrato' });
 
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(updateClientSchema),
     values: client ?? undefined,
   });
 
-  const updateMutation = trpc.client.update.useMutation({
+  const updateMutation = trpc.clientes.update.useMutation({
     onSuccess: () => { utils.client.list.invalidate(); utils.client.get.invalidate({ id: clientId }); },
   });
 

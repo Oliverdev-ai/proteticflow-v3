@@ -17,7 +17,7 @@ import { notificationRouter } from '../modules/notifications/router.js';
 export const appRouter = router({
   auth: authRouter,
   tenant: tenantRouter,
-  client: clientRouter,
+  clientes: clientRouter,
   pricing: pricingRouter,
   job: jobRouter,
   financial: financialRouter,
