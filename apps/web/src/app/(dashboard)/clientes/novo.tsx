@@ -17,7 +17,7 @@ export default function ClientCreatePage() {
     defaultValues: { priceAdjustmentPercent: 0 },
   });
 
-  const createMutation = trpc.client.create.useMutation({
+  const createMutation = trpc.clientes.create.useMutation({
     onSuccess: (client) => {
       utils.client.list.invalidate();
       navigate(`/clientes/${client.id}`);
@@ -26,7 +26,7 @@ export default function ClientCreatePage() {
 
   // Busca CEP automática (03.02)
   const zipCode = watch('zipCode');
-  const lookupQuery = trpc.client.lookupCep.useQuery(
+  const lookupQuery = trpc.clientes.lookupCep.useQuery(
     { cep: (zipCode ?? '').replace(/\D/g, '') },
     { enabled: (zipCode ?? '').replace(/\D/g, '').length === 8, retry: false }
   );

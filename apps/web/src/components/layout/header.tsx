@@ -1,7 +1,8 @@
-import { Bell, ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/use-auth';
 import { TenantSwitcher } from './tenant-switcher';
 import { trpc } from '../../lib/trpc';
+import { NotificationPopover } from './notification-popover';
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -13,9 +14,7 @@ export function Header() {
         <TenantSwitcher />
       </div>
 
-      <button className="relative text-neutral-400 hover:text-white transition-colors">
-        <Bell size={18} />
-      </button>
+      <NotificationPopover />
 
       <div className="flex items-center gap-2 text-sm">
         <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-semibold uppercase">

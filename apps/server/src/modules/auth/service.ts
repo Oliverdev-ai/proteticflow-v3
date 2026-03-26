@@ -16,6 +16,8 @@ import {
 } from '../../core/auth.js';
 import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
+import { sendPasswordResetEmail } from '../notifications/email.js';
+import { dispatchByPreference } from '../notifications/service.js';
 import {
   registerSchema,
   loginSchema,
@@ -187,6 +189,21 @@ export async function forgotPassword(email: string) {
     tokenHash,
     expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hora
   });
+
+  await sendPasswordResetEmail(user.email, token);
+
+  if (user.activeTenantId) {
+    await dispatchByPreference({
+      tenantId: user.activeTenantId,
+      userId: user.id,
+      eventKey: 'password_reset',
+      type: 'info',
+      title: 'Reset de senha solicitado',
+      message: 'Recebemos uma solicitacao de reset de senha para sua conta.',
+      emailSubject: 'Reset de senha solicitado',
+      emailText: 'Voce solicitou um reset de senha. Se nao foi voce, ignore este email.',
+    });
+  }
 
   logger.info({ action: 'auth.password_reset_request', userId: user.id }, 'Password reset requested');
   if (process.env.NODE_ENV === 'development') {

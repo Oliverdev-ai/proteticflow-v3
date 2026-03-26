@@ -21,7 +21,7 @@ export default function JobCreatePage() {
   const [details, setDetails] = useState({ patientName: '', prothesisType: '', material: '', color: '', instructions: '', deadline: '', notes: '' });
   const [error, setError] = useState('');
 
-  const { data: clientsData } = trpc.client.list.useQuery({ limit: 100 });
+  const { data: clientsData } = trpc.clientes.list.useQuery({ limit: 100 });
   const { data: priceTablesData } = trpc.pricing.listTables.useQuery({ limit: 100 });
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const { data: priceItemsData } = trpc.pricing.listItems.useQuery(

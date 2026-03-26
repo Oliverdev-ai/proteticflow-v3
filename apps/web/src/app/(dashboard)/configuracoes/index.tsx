@@ -7,6 +7,7 @@ import { LabTab } from '../../../components/settings/lab-tab';
 import { EmployeesTab } from '../../../components/settings/employees-tab';
 import { AuthorizationsTab } from '../../../components/settings/authorizations-tab';
 import { PlansTab } from '../../../components/settings/plans-tab';
+import { NotificationsTab } from '../../../components/settings/notifications-tab';
 
 export default function SettingsPage() {
   const { hasAccess } = usePermissions();
@@ -38,6 +39,7 @@ export default function SettingsPage() {
         funcionarios={<EmployeesTab />}
         autorizacoes={<AuthorizationsTab />}
         planos={<PlansTab />}
+        notificacoes={<NotificationsTab />}
       />
     </div>
   );

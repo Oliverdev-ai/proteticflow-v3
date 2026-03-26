@@ -11,15 +11,15 @@ export default function ClientListPage() {
   const [status, setStatus] = useState<'active' | 'inactive' | undefined>(undefined);
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, error, refetch } = trpc.client.list.useQuery({
+  const { data, isLoading, error, refetch } = trpc.clientes.list.useQuery({
     search: search || undefined,
     status,
     page,
     limit: 20,
   });
 
-  const toggleMutation = trpc.client.toggleStatus.useMutation({ onSuccess: () => refetch() });
-  const deleteMutation = trpc.client.delete.useMutation({ onSuccess: () => refetch() });
+  const toggleMutation = trpc.clientes.toggleStatus.useMutation({ onSuccess: () => refetch() });
+  const deleteMutation = trpc.clientes.delete.useMutation({ onSuccess: () => refetch() });
 
   const canDelete = hasAccess('clients.delete');
 

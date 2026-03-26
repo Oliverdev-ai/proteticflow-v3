@@ -8,6 +8,7 @@ import {
   integer,
   timestamp,
   index,
+  uniqueIndex,
   jsonb,
 } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
@@ -84,12 +85,18 @@ export type InsertApiKey = typeof apiKeys.$inferInsert;
 
 export const deadlineNotifLog = pgTable('deadline_notif_log', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull(),
+  userId: integer('user_id').notNull(),
   jobId: integer('job_id').notNull(),
   notifiedAt: timestamp('notified_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [
+  index('deadline_notif_tenant_user_job_idx').on(table.tenantId, table.userId, table.jobId),
+  uniqueIndex('deadline_notif_tenant_user_job_unique').on(table.tenantId, table.userId, table.jobId),
+]);
 
 export const pushSubscriptions = pgTable('push_subscriptions', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   endpoint: text('endpoint').notNull(),
   p256dh: text('p256dh').notNull(),
@@ -99,4 +106,5 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
 }, (table) => [
   index('ps_user_idx').on(table.userId),
+  index('ps_tenant_user_idx').on(table.tenantId, table.userId),
 ]);
