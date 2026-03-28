@@ -37,7 +37,7 @@ const MENU_ITEMS = [
   { label: 'Folha de Pagamento', icon: DollarSign, href: '/payroll', module: 'payroll' },
   { label: 'Relatorios', icon: BarChart3, href: '/relatorios', module: 'reports' },
   { label: 'Simulador', icon: Calculator, href: '/simulador', module: 'simulator' },
-  { label: 'Flow IA', icon: Sparkles, href: '/flow-ia', module: 'dashboard' },
+  { label: 'Flow IA', icon: Sparkles, href: '/flow-ia', module: 'ai' },
   { label: 'Configuracoes', icon: Settings, href: '/configuracoes', module: 'settings' },
 ] as const;
 
