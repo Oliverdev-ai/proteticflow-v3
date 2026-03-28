@@ -209,7 +209,7 @@ export async function buildPublicJobTimeline(tenantId: number, clientId: number)
   const timelineByJob: Record<number, PublicPortalTimelineItem[]> = {};
   for (const log of logs) {
     if (!timelineByJob[log.jobId]) timelineByJob[log.jobId] = [];
-    timelineByJob[log.jobId].push(pickPublicTimeline(log));
+    timelineByJob[log.jobId]!.push(pickPublicTimeline(log));
   }
 
   return timelineByJob;
