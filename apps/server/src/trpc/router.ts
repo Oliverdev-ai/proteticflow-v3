@@ -14,6 +14,7 @@ import { agendaRouter } from '../modules/agenda/router.js';
 import { settingsRouter } from '../modules/settings/router.js';
 import { notificationRouter } from '../modules/notifications/router.js';
 import { portalRouter } from '../modules/portal/router.js';
+import { simulatorRouter } from '../modules/simulator/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   settings: settingsRouter,
   notification: notificationRouter,
   portal: portalRouter,
+  simulator: simulatorRouter,
 });
 
 export type AppRouter = typeof appRouter;

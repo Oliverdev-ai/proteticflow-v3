@@ -36,3 +36,6 @@ export * from './agenda';
 
 // Portal do cliente
 export * from './portal';
+
+// Simulador
+export * from './simulations.js';
