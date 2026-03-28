@@ -96,7 +96,11 @@ export const jobRouter = router({
     .input(z.object({ id: z.number().int().positive() }).merge(createJobStageSchema.partial()))
     .mutation(async ({ input, ctx }) => {
       const { id, ...data } = input;
-      return jobService.updateStage(ctx.tenantId!, id, data);
+      return jobService.updateStage(
+        ctx.tenantId!,
+        id,
+        Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
+      );
     }),
 
   deleteStage: adminProcedure

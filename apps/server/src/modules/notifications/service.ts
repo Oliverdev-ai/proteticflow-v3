@@ -262,7 +262,7 @@ export async function dispatchByPreference(args: {
       type: args.type,
       title: args.title,
       message: args.message,
-      relatedJobId: args.relatedJobId,
+      relatedJobId: args.relatedJobId ?? null,
     });
   }
 

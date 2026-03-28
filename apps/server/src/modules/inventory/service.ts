@@ -1,4 +1,4 @@
-import { eq, and, ilike, or, lt, gt, gte, lte, sql, isNull, desc } from 'drizzle-orm';
+import { eq, and, ilike, or, lt, gte, lte, sql, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import {
   materialCategories, suppliers, materials, stockMovements,
@@ -14,11 +14,20 @@ import {
 } from '@proteticflow/shared';
 import { XMLParser } from 'fast-xml-parser';
 
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as T;
+}
+
 // ─── Categorias ───────────────────────────────────────────────────────────────
 
 export async function createCategory(tenantId: number, input: CreateCategoryInput) {
   const [cat] = await db.insert(materialCategories).values({
-    tenantId, name: input.name, description: input.description, color: input.color ?? 'slate',
+    tenantId,
+    name: input.name,
+    description: input.description ?? null,
+    color: input.color ?? 'slate',
   }).returning();
   return cat!;
 }
@@ -30,8 +39,13 @@ export async function listCategories(tenantId: number) {
 }
 
 export async function updateCategory(tenantId: number, categoryId: number, input: Partial<CreateCategoryInput>) {
+  const updateData: Record<string, unknown> = {};
+  if (input.name !== undefined) updateData.name = input.name;
+  if (input.description !== undefined) updateData.description = input.description;
+  if (input.color !== undefined) updateData.color = input.color;
+
   const [cat] = await db.update(materialCategories)
-    .set({ ...input, updatedAt: new Date() })
+    .set(updateData)
     .where(and(eq(materialCategories.id, categoryId), eq(materialCategories.tenantId, tenantId)))
     .returning();
   if (!cat) throw new TRPCError({ code: 'NOT_FOUND', message: 'Categoria não encontrada' });
@@ -48,7 +62,14 @@ export async function deleteCategory(tenantId: number, categoryId: number) {
 
 export async function createSupplier(tenantId: number, input: CreateSupplierInput) {
   const [sup] = await db.insert(suppliers).values({
-    tenantId, ...input,
+    tenantId,
+    name: input.name,
+    cnpj: input.cnpj ?? null,
+    contact: input.contact ?? null,
+    email: input.email ?? null,
+    phone: input.phone ?? null,
+    address: input.address ?? null,
+    notes: input.notes ?? null,
   }).returning();
   return sup!;
 }
@@ -61,8 +82,9 @@ export async function listSuppliers(tenantId: number, filters: ListSuppliersInpu
   const offset = (filters.page - 1) * filters.limit;
   const data = await db.select().from(suppliers)
     .where(and(...conditions)).orderBy(suppliers.name).limit(filters.limit).offset(offset);
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(suppliers).where(and(...conditions));
-  return { data, total: Number(count) };
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(suppliers).where(and(...conditions));
+  const countRow = countRows[0];
+  return { data, total: Number(countRow?.count ?? 0) };
 }
 
 export async function getSupplier(tenantId: number, supplierId: number) {
@@ -73,7 +95,16 @@ export async function getSupplier(tenantId: number, supplierId: number) {
 }
 
 export async function updateSupplier(tenantId: number, supplierId: number, input: Partial<CreateSupplierInput>) {
-  const [sup] = await db.update(suppliers).set({ ...input, updatedAt: new Date() })
+  const updateData: Record<string, unknown> = { updatedAt: new Date() };
+  if (input.name !== undefined) updateData.name = input.name;
+  if (input.cnpj !== undefined) updateData.cnpj = input.cnpj;
+  if (input.contact !== undefined) updateData.contact = input.contact;
+  if (input.email !== undefined) updateData.email = input.email;
+  if (input.phone !== undefined) updateData.phone = input.phone;
+  if (input.address !== undefined) updateData.address = input.address;
+  if (input.notes !== undefined) updateData.notes = input.notes;
+
+  const [sup] = await db.update(suppliers).set(updateData)
     .where(and(eq(suppliers.id, supplierId), eq(suppliers.tenantId, tenantId))).returning();
   if (!sup) throw new TRPCError({ code: 'NOT_FOUND', message: 'Fornecedor não encontrado' });
   return sup;
@@ -92,15 +123,15 @@ export async function createMaterial(tenantId: number, input: CreateMaterialInpu
   const [mat] = await db.insert(materials).values({
     tenantId,
     name: input.name,
-    code: input.code,
-    barcode: input.barcode,
-    description: input.description,
-    categoryId: input.categoryId,
-    supplierId: input.supplierId,
+    code: input.code ?? null,
+    barcode: input.barcode ?? null,
+    description: input.description ?? null,
+    categoryId: input.categoryId ?? null,
+    supplierId: input.supplierId ?? null,
     unit: input.unit ?? 'un',
     minStock: String(input.minStock ?? 0),
-    maxStock: input.maxStock !== undefined ? String(input.maxStock) : undefined,
-    notes: input.notes,
+    maxStock: input.maxStock !== undefined ? String(input.maxStock) : null,
+    notes: input.notes ?? null,
     createdBy: userId,
   }).returning();
   return mat!;
@@ -125,8 +156,9 @@ export async function listMaterials(tenantId: number, filters: ListMaterialsInpu
   const offset = (filters.page - 1) * filters.limit;
   const data = await db.select().from(materials)
     .where(and(...conditions)).orderBy(materials.name).limit(filters.limit).offset(offset);
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(materials).where(and(...conditions));
-  return { data, total: Number(count) };
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(materials).where(and(...conditions));
+  const countRow = countRows[0];
+  return { data, total: Number(countRow?.count ?? 0) };
 }
 
 export async function getMaterial(tenantId: number, materialId: number) {
@@ -172,7 +204,7 @@ export async function createMovement(tenantId: number, input: CreateMovementInpu
 
   if (input.type === 'in') {
     // AP-13 + 09.05: custo médio ponderado no mesmo UPDATE atômico
-    const [updated] = await db.execute<{ current_stock: string; }>(sql`
+    const updatedResult = await db.execute<{ current_stock: string; }>(sql`
       UPDATE materials SET
         current_stock = current_stock + ${qty},
         average_cost_cents = CASE
@@ -184,18 +216,20 @@ export async function createMovement(tenantId: number, input: CreateMovementInpu
       WHERE tenant_id = ${tenantId} AND id = ${input.materialId} AND deleted_at IS NULL
       RETURNING current_stock
     `);
+    const updated = updatedResult.rows[0];
     if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Material não encontrado' });
     stockAfterResult = Number(updated.current_stock);
 
   } else if (input.type === 'out') {
     // AP-13: WHERE current_stock >= qty — se rows = 0 → estoque insuficiente
-    const [updated] = await db.execute<{ current_stock: string; }>(sql`
+    const updatedResult = await db.execute<{ current_stock: string; }>(sql`
       UPDATE materials SET
         current_stock = current_stock - ${qty},
         updated_at = NOW()
       WHERE tenant_id = ${tenantId} AND id = ${input.materialId} AND current_stock >= ${qty} AND deleted_at IS NULL
       RETURNING current_stock
     `);
+    const updated = updatedResult.rows[0];
     if (!updated) {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Estoque insuficiente para realizar a saída' });
     }
@@ -203,33 +237,34 @@ export async function createMovement(tenantId: number, input: CreateMovementInpu
 
   } else {
     // adjustment: setar valor absoluto
-    const [updated] = await db.execute<{ current_stock: string; }>(sql`
+    const updatedResult = await db.execute<{ current_stock: string; }>(sql`
       UPDATE materials SET
         current_stock = ${qty},
         updated_at = NOW()
       WHERE tenant_id = ${tenantId} AND id = ${input.materialId} AND deleted_at IS NULL
       RETURNING current_stock
     `);
+    const updated = updatedResult.rows[0];
     if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Material não encontrado' });
     stockAfterResult = Number(updated.current_stock);
   }
 
   // Insert de movimentação com stockAfter correto
-  const [movement] = await db.insert(stockMovements).values({
+  const [movement] = await db.insert(stockMovements).values(stripUndefined({
     tenantId,
     materialId: input.materialId,
     type: input.type,
     quantity: String(qty),
     stockAfter: String(stockAfterResult),
-    reason: input.reason,
-    jobId: input.jobId,
-    supplierId: input.supplierId,
-    purchaseOrderId: input.purchaseOrderId,
-    invoiceNumber: input.invoiceNumber,
+    reason: input.reason ?? null,
+    jobId: input.jobId ?? null,
+    supplierId: input.supplierId ?? null,
+    purchaseOrderId: input.purchaseOrderId ?? null,
+    invoiceNumber: input.invoiceNumber ?? null,
     unitCostCents: unitCost || null,
-    notes: input.notes,
+    notes: input.notes ?? null,
     createdBy: userId,
-  }).returning();
+  })).returning();
 
   logger.info({ tenantId, materialId: input.materialId, type: input.type, quantity: qty, stockAfter: stockAfterResult }, 'inventory.movement');
   return movement!;
@@ -261,24 +296,28 @@ export async function consumeForJob(tenantId: number, materialId: number, quanti
 }
 
 export async function getDashboard(tenantId: number) {
-  const [{ total }] = await db.select({ total: sql<number>`count(*)` }).from(materials)
+  const totalRows = await db.select({ total: sql<number>`count(*)` }).from(materials)
     .where(and(eq(materials.tenantId, tenantId), eq(materials.isActive, true), isNull(materials.deletedAt)));
+  const total = totalRows[0]?.total ?? 0;
 
-  const [{ belowMin }] = await db.select({ belowMin: sql<number>`count(*)` }).from(materials)
+  const belowRows = await db.select({ belowMin: sql<number>`count(*)` }).from(materials)
     .where(and(
       eq(materials.tenantId, tenantId),
       eq(materials.isActive, true),
       isNull(materials.deletedAt),
       sql`${materials.currentStock} < ${materials.minStock} AND ${materials.minStock} > 0`,
     ));
+  const belowMin = belowRows[0]?.belowMin ?? 0;
 
-  const [{ totalValue }] = await db.select({
+  const totalValueRows = await db.select({
     totalValue: sql<number>`SUM(CAST(${materials.currentStock} AS numeric) * ${materials.averageCostCents})`,
   }).from(materials)
     .where(and(eq(materials.tenantId, tenantId), eq(materials.isActive, true), isNull(materials.deletedAt)));
+  const totalValue = totalValueRows[0]?.totalValue ?? 0;
 
-  const [{ pendingPOs }] = await db.select({ pendingPOs: sql<number>`count(*)` }).from(purchaseOrders)
+  const pendingRows = await db.select({ pendingPOs: sql<number>`count(*)` }).from(purchaseOrders)
     .where(and(eq(purchaseOrders.tenantId, tenantId), eq(purchaseOrders.status, 'sent'), isNull(purchaseOrders.deletedAt)));
+  const pendingPOs = pendingRows[0]?.pendingPOs ?? 0;
 
   return {
     totalMaterials: Number(total),
@@ -291,8 +330,9 @@ export async function getDashboard(tenantId: number) {
 // ─── Ordens de Compra ─────────────────────────────────────────────────────────
 
 async function getNextPoCode(tenantId: number): Promise<string> {
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(purchaseOrders)
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(purchaseOrders)
     .where(eq(purchaseOrders.tenantId, tenantId));
+  const count = countRows[0]?.count ?? 0;
   return `PO-${String(Number(count) + 1).padStart(5, '0')}`;
 }
 
@@ -302,7 +342,7 @@ export async function createPurchaseOrder(tenantId: number, input: CreatePurchas
 
   return db.transaction(async (tx) => {
     const [po] = await tx.insert(purchaseOrders).values({
-      tenantId, supplierId: input.supplierId, code, notes: input.notes, totalCents, createdBy: userId,
+      tenantId, supplierId: input.supplierId ?? null, code, notes: input.notes ?? null, totalCents, createdBy: userId,
     }).returning();
 
     await tx.insert(purchaseOrderItems).values(
@@ -331,8 +371,9 @@ export async function listPurchaseOrders(tenantId: number, filters: ListPurchase
   const offset = (filters.page - 1) * filters.limit;
   const data = await db.select().from(purchaseOrders)
     .where(and(...conditions)).orderBy(desc(purchaseOrders.createdAt)).limit(filters.limit).offset(offset);
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(purchaseOrders).where(and(...conditions));
-  return { data, total: Number(count) };
+  const countRows = await db.select({ count: sql<number>`count(*)` }).from(purchaseOrders).where(and(...conditions));
+  const countRow = countRows[0];
+  return { data, total: Number(countRow?.count ?? 0) };
 }
 
 export async function getPurchaseOrder(tenantId: number, poId: number) {
@@ -422,7 +463,7 @@ export async function importNfeXml(tenantId: number, xmlContent: string, userId:
     supplierId = found?.id;
     // If not found, optionally create stub supplier
     if (!supplierId) {
-      const [newSup] = await db.insert(suppliers).values({ tenantId, name: supplierName, cnpj: supplierCnpj }).returning();
+      const [newSup] = await db.insert(suppliers).values(stripUndefined({ tenantId, name: supplierName, cnpj: supplierCnpj })).returning();
       supplierId = newSup?.id;
     }
   }
@@ -456,7 +497,7 @@ export async function importNfeXml(tenantId: number, xmlContent: string, userId:
     if (!materialId) {
       // Create stub material
       const [newMat] = await db.insert(materials).values({
-        tenantId, name, code, unit: 'un', averageCostCents: 0, createdBy: userId,
+        tenantId, name, code: code ?? null, unit: 'un', averageCostCents: 0, createdBy: userId,
       }).returning();
       materialId = newMat!.id;
     }
@@ -473,7 +514,7 @@ export async function importNfeXml(tenantId: number, xmlContent: string, userId:
 
 export async function updatePurchaseOrder(tenantId: number, poId: number, input: { supplierId?: number; notes?: string }) {
   const [updated] = await db.update(purchaseOrders)
-    .set({ ...input, updatedAt: new Date() })
+    .set(stripUndefined({ ...input, updatedAt: new Date() }))
     .where(and(eq(purchaseOrders.id, poId), eq(purchaseOrders.tenantId, tenantId)))
     .returning();
   if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'OC não encontrada' });

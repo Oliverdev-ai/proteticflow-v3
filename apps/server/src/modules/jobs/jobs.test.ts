@@ -3,7 +3,7 @@ import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
-import { eq, and, ne } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as jobService from './service.js';
 
@@ -11,7 +11,7 @@ async function createTestUser(email: string) {
   const [u] = await db.insert(users).values({
     name: 'Test', email, passwordHash: await hashPassword('Test123!'), role: 'user',
   }).returning();
-  return u;
+  return u!;
 }
 
 async function createTestTenant(userId: number, name: string) {
@@ -198,7 +198,7 @@ describe('Job Service — CRUD', () => {
     const tenant = await createTestTenant(user.id, 'Lab J11');
     const client = await createTestClient(tenant.id, user.id);
     const job = await jobService.createJob(tenant.id, { clientId: client.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, user.id);
-    const updated = await jobService.updateJob(tenant.id, job.id, { patientName: 'Paciente Updated' }, user.id);
+    const updated = (await jobService.updateJob(tenant.id, job.id, { patientName: 'Paciente Updated' }, user.id))!;
     expect(updated.patientName).toBe('Paciente Updated');
     expect(updated.orderNumber).toBe(job.orderNumber);
   });
@@ -218,8 +218,8 @@ describe('Job Service — Status Machine', () => {
 
   it('12. pending → in_progress: permitido', async () => {
     const { user, tenant, job } = await setup('j12@test.com', 'Lab J12');
-    const updated = await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id);
-    expect(updated?.status).toBe('in_progress');
+    const updated = (await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id))!;
+    expect(updated.status).toBe('in_progress');
   });
 
   it('13. pending → ready: REJEITADO (transição inválida)', async () => {
@@ -233,15 +233,15 @@ describe('Job Service — Status Machine', () => {
     await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id);
     await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'quality_check' }, user.id);
     await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'ready' }, user.id);
-    const final = await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'delivered' }, user.id);
-    expect(final?.status).toBe('delivered');
+    const final = (await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'delivered' }, user.id))!;
+    expect(final.status).toBe('delivered');
   });
 
   it('15. Qualquer → cancelled: permitido (exceto delivered e cancelled)', async () => {
     const { user, tenant, job } = await setup('j15@test.com', 'Lab J15');
     await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id);
-    const cancelled = await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'cancelled', cancelReason: 'Teste' }, user.id);
-    expect(cancelled?.status).toBe('cancelled');
+    const cancelled = (await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'cancelled', cancelReason: 'Teste' }, user.id))!;
+    expect(cancelled.status).toBe('cancelled');
   });
 
   it('16. delivered → qualquer: REJEITADO (estado final)', async () => {
@@ -284,10 +284,10 @@ describe('Job Service — Status Machine', () => {
     const { user, tenant, job } = await setup('j20@test.com', 'Lab J20');
     // changeStatus com cancelReason vazio é validado pelo schema (Zod), mas testamos o service
     // que deve setar cancelReason vindo do input
-    const updated = await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'cancelled', cancelReason: 'Motivo' }, user.id);
+    const updated = (await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'cancelled', cancelReason: 'Motivo' }, user.id))!;
     const [jdb] = await db.select().from(jobs).where(eq(jobs.id, job.id));
     expect(jdb?.cancelReason).toBe('Motivo');
-    expect(updated?.status).toBe('cancelled');
+    expect(updated.status).toBe('cancelled');
   });
 });
 
@@ -344,7 +344,7 @@ describe('Job Service — RBAC e Tenant Isolation', () => {
     const u2 = await createTestUser('j25b@test.com');
     const t1 = await createTestTenant(u1.id, 'Lab J25A');
     const t2 = await createTestTenant(u2.id, 'Lab J25B');
-    const c1 = await createTestClient(t1.id, u1.id);
+    await createTestClient(t1.id, u1.id);
     const c2 = await createTestClient(t2.id, u2.id);
     await jobService.createJob(t2.id, { clientId: c2.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, u2.id);
     const { data } = await jobService.listJobs(t1.id, { limit: 100 });

@@ -3,7 +3,7 @@ import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as jobService from './service.js';
 
@@ -11,7 +11,7 @@ async function createTestUser(email: string) {
   const [u] = await db.insert(users).values({
     name: 'Test', email, passwordHash: await hashPassword('Test123!'), role: 'user',
   }).returning();
-  return u;
+  return u!;
 }
 
 async function createTestTenant(userId: number, name: string) {
@@ -139,7 +139,7 @@ describe('Kanban Service', () => {
     const u2 = await createTestUser('k9b@test.com');
     const t1 = await createTestTenant(u1.id, 'Lab K9A');
     const t2 = await createTestTenant(u2.id, 'Lab K9B');
-    const c1 = await createTestClient(t1.id, u1.id);
+    await createTestClient(t1.id, u1.id);
     const c2 = await createTestClient(t2.id, u2.id);
     await createJobForTest(t2.id, c2.id, u2.id);
     const board = await jobService.getKanbanBoard(t1.id, {});

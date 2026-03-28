@@ -22,7 +22,7 @@ async function createUser(email: string) {
       passwordHash: await hashPassword('Test123!'),
     })
     .returning();
-  return user;
+  return user!;
 }
 
 async function createTenantFor(userId: number, name: string) {
@@ -82,23 +82,23 @@ describe('notifications service', () => {
     const tenantA = await createTenantFor(userA.id, 'Tenant MA');
     const tenantB = await createTenantFor(userB.id, 'Tenant MB');
 
-    const notifA = await notificationService.createInAppNotification({
+    const notifA = (await notificationService.createInAppNotification({
       tenantId: tenantA.id,
       userId: userA.id,
       eventKey: 'deadline_24h',
       type: 'warning',
       title: 'A',
       message: 'A',
-    });
+    }))!;
 
-    const notifB = await notificationService.createInAppNotification({
+    const notifB = (await notificationService.createInAppNotification({
       tenantId: tenantB.id,
       userId: userB.id,
       eventKey: 'deadline_24h',
       type: 'warning',
       title: 'B',
       message: 'B',
-    });
+    }))!;
 
     const result = await notificationService.markRead(tenantA.id, userA.id, [notifA.id, notifB.id]);
     expect(result.updated).toBe(1);
