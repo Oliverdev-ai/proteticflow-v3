@@ -39,3 +39,6 @@ export * from './portal';
 
 // Simulador
 export * from './simulations.js';
+
+// IA Flow
+export * from './ai.js';
