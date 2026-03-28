@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
-import { 
-  ArrowLeft, 
-  Loader2, 
-  RefreshCw, 
-  Lock, 
-  FileDown, 
-  Pencil, 
-  CheckCircle2, 
+import {
+  ArrowLeft,
+  Loader2,
+  RefreshCw,
+  Lock,
+  FileDown,
+  Pencil,
+  CheckCircle2,
   AlertCircle,
-  MoreVertical,
-  ChevronRight,
-  User,
-  DollarSign
 } from 'lucide-react';
 
 export default function PayrollDetailPage() {
@@ -25,49 +21,56 @@ export default function PayrollDetailPage() {
   const [discountValue, setDiscountValue] = useState(0);
   const [bonusValue, setBonusValue] = useState(0);
   const [notes, setNotes] = useState('');
+  const [downloadingEmployeeId, setDownloadingEmployeeId] = useState<number | null>(null);
 
-  const { data: period, isLoading: isLoadingPeriod } = trpc.payroll.getPeriod.useQuery(periodId);
-  const { data: entries, isLoading: isLoadingEntries } = trpc.payroll.listEntries.useQuery(periodId);
+  const { data: periodReport, isLoading: isLoadingPeriod } = trpc.payroll.getPeriodReport.useQuery({ periodId });
+  const period = periodReport?.period;
+  const entries = periodReport?.entries ?? [];
 
   const generateMutation = trpc.payroll.generateEntries.useMutation({
     onSuccess: () => {
-      utils.payroll.listEntries.invalidate(periodId);
-      utils.payroll.getPeriod.invalidate(periodId);
+      utils.payroll.getPeriodReport.invalidate({ periodId });
     },
   });
 
   const updateEntryMutation = trpc.payroll.updateEntry.useMutation({
     onSuccess: () => {
-      utils.payroll.listEntries.invalidate(periodId);
-      utils.payroll.getPeriod.invalidate(periodId);
+      utils.payroll.getPeriodReport.invalidate({ periodId });
       setEditingEntryId(null);
     },
   });
 
   const closeMutation = trpc.payroll.closePeriod.useMutation({
     onSuccess: () => {
-      utils.payroll.getPeriod.invalidate(periodId);
+      utils.payroll.getPeriodReport.invalidate({ periodId });
       utils.payroll.listPeriods.invalidate();
     },
   });
 
-  const downloadPdMutation = trpc.payroll.generatePayslipPdf.useMutation({
-    onSuccess: (data) => {
-      const blob = new Blob([new Uint8Array(data.data)], { type: 'application/pdf' });
+  async function handleDownloadPayslip(employeeId: number) {
+    setDownloadingEmployeeId(employeeId);
+    try {
+      const payload = await utils.payroll.generatePayslip.fetch({ periodId, employeeId });
+      const maybeBuffer = payload as { data?: number[] };
+      const bytes = maybeBuffer.data ? new Uint8Array(maybeBuffer.data) : new Uint8Array();
+      const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `holerite-${period?.month}-${period?.year}.pdf`;
       a.click();
-    },
-  });
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setDownloadingEmployeeId(null);
+    }
+  }
 
   const handleUpdate = (entryId: number) => {
     updateEntryMutation.mutate({
       entryId,
       discountsCents: discountValue,
       bonusCents: bonusValue,
-      notes
+      notes,
     });
   };
 
@@ -100,16 +103,16 @@ export default function PayrollDetailPage() {
         <div className="flex gap-2">
            {period.status === 'open' && (
              <>
-               <button 
-                 onClick={() => generateMutation.mutate(periodId)}
+               <button
+                 onClick={() => generateMutation.mutate({ periodId })}
                  disabled={generateMutation.isPending}
                  className="flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-neutral-700"
                >
                  {generateMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                  Consolidar Valores
                </button>
-               <button 
-                 onClick={() => { if(confirm('Deseja fechar esta folha? Não será mais possível editar lançamentos.')) closeMutation.mutate(periodId); }}
+               <button
+                 onClick={() => { if (confirm('Deseja fechar esta folha? Não será mais possível editar lançamentos.')) closeMutation.mutate({ periodId }); }}
                  disabled={closeMutation.isPending}
                  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-violet-500/20"
                >
@@ -150,18 +153,18 @@ export default function PayrollDetailPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800">
-              {isLoadingEntries ? (
+              {isLoadingPeriod ? (
                 <tr><td colSpan={6} className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-neutral-600" /></td></tr>
-              ) : entries?.length === 0 ? (
+              ) : entries.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-20 text-center text-neutral-500">
                      <AlertCircle size={32} className="mx-auto mb-2 opacity-20" />
                      <p>Nenhum lançamento gerado.</p>
-                     <button onClick={() => generateMutation.mutate(periodId)} className="text-violet-400 text-sm mt-2 hover:underline">Consolidar agora</button>
+                     <button onClick={() => generateMutation.mutate({ periodId })} className="text-violet-400 text-sm mt-2 hover:underline">Consolidar agora</button>
                   </td>
                 </tr>
               ) : (
-                entries?.map(entry => (
+                entries.map((entry: typeof entries[number]) => (
                   <tr key={entry.id} className="hover:bg-neutral-800/20 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -178,29 +181,29 @@ export default function PayrollDetailPage() {
                     </td>
                     <td className="px-6 py-4">
                       {editingEntryId === entry.id ? (
-                        <input 
-                          type="number" 
+                        <input
+                          type="number"
                           className="w-20 bg-neutral-950 border border-neutral-800 rounded px-2 py-1 text-xs text-emerald-400"
                           value={bonusValue}
                           onChange={(e) => setBonusValue(Number(e.target.value))}
                         />
                       ) : (
                         <div className="text-xs text-emerald-500 font-medium">
-                          + R$ {(entry.bonusCents / 100).toLocaleString('pt-BR')}
+                          + R$ {(0).toLocaleString('pt-BR')}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {editingEntryId === entry.id ? (
-                        <input 
-                          type="number" 
+                        <input
+                          type="number"
                           className="w-20 bg-neutral-950 border border-neutral-800 rounded px-2 py-1 text-xs text-red-400"
                           value={discountValue}
                           onChange={(e) => setDiscountValue(Number(e.target.value))}
                         />
                       ) : (
                         <div className="text-xs text-red-400 font-medium">
-                          - R$ {(entry.discountsCents / 100).toLocaleString('pt-BR')}
+                          - R$ {(0).toLocaleString('pt-BR')}
                         </div>
                       )}
                     </td>
@@ -216,25 +219,25 @@ export default function PayrollDetailPage() {
                              <CheckCircle2 size={16} />
                            </button>
                          ) : (
-                           <button 
-                             onClick={() => { 
-                               setEditingEntryId(entry.id); 
-                               setDiscountValue(entry.discountsCents); 
-                               setBonusValue(entry.bonusCents);
+                           <button
+                             onClick={() => {
+                               setEditingEntryId(entry.id);
+                               setDiscountValue(0);
+                               setBonusValue(0);
                                setNotes(entry.notes || '');
-                             }} 
+                             }}
                              className="p-2 text-neutral-500 hover:text-white"
                            >
                              <Pencil size={16} />
                            </button>
                          )
                        )}
-                       <button 
-                         onClick={() => downloadPdMutation.mutate({ periodId, employeeId: entry.employeeId })}
+                       <button
+                         onClick={() => { void handleDownloadPayslip(entry.employeeId); }}
                          className="p-2 text-violet-400 hover:text-violet-300 hover:bg-violet-400/10 rounded-lg transition-colors"
                          title="Baixar Holerite PDF"
                        >
-                         {downloadPdMutation.isPending && downloadPdMutation.variables?.employeeId === entry.employeeId ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                         {downloadingEmployeeId === entry.employeeId ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
                        </button>
                     </td>
                   </tr>

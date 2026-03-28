@@ -16,7 +16,7 @@ export default function FuncionariosIndex() {
   const [showInactive, setShowInactive] = useState(false);
 
   // Router is 'employee' (singular)
-  const { data, isLoading } = trpc.employee.listEmployees.useQuery({ 
+  const { data, isLoading } = trpc.employee.list.useQuery({
     search, 
     isActive: !showInactive 
   });
@@ -94,7 +94,7 @@ export default function FuncionariosIndex() {
                   </td>
                 </tr>
               ) : (
-                data?.data.map((emp) => (
+                data?.data.map((emp: typeof data.data[number]) => (
                   <tr 
                     key={emp.id} 
                     className="group cursor-pointer hover:bg-neutral-800/50 transition-colors"

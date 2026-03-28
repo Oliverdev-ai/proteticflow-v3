@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../db/index.js';
-import { users, refreshTokens, passwordResetTokens } from '../../db/schema/users.js';
+import { users, refreshTokens } from '../../db/schema/users.js';
 import * as authService from './service.js';
 import { eq } from 'drizzle-orm';
 
@@ -80,9 +80,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
   it('11. Should process logout properly', async () => {
     const res = await authService.login({ email: testEmail, password: testPassword }, {});
     await authService.logout(res.refreshToken);
-    const sessions = await authService.getSessions(createdUserId, 'abc');
     const tokenHash = authService.hashToken(res.refreshToken);
-    const activeSession = sessions.find(s => s.id === 0); // we can't search by hash easily in the output, but session is revoked.
     // the query `getSessions` only returns non-revoked ones.
     const [dbToken] = await db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
     if (!dbToken) throw new Error('Refresh token not found in test');

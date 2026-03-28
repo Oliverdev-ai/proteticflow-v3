@@ -19,7 +19,6 @@ export default function PricingTableDetailPage() {
   const [newItem, setNewItem] = useState({ name: '', category: '', priceCents: '', estimatedDays: '5', code: '' });
   const [importResult, setImportResult] = useState<{ created: number; updated: number; errors: { line: number; message: string }[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const utils = trpc.useUtils();
 
   const { data: table, isLoading: tableLoading, error: tableError } = trpc.pricing.getTable.useQuery({ id: tableId });
   const { data: items, isLoading: itemsLoading, refetch } = trpc.pricing.listItems.useQuery({ pricingTableId: tableId, search: search || undefined, page, limit: 20 });

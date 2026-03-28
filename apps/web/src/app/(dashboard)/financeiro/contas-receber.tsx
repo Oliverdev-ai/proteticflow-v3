@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { trpc } from '../../../lib/trpc';
-import { CheckCircle, XCircle, ChevronDown, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 type ArStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 

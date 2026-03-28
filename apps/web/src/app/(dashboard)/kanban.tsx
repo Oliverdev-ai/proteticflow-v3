@@ -1,4 +1,4 @@
-import { useState, useOptimistic } from 'react';
+import { useState } from 'react';
 import { DndContext, DragOverlay, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { Loader2, AlertCircle, Clock, User } from 'lucide-react';
@@ -75,7 +75,6 @@ function DraggableCard({ job }: { job: KanbanJob }) {
 }
 
 export default function KanbanPage() {
-  const [clientFilter, setClientFilter] = useState<number | undefined>();
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [activeJob, setActiveJob] = useState<KanbanJob | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
@@ -83,7 +82,6 @@ export default function KanbanPage() {
   const utils = trpc.useUtils();
 
   const { data, isLoading, error } = trpc.job.getBoard.useQuery({
-    clientId: clientFilter,
     overdue: overdueOnly || undefined,
   });
 
@@ -116,6 +114,7 @@ export default function KanbanPage() {
     if (!over || !active.data.current) return;
     const fromStatus = active.data.current.status as JobStatus;
     const toStatus = over.id as JobStatus;
+    if (fromStatus === 'cancelled' || toStatus === 'cancelled') return;
     if (fromStatus === toStatus) return;
 
     // Validate transition — if invalid, show toast (revert happens automatically since we don't update optimistically)

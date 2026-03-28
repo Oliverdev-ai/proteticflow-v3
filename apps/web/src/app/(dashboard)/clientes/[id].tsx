@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { updateClientSchema } from '@proteticflow/shared';
@@ -23,16 +23,39 @@ export default function ClientEditPage() {
   const { data: client, isLoading, error } = trpc.clientes.get.useQuery({ id: clientId });
   const { data: extract } = trpc.clientes.getExtract.useQuery({ id: clientId }, { enabled: tab === 'extrato' });
 
-  const { register, handleSubmit, formState: { isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(updateClientSchema),
-    values: client ?? undefined,
   });
+
+  useEffect(() => {
+    if (!client) return;
+    reset({
+      name: client.name,
+      clinic: client.clinic ?? undefined,
+      contactPerson: client.contactPerson ?? undefined,
+      email: client.email ?? undefined,
+      phone: client.phone ?? undefined,
+      phone2: client.phone2 ?? undefined,
+      documentType: client.documentType ?? undefined,
+      document: client.document ?? undefined,
+      street: client.street ?? undefined,
+      addressNumber: client.addressNumber ?? undefined,
+      complement: client.complement ?? undefined,
+      neighborhood: client.neighborhood ?? undefined,
+      city: client.city ?? undefined,
+      state: client.state ?? undefined,
+      zipCode: client.zipCode ?? undefined,
+      technicalPreferences: client.technicalPreferences ?? undefined,
+      priceAdjustmentPercent: Number(client.priceAdjustmentPercent ?? 0),
+      pricingTableId: client.pricingTableId ?? undefined,
+    });
+  }, [client, reset]);
 
   const updateMutation = trpc.clientes.update.useMutation({
-    onSuccess: () => { utils.client.list.invalidate(); utils.client.get.invalidate({ id: clientId }); },
+    onSuccess: () => { utils.clientes.list.invalidate(); utils.clientes.get.invalidate({ id: clientId }); },
   });
 
-  const onSubmit = (data: FormData) => updateMutation.mutate({ id: clientId, ...data });
+  const onSubmit: SubmitHandler<FormData> = (data) => updateMutation.mutate({ id: clientId, ...data });
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-violet-400" size={32} /></div>;

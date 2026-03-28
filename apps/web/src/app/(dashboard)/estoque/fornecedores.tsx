@@ -35,7 +35,7 @@ export default function SuppliersPage() {
 
       <div className="space-y-3">
         {suppliers.length === 0 && <p className="text-neutral-500 text-center py-10">Nenhum fornecedor cadastrado</p>}
-        {suppliers.map(s => (
+        {suppliers.map((s: typeof suppliers[number]) => (
           <div key={s.id} className={`bg-neutral-900 border rounded-xl px-5 py-4 flex items-center justify-between ${s.isActive ? 'border-neutral-800' : 'border-neutral-800 opacity-60'}`}>
             <div>
               <p className="text-white font-medium">{s.name}</p>

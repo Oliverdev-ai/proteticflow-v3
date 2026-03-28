@@ -1,6 +1,6 @@
 import { trpc } from '../lib/trpc';
 
-export function useSettings() {
+function createUseSettingsData() {
   const utils = trpc.useUtils();
 
   const overview = trpc.settings.getSettingsOverview.useQuery({ includeUsers: true });
@@ -30,4 +30,8 @@ export function useSettings() {
     testSmtp,
     updateRole,
   };
+}
+
+export function useSettings() {
+  return createUseSettingsData();
 }

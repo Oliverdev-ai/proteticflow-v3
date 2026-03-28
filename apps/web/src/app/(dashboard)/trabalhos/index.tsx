@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Loader2, AlertCircle, Clock, CheckCircle2, XCircle, Truck, Eye, Filter } from 'lucide-react';
+import { Plus, Search, Loader2, AlertCircle, Clock, CheckCircle2, Eye } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { JOB_STATUS_LABELS, JOB_STATUS_COLORS } from '@proteticflow/shared';
 

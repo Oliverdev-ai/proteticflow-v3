@@ -5,7 +5,6 @@ import {
   materialCategories, suppliers, materials, stockMovements,
   purchaseOrders, purchaseOrderItems,
 } from '../../db/schema/materials.js';
-import { eq, and } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as inventoryService from './service.js';
 

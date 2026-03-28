@@ -306,7 +306,7 @@ export async function revokeSession(userId: number, sessionId: number) {
     .where(and(eq(refreshTokens.id, sessionId), eq(refreshTokens.userId, userId)));
 }
 
-export async function getPermissions(userId: number, tenantId: number) {
+export async function getPermissions(userId: number, _tenantId: number) {
   // Implementations for Phase 2
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario nao encontrado' });

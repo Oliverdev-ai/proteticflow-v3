@@ -94,7 +94,7 @@ export async function getEmployee(tenantId: number, id: number) {
   return { ...employee, skills };
 }
 
-export async function updateEmployee(tenantId: number, id: number, input: UpdateEmployeeInput, userId: number) {
+export async function updateEmployee(tenantId: number, id: number, input: UpdateEmployeeInput, _userId: number) {
   const data: Partial<typeof employees.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -139,7 +139,7 @@ export async function updateEmployee(tenantId: number, id: number, input: Update
   return updated;
 }
 
-export async function dismissEmployee(tenantId: number, id: number, dismissalDate: string, userId: number) {
+export async function dismissEmployee(tenantId: number, id: number, dismissalDate: string, _userId: number) {
   const [updated] = await db.update(employees)
     .set({ 
       dismissalDate: new Date(dismissalDate), 

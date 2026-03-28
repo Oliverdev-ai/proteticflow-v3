@@ -1,4 +1,4 @@
-import { eq, and, gt, lt, inArray, isNull, sql } from 'drizzle-orm';
+import { eq, and, gt, sql } from 'drizzle-orm';
 import jsPDF from 'jspdf';
 import { db } from '../../db/index.js';
 import { 

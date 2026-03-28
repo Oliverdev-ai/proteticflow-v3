@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
-import { clients, pricingTables } from '../../db/schema/clients.js';
+import { clients } from '../../db/schema/clients.js';
 import { jobs } from '../../db/schema/jobs.js';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as clientService from './service.js';
 

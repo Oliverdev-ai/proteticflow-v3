@@ -1,14 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
-import { Truck, Plus, Calendar, ChevronRight, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-
-const STATUS_CONFIG = {
-  scheduled: { label: 'Agendado', color: 'text-neutral-400', bg: 'bg-neutral-800', icon: Clock },
-  in_transit: { label: 'Em trânsito', color: 'text-blue-400', bg: 'bg-blue-900/30', icon: Truck },
-  delivered: { label: 'Entregue', color: 'text-green-400', bg: 'bg-green-900/30', icon: CheckCircle },
-  failed: { label: 'Falhou', color: 'text-red-400', bg: 'bg-red-900/30', icon: XCircle },
-};
+import { Truck, Plus, Calendar, ChevronRight } from 'lucide-react';
 
 function getWeekDays() {
   const today = new Date();
@@ -28,7 +21,7 @@ export default function DeliveryListPage() {
   const endOfWeek = weekDays[6]!;
   endOfWeek.setHours(23, 59, 59);
 
-  const { data, refetch } = trpc.delivery.listSchedules.useQuery({
+  const { data } = trpc.delivery.listSchedules.useQuery({
     dateFrom: startOfWeek.toISOString(),
     dateTo: endOfWeek.toISOString(),
     page: 1, limit: 100,
@@ -44,7 +37,7 @@ export default function DeliveryListPage() {
     byDay[key].push(s);
   }
 
-  const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'];
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -54,7 +47,7 @@ export default function DeliveryListPage() {
             <Truck className="text-violet-500" size={24} />
             Roteiros de Entrega
           </h1>
-          <p className="text-neutral-400 text-sm mt-1">Calendário semanal dos roteiros</p>
+          <p className="text-neutral-400 text-sm mt-1">CalendÃ¡rio semanal dos roteiros</p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
@@ -132,7 +125,7 @@ export default function DeliveryListPage() {
                 <input type="text" placeholder="Nome do motorista" className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm placeholder-neutral-600" />
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-1">Veículo (opcional)</label>
+                <label className="block text-sm text-neutral-400 mb-1">VeÃ­culo (opcional)</label>
                 <input type="text" placeholder="Placa ou modelo" className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm placeholder-neutral-600" />
               </div>
               <div className="flex gap-3 pt-2">

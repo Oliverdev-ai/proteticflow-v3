@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updateEmployeeSchema, createSkillSchema } from '@proteticflow/shared';
+import { updateEmployeeSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { 
-  ArrowLeft, Loader2, User, MapPin, Briefcase, 
-  CreditCard, Pencil, Trash2, Award, History,
+  ArrowLeft, Loader2, User, Briefcase,
+  Pencil, Trash2, Award, History,
   Plus, X, Save
 } from 'lucide-react';
 import type { z } from 'zod';
@@ -21,41 +21,41 @@ export default function EmployeeEditPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [showSkillForm, setShowSkillForm] = useState(false);
 
-  const { data: employee, isLoading: isLoadingEmp } = trpc.employee.getEmployee.useQuery(employeeId);
-  const { data: skills, isLoading: isLoadingSkills } = trpc.employee.listSkills.useQuery(employeeId);
-  const { data: assignments, isLoading: isLoadingAssignments } = trpc.employee.listAssignments.useQuery({ employeeId });
+  const { data: employee, isLoading: isLoadingEmp } = trpc.employee.get.useQuery({ id: employeeId });
+  const { data: skills } = trpc.employee.listSkills.useQuery({ employeeId });
+  const { data: assignments } = trpc.employee.listAssignments.useQuery({ employeeId });
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, reset } = useForm<FormData>({
     resolver: zodResolver(updateEmployeeSchema),
   });
 
-  const updateMutation = trpc.employee.updateEmployee.useMutation({
+  const updateMutation = trpc.employee.update.useMutation({
     onSuccess: () => {
-      utils.employee.getEmployee.invalidate(employeeId);
+      utils.employee.get.invalidate({ id: employeeId });
       setIsEditing(false);
     },
   });
 
-  const dismissMutation = trpc.employee.dismissEmployee.useMutation({
+  const dismissMutation = trpc.employee.dismiss.useMutation({
     onSuccess: () => {
-      utils.employee.getEmployee.invalidate(employeeId);
+      utils.employee.get.invalidate({ id: employeeId });
     },
   });
 
   const addSkillMutation = trpc.employee.addSkill.useMutation({
     onSuccess: () => {
-      utils.employee.listSkills.invalidate(employeeId);
+      utils.employee.listSkills.invalidate({ employeeId });
       setShowSkillForm(false);
     },
   });
 
   const removeSkillMutation = trpc.employee.removeSkill.useMutation({
     onSuccess: () => {
-      utils.employee.listSkills.invalidate(employeeId);
+      utils.employee.listSkills.invalidate({ employeeId });
     },
   });
 
-  const onSubmit = (data: FormData) => updateMutation.mutate({ id: employeeId, data });
+  const onSubmit = (data: FormData) => updateMutation.mutate({ id: employeeId, ...data });
 
   if (isLoadingEmp) {
     return (
@@ -84,7 +84,7 @@ export default function EmployeeEditPage() {
         <div className="flex gap-2">
            {!isEditing ? (
              <button 
-               onClick={() => { setIsEditing(true); reset(employee as any); }}
+               onClick={() => { setIsEditing(true); reset(employee as FormData); }}
                className="flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
              >
                <Pencil size={15} /> Editar
@@ -240,7 +240,7 @@ export default function EmployeeEditPage() {
                     ) : (
                       assignments?.map((as) => (
                         <tr key={as.id} className="text-sm">
-                          <td className="py-3 text-violet-400 font-medium">{as.jobCode}</td>
+                          <td className="py-3 text-violet-400 font-medium">#{as.jobId}</td>
                           <td className="py-3 text-neutral-300">{as.task || 'Geral'}</td>
                           <td className="py-3">
                             {as.commissionAmountCents ? `R$ ${(as.commissionAmountCents / 100).toFixed(2)}` : <span className="text-neutral-600 text-[10px]">Aguardando cálculo</span>}
@@ -305,7 +305,7 @@ export default function EmployeeEditPage() {
                       </div>
                     </div>
                     <button 
-                      onClick={() => removeSkillMutation.mutate(skill.id)}
+                      onClick={() => removeSkillMutation.mutate({ skillId: skill.id })}
                       className="opacity-0 group-hover:opacity-100 p-1 text-neutral-600 hover:text-red-400 transition-all"
                     >
                       <X size={12} />

@@ -5,7 +5,6 @@ import {
   materialCategories, suppliers, materials, stockMovements,
   purchaseOrders, purchaseOrderItems,
 } from '../../db/schema/materials.js';
-import { eq, and } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as inventoryService from '../inventory/service.js';
 
@@ -133,7 +132,7 @@ describe('Inventory Service — Ordens de Compra e Dashboard', () => {
     const user = await createTestUser('inv20@test.com');
     const tenant = await createTestTenant(user.id, 'Lab Inv20');
     const mat1 = await inventoryService.createMaterial(tenant.id, { name: 'Mat OK', unit: 'un', minStock: 5 }, user.id);
-    const mat2 = await inventoryService.createMaterial(tenant.id, { name: 'Mat Baixo', unit: 'un', minStock: 10 }, user.id);
+    await inventoryService.createMaterial(tenant.id, { name: 'Mat Baixo', unit: 'un', minStock: 10 }, user.id);
 
     // mat1: entra 20 (acima do mínimo de 5)
     await inventoryService.createMovement(tenant.id, { materialId: mat1.id, type: 'in', quantity: 20, unitCostCents: 1000 }, user.id);

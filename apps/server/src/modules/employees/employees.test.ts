@@ -1,6 +1,6 @@
-﻿import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../db/index.js';
-import { employees, employeeSkills, jobAssignments, commissionPayments } from '../../db/schema/employees.js';
+import { employees, jobAssignments, commissionPayments } from '../../db/schema/employees.js';
 import { users } from '../../db/schema/users.js';
 import { tenants } from '../../db/schema/tenants.js';
 import { clients } from '../../db/schema/clients.js';
@@ -18,7 +18,6 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
   let testTenantId: number;
   let otherTenantId: number;
   let adminUserId: number;
-  let regularUserId: number;
   let createdEmployeeId: number;
   let testClientId: number;
   let testJobId: number;
@@ -59,7 +58,7 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
         name: 'Admin User',
         email: `admin-${Date.now()}@test.com`,
         passwordHash: 'hashed',
-        role: 'admin' as any,
+        role: 'admin',
       })
       .returning();
     const admin = assertExists(adminRow, 'admin user');
@@ -72,11 +71,11 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
         name: 'Regular User',
         email: `regular-${Date.now()}@test.com`,
         passwordHash: 'hashed',
-        role: 'user' as any,
+        role: 'user',
       })
       .returning();
     const regular = assertExists(regularRow, 'regular user');
-    regularUserId = regular.id;
+    void regular;
 
     const [otherRow] = await db
       .insert(tenants)
@@ -114,12 +113,15 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
   });
 
   it('1. Should create employee with 35+ fields', async () => {
-    const input: any = {
+    const input: Parameters<typeof employeeService.createEmployee>[1] = {
       name: 'John Doe Employee',
       cpf: '123.456.789-00',
-      type: 'protesista' as any,
-      contractType: 'pj_mei' as any,
+      type: 'protesista',
+      contractType: 'pj_mei',
       baseSalaryCents: 500000,
+      transportAllowanceCents: 0,
+      mealAllowanceCents: 0,
+      healthInsuranceCents: 0,
       defaultCommissionPercent: 10,
       admissionDate: new Date().toISOString(),
       email: 'john-emp@test.com',
@@ -271,7 +273,7 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
   it('15. Should generate production report with totals', async () => {
     const dateFrom = new Date(Date.now() - 86400000).toISOString();
     const dateTo = new Date(Date.now() + 86400000).toISOString();
-    const report: any = await employeeService.getProductionReport(testTenantId, { dateFrom, dateTo });
+    const report = await employeeService.getProductionReport(testTenantId, { dateFrom, dateTo });
     expect(report.length).toBe(1);
     expect(Number(report[0]?.jobsCompleted)).toBe(1);
     expect(Number(report[0]?.totalValueCents)).toBe(100000);
@@ -281,7 +283,7 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
   it('16. Should generate production report for specific employee', async () => {
     const dateFrom = new Date(Date.now() - 86400000).toISOString();
     const dateTo = new Date(Date.now() + 86400000).toISOString();
-    const report: any = await employeeService.getProductionReport(testTenantId, {
+    const report = await employeeService.getProductionReport(testTenantId, {
       employeeId: createdEmployeeId,
       dateFrom,
       dateTo,

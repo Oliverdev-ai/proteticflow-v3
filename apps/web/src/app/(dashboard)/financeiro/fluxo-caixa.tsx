@@ -29,7 +29,7 @@ export default function FluxoCaixaPage() {
 
   const shortMonth = (monthStr: string) => {
     const [y, m] = monthStr.split('-');
-    return new Date(parseInt(y), parseInt(m) - 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+    return new Date(parseInt(y ?? '0', 10), parseInt(m ?? '1', 10) - 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
   };
 
   return (

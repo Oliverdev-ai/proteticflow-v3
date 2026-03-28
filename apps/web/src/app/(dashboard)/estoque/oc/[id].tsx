@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { trpc } from '../../../../lib/trpc';
-import { ArrowLeft, ShoppingCart, CheckCircle, Send, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Send } from 'lucide-react';
 
 export default function PODetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -72,7 +72,7 @@ export default function PODetailPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800">
-            {items.map(({ item, materialName }) => (
+            {items.map(({ item, materialName }: typeof items[number]) => (
               <tr key={item.id} className="hover:bg-neutral-800/40">
                 <td className="px-4 py-3 text-white">{materialName ?? `Material #${item.materialId}`}</td>
                 <td className="px-4 py-3 text-right text-neutral-300">{Number(item.quantity)}</td>

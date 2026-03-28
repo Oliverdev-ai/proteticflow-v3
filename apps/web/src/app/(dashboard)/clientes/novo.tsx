@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createClientSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 
-type FormData = z.infer<typeof createClientSchema>;
+type FormData = z.input<typeof createClientSchema>;
 
 export default function ClientCreatePage() {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export default function ClientCreatePage() {
 
   const createMutation = trpc.clientes.create.useMutation({
     onSuccess: (client) => {
-      utils.client.list.invalidate();
+      utils.clientes.list.invalidate();
       navigate(`/clientes/${client.id}`);
     },
   });
@@ -40,7 +40,7 @@ export default function ClientCreatePage() {
     }
   }, [lookupQuery.data, setValue]);
 
-  const onSubmit = (data: FormData) => createMutation.mutate(data);
+  const onSubmit: SubmitHandler<FormData> = (data) => createMutation.mutate(data);
 
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto max-w-2xl">

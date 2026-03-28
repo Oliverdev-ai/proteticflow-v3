@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, FileText, Package, Clock, Camera, Download, CheckCircle, XCircle } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { canTransition, JOB_STATUS_LABELS, JOB_STATUS_COLORS } from '@proteticflow/shared';

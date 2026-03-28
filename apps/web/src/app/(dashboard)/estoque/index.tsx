@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
 import {
   Package, AlertTriangle, ShoppingCart, TrendingUp, BarChart3,
-  ChevronRight, Plus,
+  ChevronRight,
 } from 'lucide-react';
 
 function SummaryCard({ icon: Icon, label, value, sub, accent = false }: {

@@ -5,11 +5,10 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { logger } from '../../logger.js';
 import { updatePayrollEntrySchema } from '@proteticflow/shared';
-import { PgTransaction } from 'drizzle-orm/pg-core';
-import { PostgresJsQueryResultHKT } from 'drizzle-orm/postgres-js';
 
 type PayrollEntry = typeof payrollEntries.$inferSelect;
 type UpdatePayrollEntryInput = z.infer<typeof updatePayrollEntrySchema>;
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // ─── PERÍODOS (11.01) ────────────────────────────────────────────────────────
 
@@ -43,7 +42,7 @@ export async function listPeriods(tenantId: number) {
 
 // ─── LANÇAMENTOS (11.02–11.03) ──────────────────────────────────────────────
 
-export async function generateEntries(tenantId: number, periodId: number, userId: number) {
+export async function generateEntries(tenantId: number, periodId: number, _userId: number) {
   return db.transaction(async (tx) => {
     const [period] = await tx.select().from(payrollPeriods)
       .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
@@ -113,7 +112,7 @@ export async function generateEntries(tenantId: number, periodId: number, userId
   });
 }
 
-export async function updateEntry(tenantId: number, input: UpdatePayrollEntryInput, userId: number) {
+export async function updateEntry(tenantId: number, input: UpdatePayrollEntryInput, _userId: number) {
   return db.transaction(async (tx) => {
     const [entry] = await tx.select().from(payrollEntries).where(and(eq(payrollEntries.id, input.entryId), eq(payrollEntries.tenantId, tenantId)));
     if (!entry) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lançamento não encontrado' });
@@ -144,7 +143,7 @@ export async function updateEntry(tenantId: number, input: UpdatePayrollEntryInp
   });
 }
 
-async function calculatePeriodTotals(tx: PgTransaction<PostgresJsQueryResultHKT, any, any>, tenantId: number, periodId: number) {
+async function calculatePeriodTotals(tx: DbTransaction, _tenantId: number, periodId: number) {
   const entries = await tx.select().from(payrollEntries).where(eq(payrollEntries.periodId, periodId));
   const totalGrossCents = entries.reduce((acc: number, curr: PayrollEntry) => acc + curr.grossCents, 0);
   const totalDiscountsCents = entries.reduce((acc: number, curr: PayrollEntry) => acc + curr.discountsCents, 0);

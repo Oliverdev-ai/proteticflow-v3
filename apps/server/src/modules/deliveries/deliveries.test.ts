@@ -4,7 +4,6 @@ import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients, pricingTables, priceItems } from '../../db/schema/clients.js';
 import { deliverySchedules, deliveryItems } from '../../db/schema/deliveries.js';
-import { eq } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as deliveryService from './service.js';
 import * as jobService from '../jobs/service.js';

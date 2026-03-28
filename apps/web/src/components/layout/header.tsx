@@ -25,7 +25,7 @@ export function Header() {
       </div>
 
       <button
-        onClick={logout}
+        onClick={() => { void logout(); }}
         className="text-neutral-500 hover:text-red-400 transition-colors"
         title="Sair"
       >

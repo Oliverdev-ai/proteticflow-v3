@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
 import {
   TrendingUp, TrendingDown, AlertTriangle, Activity,
-  CreditCard, FileText, BookOpen, BarChart3,
+  FileText, BookOpen, BarChart3,
 } from 'lucide-react';
 
 function formatBRL(cents: number) {

@@ -13,7 +13,6 @@ const NEXT_STATUS: Record<string, Array<'sent' | 'printing' | 'completed' | 'err
 export default function ScanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const utils = trpc.useUtils();
   const scanId = Number(id);
 
   const query = trpc.scan.get.useQuery({ id: scanId }, { enabled: Number.isFinite(scanId) });

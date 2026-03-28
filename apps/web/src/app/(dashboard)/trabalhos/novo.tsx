@@ -38,13 +38,18 @@ export default function JobCreatePage() {
   const selectedClient = clientsData?.data.find(c => c.id === clientId);
 
   function addItem(priceItemId?: number, name?: string, price?: number) {
-    setItems(prev => [...prev, {
-      priceItemId,
-      serviceNameSnapshot: name ?? '',
-      quantity: 1,
-      unitPriceCents: price ?? 0,
-      adjustmentPercent: 0,
-    }]);
+    setItems(prev => {
+      const nextItem: Item = {
+        serviceNameSnapshot: name ?? '',
+        quantity: 1,
+        unitPriceCents: price ?? 0,
+        adjustmentPercent: 0,
+      };
+      if (priceItemId !== undefined) {
+        nextItem.priceItemId = priceItemId;
+      }
+      return [...prev, nextItem];
+    });
   }
 
   function removeItem(idx: number) {

@@ -7,9 +7,7 @@ import {
   ChevronRight, 
   CheckCircle2, 
   Clock,
-  ArrowLeft,
   Loader2,
-  FileText
 } from 'lucide-react';
 
 export default function PayrollIndex() {
@@ -23,6 +21,7 @@ export default function PayrollIndex() {
 
   const createMutation = trpc.payroll.createPeriod.useMutation({
     onSuccess: (period) => {
+      if (!period) return;
       utils.payroll.listPeriods.invalidate();
       setIsCreating(false);
       navigate(`/payroll/${period.id}`);

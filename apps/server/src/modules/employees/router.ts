@@ -51,7 +51,7 @@ export const employeeRouter = router({
 
   // Relatório
   productionReport: tenantProcedure.input(productionReportSchema).query(({ ctx, input }) =>
-    employeeService.getProductionReport(ctx.user!.tenantId, input)),
+    employeeService.getProductionReport(ctx.user!.tenantId, input)),
   commissionDetails: tenantProcedure.input(productionReportSchema).query(({ ctx, input }) =>
     employeeService.getCommissionDetails(ctx.user!.tenantId, input)),
 });

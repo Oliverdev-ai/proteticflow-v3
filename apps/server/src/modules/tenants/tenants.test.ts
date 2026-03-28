@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers, invites } from '../../db/schema/index.js';
 import { eq, and } from 'drizzle-orm';
@@ -102,7 +102,7 @@ describe('Tenant Service - Switch', () => {
 
   it('8. Switch tenant atualiza activeTenantId', async () => {
     const user = await createTestUser('sw1@test.com');
-    const t1 = await tenantService.createTenant(user.id, { name: 'Lab SW1' });
+    await tenantService.createTenant(user.id, { name: 'Lab SW1' });
     const t2 = await tenantService.createTenant(user.id, { name: 'Lab SW2' });
     await tenantService.switchTenant(user.id, t2.id);
     const [uRow] = await db.select().from(users).where(eq(users.id, user.id));

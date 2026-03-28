@@ -1,6 +1,6 @@
 import { eq, and, isNull, ilike, or, sql, count } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { clients, pricingTables } from '../../db/schema/clients.js';
+import { clients } from '../../db/schema/clients.js';
 import { tenants } from '../../db/schema/tenants.js';
 import { jobs } from '../../db/schema/jobs.js';
 import { logger } from '../../logger.js';

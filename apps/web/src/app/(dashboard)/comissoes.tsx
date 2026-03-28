@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { trpc } from '../../lib/trpc';
 import { 
-  DollarSign, 
-  Search, 
-  Filter, 
   Download, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle,
   FileText
 } from 'lucide-react';
 
@@ -23,8 +17,8 @@ type CommissionDetail = {
 };
 
 export default function CommissionsPage() {
-  const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] ?? '');
+  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0] ?? '');
   const [employeeId, setEmployeeId] = useState<number | undefined>(undefined);
 
   const { data: report, isLoading } = trpc.employee.commissionDetails.useQuery({
@@ -59,7 +53,7 @@ export default function CommissionsPage() {
             onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : undefined)}
           >
             <option value="">Todos os Funcionários</option>
-            {employees?.data.map(emp => (
+            {employees?.data.map((emp: typeof employees.data[number]) => (
               <option key={emp.id} value={emp.id}>{emp.name}</option>
             ))}
           </select>

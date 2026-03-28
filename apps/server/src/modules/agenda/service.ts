@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, lte } from 'drizzle-orm';
+import { and, eq, gte, lte } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { db } from '../../db/index.js';
 import { events } from '../../db/schema/agenda.js';

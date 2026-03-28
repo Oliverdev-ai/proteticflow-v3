@@ -116,7 +116,7 @@ export async function getSchedule(tenantId: number, scheduleId: number) {
 
 // ─── Atualizar Status de Item ─────────────────────────────────────────────────
 
-export async function updateItemStatus(tenantId: number, input: UpdateDeliveryItemStatusInput, userId: number) {
+export async function updateItemStatus(tenantId: number, input: UpdateDeliveryItemStatusInput, _userId: number) {
   if (input.status === 'failed' && !input.failedReason) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'failedReason é obrigatório para status "failed"' });
   }

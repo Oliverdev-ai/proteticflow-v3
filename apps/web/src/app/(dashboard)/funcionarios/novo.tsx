@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createEmployeeSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Loader2, User, MapPin, Briefcase, CreditCard, Percent } from 'lucide-react';
 import type { z } from 'zod';
 
-type FormData = z.infer<typeof createEmployeeSchema>;
+type FormData = z.input<typeof createEmployeeSchema>;
 
 export default function EmployeeCreatePage() {
   const navigate = useNavigate();
@@ -22,14 +22,14 @@ export default function EmployeeCreatePage() {
     }
   });
 
-  const createMutation = trpc.employee.createEmployee.useMutation({
+  const createMutation = trpc.employee.create.useMutation({
     onSuccess: () => {
-      utils.employee.listEmployees.invalidate();
+      utils.employee.list.invalidate();
       navigate('/funcionarios');
     },
   });
 
-  const onSubmit = (data: FormData) => createMutation.mutate(data);
+  const onSubmit: SubmitHandler<FormData> = (data) => createMutation.mutate(data);
 
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto max-w-4xl mx-auto">

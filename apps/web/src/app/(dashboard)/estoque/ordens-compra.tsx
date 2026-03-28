@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
-import { ShoppingCart, ChevronLeft, Plus, CheckCircle, Clock, Send, XCircle, ArrowRight } from 'lucide-react';
+import { ShoppingCart, ChevronLeft, CheckCircle, Clock, Send, XCircle, ArrowRight } from 'lucide-react';
 
 const STATUS_CONFIG = {
   draft:      { label: 'Rascunho',  color: 'text-neutral-400', bg: 'bg-neutral-800', icon: Clock },
@@ -45,7 +45,7 @@ export default function PurchaseOrdersPage() {
 
       <div className="space-y-3">
         {pos.length === 0 && <p className="text-neutral-500 text-center py-10">Nenhuma ordem de compra encontrada</p>}
-        {pos.map(po => {
+        {pos.map((po: typeof pos[number]) => {
           const cfg = STATUS_CONFIG[po.status as keyof typeof STATUS_CONFIG];
           const StatusIcon = cfg.icon;
           const totalBRL = (po.totalCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

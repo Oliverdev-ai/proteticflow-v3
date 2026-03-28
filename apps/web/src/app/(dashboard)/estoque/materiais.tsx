@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
-import { Package, Search, Plus, AlertTriangle, ArrowRight, ChevronLeft, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Package, Search, Plus, AlertTriangle, ArrowRight, ChevronLeft } from 'lucide-react';
 
 export default function MaterialsPage() {
   const [search, setSearch] = useState('');
@@ -12,7 +12,6 @@ export default function MaterialsPage() {
 
   const utils = trpc.useUtils();
   const { data } = trpc.inventory.listMaterials.useQuery({ search: search || undefined, belowMinimum: belowMin || undefined, page, limit: 20 });
-  const { data: categories } = trpc.inventory.listCategories.useQuery();
 
   const createMaterial = trpc.inventory.createMaterial.useMutation({
     onSuccess: () => { utils.inventory.listMaterials.invalidate(); setCreateOpen(false); setForm({ name: '', code: '', unit: 'un', minStock: 0 }); },
@@ -65,7 +64,7 @@ export default function MaterialsPage() {
             {materials.length === 0 && (
               <tr><td colSpan={6} className="py-10 text-center text-neutral-500">Nenhum material encontrado</td></tr>
             )}
-            {materials.map(mat => {
+            {materials.map((mat: typeof materials[number]) => {
               const stock = Number(mat.currentStock);
               const min = Number(mat.minStock);
               const isLow = min > 0 && stock < min;
