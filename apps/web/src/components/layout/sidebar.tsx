@@ -17,6 +17,7 @@ import {
   Calendar,
   Calculator,
   Sparkles,
+  Headphones,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
@@ -38,6 +39,7 @@ const MENU_ITEMS = [
   { label: 'Relatorios', icon: BarChart3, href: '/relatorios', module: 'reports' },
   { label: 'Simulador', icon: Calculator, href: '/simulador', module: 'simulator' },
   { label: 'Flow IA', icon: Sparkles, href: '/flow-ia', module: 'ai' },
+  { label: 'Suporte', icon: Headphones, href: '/suporte/tickets', module: 'support' },
   { label: 'Configuracoes', icon: Settings, href: '/configuracoes', module: 'settings' },
 ] as const;
 

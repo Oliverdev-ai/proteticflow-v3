@@ -58,6 +58,8 @@ import EventCreatePage from './app/(dashboard)/agenda/novo';
 import SettingsPage from './app/(dashboard)/configuracoes/index';
 import SimulatorPage from './app/(dashboard)/simulador';
 import FlowIAPage from './app/(dashboard)/flow-ia';
+import TicketsPage from './app/(dashboard)/suporte/tickets';
+import ChatbotConfigPage from './app/(dashboard)/suporte/chatbot-config';
 import PublicPortalPage from './app/portal/[token]';
 
 import './globals.css';
@@ -135,6 +137,8 @@ function AppContent() {
           {/* Fase 15 - Configuracoes */}
           <Route path="/simulador" element={<SimulatorPage />} />
           <Route path="/flow-ia" element={<FlowIAPage />} />
+          <Route path="/suporte/tickets" element={<TicketsPage />} />
+          <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
         </Route>
 

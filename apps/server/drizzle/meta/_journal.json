@@ -99,6 +99,13 @@
       "when": 1774728000000,
       "tag": "0013_ai_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1774737000000,
+      "tag": "0014_support",
+      "breakpoints": true
     }
   ]
 }

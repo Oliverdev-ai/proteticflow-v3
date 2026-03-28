@@ -42,3 +42,6 @@ export * from './simulations.js';
 
 // IA Flow
 export * from './ai.js';
+
+// Suporte automatizado
+export * from './support.js';
