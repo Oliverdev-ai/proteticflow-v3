@@ -40,7 +40,7 @@ export const simulatorRouter = router({
     .input(sendSimulationBudgetEmailSchema)
     .mutation(({ ctx, input }) => simulatorService.sendBudgetEmail(ctx.tenantId!, input.simulationId, input.email)),
 
-  approveAndCreateJob: adminProcedure
+  approveAndCreateJob: licensedProcedure
     .input(approveSimulationAndCreateJobSchema)
     .mutation(({ ctx, input }) => simulatorService.approveAndCreateJob(ctx.tenantId!, input, ctx.user!.id)),
 });

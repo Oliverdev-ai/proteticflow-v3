@@ -7,6 +7,12 @@ type EmailPayload = {
   subject: string;
   text: string;
   html?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string;
+    encoding?: string;
+    contentType?: string;
+  }>;
 };
 
 function hasSmtpConfig() {
@@ -38,6 +44,7 @@ export async function sendEmail(payload: EmailPayload) {
     subject: payload.subject,
     text: payload.text,
     html: payload.html,
+    attachments: payload.attachments,
   });
 
   logger.info(

@@ -1,4 +1,4 @@
-import { sendEmail } from '../notifications/email.js';
+ï»¿import { sendEmail } from '../notifications/email.js';
 import { logger } from '../../logger.js';
 
 type SendSimulationEmailInput = {
@@ -14,17 +14,25 @@ export async function sendSimulationEmail(input: SendSimulationEmailInput) {
     const result = await sendEmail({
       to: input.to,
       subject: input.subject,
-      text: `Segue o orçamento #${input.simulationId} em anexo.`,
+      text: `Segue o orÃ§amento #${input.simulationId} em anexo.`,
+      attachments: [
+        {
+          filename: `orcamento-${input.simulationId}.pdf`,
+          content: input.pdfBase64,
+          encoding: 'base64',
+          contentType: 'application/pdf',
+        },
+      ],
     });
     logger.info(
       { action: 'simulator.email.sent', tenantId: input.tenantId, simulationId: input.simulationId, to: input.to, sent: result.sent },
-      'Email de simulação enviado',
+      'Email de simulaÃ§Ã£o enviado',
     );
     return { success: true, sent: result.sent };
   } catch (err) {
     logger.error(
       { action: 'simulator.email.error', tenantId: input.tenantId, simulationId: input.simulationId, to: input.to, err },
-      'Falha ao enviar email de simulação',
+      'Falha ao enviar email de simulaÃ§Ã£o',
     );
     return { success: false, sent: false };
   }
