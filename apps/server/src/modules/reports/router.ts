@@ -1,0 +1,87 @@
+import { router, tenantProcedure, adminProcedure } from '../../trpc/trpc.js';
+import {
+  reportPreviewSchema,
+  reportGeneratePdfSchema,
+  reportExportCsvSchema,
+  reportSendByEmailSchema,
+} from '@proteticflow/shared';
+import * as reportsService from './service.js';
+
+type ReportFilters = {
+  dateFrom: string;
+  dateTo: string;
+  clientId?: number;
+  employeeId?: number;
+  supplierId?: number;
+  status?: string;
+  groupBy?: 'day' | 'week' | 'month' | 'quarter' | 'year';
+  includeCharts?: boolean;
+  includeBreakdownByClient?: boolean;
+};
+
+function sanitizeFilters(filters: {
+  dateFrom: string;
+  dateTo: string;
+  clientId?: number | undefined;
+  employeeId?: number | undefined;
+  supplierId?: number | undefined;
+  status?: string | undefined;
+  groupBy?: 'day' | 'week' | 'month' | 'quarter' | 'year' | undefined;
+  includeCharts?: boolean | undefined;
+  includeBreakdownByClient?: boolean | undefined;
+}): ReportFilters {
+  return {
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
+    ...(filters.clientId !== undefined ? { clientId: filters.clientId } : {}),
+    ...(filters.employeeId !== undefined ? { employeeId: filters.employeeId } : {}),
+    ...(filters.supplierId !== undefined ? { supplierId: filters.supplierId } : {}),
+    ...(filters.status !== undefined ? { status: filters.status } : {}),
+    ...(filters.groupBy !== undefined ? { groupBy: filters.groupBy } : {}),
+    ...(filters.includeCharts !== undefined ? { includeCharts: filters.includeCharts } : {}),
+    ...(filters.includeBreakdownByClient !== undefined
+      ? { includeBreakdownByClient: filters.includeBreakdownByClient }
+      : {}),
+  };
+}
+
+export const reportsRouter = router({
+  listDefinitions: tenantProcedure.query(({ ctx }) => reportsService.listDefinitions(ctx.tenantId!)),
+
+  preview: tenantProcedure
+    .input(reportPreviewSchema)
+    .query(({ ctx, input }) =>
+      reportsService.preview(ctx.tenantId!, input.type, sanitizeFilters(input.filters), ctx.user!.role),
+    ),
+
+  generatePdf: tenantProcedure
+    .input(reportGeneratePdfSchema)
+    .query(({ ctx, input }) =>
+      reportsService.generatePdf(
+        ctx.tenantId!,
+        input.type,
+        sanitizeFilters(input.filters),
+        ctx.user!.role,
+        input.titleOverride,
+      ),
+    ),
+
+  exportCsv: tenantProcedure
+    .input(reportExportCsvSchema)
+    .query(({ ctx, input }) =>
+      reportsService.exportCsv(ctx.tenantId!, input.type, sanitizeFilters(input.filters), ctx.user!.role),
+    ),
+
+  sendByEmail: adminProcedure
+    .input(reportSendByEmailSchema)
+    .mutation(({ ctx, input }) =>
+      reportsService.sendByEmail(
+        ctx.tenantId!,
+        input.type,
+        sanitizeFilters(input.filters),
+        ctx.user!.role,
+        input.to,
+        input.sendCsv,
+        input.sendPdf,
+      )),
+});

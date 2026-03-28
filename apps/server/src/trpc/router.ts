@@ -15,6 +15,7 @@ import { settingsRouter } from '../modules/settings/router.js';
 import { notificationRouter } from '../modules/notifications/router.js';
 import { portalRouter } from '../modules/portal/router.js';
 import { simulatorRouter } from '../modules/simulator/router.js';
+import { reportsRouter } from '../modules/reports/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -33,6 +34,7 @@ export const appRouter = router({
   notification: notificationRouter,
   portal: portalRouter,
   simulator: simulatorRouter,
+  reports: reportsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -57,6 +57,7 @@ import AgendaPage from './app/(dashboard)/agenda/index';
 import EventCreatePage from './app/(dashboard)/agenda/novo';
 import SettingsPage from './app/(dashboard)/configuracoes/index';
 import SimulatorPage from './app/(dashboard)/simulador';
+import ReportsHubPage from './app/(dashboard)/relatorios/index';
 import PublicPortalPage from './app/portal/[token]';
 
 import './globals.css';
@@ -133,6 +134,7 @@ function AppContent() {
           <Route path="/agenda/novo" element={<EventCreatePage />} />
           {/* Fase 15 - Configuracoes */}
           <Route path="/simulador" element={<SimulatorPage />} />
+          <Route path="/relatorios" element={<ReportsHubPage />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
         </Route>
 
