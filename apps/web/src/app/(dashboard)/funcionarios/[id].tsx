@@ -84,7 +84,7 @@ export default function EmployeeEditPage() {
         <div className="flex gap-2">
            {!isEditing ? (
              <button 
-               onClick={() => { setIsEditing(true); reset(employee as FormData); }}
+               onClick={() => { setIsEditing(true); reset(employee as unknown as FormData); }}
                className="flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
              >
                <Pencil size={15} /> Editar
