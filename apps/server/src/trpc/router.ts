@@ -20,8 +20,10 @@ import { supportRouter } from '../modules/support/router.js';
 import { reportsRouter } from '../modules/reports/router.js';
 import { licensingRouter } from '../modules/licensing/router.js';
 import { fiscalRouter } from '../modules/fiscal/router.js';
+import { dashboardRouter } from '../modules/dashboard/router.js';
 
 export const appRouter = router({
+  dashboard: dashboardRouter,
   auth: authRouter,
   tenant: tenantRouter,
   clientes: clientRouter,

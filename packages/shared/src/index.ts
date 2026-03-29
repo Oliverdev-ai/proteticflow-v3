@@ -36,3 +36,4 @@ export * from './types/support.js';
 export * from './types/report.js';
 export * from './types/fiscal';
 export * from './constants/report-types.js';
+export * from './types/dashboard';
