@@ -58,6 +58,7 @@ import EventCreatePage from './app/(dashboard)/agenda/novo';
 import SettingsPage from './app/(dashboard)/configuracoes/index';
 import SimulatorPage from './app/(dashboard)/simulador';
 import FlowIAPage from './app/(dashboard)/flow-ia';
+import IAAvancadaPage from './app/(dashboard)/ia-avancada';
 import TicketsPage from './app/(dashboard)/suporte/tickets';
 import ChatbotConfigPage from './app/(dashboard)/suporte/chatbot-config';
 import ReportsHubPage from './app/(dashboard)/relatorios/index';
@@ -139,6 +140,7 @@ function AppContent() {
           <Route path="/simulador" element={<SimulatorPage />} />
           <Route path="/relatorios" element={<ReportsHubPage />} />
           <Route path="/flow-ia" element={<FlowIAPage />} />
+          <Route path="/ia-avancada" element={<IAAvancadaPage />} />
           <Route path="/suporte/tickets" element={<TicketsPage />} />
           <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
           <Route path="/configuracoes" element={<SettingsPage />} />

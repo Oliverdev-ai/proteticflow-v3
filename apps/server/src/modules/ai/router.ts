@@ -1,11 +1,17 @@
 import { z } from 'zod';
 import {
+  aiFeatureFlagsSchema,
   archiveSessionSchema,
   createSessionSchema,
+  getAiSnapshotSchema,
   listSessionsSchema,
+  listAiPredictionsSchema,
+  listAiRecommendationsSchema,
+  recordAiFeedbackSchema,
+  runForecastsSchema,
   sendMessageSchema,
 } from '@proteticflow/shared';
-import { router, tenantProcedure } from '../../trpc/trpc.js';
+import { adminProcedure, router, tenantProcedure } from '../../trpc/trpc.js';
 import * as aiService from './service.js';
 import { buildLabContext } from './context-builder.js';
 import { streamAiResponse } from './flow-engine.js';
@@ -84,4 +90,34 @@ export const aiRouter = router({
 
   getLabContext: tenantProcedure
     .query(({ ctx }) => buildLabContext(ctx.tenantId!)),
+
+  getCapabilities: tenantProcedure
+    .query(({ ctx }) => aiService.getAICapabilities(ctx.tenantId!)),
+
+  updateSettings: adminProcedure
+    .input(aiFeatureFlagsSchema)
+    .mutation(({ ctx, input }) => aiService.updateTenantAISettings(ctx.tenantId!, input)),
+
+  listPredictions: tenantProcedure
+    .input(listAiPredictionsSchema)
+    .query(({ ctx, input }) => aiService.listPredictions(ctx.tenantId!, input)),
+
+  listRecommendations: tenantProcedure
+    .input(listAiRecommendationsSchema)
+    .query(({ ctx, input }) => aiService.listRecommendations(ctx.tenantId!, input)),
+
+  recordFeedback: tenantProcedure
+    .input(recordAiFeedbackSchema)
+    .mutation(({ ctx, input }) => aiService.recordFeedback(ctx.tenantId!, ctx.user!.id, input)),
+
+  listModelRuns: tenantProcedure
+    .query(({ ctx }) => aiService.listModelRuns(ctx.tenantId!)),
+
+  getFeatureSnapshot: tenantProcedure
+    .input(getAiSnapshotSchema)
+    .query(({ ctx, input }) => aiService.getFeatureSnapshot(ctx.tenantId!, input.id)),
+
+  runRefresh: adminProcedure
+    .input(runForecastsSchema)
+    .mutation(({ ctx, input }) => aiService.runDailyRefresh(ctx.tenantId!, input.force ? 'manual_force' : 'manual')),
 });

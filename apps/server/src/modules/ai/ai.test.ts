@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import {
+  aiFeatureFlagsSchema,
+  listAiPredictionsSchema,
+  listAiRecommendationsSchema,
+  recordAiFeedbackSchema,
+} from '@proteticflow/shared';
 import { detectCommand } from './commands.js';
 import { setAnthropicClientForTests, streamAiResponse } from './flow-engine.js';
 import { buildSystemPrompt } from './context-builder.js';
+import * as aiService from './service.js';
 
 describe('ai commands RBAC', () => {
   it('T01 detecta trabalhos pendentes para producao', () => {
@@ -52,5 +59,37 @@ describe('ai prompts e fallback', () => {
     expect(first?.type).toBe('delta');
     expect(first && 'text' in first ? first.text : '').toContain('dificuldades tecnicas');
     expect(last?.type).toBe('done');
+  });
+});
+
+describe('ai avancada contracts', () => {
+  it('T22 valida defaults de flags e filtros', () => {
+    const flags = aiFeatureFlagsSchema.parse({});
+    const predictions = listAiPredictionsSchema.parse({});
+    const recommendations = listAiRecommendationsSchema.parse({});
+
+    expect(flags.forecasting).toBe(true);
+    expect(flags.operations).toBe(true);
+    expect(flags.recommendation).toBe(true);
+    expect(predictions.limit).toBe(20);
+    expect(recommendations.limit).toBe(20);
+  });
+
+  it('T23 valida input de feedback de recomendacao', () => {
+    const parsed = recordAiFeedbackSchema.parse({
+      recommendationId: 7,
+      decision: 'accepted',
+      confidenceDelta: 0.1,
+    });
+
+    expect(parsed.recommendationId).toBe(7);
+    expect(parsed.decision).toBe('accepted');
+  });
+
+  it('T24 expõe APIs de refresh avançado no service', () => {
+    expect(typeof aiService.runDailyRefresh).toBe('function');
+    expect(typeof aiService.runRevenueForecastRefresh).toBe('function');
+    expect(typeof aiService.runScheduleOptimizationRefresh).toBe('function');
+    expect(typeof aiService.runClientCreditScoreRefresh).toBe('function');
   });
 });

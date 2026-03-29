@@ -17,6 +17,7 @@ import {
   Calendar,
   Calculator,
   Sparkles,
+  Brain,
   Headphones,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
@@ -39,6 +40,7 @@ const MENU_ITEMS = [
   { label: 'Relatorios', icon: BarChart3, href: '/relatorios', module: 'reports' },
   { label: 'Simulador', icon: Calculator, href: '/simulador', module: 'simulator' },
   { label: 'Flow IA', icon: Sparkles, href: '/flow-ia', module: 'ai' },
+  { label: 'IA Avancada', icon: Brain, href: '/ia-avancada', module: 'ai' },
   { label: 'Suporte', icon: Headphones, href: '/suporte/tickets', module: 'support' },
   { label: 'Configuracoes', icon: Settings, href: '/configuracoes', module: 'settings' },
 ] as const;

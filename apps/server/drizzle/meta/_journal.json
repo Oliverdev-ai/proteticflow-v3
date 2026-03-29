@@ -106,6 +106,13 @@
       "when": 1774737000000,
       "tag": "0014_support",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1775088000000,
+      "tag": "0015_ai_advanced",
+      "breakpoints": true
     }
   ]
 }

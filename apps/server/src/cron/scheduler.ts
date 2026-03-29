@@ -2,6 +2,13 @@ import cron from 'node-cron';
 import { monthlyClosing } from './monthly-closing.js';
 import { overdueReminders } from './overdue-reminders.js';
 import { eventReminders } from './event-reminders.js';
+import {
+  clientCreditScoreRefresh,
+  reworkPatternDetection,
+  revenueForecastRefresh,
+  scheduleOptimizationRefresh,
+  stockDepletionForecast,
+} from './ai-refresh.js';
 import { deadlineAlerts } from './deadline-alerts.js';
 import { portalTokenCleanup } from '../modules/portal/tasks.js';
 import { logger } from '../logger.js';
@@ -35,6 +42,36 @@ export function startCronJobs() {
   cron.schedule('0 3 * * *', async () => {
     logger.info({ action: 'cron.portal_token_cleanup.start' }, 'Iniciando cleanup de tokens do portal');
     await portalTokenCleanup();
+  });
+
+  // 22.xx AI: previsao de receita - diario as 04h
+  cron.schedule('0 4 * * *', async () => {
+    logger.info({ action: 'cron.ai.revenue_forecast_refresh.start' }, 'Atualizando previsao de receita');
+    await revenueForecastRefresh();
+  });
+
+  // 22.xx AI: alerta de estoque - diario as 05h
+  cron.schedule('0 5 * * *', async () => {
+    logger.info({ action: 'cron.ai.stock_depletion_forecast.start' }, 'Atualizando previsao de ruptura de estoque');
+    await stockDepletionForecast();
+  });
+
+  // 22.xx AI: score de credito - diario as 06h30
+  cron.schedule('30 6 * * *', async () => {
+    logger.info({ action: 'cron.ai.client_credit_score_refresh.start' }, 'Atualizando score de credito');
+    await clientCreditScoreRefresh();
+  });
+
+  // 22.xx AI: deteccao de retrabalho - diario as 02h30
+  cron.schedule('30 2 * * *', async () => {
+    logger.info({ action: 'cron.ai.rework_pattern_detection.start' }, 'Atualizando padroes de retrabalho');
+    await reworkPatternDetection();
+  });
+
+  // 22.xx AI: refresh operacional - a cada 2 horas
+  cron.schedule('0 */2 * * *', async () => {
+    logger.info({ action: 'cron.ai.schedule_optimization_refresh.start' }, 'Atualizando recomendacoes operacionais');
+    await scheduleOptimizationRefresh();
   });
 
   logger.info('Cron jobs registrados');
