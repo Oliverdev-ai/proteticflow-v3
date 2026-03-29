@@ -1,10 +1,10 @@
 import { eq, and, isNull, ilike, or, sql, count } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { clients } from '../../db/schema/clients.js';
-import { tenants } from '../../db/schema/tenants.js';
 import { jobs } from '../../db/schema/jobs.js';
 import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
+import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
 import type {
   createClientSchema,
   updateClientSchema,
@@ -19,6 +19,8 @@ type ListClientsInput = z.infer<typeof listClientsSchema>;
 // ─── CRUD ────────────────────────────────────────────────────────────────────
 
 export async function createClient(tenantId: number, input: CreateClientInput, createdBy: number) {
+  await checkLimit(tenantId, 'clients', createdBy);
+
   const [client] = await db.transaction(async (tx) => {
     const clientData: typeof clients.$inferInsert = {
       tenantId,
@@ -46,10 +48,7 @@ export async function createClient(tenantId: number, input: CreateClientInput, c
     const [c] = await tx.insert(clients).values(clientData).returning();
     if (!c) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar cliente' });
 
-    // Incrementar contador do tenant atomicamente
-    await tx.update(tenants)
-      .set({ clientCount: sql`${tenants.clientCount} + 1` })
-      .where(eq(tenants.id, tenantId));
+    await incrementCounter(tenantId, 'clients', tx);
 
     return [c];
   });
@@ -158,9 +157,7 @@ export async function deleteClient(tenantId: number, clientId: number, deletedBy
       .set({ deletedAt: new Date(), deletedBy })
       .where(and(eq(clients.tenantId, tenantId), eq(clients.id, clientId)));
 
-    await tx.update(tenants)
-      .set({ clientCount: sql`GREATEST(${tenants.clientCount} - 1, 0)` })
-      .where(eq(tenants.id, tenantId));
+    await decrementCounter(tenantId, 'clients', tx);
   });
 
   logger.info({ action: 'client.delete', tenantId, clientId, userId: deletedBy }, 'Cliente removido (soft delete)');

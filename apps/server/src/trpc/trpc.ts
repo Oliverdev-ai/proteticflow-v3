@@ -1,5 +1,8 @@
 import { initTRPC, TRPCError } from '@trpc/server';
+import { eq } from 'drizzle-orm';
 import { ZodError } from 'zod';
+import { db } from '../db/index.js';
+import { tenants } from '../db/schema/tenants.js';
 import type { TrpcContext } from './context.js';
 
 const t = initTRPC.context<TrpcContext>().create({
@@ -61,8 +64,37 @@ const enforceAdmin = t.middleware(({ ctx, next }) => {
 
 export const adminProcedure = tenantProcedure.use(enforceAdmin);
 
-const enforceLicense = t.middleware(({ ctx, next }) => {
-  // TODO Fase 23: verificar limites do plano aqui
+const enforceSuperadmin = t.middleware(({ ctx, next }) => {
+  if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
+  if (ctx.user.role !== 'superadmin') {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Acesso restrito ao superadmin',
+    });
+  }
+  return next({ ctx: { ...ctx, user: ctx.user, tenantId: ctx.tenantId } });
+});
+
+export const superadminProcedure = protectedProcedure.use(enforceSuperadmin);
+
+const enforceLicense = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.tenantId) {
+    throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+  }
+
+  const [tenant] = await db
+    .select({ plan: tenants.plan, planExpiresAt: tenants.planExpiresAt })
+    .from(tenants)
+    .where(eq(tenants.id, ctx.tenantId))
+    .limit(1);
+
+  if (tenant?.plan === 'trial' && tenant.planExpiresAt && tenant.planExpiresAt < new Date()) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Periodo de trial encerrado. Faca upgrade para continuar.',
+    });
+  }
+
   return next({ ctx });
 });
 

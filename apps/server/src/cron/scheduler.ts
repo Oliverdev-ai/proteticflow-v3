@@ -11,6 +11,7 @@ import {
 } from './ai-refresh.js';
 import { deadlineAlerts } from './deadline-alerts.js';
 import { portalTokenCleanup } from '../modules/portal/tasks.js';
+import { processExpiredTrials, resetMonthlyJobCounter } from '../modules/licensing/service.js';
 import { logger } from '../logger.js';
 
 export function startCronJobs() {
@@ -72,6 +73,18 @@ export function startCronJobs() {
   cron.schedule('0 */2 * * *', async () => {
     logger.info({ action: 'cron.ai.schedule_optimization_refresh.start' }, 'Atualizando recomendacoes operacionais');
     await scheduleOptimizationRefresh();
+  });
+
+  // 23.xx Licenciamento: trials expirados - diario 00:00
+  cron.schedule('0 0 * * *', async () => {
+    logger.info({ action: 'cron.licensing.trial_expiration.start' }, 'Verificando trials expirados');
+    await processExpiredTrials();
+  });
+
+  // 23.xx Licenciamento: reset mensal de jobs - dia 1 as 00:05
+  cron.schedule('5 0 1 * *', async () => {
+    logger.info({ action: 'cron.licensing.jobs_counter_reset.start' }, 'Resetando contador mensal de jobs');
+    await resetMonthlyJobCounter();
   });
 
   logger.info('Cron jobs registrados');

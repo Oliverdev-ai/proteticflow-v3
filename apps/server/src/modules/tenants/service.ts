@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { eq, and, sql, gt } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { tenants, tenantMembers, invites } from '../../db/schema/index.js';
 import { users } from '../../db/schema/index.js';
@@ -7,6 +7,7 @@ import { logger } from '../../logger.js';
 import type { TenantInfo, TenantMember, PendingInvite } from '@proteticflow/shared';
 import type { Role } from '@proteticflow/shared';
 import { sendInviteEmail } from '../notifications/email.js';
+import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -236,8 +237,9 @@ export async function acceptInvite(token: string, userId: number): Promise<void>
     if (existing) {
       await tx.update(tenantMembers).set({ isActive: true, role: invite.role, updatedAt: new Date() }).where(eq(tenantMembers.id, existing.id));
     } else {
+      await checkLimit(invite.tenantId, 'users', userId);
       await tx.insert(tenantMembers).values({ tenantId: invite.tenantId, userId, role: invite.role });
-      await tx.update(tenants).set({ userCount: sql`${tenants.userCount} + 1` }).where(eq(tenants.id, invite.tenantId));
+      await incrementCounter(invite.tenantId, 'users', tx);
     }
 
     await tx.update(invites).set({ status: 'accepted' }).where(eq(invites.id, invite.id));
@@ -342,7 +344,7 @@ export async function removeMember(tenantId: number, memberId: number): Promise<
 
   await db.transaction(async (tx) => {
     await tx.update(tenantMembers).set({ isActive: false, updatedAt: new Date() }).where(eq(tenantMembers.id, memberId));
-    await tx.update(tenants).set({ userCount: sql`${tenants.userCount} - 1` }).where(eq(tenants.id, tenantId));
+    await decrementCounter(tenantId, 'users', tx);
 
     // Se user removido tinha este tenant como ativo, limpar activeTenantId
     const [u] = await tx.select({ activeTenantId: users.activeTenantId }).from(users).where(eq(users.id, member.userId));

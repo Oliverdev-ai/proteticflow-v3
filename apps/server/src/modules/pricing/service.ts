@@ -13,8 +13,8 @@ import type { z } from 'zod';
 
 import { db } from '../../db/index.js';
 import { pricingTables, priceItems, clients } from '../../db/schema/clients.js';
-import { tenants } from '../../db/schema/tenants.js';
 import { logger } from '../../logger.js';
+import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
 
 type CreatePricingTableInput = z.infer<typeof createPricingTableSchema>;
 type UpdatePricingTableInput = z.infer<typeof updatePricingTableSchema>;
@@ -25,6 +25,8 @@ type ListPriceItemsInput = z.infer<typeof listPriceItemsSchema>;
 type ListPricingTablesInput = z.infer<typeof listPricingTablesSchema>;
 
 export async function createTable(tenantId: number, input: CreatePricingTableInput) {
+  await checkLimit(tenantId, 'priceTables');
+
   const [table] = await db.transaction(async (tx) => {
     if (input.isDefault) {
       await tx
@@ -43,11 +45,7 @@ export async function createTable(tenantId: number, input: CreatePricingTableInp
     }
 
     const [created] = await tx.insert(pricingTables).values(tableValues).returning();
-
-    await tx
-      .update(tenants)
-      .set({ priceTableCount: sql`${tenants.priceTableCount} + 1` })
-      .where(eq(tenants.id, tenantId));
+    await incrementCounter(tenantId, 'priceTables', tx);
 
     return [created];
   });
@@ -163,11 +161,7 @@ export async function deleteTable(tenantId: number, tableId: number) {
       .update(pricingTables)
       .set({ deletedAt: now, updatedAt: now })
       .where(and(eq(pricingTables.tenantId, tenantId), eq(pricingTables.id, tableId)));
-
-    await tx
-      .update(tenants)
-      .set({ priceTableCount: sql`GREATEST(${tenants.priceTableCount} - 1, 0)` })
-      .where(eq(tenants.id, tenantId));
+    await decrementCounter(tenantId, 'priceTables', tx);
   });
 }
 

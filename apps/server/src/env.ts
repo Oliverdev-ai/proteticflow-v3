@@ -25,6 +25,11 @@ const envSchema = z.object({
   VAPID_SUBJECT: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  STRIPE_PRICE_STARTER: z.string().optional(),
+  STRIPE_PRICE_PRO: z.string().optional(),
+  STRIPE_PRICE_ENTERPRISE: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

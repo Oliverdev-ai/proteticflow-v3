@@ -19,9 +19,11 @@ import {
   Sparkles,
   Brain,
   Headphones,
+  CreditCard,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
+import { PlanBadge } from '../licensing/plan-badge';
 
 const MENU_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/', module: 'dashboard' },
@@ -39,6 +41,7 @@ const MENU_ITEMS = [
   { label: 'Folha de Pagamento', icon: DollarSign, href: '/payroll', module: 'payroll' },
   { label: 'Relatorios', icon: BarChart3, href: '/relatorios', module: 'reports' },
   { label: 'Simulador', icon: Calculator, href: '/simulador', module: 'simulator' },
+  { label: 'Planos', icon: CreditCard, href: '/planos', module: 'settings' },
   { label: 'Flow IA', icon: Sparkles, href: '/flow-ia', module: 'ai' },
   { label: 'IA Avancada', icon: Brain, href: '/ia-avancada', module: 'ai' },
   { label: 'Suporte', icon: Headphones, href: '/suporte/tickets', module: 'support' },
@@ -82,6 +85,8 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <PlanBadge />
     </aside>
   );
 }

@@ -59,6 +59,7 @@ import SettingsPage from './app/(dashboard)/configuracoes/index';
 import SimulatorPage from './app/(dashboard)/simulador';
 import FlowIAPage from './app/(dashboard)/flow-ia';
 import IAAvancadaPage from './app/(dashboard)/ia-avancada';
+import PlanosPage from './app/(dashboard)/planos';
 import TicketsPage from './app/(dashboard)/suporte/tickets';
 import ChatbotConfigPage from './app/(dashboard)/suporte/chatbot-config';
 import ReportsHubPage from './app/(dashboard)/relatorios/index';
@@ -139,6 +140,7 @@ function AppContent() {
           {/* Fase 15 - Configuracoes */}
           <Route path="/simulador" element={<SimulatorPage />} />
           <Route path="/relatorios" element={<ReportsHubPage />} />
+          <Route path="/planos" element={<PlanosPage />} />
           <Route path="/flow-ia" element={<FlowIAPage />} />
           <Route path="/ia-avancada" element={<IAAvancadaPage />} />
           <Route path="/suporte/tickets" element={<TicketsPage />} />

@@ -18,6 +18,7 @@ import { simulatorRouter } from '../modules/simulator/router.js';
 import { aiRouter } from '../modules/ai/router.js';
 import { supportRouter } from '../modules/support/router.js';
 import { reportsRouter } from '../modules/reports/router.js';
+import { licensingRouter } from '../modules/licensing/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -37,6 +38,7 @@ export const appRouter = router({
   portal: portalRouter,
   simulator: simulatorRouter,
   reports: reportsRouter,
+  licensing: licensingRouter,
   ai: aiRouter,
   support: supportRouter,
 });

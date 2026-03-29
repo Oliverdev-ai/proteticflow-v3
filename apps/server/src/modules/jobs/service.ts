@@ -8,6 +8,7 @@ import { TRPCError } from '@trpc/server';
 import { canTransition, DEFAULT_STAGES } from '@proteticflow/shared';
 import { uploadBuffer, deleteObject } from '../../core/storage.js';
 import { autoCreateArFromJob } from '../financial/service.js';
+import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
 import type {
   createJobSchema,
   updateJobSchema,
@@ -62,6 +63,8 @@ export async function getNextOrderNumber(tx: DbTransaction, tenantId: number): P
 // â”€â”€â”€ CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createJob(tenantId: number, input: CreateJobInput, createdBy: number) {
+  await checkLimit(tenantId, 'jobsPerMonth', createdBy);
+
   // 1. Verificar que o cliente pertence ao tenant
   const [client] = await db.select().from(clients).where(
     and(eq(clients.tenantId, tenantId), eq(clients.id, input.clientId), isNull(clients.deletedAt))
@@ -172,11 +175,7 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
       WHERE id = ${input.clientId} AND tenant_id = ${tenantId}
     `);
 
-    await tx.execute(sql`
-      UPDATE tenants
-      SET job_count_this_month = job_count_this_month + 1
-      WHERE id = ${tenantId}
-    `).catch(() => {}); // campo pode nÃ£o existir ainda em tenants
+    await incrementCounter(tenantId, 'jobsPerMonth', tx);
 
     logger.info({ action: 'job.create', tenantId, jobId: createdJob.id, orderNumber, clientId: input.clientId, totalCents: jobTotalCents, itemCount: processedItems.length }, 'OS criada');
     return createdJob;
@@ -338,9 +337,12 @@ export async function deleteJob(tenantId: number, jobId: number, deletedBy: numb
   );
   if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
 
-  await db.update(jobs)
-    .set({ deletedAt: new Date(), deletedBy })
-    .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId)));
+  await db.transaction(async (tx) => {
+    await tx.update(jobs)
+      .set({ deletedAt: new Date(), deletedBy })
+      .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId)));
+    await decrementCounter(tenantId, 'jobsPerMonth', tx);
+  });
 
   logger.info({ action: 'job.delete', tenantId, jobId, userId: deletedBy }, 'OS removida (soft delete)');
 }

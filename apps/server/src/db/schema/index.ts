@@ -48,3 +48,6 @@ export * from './ai-advanced.js';
 
 // Suporte automatizado
 export * from './support.js';
+
+// Licenciamento + Stripe
+export * from './licensing.js';

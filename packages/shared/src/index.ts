@@ -24,6 +24,7 @@ export * from './validation/simulation.schema.js';
 export * from './validation/ai.schema.js';
 export * from './validation/support.schema.js';
 export * from './validation/report.schema.js';
+export * from './validation/licensing.schema';
 export * from './types/auth';
 export * from './types/tenant';
 export * from './types/settings';
