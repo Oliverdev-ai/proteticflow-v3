@@ -60,6 +60,7 @@ import SimulatorPage from './app/(dashboard)/simulador';
 import FlowIAPage from './app/(dashboard)/flow-ia';
 import TicketsPage from './app/(dashboard)/suporte/tickets';
 import ChatbotConfigPage from './app/(dashboard)/suporte/chatbot-config';
+import ReportsHubPage from './app/(dashboard)/relatorios/index';
 import PublicPortalPage from './app/portal/[token]';
 
 import './globals.css';
@@ -136,6 +137,7 @@ function AppContent() {
           <Route path="/agenda/novo" element={<EventCreatePage />} />
           {/* Fase 15 - Configuracoes */}
           <Route path="/simulador" element={<SimulatorPage />} />
+          <Route path="/relatorios" element={<ReportsHubPage />} />
           <Route path="/flow-ia" element={<FlowIAPage />} />
           <Route path="/suporte/tickets" element={<TicketsPage />} />
           <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
