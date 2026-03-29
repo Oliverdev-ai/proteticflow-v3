@@ -1,10 +1,10 @@
-import { eq, and, isNull, lt, gte, inArray, not, sql, count, sum } from 'drizzle-orm';
+import { eq, and, isNull, lt, gte, lte, inArray, not, sql, count, sum } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { accountsReceivable, accountsPayable, financialClosings } from '../../db/schema/financials.js';
-import { jobs } from '../../db/schema/jobs.js';
+import { jobs, jobItems } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
 import { materials } from '../../db/schema/materials.js';
-import { employees } from '../../db/schema/employees.js';
+import { employees, commissionPayments, jobAssignments } from '../../db/schema/employees.js';
 import { deliverySchedules, deliveryItems } from '../../db/schema/deliveries.js';
 import type {
   DashboardSummary,
@@ -16,16 +16,31 @@ import type {
   RecentJob,
   TodayDeliveries,
   MonthRevenue,
+  ServiceDistribution,
+  JobsTrend,
+  SparklineData,
+  DashboardSparklines,
 } from '@proteticflow/shared';
 
-// ─── Subqueries ────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function trendFromPoints(points: number[]): SparklineData {
+  const first = points[0] ?? 0;
+  const last = points[points.length - 1] ?? 0;
+  const changePercent =
+    first === 0 ? 0 : Math.round(((last - first) / first) * 1000) / 10;
+  const trend: SparklineData['trend'] =
+    changePercent > 1 ? 'up' : changePercent < -1 ? 'down' : 'neutral';
+  return { points, trend, changePercent };
+}
+
+// ─── 19.01 — Financeiro ───────────────────────────────────────────────────────
 
 async function getFinancialKpis(tenantId: number, startOfMonth: Date): Promise<FinancialKpis> {
   const now = new Date();
 
   const [pendingArResult, overdueArResult, monthRevenueResult, monthExpensesResult] =
     await Promise.all([
-      // Pendente (status = pending, não vencido)
       db
         .select({ total: sum(accountsReceivable.amountCents) })
         .from(accountsReceivable)
@@ -36,7 +51,6 @@ async function getFinancialKpis(tenantId: number, startOfMonth: Date): Promise<F
             gte(accountsReceivable.dueDate, now),
           ),
         ),
-      // Vencido: status overdue OU (status pending E dueDate < now)
       db
         .select({ total: sum(accountsReceivable.amountCents) })
         .from(accountsReceivable)
@@ -46,7 +60,6 @@ async function getFinancialKpis(tenantId: number, startOfMonth: Date): Promise<F
             sql`(${accountsReceivable.status} = 'overdue' OR (${accountsReceivable.status} = 'pending' AND ${accountsReceivable.dueDate} < ${now}))`,
           ),
         ),
-      // Receita do mês: AR pagas neste mês
       db
         .select({ total: sum(accountsReceivable.amountCents) })
         .from(accountsReceivable)
@@ -57,7 +70,6 @@ async function getFinancialKpis(tenantId: number, startOfMonth: Date): Promise<F
             gte(accountsReceivable.paidAt, startOfMonth),
           ),
         ),
-      // Despesas do mês: AP pagas neste mês
       db
         .select({ total: sum(accountsPayable.amountCents) })
         .from(accountsPayable)
@@ -70,23 +82,22 @@ async function getFinancialKpis(tenantId: number, startOfMonth: Date): Promise<F
         ),
     ]);
 
-  const pendingArCents = Number(pendingArResult[0]?.total ?? 0);
-  const overdueArCents = Number(overdueArResult[0]?.total ?? 0);
   const monthRevenueCents = Number(monthRevenueResult[0]?.total ?? 0);
   const monthExpensesCents = Number(monthExpensesResult[0]?.total ?? 0);
 
   return {
-    pendingArCents,
-    overdueArCents,
+    pendingArCents: Number(pendingArResult[0]?.total ?? 0),
+    overdueArCents: Number(overdueArResult[0]?.total ?? 0),
     monthRevenueCents,
     monthExpensesCents,
     cashFlowCents: monthRevenueCents - monthExpensesCents,
   };
 }
 
+// ─── 19.02 — Trabalhos ────────────────────────────────────────────────────────
+
 async function getJobKpis(tenantId: number, now: Date): Promise<JobKpis> {
   const [activeResult, completedResult, overdueResult, pendingResult] = await Promise.all([
-    // Ativos
     db
       .select({ total: count() })
       .from(jobs)
@@ -97,7 +108,6 @@ async function getJobKpis(tenantId: number, now: Date): Promise<JobKpis> {
           isNull(jobs.deletedAt),
         ),
       ),
-    // Concluídos
     db
       .select({ total: count() })
       .from(jobs)
@@ -108,7 +118,6 @@ async function getJobKpis(tenantId: number, now: Date): Promise<JobKpis> {
           isNull(jobs.deletedAt),
         ),
       ),
-    // Atrasados: não concluídos/cancelados E deadline < now
     db
       .select({ total: count() })
       .from(jobs)
@@ -120,7 +129,6 @@ async function getJobKpis(tenantId: number, now: Date): Promise<JobKpis> {
           isNull(jobs.deletedAt),
         ),
       ),
-    // Pendentes
     db
       .select({ total: count() })
       .from(jobs)
@@ -141,12 +149,24 @@ async function getJobKpis(tenantId: number, now: Date): Promise<JobKpis> {
   };
 }
 
+// ─── 19.03 — Clientes (com campo active) ─────────────────────────────────────
+
 async function getClientKpis(tenantId: number, startOfMonth: Date): Promise<ClientKpis> {
-  const [totalResult, newThisMonthResult] = await Promise.all([
+  const [totalResult, activeResult, newThisMonthResult] = await Promise.all([
     db
       .select({ total: count() })
       .from(clients)
       .where(and(eq(clients.tenantId, tenantId), isNull(clients.deletedAt))),
+    db
+      .select({ total: count() })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.tenantId, tenantId),
+          eq(clients.status, 'active'),
+          isNull(clients.deletedAt),
+        ),
+      ),
     db
       .select({ total: count() })
       .from(clients)
@@ -161,9 +181,12 @@ async function getClientKpis(tenantId: number, startOfMonth: Date): Promise<Clie
 
   return {
     total: Number(totalResult[0]?.total ?? 0),
+    active: Number(activeResult[0]?.total ?? 0),
     newThisMonth: Number(newThisMonthResult[0]?.total ?? 0),
   };
 }
+
+// ─── 19.04 — Estoque ──────────────────────────────────────────────────────────
 
 async function getInventoryKpis(tenantId: number): Promise<InventoryKpis> {
   const [totalResult, belowMinResult, valueResult] = await Promise.all([
@@ -196,16 +219,50 @@ async function getInventoryKpis(tenantId: number): Promise<InventoryKpis> {
   };
 }
 
-async function getEmployeeKpis(tenantId: number): Promise<EmployeeKpis> {
-  const [result] = await db
-    .select({ total: count() })
-    .from(employees)
-    .where(
-      and(eq(employees.tenantId, tenantId), eq(employees.isActive, true), isNull(employees.deletedAt)),
-    );
+// ─── 19.05 — Funcionários (com comissões e atribuições pendentes) ─────────────
 
-  return { total: Number(result?.total ?? 0) };
+async function getEmployeeKpis(tenantId: number, startOfMonth: Date): Promise<EmployeeKpis> {
+  const [totalResult, commissionResult, pendingAssignmentsResult] = await Promise.all([
+    db
+      .select({ total: count() })
+      .from(employees)
+      .where(
+        and(eq(employees.tenantId, tenantId), eq(employees.isActive, true), isNull(employees.deletedAt)),
+      ),
+    // Comissões com status 'pending' criadas este mês
+    db
+      .select({ total: sum(commissionPayments.totalCents) })
+      .from(commissionPayments)
+      .where(
+        and(
+          eq(commissionPayments.tenantId, tenantId),
+          eq(commissionPayments.status, 'pending'),
+          gte(commissionPayments.createdAt, startOfMonth),
+        ),
+      ),
+    // job_assignments cujo job está ativo (não entregue/cancelado)
+    db
+      .select({ total: count() })
+      .from(jobAssignments)
+      .innerJoin(
+        jobs,
+        and(
+          eq(jobAssignments.jobId, jobs.id),
+          not(inArray(jobs.status, ['delivered', 'cancelled'])),
+          isNull(jobs.deletedAt),
+        ),
+      )
+      .where(eq(jobAssignments.tenantId, tenantId)),
+  ]);
+
+  return {
+    total: Number(totalResult[0]?.total ?? 0),
+    commissionPendingCents: Number(commissionResult[0]?.total ?? 0),
+    pendingAssignments: Number(pendingAssignmentsResult[0]?.total ?? 0),
+  };
 }
+
+// ─── 19.06 — Trabalhos recentes ───────────────────────────────────────────────
 
 async function getRecentJobs(tenantId: number): Promise<RecentJob[]> {
   const rows = await db
@@ -235,12 +292,13 @@ async function getRecentJobs(tenantId: number): Promise<RecentJob[]> {
   }));
 }
 
+// ─── 19.07 — Entregas de hoje ─────────────────────────────────────────────────
+
 async function getTodayDeliveries(
   tenantId: number,
   startOfToday: Date,
   endOfToday: Date,
 ): Promise<TodayDeliveries> {
-  // Busca schedules de hoje
   const schedules = await db
     .select({ id: deliverySchedules.id })
     .from(deliverySchedules)
@@ -284,8 +342,9 @@ async function getTodayDeliveries(
   };
 }
 
+// ─── 19.08 — Receita mensal (BarChart) ───────────────────────────────────────
+
 async function getMonthlyRevenue(tenantId: number, months: number): Promise<MonthRevenue[]> {
-  // Gera os últimos N períodos (YYYY-MM) em JS
   const periods: string[] = [];
   const now = new Date();
   for (let i = months - 1; i >= 0; i--) {
@@ -318,6 +377,166 @@ async function getMonthlyRevenue(tenantId: number, months: number): Promise<Mont
   }));
 }
 
+// ─── 19.08 — Distribuição de serviços (PieChart) ─────────────────────────────
+
+async function getServiceDistribution(
+  tenantId: number,
+  startOfMonth: Date,
+): Promise<ServiceDistribution[]> {
+  // Top 6 serviços por receita no mês corrente
+  const rows = await db
+    .select({
+      name: jobItems.serviceNameSnapshot,
+      totalCents: sql<string>`SUM(${jobItems.totalCents})`,
+    })
+    .from(jobItems)
+    .innerJoin(
+      jobs,
+      and(
+        eq(jobItems.jobId, jobs.id),
+        eq(jobs.tenantId, tenantId),
+        gte(jobs.createdAt, startOfMonth),
+        isNull(jobs.deletedAt),
+      ),
+    )
+    .where(eq(jobItems.tenantId, tenantId))
+    .groupBy(jobItems.serviceNameSnapshot)
+    .orderBy(sql`SUM(${jobItems.totalCents}) DESC`)
+    .limit(6);
+
+  return rows.map((r) => ({
+    name: r.name,
+    totalCents: Number(r.totalCents ?? 0),
+  }));
+}
+
+// ─── 19.08 — Tendência de trabalhos (LineChart) ───────────────────────────────
+
+async function getJobsTrend(tenantId: number, months: number): Promise<JobsTrend[]> {
+  const periods: string[] = [];
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    periods.push(`${yyyy}-${mm}`);
+  }
+
+  // jobs criados por mês e jobs entregues por mês
+  const [createdRows, deliveredRows] = await Promise.all([
+    db
+      .select({
+        period: sql<string>`TO_CHAR(${jobs.createdAt}, 'YYYY-MM')`,
+        total: count(),
+      })
+      .from(jobs)
+      .where(
+        and(
+          eq(jobs.tenantId, tenantId),
+          isNull(jobs.deletedAt),
+          gte(jobs.createdAt, new Date(now.getFullYear(), now.getMonth() - months + 1, 1)),
+        ),
+      )
+      .groupBy(sql`TO_CHAR(${jobs.createdAt}, 'YYYY-MM')`),
+    db
+      .select({
+        period: sql<string>`TO_CHAR(${jobs.deliveredAt}, 'YYYY-MM')`,
+        total: count(),
+      })
+      .from(jobs)
+      .where(
+        and(
+          eq(jobs.tenantId, tenantId),
+          eq(jobs.status, 'delivered'),
+          isNull(jobs.deletedAt),
+          gte(jobs.deliveredAt, new Date(now.getFullYear(), now.getMonth() - months + 1, 1)),
+        ),
+      )
+      .groupBy(sql`TO_CHAR(${jobs.deliveredAt}, 'YYYY-MM')`),
+  ]);
+
+  const createdMap = new Map(createdRows.map((r) => [r.period, Number(r.total)]));
+  const deliveredMap = new Map(deliveredRows.map((r) => [r.period, Number(r.total)]));
+
+  return periods.map((period) => ({
+    period,
+    created: createdMap.get(period) ?? 0,
+    delivered: deliveredMap.get(period) ?? 0,
+  }));
+}
+
+// ─── 19.09 — Sparklines (série semanal, 4 semanas) ───────────────────────────
+
+async function getSparklines(tenantId: number): Promise<DashboardSparklines> {
+  const now = new Date();
+  // Gera 4 semanas: [inicio_semana_3, inicio_semana_2, inicio_semana_1, inicio_semana_0]
+  const weeks: Array<{ start: Date; end: Date }> = [];
+  for (let i = 3; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 7 - 6, 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 7, 23, 59, 59, 999);
+    weeks.push({ start, end });
+  }
+
+  // Revenue por semana (AR pago)
+  const revenueRows = await db
+    .select({ paidAt: accountsReceivable.paidAt, amountCents: accountsReceivable.amountCents })
+    .from(accountsReceivable)
+    .where(
+      and(
+        eq(accountsReceivable.tenantId, tenantId),
+        eq(accountsReceivable.status, 'paid'),
+        gte(accountsReceivable.paidAt, weeks[0]!.start),
+        lte(accountsReceivable.paidAt, weeks[3]!.end),
+      ),
+    );
+
+  // Jobs criados por semana
+  const jobsRows = await db
+    .select({ createdAt: jobs.createdAt })
+    .from(jobs)
+    .where(
+      and(
+        eq(jobs.tenantId, tenantId),
+        isNull(jobs.deletedAt),
+        gte(jobs.createdAt, weeks[0]!.start),
+        lte(jobs.createdAt, weeks[3]!.end),
+      ),
+    );
+
+  // Novos clientes por semana
+  const clientsRows = await db
+    .select({ createdAt: clients.createdAt })
+    .from(clients)
+    .where(
+      and(
+        eq(clients.tenantId, tenantId),
+        isNull(clients.deletedAt),
+        gte(clients.createdAt, weeks[0]!.start),
+        lte(clients.createdAt, weeks[3]!.end),
+      ),
+    );
+
+  const revenuePoints = weeks.map(({ start, end }) =>
+    revenueRows
+      .filter((r) => r.paidAt && r.paidAt >= start && r.paidAt <= end)
+      .reduce((acc, r) => acc + r.amountCents, 0),
+  );
+
+  const jobPoints = weeks.map(({ start, end }) =>
+    jobsRows.filter((r) => r.createdAt >= start && r.createdAt <= end).length,
+  );
+
+  const clientPoints = weeks.map(({ start, end }) =>
+    clientsRows.filter((r) => r.createdAt >= start && r.createdAt <= end).length,
+  );
+
+  return {
+    revenue: trendFromPoints(revenuePoints),
+    activeJobs: trendFromPoints(jobPoints),
+    newClients: trendFromPoints(clientPoints),
+  };
+}
+
 // ─── Main export ───────────────────────────────────────────────────────────────
 
 export async function getDashboardSummary(tenantId: number): Promise<DashboardSummary> {
@@ -335,15 +554,21 @@ export async function getDashboardSummary(tenantId: number): Promise<DashboardSu
     recentJobs,
     todayDeliveries,
     monthlyRevenue,
+    serviceDistribution,
+    jobsTrend,
+    sparklines,
   ] = await Promise.all([
     getFinancialKpis(tenantId, startOfMonth),
     getJobKpis(tenantId, now),
     getClientKpis(tenantId, startOfMonth),
     getInventoryKpis(tenantId),
-    getEmployeeKpis(tenantId),
+    getEmployeeKpis(tenantId, startOfMonth),
     getRecentJobs(tenantId),
     getTodayDeliveries(tenantId, startOfToday, endOfToday),
     getMonthlyRevenue(tenantId, 6),
+    getServiceDistribution(tenantId, startOfMonth),
+    getJobsTrend(tenantId, 6),
+    getSparklines(tenantId),
   ]);
 
   return {
@@ -354,7 +579,8 @@ export async function getDashboardSummary(tenantId: number): Promise<DashboardSu
     employees: employeeKpis,
     recentJobs,
     todayDeliveries,
-    charts: { monthlyRevenue },
+    charts: { monthlyRevenue, serviceDistribution, jobsTrend },
+    sparklines,
     generatedAt: new Date().toISOString(),
   };
 }
@@ -369,4 +595,7 @@ export {
   getRecentJobs,
   getTodayDeliveries,
   getMonthlyRevenue,
+  getServiceDistribution,
+  getJobsTrend,
+  getSparklines,
 };

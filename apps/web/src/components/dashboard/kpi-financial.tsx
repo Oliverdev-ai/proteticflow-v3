@@ -1,12 +1,18 @@
 import { TrendingUp, AlertTriangle, DollarSign, Activity } from 'lucide-react';
 import { KpiCard } from './kpi-card';
-import type { FinancialKpis } from '@proteticflow/shared';
+import type { FinancialKpis, SparklineData } from '@proteticflow/shared';
 
 function formatBRL(cents: number) {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export function KpiFinancial({ data }: { data: FinancialKpis }) {
+export function KpiFinancial({
+  data,
+  revenueSparkline,
+}: {
+  data: FinancialKpis;
+  revenueSparkline?: SparklineData;
+}) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <KpiCard
@@ -29,6 +35,7 @@ export function KpiFinancial({ data }: { data: FinancialKpis }) {
         icon={DollarSign}
         sub="Recebido este mês"
         variant="success"
+        sparkline={revenueSparkline}
       />
       <KpiCard
         label="Fluxo de Caixa"

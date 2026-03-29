@@ -4,16 +4,17 @@ import { KpiFinancial } from '../../components/dashboard/kpi-financial';
 import { KpiJobs } from '../../components/dashboard/kpi-jobs';
 import { KpiClients } from '../../components/dashboard/kpi-clients';
 import { KpiInventory } from '../../components/dashboard/kpi-inventory';
+import { KpiEmployees } from '../../components/dashboard/kpi-employees';
 import { RevenueChart } from '../../components/dashboard/revenue-chart';
+import { ServiceDistributionChart } from '../../components/dashboard/service-distribution-chart';
+import { JobsTrendChart } from '../../components/dashboard/jobs-trend-chart';
 import { TodayDeliveriesCard } from '../../components/dashboard/today-deliveries';
 import { RecentJobsTable } from '../../components/dashboard/recent-jobs-table';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonBox({ className }: { className?: string }) {
-  return (
-    <div className={`bg-neutral-800 animate-pulse rounded-xl ${className ?? ''}`} />
-  );
+  return <div className={`bg-neutral-800 animate-pulse rounded-xl ${className ?? ''}`} />;
 }
 
 function DashboardSkeleton() {
@@ -23,34 +24,31 @@ function DashboardSkeleton() {
         <SkeletonBox className="h-8 w-40" />
         <SkeletonBox className="h-9 w-28" />
       </div>
-      {/* Financial KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <SkeletonBox key={i} className="h-24" />
-        ))}
+        {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} className="h-24" />)}
       </div>
-      {/* Jobs + Clients */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="grid grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonBox key={i} className="h-24" />
-          ))}
+          {Array.from({ length: 4 }).map((_, i) => <SkeletonBox key={i} className="h-24" />)}
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <SkeletonBox key={i} className="h-24" />
-          ))}
-          {Array.from({ length: 2 }).map((_, i) => (
-            <SkeletonBox key={i} className="h-24" />
-          ))}
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => <SkeletonBox key={i} className="h-24" />)}
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => <SkeletonBox key={i} className="h-24" />)}
+          </div>
         </div>
       </div>
-      {/* Chart + Deliveries */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <SkeletonBox className="lg:col-span-2 h-64" />
+        <SkeletonBox className="h-64" />
+        <SkeletonBox className="h-64" />
         <SkeletonBox className="h-64" />
       </div>
-      {/* Recent jobs */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <SkeletonBox className="lg:col-span-2 h-56" />
+        <SkeletonBox className="h-56" />
+      </div>
       <SkeletonBox className="h-64" />
     </div>
   );
@@ -93,27 +91,34 @@ export default function DashboardPage() {
       </div>
 
       {/* 19.01 — KPIs financeiros */}
-      <KpiFinancial data={data.financial} />
+      <KpiFinancial data={data.financial} revenueSparkline={data.sparklines.revenue} />
 
-      {/* 19.02–19.04 — Trabalhos + Clientes + Estoque */}
+      {/* 19.02–19.05 — Trabalhos + Clientes + Funcionários */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <KpiJobs data={data.jobs} />
+        <KpiJobs data={data.jobs} activeSparkline={data.sparklines.activeJobs} />
         <div className="space-y-4">
-          <KpiClients data={data.clients} />
-          <KpiInventory data={data.inventory} />
+          <KpiClients data={data.clients} newClientsSparkline={data.sparklines.newClients} />
+          <KpiEmployees data={data.employees} />
         </div>
       </div>
 
-      {/* 19.07–19.08 — Gráfico + Entregas */}
+      {/* 19.04 — Estoque */}
+      <KpiInventory data={data.inventory} />
+
+      {/* 19.08 — Gráficos (BarChart, PieChart, LineChart) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <RevenueChart data={data.charts.monthlyRevenue} />
+        <ServiceDistributionChart data={data.charts.serviceDistribution} />
+        <JobsTrendChart data={data.charts.jobsTrend} />
+      </div>
+
+      {/* 19.07 + últimos trabalhos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <RevenueChart data={data.charts.monthlyRevenue} />
+          <RecentJobsTable jobs={data.recentJobs} />
         </div>
         <TodayDeliveriesCard data={data.todayDeliveries} />
       </div>
-
-      {/* 19.06 — Trabalhos recentes */}
-      <RecentJobsTable jobs={data.recentJobs} />
     </div>
   );
 }

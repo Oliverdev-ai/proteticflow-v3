@@ -1,8 +1,14 @@
 import { Wrench, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { KpiCard } from './kpi-card';
-import type { JobKpis } from '@proteticflow/shared';
+import type { JobKpis, SparklineData } from '@proteticflow/shared';
 
-export function KpiJobs({ data }: { data: JobKpis }) {
+export function KpiJobs({
+  data,
+  activeSparkline,
+}: {
+  data: JobKpis;
+  activeSparkline?: SparklineData;
+}) {
   return (
     <div className="grid grid-cols-2 gap-4">
       <KpiCard
@@ -11,6 +17,7 @@ export function KpiJobs({ data }: { data: JobKpis }) {
         icon={Wrench}
         sub="Em andamento"
         variant="default"
+        sparkline={activeSparkline}
       />
       <KpiCard
         label="Atrasados"
