@@ -65,6 +65,7 @@ import PlanosPage from './app/(dashboard)/planos';
 import TicketsPage from './app/(dashboard)/suporte/tickets';
 import ChatbotConfigPage from './app/(dashboard)/suporte/chatbot-config';
 import ReportsHubPage from './app/(dashboard)/relatorios/index';
+import DashboardPage from './app/(dashboard)/dashboard';
 import PublicPortalPage from './app/portal/[token]';
 
 import './globals.css';
@@ -89,11 +90,7 @@ function AppContent() {
 
         {/* Dashboard — autenticado + tenant obrigatório */}
         <Route element={<DashboardLayout />}>
-          <Route path="/" element={
-            <div className="flex items-center justify-center h-full">
-              <p className="text-neutral-500 text-sm">Dashboard (Phase 11+12 Implementation)</p>
-            </div>
-          } />
+          <Route path="/" element={<DashboardPage />} />
           {/* Fase 4 — Clientes */}
           <Route path="/clientes" element={<ClientListPage />} />
           <Route path="/clientes/novo" element={<ClientCreatePage />} />
