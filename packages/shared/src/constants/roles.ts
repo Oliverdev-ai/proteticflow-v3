@@ -21,8 +21,8 @@ export const ROLE_PERMISSIONS: Record<Role, { modules: string[] }> = {
   superadmin: { modules: ['*'] },
   gerente: { modules: ['dashboard', 'clients', 'jobs', 'kanban', 'financial', 'inventory',
     'employees', 'payroll', 'reports', 'scans', 'agenda', 'deliveries', 'commissions',
-    'settings', 'portal', 'ai'] },
+    'settings', 'portal', 'ai', 'fiscal'] },
   producao: { modules: ['dashboard', 'jobs', 'kanban', 'scans', 'agenda', 'inventory.consume'] },
   recepcao: { modules: ['dashboard', 'clients', 'jobs.create', 'jobs.view', 'agenda', 'deliveries', 'pricing.view'] },
-  contabil: { modules: ['dashboard', 'financial', 'reports', 'payroll'] },
+  contabil: { modules: ['dashboard', 'financial', 'reports', 'payroll', 'fiscal'] },
 };

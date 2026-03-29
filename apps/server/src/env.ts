@@ -30,6 +30,10 @@ const envSchema = z.object({
   STRIPE_PRICE_STARTER: z.string().optional(),
   STRIPE_PRICE_PRO: z.string().optional(),
   STRIPE_PRICE_ENTERPRISE: z.string().optional(),
+  ASAAS_API_KEY: z.string().optional(),
+  ASAAS_SANDBOX: z.string().optional(),
+  FOCUS_NFE_TOKEN: z.string().optional(),
+  FOCUS_NFE_SANDBOX: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

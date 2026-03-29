@@ -20,6 +20,7 @@ import {
   Brain,
   Headphones,
   CreditCard,
+  Receipt,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
@@ -35,6 +36,7 @@ const MENU_ITEMS = [
   { label: 'Agenda', icon: Calendar, href: '/agenda', module: 'agenda' },
   { label: 'Entregas', icon: Truck, href: '/entregas', module: 'deliveries' },
   { label: 'Financeiro', icon: DollarSign, href: '/financeiro', module: 'financial' },
+  { label: 'Fiscal', icon: Receipt, href: '/fiscal/boletos', module: 'fiscal' },
   { label: 'Estoque', icon: Package, href: '/estoque', module: 'inventory' },
   { label: 'Funcionarios', icon: UserCog, href: '/funcionarios', module: 'employees' },
   { label: 'Comissoes', icon: Coins, href: '/comissoes', module: 'commissions' },

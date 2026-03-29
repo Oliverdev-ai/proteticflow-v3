@@ -10,6 +10,7 @@ import { appRouter } from './trpc/router.js';
 import { healthRouter } from './routes/health.js';
 import { startCronJobs } from './cron/scheduler.js';
 import * as licensingService from './modules/licensing/service.js';
+import * as fiscalService from './modules/fiscal/service.js';
 
 const app = express();
 
@@ -28,6 +29,20 @@ app.post(
       return res.json({ received: true });
     } catch (error) {
       logger.error({ err: error }, 'Stripe webhook error');
+      return res.status(400).send('Webhook error');
+    }
+  },
+);
+
+app.post(
+  '/webhooks/asaas',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    try {
+      await fiscalService.handleAsaasWebhook(req.body.toString());
+      return res.json({ received: true });
+    } catch (error) {
+      logger.error({ err: error }, 'Asaas webhook error');
       return res.status(400).send('Webhook error');
     }
   },

@@ -8,6 +8,7 @@ import { EmployeesTab } from '../../../components/settings/employees-tab';
 import { AuthorizationsTab } from '../../../components/settings/authorizations-tab';
 import { PlansTab } from '../../../components/settings/plans-tab';
 import { NotificationsTab } from '../../../components/settings/notifications-tab';
+import { FiscalSettingsForm } from '../../../components/fiscal/fiscal-settings-form';
 
 export default function SettingsPage() {
   const { hasAccess } = usePermissions();
@@ -40,6 +41,7 @@ export default function SettingsPage() {
         autorizacoes={<AuthorizationsTab />}
         planos={<PlansTab />}
         notificacoes={<NotificationsTab />}
+        fiscal={<FiscalSettingsForm />}
       />
     </div>
   );

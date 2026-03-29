@@ -120,6 +120,13 @@
       "when": 1775091600000,
       "tag": "0016_licensing",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1775192400000,
+      "tag": "0017_fiscal",
+      "breakpoints": true
     }
   ]
 }

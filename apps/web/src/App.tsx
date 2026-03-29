@@ -56,6 +56,8 @@ import ScanDetailPage from './app/(dashboard)/scans/[id]';
 import AgendaPage from './app/(dashboard)/agenda/index';
 import EventCreatePage from './app/(dashboard)/agenda/novo';
 import SettingsPage from './app/(dashboard)/configuracoes/index';
+import BoletosPage from './app/(dashboard)/fiscal/boletos';
+import NotasFiscaisPage from './app/(dashboard)/fiscal/notas-fiscais';
 import SimulatorPage from './app/(dashboard)/simulador';
 import FlowIAPage from './app/(dashboard)/flow-ia';
 import IAAvancadaPage from './app/(dashboard)/ia-avancada';
@@ -113,6 +115,8 @@ function AppContent() {
           <Route path="/financeiro/fechamento" element={<FechamentoPage />} />
           <Route path="/financeiro/livro-caixa" element={<LivroCaixaPage />} />
           <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
+          <Route path="/fiscal/boletos" element={<BoletosPage />} />
+          <Route path="/fiscal/notas-fiscais" element={<NotasFiscaisPage />} />
           {/* Fase 9 — Entregas */}
           <Route path="/entregas" element={<DeliveryListPage />} />
           <Route path="/entregas/:id" element={<DeliveryDetailPage />} />

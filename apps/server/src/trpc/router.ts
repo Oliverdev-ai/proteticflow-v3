@@ -19,6 +19,7 @@ import { aiRouter } from '../modules/ai/router.js';
 import { supportRouter } from '../modules/support/router.js';
 import { reportsRouter } from '../modules/reports/router.js';
 import { licensingRouter } from '../modules/licensing/router.js';
+import { fiscalRouter } from '../modules/fiscal/router.js';
 
 export const appRouter = router({
   auth: authRouter,
@@ -39,6 +40,7 @@ export const appRouter = router({
   simulator: simulatorRouter,
   reports: reportsRouter,
   licensing: licensingRouter,
+  fiscal: fiscalRouter,
   ai: aiRouter,
   support: supportRouter,
 });

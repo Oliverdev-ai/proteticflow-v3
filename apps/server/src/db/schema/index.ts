@@ -51,3 +51,6 @@ export * from './support.js';
 
 // Licenciamento + Stripe
 export * from './licensing.js';
+
+// Fiscal (boletos + NFS-e)
+export * from './fiscal.js';

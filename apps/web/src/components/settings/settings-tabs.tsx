@@ -1,6 +1,9 @@
 import { useState, type ReactNode } from 'react';
 
 type TabKey = 'perfil' | 'laboratorio' | 'funcionarios' | 'autorizacoes' | 'planos' | 'notificacoes';
+type OptionalTabKey = 'notificacoes' | 'fiscal';
+type BaseTabKey = Exclude<TabKey, 'notificacoes'>;
+type ActiveTabKey = BaseTabKey | OptionalTabKey;
 
 export interface SettingsTabsProps {
   perfil: ReactNode;
@@ -9,9 +12,10 @@ export interface SettingsTabsProps {
   autorizacoes: ReactNode;
   planos: ReactNode;
   notificacoes?: ReactNode;
+  fiscal?: ReactNode;
 }
 
-const BASE_TABS: Array<{ key: Exclude<TabKey, 'notificacoes'>; label: string }> = [
+const BASE_TABS: Array<{ key: BaseTabKey; label: string }> = [
   { key: 'perfil', label: 'Perfil' },
   { key: 'laboratorio', label: 'Laboratorio' },
   { key: 'funcionarios', label: 'Funcionarios' },
@@ -20,10 +24,16 @@ const BASE_TABS: Array<{ key: Exclude<TabKey, 'notificacoes'>; label: string }> 
 ];
 
 export function SettingsTabs(props: SettingsTabsProps) {
-  const [active, setActive] = useState<TabKey>('perfil');
-  const tabs = props.notificacoes
-    ? [...BASE_TABS, { key: 'notificacoes' as const, label: 'Notificacoes' }]
-    : BASE_TABS;
+  const [active, setActive] = useState<ActiveTabKey>('perfil');
+  const tabs: Array<{ key: ActiveTabKey; label: string }> = [...BASE_TABS];
+
+  if (props.notificacoes) {
+    tabs.push({ key: 'notificacoes', label: 'Notificacoes' });
+  }
+
+  if (props.fiscal) {
+    tabs.push({ key: 'fiscal', label: 'Fiscal' });
+  }
 
   return (
     <div className="space-y-4">
@@ -48,6 +58,7 @@ export function SettingsTabs(props: SettingsTabsProps) {
         {active === 'autorizacoes' && props.autorizacoes}
         {active === 'planos' && props.planos}
         {active === 'notificacoes' && props.notificacoes}
+        {active === 'fiscal' && props.fiscal}
       </div>
     </div>
   );
