@@ -1,158 +1,150 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { trpc, queryClient } from './lib/trpc';
 import AuthLayout from './app/(auth)/layout';
 import LoginPage from './app/(auth)/login';
 import RegisterPage from './app/(auth)/register';
-import ForgotPasswordPage from './app/(auth)/forgot-password';
-import ResetPasswordPage from './app/(auth)/reset-password';
 import { DashboardLayout } from './app/(dashboard)/layout';
-import { OnboardingWizard } from './app/(dashboard)/onboarding';
-// Fase 4 — Clientes
-import ClientListPage from './app/(dashboard)/clientes/index';
-import ClientCreatePage from './app/(dashboard)/clientes/novo';
-import ClientEditPage from './app/(dashboard)/clientes/[id]';
-import ClientPortalManagementPage from './app/(dashboard)/clientes/[id]/portal';
-// Fase 5 — Tabelas de Preços
-import PricingTablesPage from './app/(dashboard)/precos/index';
-import PricingTableDetailPage from './app/(dashboard)/precos/[id]';
-// Fase 6 — Trabalhos / OS
-import JobListPage from './app/(dashboard)/trabalhos/index';
-import JobCreatePage from './app/(dashboard)/trabalhos/novo';
-import JobDetailPage from './app/(dashboard)/trabalhos/[id]';
-// Fase 7 — Kanban
-import KanbanPage from './app/(dashboard)/kanban';
-// Fase 8 — Financeiro
-import FinancialDashboard from './app/(dashboard)/financeiro/index';
-import ContasReceberPage from './app/(dashboard)/financeiro/contas-receber';
-import ContasPagarPage from './app/(dashboard)/financeiro/contas-pagar';
-import FechamentoPage from './app/(dashboard)/financeiro/fechamento';
-import LivroCaixaPage from './app/(dashboard)/financeiro/livro-caixa';
-import FluxoCaixaPage from './app/(dashboard)/financeiro/fluxo-caixa';
-// Fase 9 — Entregas
-import DeliveryListPage from './app/(dashboard)/entregas/index';
-import DeliveryDetailPage from './app/(dashboard)/entregas/[id]';
-// Fase 10 — Estoque
-import InventoryDashboard from './app/(dashboard)/estoque/index';
-import MaterialsPage from './app/(dashboard)/estoque/materiais';
-import SuppliersPage from './app/(dashboard)/estoque/fornecedores';
-import PurchaseOrdersPage from './app/(dashboard)/estoque/ordens-compra';
-import PODetailPage from './app/(dashboard)/estoque/oc/[id]';
-// Fase 11 — Funcionários e Comissões
-import EmployeeListPage from './app/(dashboard)/funcionarios/index';
-import EmployeeCreatePage from './app/(dashboard)/funcionarios/novo';
-import EmployeeEditPage from './app/(dashboard)/funcionarios/[id]';
-import CommissionsPage from './app/(dashboard)/comissoes';
-// Fase 12 — Folha de Pagamento
-import PayrollListPage from './app/(dashboard)/payroll/index';
-import PayrollDetailPage from './app/(dashboard)/payroll/[id]';
-// Fase 13 - Scans 3D
-import ScanListPage from './app/(dashboard)/scans/index';
-import ScanUploadPage from './app/(dashboard)/scans/upload';
-import ScanDetailPage from './app/(dashboard)/scans/[id]';
-// Fase 14 - Agenda
-import AgendaPage from './app/(dashboard)/agenda/index';
-import EventCreatePage from './app/(dashboard)/agenda/novo';
-import SettingsPage from './app/(dashboard)/configuracoes/index';
-import BoletosPage from './app/(dashboard)/fiscal/boletos';
-import NotasFiscaisPage from './app/(dashboard)/fiscal/notas-fiscais';
-import SimulatorPage from './app/(dashboard)/simulador';
-import FlowIAPage from './app/(dashboard)/flow-ia';
-import IAAvancadaPage from './app/(dashboard)/ia-avancada';
-import PlanosPage from './app/(dashboard)/planos';
-import TicketsPage from './app/(dashboard)/suporte/tickets';
-import ChatbotConfigPage from './app/(dashboard)/suporte/chatbot-config';
-import ReportsHubPage from './app/(dashboard)/relatorios/index';
-import AuditPage from './app/(dashboard)/auditoria/index';
-import DashboardPage from './app/(dashboard)/dashboard';
 import PublicPortalPage from './app/portal/[token]';
+import { PageSkeleton } from './components/shared/page-skeleton';
+
+const ForgotPasswordPage = lazy(() => import('./app/(auth)/forgot-password'));
+const ResetPasswordPage = lazy(() => import('./app/(auth)/reset-password'));
+const LandingPage = lazy(() => import('./app/landing'));
+const OnboardingWizard = lazy(() =>
+  import('./app/(dashboard)/onboarding').then((module) => ({ default: module.OnboardingWizard }))
+);
+const ClientListPage = lazy(() => import('./app/(dashboard)/clientes/index'));
+const ClientCreatePage = lazy(() => import('./app/(dashboard)/clientes/novo'));
+const ClientEditPage = lazy(() => import('./app/(dashboard)/clientes/[id]'));
+const ClientPortalManagementPage = lazy(() => import('./app/(dashboard)/clientes/[id]/portal'));
+const PricingTablesPage = lazy(() => import('./app/(dashboard)/precos/index'));
+const PricingTableDetailPage = lazy(() => import('./app/(dashboard)/precos/[id]'));
+const JobListPage = lazy(() => import('./app/(dashboard)/trabalhos/index'));
+const JobCreatePage = lazy(() => import('./app/(dashboard)/trabalhos/novo'));
+const JobDetailPage = lazy(() => import('./app/(dashboard)/trabalhos/[id]'));
+const KanbanPage = lazy(() => import('./app/(dashboard)/kanban'));
+const FinancialDashboard = lazy(() => import('./app/(dashboard)/financeiro/index'));
+const ContasReceberPage = lazy(() => import('./app/(dashboard)/financeiro/contas-receber'));
+const ContasPagarPage = lazy(() => import('./app/(dashboard)/financeiro/contas-pagar'));
+const FechamentoPage = lazy(() => import('./app/(dashboard)/financeiro/fechamento'));
+const LivroCaixaPage = lazy(() => import('./app/(dashboard)/financeiro/livro-caixa'));
+const FluxoCaixaPage = lazy(() => import('./app/(dashboard)/financeiro/fluxo-caixa'));
+const BoletosPage = lazy(() => import('./app/(dashboard)/fiscal/boletos'));
+const NotasFiscaisPage = lazy(() => import('./app/(dashboard)/fiscal/notas-fiscais'));
+const DeliveryListPage = lazy(() => import('./app/(dashboard)/entregas/index'));
+const DeliveryDetailPage = lazy(() => import('./app/(dashboard)/entregas/[id]'));
+const InventoryDashboard = lazy(() => import('./app/(dashboard)/estoque/index'));
+const MaterialsPage = lazy(() => import('./app/(dashboard)/estoque/materiais'));
+const SuppliersPage = lazy(() => import('./app/(dashboard)/estoque/fornecedores'));
+const PurchaseOrdersPage = lazy(() => import('./app/(dashboard)/estoque/ordens-compra'));
+const PODetailPage = lazy(() => import('./app/(dashboard)/estoque/oc/[id]'));
+const EmployeeListPage = lazy(() => import('./app/(dashboard)/funcionarios/index'));
+const EmployeeCreatePage = lazy(() => import('./app/(dashboard)/funcionarios/novo'));
+const EmployeeEditPage = lazy(() => import('./app/(dashboard)/funcionarios/[id]'));
+const CommissionsPage = lazy(() => import('./app/(dashboard)/comissoes'));
+const PayrollListPage = lazy(() => import('./app/(dashboard)/payroll/index'));
+const PayrollDetailPage = lazy(() => import('./app/(dashboard)/payroll/[id]'));
+const ScanListPage = lazy(() => import('./app/(dashboard)/scans/index'));
+const ScanUploadPage = lazy(() => import('./app/(dashboard)/scans/upload'));
+const ScanDetailPage = lazy(() => import('./app/(dashboard)/scans/[id]'));
+const AgendaPage = lazy(() => import('./app/(dashboard)/agenda/index'));
+const EventCreatePage = lazy(() => import('./app/(dashboard)/agenda/novo'));
+const SettingsPage = lazy(() => import('./app/(dashboard)/configuracoes/index'));
+const SimulatorPage = lazy(() => import('./app/(dashboard)/simulador'));
+const ReportsHubPage = lazy(() => import('./app/(dashboard)/relatorios/index'));
+const PlanosPage = lazy(() => import('./app/(dashboard)/planos'));
+const FlowIAPage = lazy(() => import('./app/(dashboard)/flow-ia'));
+const IAAvancadaPage = lazy(() => import('./app/(dashboard)/ia-avancada'));
+const TicketsPage = lazy(() => import('./app/(dashboard)/suporte/tickets'));
+const ChatbotConfigPage = lazy(() => import('./app/(dashboard)/suporte/chatbot-config'));
+const AuditPage = lazy(() => import('./app/(dashboard)/auditoria/index'));
+const DashboardPage = lazy(() => import('./app/(dashboard)/dashboard'));
 
 import './globals.css';
 
 function AppContent() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Auth */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-        </Route>
+      <Suspense fallback={<PageSkeleton />}>
+        <Routes>
+          <Route path="/landing" element={<LandingPage />} />
 
-        {/* Fase 17 - Portal publico por token */}
-        <Route path="/portal/:token" element={<PublicPortalPage />} />
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+          </Route>
 
-        {/* Onboarding — autenticado mas sem tenant */}
-        <Route path="/onboarding" element={<OnboardingWizard />} />
+          <Route path="/portal/:token" element={<PublicPortalPage />} />
+          <Route path="/onboarding" element={<OnboardingWizard />} />
 
-        {/* Dashboard — autenticado + tenant obrigatório */}
-        <Route element={<DashboardLayout />}>
-          <Route path="/" element={<DashboardPage />} />
-          {/* Fase 4 — Clientes */}
-          <Route path="/clientes" element={<ClientListPage />} />
-          <Route path="/clientes/novo" element={<ClientCreatePage />} />
-          <Route path="/clientes/:id" element={<ClientEditPage />} />
-          <Route path="/clientes/:id/portal" element={<ClientPortalManagementPage />} />
-          {/* Fase 5 — Tabelas de Preços */}
-          <Route path="/precos" element={<PricingTablesPage />} />
-          <Route path="/precos/:id" element={<PricingTableDetailPage />} />
-          {/* Fase 6 — Trabalhos / OS */}
-          <Route path="/trabalhos" element={<JobListPage />} />
-          <Route path="/trabalhos/novo" element={<JobCreatePage />} />
-          <Route path="/trabalhos/:id" element={<JobDetailPage />} />
-          {/* Fase 7 — Kanban */}
-          <Route path="/kanban" element={<KanbanPage />} />
-          {/* Fase 8 — Financeiro */}
-          <Route path="/financeiro" element={<FinancialDashboard />} />
-          <Route path="/financeiro/contas-receber" element={<ContasReceberPage />} />
-          <Route path="/financeiro/contas-pagar" element={<ContasPagarPage />} />
-          <Route path="/financeiro/fechamento" element={<FechamentoPage />} />
-          <Route path="/financeiro/livro-caixa" element={<LivroCaixaPage />} />
-          <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
-          <Route path="/fiscal/boletos" element={<BoletosPage />} />
-          <Route path="/fiscal/notas-fiscais" element={<NotasFiscaisPage />} />
-          {/* Fase 9 — Entregas */}
-          <Route path="/entregas" element={<DeliveryListPage />} />
-          <Route path="/entregas/:id" element={<DeliveryDetailPage />} />
-          {/* Fase 10 — Estoque */}
-          <Route path="/estoque" element={<InventoryDashboard />} />
-          <Route path="/estoque/materiais" element={<MaterialsPage />} />
-          <Route path="/estoque/fornecedores" element={<SuppliersPage />} />
-          <Route path="/estoque/ordens-compra" element={<PurchaseOrdersPage />} />
-          <Route path="/estoque/oc/:id" element={<PODetailPage />} />
-          {/* Fase 11 — Funcionários */}
-          <Route path="/funcionarios" element={<EmployeeListPage />} />
-          <Route path="/funcionarios/novo" element={<EmployeeCreatePage />} />
-          <Route path="/funcionarios/:id" element={<EmployeeEditPage />} />
-          <Route path="/comissoes" element={<CommissionsPage />} />
-          {/* Fase 12 — Folha de Pagamento */}
-          <Route path="/payroll" element={<PayrollListPage />} />
-          <Route path="/payroll/:id" element={<PayrollDetailPage />} />
-          {/* Fase 13 - Scans 3D */}
-          <Route path="/scans" element={<ScanListPage />} />
-          <Route path="/scans/upload" element={<ScanUploadPage />} />
-          <Route path="/scans/:id" element={<ScanDetailPage />} />
-          {/* Fase 14 - Agenda */}
-          <Route path="/agenda" element={<AgendaPage />} />
-          <Route path="/agenda/novo" element={<EventCreatePage />} />
-          {/* Fase 15 - Configuracoes */}
-          <Route path="/simulador" element={<SimulatorPage />} />
-          <Route path="/relatorios" element={<ReportsHubPage />} />
-          <Route path="/planos" element={<PlanosPage />} />
-          <Route path="/flow-ia" element={<FlowIAPage />} />
-          <Route path="/ia-avancada" element={<IAAvancadaPage />} />
-          <Route path="/suporte/tickets" element={<TicketsPage />} />
-          <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
-          <Route path="/configuracoes" element={<SettingsPage />} />
-          <Route path="/auditoria" element={<AuditPage />} />
-        </Route>
+          <Route element={<DashboardLayout />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/clientes" element={<ClientListPage />} />
+            <Route path="/clientes/novo" element={<ClientCreatePage />} />
+            <Route path="/clientes/:id" element={<ClientEditPage />} />
+            <Route path="/clientes/:id/portal" element={<ClientPortalManagementPage />} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+            <Route path="/precos" element={<PricingTablesPage />} />
+            <Route path="/precos/:id" element={<PricingTableDetailPage />} />
+
+            <Route path="/trabalhos" element={<JobListPage />} />
+            <Route path="/trabalhos/novo" element={<JobCreatePage />} />
+            <Route path="/trabalhos/:id" element={<JobDetailPage />} />
+
+            <Route path="/kanban" element={<KanbanPage />} />
+
+            <Route path="/financeiro" element={<FinancialDashboard />} />
+            <Route path="/financeiro/contas-receber" element={<ContasReceberPage />} />
+            <Route path="/financeiro/contas-pagar" element={<ContasPagarPage />} />
+            <Route path="/financeiro/fechamento" element={<FechamentoPage />} />
+            <Route path="/financeiro/livro-caixa" element={<LivroCaixaPage />} />
+            <Route path="/financeiro/fluxo-caixa" element={<FluxoCaixaPage />} />
+            <Route path="/fiscal/boletos" element={<BoletosPage />} />
+            <Route path="/fiscal/notas-fiscais" element={<NotasFiscaisPage />} />
+
+            <Route path="/entregas" element={<DeliveryListPage />} />
+            <Route path="/entregas/:id" element={<DeliveryDetailPage />} />
+
+            <Route path="/estoque" element={<InventoryDashboard />} />
+            <Route path="/estoque/materiais" element={<MaterialsPage />} />
+            <Route path="/estoque/fornecedores" element={<SuppliersPage />} />
+            <Route path="/estoque/ordens-compra" element={<PurchaseOrdersPage />} />
+            <Route path="/estoque/oc/:id" element={<PODetailPage />} />
+
+            <Route path="/funcionarios" element={<EmployeeListPage />} />
+            <Route path="/funcionarios/novo" element={<EmployeeCreatePage />} />
+            <Route path="/funcionarios/:id" element={<EmployeeEditPage />} />
+            <Route path="/comissoes" element={<CommissionsPage />} />
+
+            <Route path="/payroll" element={<PayrollListPage />} />
+            <Route path="/payroll/:id" element={<PayrollDetailPage />} />
+
+            <Route path="/scans" element={<ScanListPage />} />
+            <Route path="/scans/upload" element={<ScanUploadPage />} />
+            <Route path="/scans/:id" element={<ScanDetailPage />} />
+
+            <Route path="/agenda" element={<AgendaPage />} />
+            <Route path="/agenda/novo" element={<EventCreatePage />} />
+
+            <Route path="/simulador" element={<SimulatorPage />} />
+            <Route path="/relatorios" element={<ReportsHubPage />} />
+            <Route path="/planos" element={<PlanosPage />} />
+            <Route path="/flow-ia" element={<FlowIAPage />} />
+            <Route path="/ia-avancada" element={<IAAvancadaPage />} />
+            <Route path="/suporte/tickets" element={<TicketsPage />} />
+            <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
+            <Route path="/configuracoes" element={<SettingsPage />} />
+            <Route path="/auditoria" element={<AuditPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
@@ -161,8 +153,9 @@ export default function App() {
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [httpBatchLink({ url: '/trpc' })],
-    })
+    }),
   );
+
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>

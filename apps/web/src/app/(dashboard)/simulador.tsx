@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { SimulationCalculationResult } from '@proteticflow/shared';
 import { trpc } from '../../lib/trpc';
 import { SimulatorForm, type DraftItem } from '../../components/simulator/simulator-form';
@@ -81,6 +82,8 @@ export default function SimulatorPage() {
     () => (tableItemsQuery.data?.data ?? []).map((item) => ({ id: item.id, name: item.name, priceCents: item.priceCents })),
     [tableItemsQuery.data?.data],
   );
+  const isBootstrapping = clientsQuery.isLoading || tablesQuery.isLoading || tableItemsQuery.isLoading;
+  const bootstrapError = clientsQuery.error ?? tablesQuery.error ?? tableItemsQuery.error;
 
   async function handlePreview() {
     if (!clientId || items.length === 0) return;
@@ -151,6 +154,56 @@ export default function SimulatorPage() {
       simulationId: selectedSimulationId,
       deadline: deadlineIso,
     });
+  }
+
+  if (isBootstrapping) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6 text-sm text-neutral-300">
+          Carregando dados do simulador...
+        </div>
+      </div>
+    );
+  }
+
+  if (bootstrapError) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <div className="rounded-2xl border border-red-800 bg-red-900/20 p-6 text-sm text-red-300">
+          Falha ao carregar dados iniciais: {bootstrapError.message}
+        </div>
+      </div>
+    );
+  }
+
+  if (clients.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+          <p className="text-sm text-neutral-300">Cadastre ao menos um cliente para gerar simulacoes e PDF.</p>
+          <Link to="/clientes/novo" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm">
+            Cadastrar primeiro cliente
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (tables.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+          <p className="text-sm text-neutral-300">Nenhuma tabela de preco ativa. Crie uma tabela antes de simular.</p>
+          <Link to="/precos" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm">
+            Ir para tabelas de preco
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -251,6 +304,10 @@ export default function SimulatorPage() {
           {simulationQuery.data?.convertedJobId ? (
             <p className="text-sm text-emerald-400">OS criada: #{simulationQuery.data.convertedJobId}</p>
           ) : null}
+          {historyQuery.isLoading && <p className="text-xs text-neutral-500">Carregando historico...</p>}
+          {historyQuery.error && <p className="text-xs text-red-400">Erro ao carregar historico: {historyQuery.error.message}</p>}
+          {sendMutation.error && <p className="text-xs text-red-400">Erro ao enviar email: {sendMutation.error.message}</p>}
+          {approveMutation.error && <p className="text-xs text-red-400">Erro ao aprovar simulacao: {approveMutation.error.message}</p>}
         </div>
       </div>
 

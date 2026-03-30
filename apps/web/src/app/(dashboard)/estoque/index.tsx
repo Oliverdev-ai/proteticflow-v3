@@ -23,13 +23,13 @@ function SummaryCard({ icon: Icon, label, value, sub, accent = false }: {
 }
 
 const QUICK_LINKS = [
-  { label: 'Materiais', href: '/estoque/materiais', desc: 'Catálogo e movimentações', icon: Package },
-  { label: 'Fornecedores', href: '/estoque/fornecedores', desc: 'Gestão de fornecedores', icon: TrendingUp },
+  { label: 'Materiais', href: '/estoque/materiais', desc: 'Catalogo e movimentacoes', icon: Package },
+  { label: 'Fornecedores', href: '/estoque/fornecedores', desc: 'Gestao de fornecedores', icon: TrendingUp },
   { label: 'Ordens de Compra', href: '/estoque/ordens-compra', desc: 'Criar e receber OCs', icon: ShoppingCart },
 ];
 
 export default function InventoryDashboard() {
-  const { data: dash } = trpc.inventory.getDashboard.useQuery();
+  const { data: dash, isLoading, error } = trpc.inventory.getDashboard.useQuery();
 
   const totalValue = dash ? (dash.totalValueCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
 
@@ -40,7 +40,7 @@ export default function InventoryDashboard() {
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Package className="text-violet-500" size={24} /> Estoque
           </h1>
-          <p className="text-neutral-400 text-sm mt-1">Visão geral do estoque do laboratório</p>
+          <p className="text-neutral-400 text-sm mt-1">Visao geral do estoque do laboratorio</p>
         </div>
         <Link
           to="/estoque/materiais"
@@ -49,6 +49,22 @@ export default function InventoryDashboard() {
           <Package size={16} /> Ver Materiais
         </Link>
       </div>
+
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
+          Falha ao carregar resumo de estoque: {error.message}
+        </div>
+      )}
+      {isLoading && (
+        <div className="mb-6 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Carregando indicadores de estoque...
+        </div>
+      )}
+      {!isLoading && !error && (dash?.totalMaterials ?? 0) === 0 && (
+        <div className="mb-6 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Estoque vazio no momento. Cadastre materiais para habilitar alertas e previsoes.
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

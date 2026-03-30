@@ -14,7 +14,7 @@ export default function PurchaseOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const utils = trpc.useUtils();
 
-  const { data } = trpc.inventory.listPOs.useQuery({
+  const { data, isLoading, error } = trpc.inventory.listPOs.useQuery({
     status: (statusFilter || undefined) as 'draft' | 'sent' | 'received' | 'cancelled' | undefined,
     page: 1, limit: 50,
   });
@@ -42,6 +42,22 @@ export default function PurchaseOrdersPage() {
           </button>
         ))}
       </div>
+
+      {error && (
+        <div className="mb-3 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
+          Erro ao carregar ordens de compra: {error.message}
+        </div>
+      )}
+      {isLoading && (
+        <div className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Carregando ordens de compra...
+        </div>
+      )}
+      {changePOStatus.error && (
+        <div className="mb-3 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
+          Nao foi possivel atualizar status da OC: {changePOStatus.error.message}
+        </div>
+      )}
 
       <div className="space-y-3">
         {pos.length === 0 && <p className="text-neutral-500 text-center py-10">Nenhuma ordem de compra encontrada</p>}

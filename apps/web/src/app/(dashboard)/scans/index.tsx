@@ -55,6 +55,17 @@ export default function ScanListPage() {
         </select>
       </div>
 
+      {query.error && (
+        <div className="mb-4 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
+          Erro ao carregar scans: {query.error.message}
+        </div>
+      )}
+      {query.isLoading && (
+        <div className="mb-4 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Carregando scans...
+        </div>
+      )}
+
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-neutral-850 border-b border-neutral-800">

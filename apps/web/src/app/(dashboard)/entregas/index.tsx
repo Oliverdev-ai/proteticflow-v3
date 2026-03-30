@@ -21,7 +21,7 @@ export default function DeliveryListPage() {
   const endOfWeek = weekDays[6]!;
   endOfWeek.setHours(23, 59, 59);
 
-  const { data } = trpc.delivery.listSchedules.useQuery({
+  const { data, isLoading, error } = trpc.delivery.listSchedules.useQuery({
     dateFrom: startOfWeek.toISOString(),
     dateTo: endOfWeek.toISOString(),
     page: 1, limit: 100,
@@ -37,7 +37,7 @@ export default function DeliveryListPage() {
     byDay[key].push(s);
   }
 
-  const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'];
+  const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -47,7 +47,7 @@ export default function DeliveryListPage() {
             <Truck className="text-violet-500" size={24} />
             Roteiros de Entrega
           </h1>
-          <p className="text-neutral-400 text-sm mt-1">CalendÃ¡rio semanal dos roteiros</p>
+          <p className="text-neutral-400 text-sm mt-1">Calendario semanal dos roteiros</p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
@@ -56,6 +56,22 @@ export default function DeliveryListPage() {
           <Plus size={16} /> Novo Roteiro
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
+          Erro ao carregar roteiros: {error.message}
+        </div>
+      )}
+      {isLoading && (
+        <div className="mb-4 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Carregando roteiros da semana...
+        </div>
+      )}
+      {!isLoading && schedules.length === 0 && (
+        <div className="mb-4 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Nenhum roteiro cadastrado nesta semana.
+        </div>
+      )}
 
       {/* Week header */}
       <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
@@ -125,7 +141,7 @@ export default function DeliveryListPage() {
                 <input type="text" placeholder="Nome do motorista" className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm placeholder-neutral-600" />
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-1">VeÃ­culo (opcional)</label>
+                <label className="block text-sm text-neutral-400 mb-1">Veiculo (opcional)</label>
                 <input type="text" placeholder="Placa ou modelo" className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm placeholder-neutral-600" />
               </div>
               <div className="flex gap-3 pt-2">

@@ -88,6 +88,22 @@ export default function ReportsHubPage() {
         <p className="text-sm text-neutral-400">Hub para preview, PDF, CSV e envio por email.</p>
       </div>
 
+      {definitionsQuery.error && (
+        <div className="rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
+          Erro ao carregar definicoes de relatorio: {definitionsQuery.error.message}
+        </div>
+      )}
+      {definitionsQuery.isLoading && (
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Carregando definicoes de relatorio...
+        </div>
+      )}
+      {!definitionsQuery.isLoading && (definitionsQuery.data?.length ?? 0) === 0 && (
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Nenhum relatorio disponivel para este tenant.
+        </div>
+      )}
+
       <ReportFilters value={filters} onChange={setFilters} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -108,6 +124,13 @@ export default function ReportsHubPage() {
           />
           <ReportChart preview={preview} />
           <ReportPreviewTable preview={preview} />
+          {sendByEmailMutation.isPending && <p className="text-xs text-neutral-500">Enviando relatorio por email...</p>}
+          {sendByEmailMutation.error && (
+            <p className="text-xs text-red-400">Falha no envio por email: {sendByEmailMutation.error.message}</p>
+          )}
+          {sendByEmailMutation.isSuccess && (
+            <p className="text-xs text-emerald-400">Relatorio enviado por email com sucesso.</p>
+          )}
         </div>
       </div>
     </div>

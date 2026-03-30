@@ -247,21 +247,35 @@ export default function AgendaPage() {
       </div>
 
       {listQuery.error && <p className="text-sm text-red-400">{listQuery.error.message}</p>}
-
-      <DndContext collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className={`grid gap-2 ${mode === 'week' ? 'grid-cols-1 md:grid-cols-7' : 'grid-cols-1 md:grid-cols-7'}`}>
-          {visibleDays.map((day) => {
-            const key = toDateKey(day);
-            const rows = rowsByDay.get(key) ?? [];
-            const isCurrentMonth = day.getMonth() === current.getMonth();
-            return <DayCell key={key} day={day} rows={rows} isCurrentMonth={isCurrentMonth} />;
-          })}
+      {listQuery.isLoading && (
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Carregando eventos da agenda...
         </div>
+      )}
+      {!listQuery.isLoading && !listQuery.error && (listQuery.data?.length ?? 0) === 0 && (
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+          Nenhum evento encontrado para o periodo e filtros selecionados.
+        </div>
+      )}
+      {moveMutation.isPending && <p className="text-xs text-neutral-500">Atualizando evento...</p>}
+      {moveMutation.error && <p className="text-xs text-red-400">Falha ao mover evento: {moveMutation.error.message}</p>}
 
-        <DragOverlay>
-          {activeRow ? <EventCard row={activeRow} dragging /> : null}
-        </DragOverlay>
-      </DndContext>
+      {!listQuery.isLoading && (
+        <DndContext collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+          <div className={`grid gap-2 ${mode === 'week' ? 'grid-cols-1 md:grid-cols-7' : 'grid-cols-1 md:grid-cols-7'}`}>
+            {visibleDays.map((day) => {
+              const key = toDateKey(day);
+              const rows = rowsByDay.get(key) ?? [];
+              const isCurrentMonth = day.getMonth() === current.getMonth();
+              return <DayCell key={key} day={day} rows={rows} isCurrentMonth={isCurrentMonth} />;
+            })}
+          </div>
+
+          <DragOverlay>
+            {activeRow ? <EventCard row={activeRow} dragging /> : null}
+          </DragOverlay>
+        </DndContext>
+      )}
     </div>
   );
 }
