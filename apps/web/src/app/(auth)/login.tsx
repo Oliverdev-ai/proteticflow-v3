@@ -4,6 +4,34 @@ import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import { loginSchema } from '@proteticflow/shared';
 
+function getFriendlyLoginError(err: unknown): string {
+  if (err instanceof z.ZodError) {
+    return 'Preencha os campos corretamente.';
+  }
+
+  if (err instanceof Error) {
+    const message = err.message.toLowerCase();
+
+    if (
+      message.includes("failed to execute 'json'") ||
+      message.includes('failed to fetch') ||
+      message.includes('network') ||
+      message.includes('connection refused') ||
+      message.includes('err_connection_refused')
+    ) {
+      return 'Nao foi possivel conectar ao servidor. Verifique se o backend esta ativo e tente novamente.';
+    }
+
+    if (message.includes('credenciais')) {
+      return 'Email ou senha invalidos.';
+    }
+
+    return 'Nao foi possivel concluir o login. Tente novamente.';
+  }
+
+  return 'Erro inesperado.';
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -19,13 +47,7 @@ export default function LoginPage() {
       setError('');
       await login({ email, password });
     } catch (err: unknown) {
-      if (err instanceof z.ZodError) {
-        setError('Preencha os campos corretamente.');
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Erro inesperado.');
-      }
+      setError(getFriendlyLoginError(err));
       setLoading(false);
     }
   };

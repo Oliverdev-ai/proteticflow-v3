@@ -1,4 +1,20 @@
 import { z } from 'zod';
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const currentDir = dirname(fileURLToPath(import.meta.url));
+const envCandidates = [
+  resolve(currentDir, '../.env'),
+  resolve(process.cwd(), '.env'),
+  resolve(process.cwd(), 'apps/server/.env'),
+];
+
+for (const candidate of envCandidates) {
+  if (existsSync(candidate)) {
+    process.loadEnvFile(candidate);
+  }
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
