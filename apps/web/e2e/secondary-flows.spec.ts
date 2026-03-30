@@ -18,7 +18,7 @@ test.describe('fluxos secundarios e2e', () => {
 
   test('landing publica carrega com seo e cta', async ({ page }) => {
     await page.goto('/landing', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /proteticflow/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { level: 1, name: /^proteticflow/i })).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('link', { name: /comece gr.tis/i })).toBeVisible();
   });
 

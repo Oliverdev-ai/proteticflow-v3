@@ -61,11 +61,6 @@ media/
 *.tar.gz
 *.zip
 .sentryclirc
-.claude/
-.claude-flow/
-.tmp/
-,,
-,+
 apply-migration.ts
 check-migrations.ts
 list-tables.ts

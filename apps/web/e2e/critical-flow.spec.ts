@@ -27,6 +27,15 @@ test.describe('fluxo critico e2e', () => {
     await page.getByPlaceholder('UF').fill('SP');
     await page.getByRole('button', { name: /criar laborat/i }).click();
 
+    if (page.url().includes('/onboarding')) {
+      await expect(page.getByRole('heading', { name: /passo 2/i })).toBeVisible({ timeout: 15000 });
+      await page.getByRole('button', { name: /continuar onboarding/i }).click();
+      await expect(page.getByRole('heading', { name: /passo 3/i })).toBeVisible({ timeout: 15000 });
+      await page.getByRole('button', { name: /finalizar onboarding/i }).click();
+      await expect(page.getByRole('heading', { name: /onboarding concluido/i })).toBeVisible({ timeout: 15000 });
+      await page.getByRole('button', { name: /acessar o painel/i }).click();
+    }
+
     await page.waitForURL(/^\/$/, { timeout: 30000 });
     await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible({ timeout: 20000 });
 
