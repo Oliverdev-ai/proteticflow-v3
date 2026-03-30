@@ -21,6 +21,7 @@ import {
   Headphones,
   CreditCard,
   Receipt,
+  Shield,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
@@ -48,6 +49,7 @@ const MENU_ITEMS = [
   { label: 'IA Avancada', icon: Brain, href: '/ia-avancada', module: 'ai' },
   { label: 'Suporte', icon: Headphones, href: '/suporte/tickets', module: 'support' },
   { label: 'Configuracoes', icon: Settings, href: '/configuracoes', module: 'settings' },
+  { label: 'Auditoria', icon: Shield, href: '/auditoria', module: 'settings' },
 ] as const;
 
 export function Sidebar() {

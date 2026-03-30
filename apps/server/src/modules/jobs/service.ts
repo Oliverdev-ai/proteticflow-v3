@@ -9,6 +9,7 @@ import { canTransition, DEFAULT_STAGES } from '@proteticflow/shared';
 import { uploadBuffer, deleteObject } from '../../core/storage.js';
 import { autoCreateArFromJob } from '../financial/service.js';
 import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
+import { logAudit } from '../audit/service.js';
 import type {
   createJobSchema,
   updateJobSchema,
@@ -181,6 +182,15 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
     return createdJob;
   });
 
+  void logAudit({
+    tenantId,
+    userId: createdBy,
+    action: 'job.create',
+    entityType: 'jobs',
+    entityId: job.id,
+    newValue: job,
+  });
+
   return job;
 }
 
@@ -282,6 +292,15 @@ export async function updateJob(tenantId: number, jobId: number, input: UpdateJo
   });
 
   logger.info({ action: 'job.update', tenantId, jobId, userId: updatedBy }, 'OS atualizada');
+  void logAudit({
+    tenantId,
+    userId: updatedBy,
+    action: 'job.update',
+    entityType: 'jobs',
+    entityId: jobId,
+    oldValue: existing,
+    newValue: updated,
+  });
   return updated;
 }
 
@@ -328,6 +347,15 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
 
   logger.info({ action: 'job.status_change', tenantId, jobId: input.jobId, from: job.status, to: input.newStatus, userId }, 'Status da OS alterado');
   const [updated] = await db.select().from(jobs).where(eq(jobs.id, input.jobId));
+  void logAudit({
+    tenantId,
+    userId,
+    action: 'job.changeStatus',
+    entityType: 'jobs',
+    entityId: input.jobId,
+    oldValue: { status: job.status },
+    newValue: updated,
+  });
   return updated;
 }
 
@@ -345,6 +373,15 @@ export async function deleteJob(tenantId: number, jobId: number, deletedBy: numb
   });
 
   logger.info({ action: 'job.delete', tenantId, jobId, userId: deletedBy }, 'OS removida (soft delete)');
+  void logAudit({
+    tenantId,
+    userId: deletedBy,
+    action: 'job.delete',
+    entityType: 'jobs',
+    entityId: jobId,
+    oldValue: existing,
+    newValue: { deletedBy },
+  });
 }
 
 export async function getLogs(tenantId: number, jobId: number) {

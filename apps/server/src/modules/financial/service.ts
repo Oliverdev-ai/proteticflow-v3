@@ -10,6 +10,7 @@ import {
 import { clients } from '../../db/schema/clients.js';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
+import { logAudit } from '../audit/service.js';
 import type { z } from 'zod';
 import type { 
   createArSchema,
@@ -176,6 +177,15 @@ export async function markArPaid(tenantId: number, input: MarkArPaidInput, userI
   });
 
   logger.info({ action: 'financial.ar.paid', tenantId, arId: ar.id, amountCents: ar.amountCents }, 'Conta recebida + cashbook');
+  void logAudit({
+    tenantId,
+    userId,
+    action: 'financial.markPaid',
+    entityType: 'accounts_receivable',
+    entityId: ar.id,
+    oldValue: ar,
+    newValue: updatedAr,
+  });
   return updatedAr;
 }
 
@@ -201,6 +211,15 @@ export async function cancelAr(tenantId: number, input: CancelArInput, userId: n
   if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a receber nao encontrada' });
 
   logger.info({ action: 'financial.ar.cancelled', tenantId, arId: ar.id, reason: input.cancelReason }, 'Conta a receber cancelada');
+  void logAudit({
+    tenantId,
+    userId,
+    action: 'financial.cancel',
+    entityType: 'accounts_receivable',
+    entityId: ar.id,
+    oldValue: ar,
+    newValue: cancelled,
+  });
   return cancelled;
 }
 
@@ -304,6 +323,15 @@ export async function markApPaid(tenantId: number, input: MarkApPaidInput, userI
   });
 
   logger.info({ action: 'financial.ap.paid', tenantId, apId: ap.id, amountCents: ap.amountCents }, 'Conta paga + cashbook');
+  void logAudit({
+    tenantId,
+    userId,
+    action: 'financial.markPaid',
+    entityType: 'accounts_payable',
+    entityId: ap.id,
+    oldValue: ap,
+    newValue: updatedAp,
+  });
   return updatedAp;
 }
 
@@ -328,6 +356,15 @@ export async function cancelAp(tenantId: number, input: CancelApInput, userId: n
   if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a pagar nao encontrada' });
 
   logger.info({ action: 'financial.ap.cancelled', tenantId, apId: ap.id, reason: input.cancelReason }, 'Conta a pagar cancelada');
+  void logAudit({
+    tenantId,
+    userId,
+    action: 'financial.cancel',
+    entityType: 'accounts_payable',
+    entityId: ap.id,
+    oldValue: ap,
+    newValue: cancelled,
+  });
   return cancelled;
 }
 

@@ -11,8 +11,18 @@ import { healthRouter } from './routes/health.js';
 import { startCronJobs } from './cron/scheduler.js';
 import * as licensingService from './modules/licensing/service.js';
 import * as fiscalService from './modules/fiscal/service.js';
+import { securityHeaders } from './middleware/security-headers.js';
+import { globalLimiter, authLimiter } from './middleware/rate-limit.js';
+import { requestLogger } from './middleware/request-logger.js';
+import { initSentry } from './core/sentry.js';
 
 const app = express();
+initSentry();
+
+app.set('trust proxy', 1);
+app.use(securityHeaders);
+app.use(globalLimiter);
+app.use(requestLogger);
 
 app.post(
   '/webhooks/stripe',
@@ -56,6 +66,8 @@ app.use(cookieParser());
 app.use(healthRouter);
 
 // tRPC
+app.use('/trpc/auth.login', authLimiter);
+app.use('/trpc/auth.register', authLimiter);
 app.use(
   '/trpc',
   createExpressMiddleware({

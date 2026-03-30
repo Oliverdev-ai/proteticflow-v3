@@ -5,6 +5,7 @@ import { jobs } from '../../db/schema/jobs.js';
 import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
+import { logAudit } from '../audit/service.js';
 import type {
   createClientSchema,
   updateClientSchema,
@@ -55,6 +56,14 @@ export async function createClient(tenantId: number, input: CreateClientInput, c
 
   if (!client) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar cliente' });
   logger.info({ action: 'client.create', tenantId, clientId: client.id, userId: createdBy }, 'Cliente criado');
+  void logAudit({
+    tenantId,
+    userId: createdBy,
+    action: 'client.create',
+    entityType: 'clients',
+    entityId: client.id,
+    newValue: client,
+  });
   return client;
 }
 
@@ -102,7 +111,7 @@ export async function getClient(tenantId: number, clientId: number) {
 }
 
 export async function updateClient(tenantId: number, clientId: number, input: UpdateClientInput, updatedBy: number) {
-  await getClient(tenantId, clientId); // valida isolamento
+  const existing = await getClient(tenantId, clientId); // valida isolamento
 
   const updates: Partial<typeof clients.$inferInsert> & { updatedAt: Date } = {
     updatedAt: new Date(),
@@ -133,11 +142,20 @@ export async function updateClient(tenantId: number, clientId: number, input: Up
   if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente nÃ£o encontrado' });
 
   logger.info({ action: 'client.update', tenantId, clientId, userId: updatedBy }, 'Cliente atualizado');
+  void logAudit({
+    tenantId,
+    userId: updatedBy,
+    action: 'client.update',
+    entityType: 'clients',
+    entityId: clientId,
+    oldValue: existing,
+    newValue: updated,
+  });
   return updated;
 }
 
 export async function deleteClient(tenantId: number, clientId: number, deletedBy: number) {
-  await getClient(tenantId, clientId);
+  const existing = await getClient(tenantId, clientId);
 
   // Verificar OS vinculadas
   const [jobCount] = await db
@@ -161,6 +179,15 @@ export async function deleteClient(tenantId: number, clientId: number, deletedBy
   });
 
   logger.info({ action: 'client.delete', tenantId, clientId, userId: deletedBy }, 'Cliente removido (soft delete)');
+  void logAudit({
+    tenantId,
+    userId: deletedBy,
+    action: 'client.delete',
+    entityType: 'clients',
+    entityId: clientId,
+    oldValue: existing,
+    newValue: { deletedBy },
+  });
 }
 
 export async function toggleClientStatus(tenantId: number, clientId: number) {

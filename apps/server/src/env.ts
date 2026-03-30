@@ -34,6 +34,8 @@ const envSchema = z.object({
   ASAAS_SANDBOX: z.string().optional(),
   FOCUS_NFE_TOKEN: z.string().optional(),
   FOCUS_NFE_SANDBOX: z.string().optional(),
+  SENTRY_DSN: z.string().url().optional().or(z.literal('')),
+  BACKUP_S3_BUCKET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

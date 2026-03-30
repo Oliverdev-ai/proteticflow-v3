@@ -127,6 +127,13 @@
       "when": 1775192400000,
       "tag": "0017_fiscal",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1775196000000,
+      "tag": "0018_audit_logs",
+      "breakpoints": true
     }
   ]
 }

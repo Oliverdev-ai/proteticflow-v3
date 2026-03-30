@@ -6,6 +6,7 @@ import {
 } from '../../db/schema/index.js';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
+import { logAudit } from '../audit/service.js';
 import {
   CreateCategoryInput, CreateSupplierInput, ListSuppliersInput,
   CreateMaterialInput, ListMaterialsInput,
@@ -267,6 +268,16 @@ export async function createMovement(tenantId: number, input: CreateMovementInpu
   })).returning();
 
   logger.info({ tenantId, materialId: input.materialId, type: input.type, quantity: qty, stockAfter: stockAfterResult }, 'inventory.movement');
+  if (input.type === 'adjustment') {
+    void logAudit({
+      tenantId,
+      userId,
+      action: 'inventory.adjustStock',
+      entityType: 'stock_movements',
+      entityId: movement!.id,
+      newValue: movement,
+    });
+  }
   return movement!;
 }
 
@@ -429,6 +440,15 @@ export async function changePurchaseOrderStatus(tenantId: number, input: ChangeP
       }
 
       logger.info({ tenantId, poId: input.id, movementsCreated }, 'inventory.po.received');
+      void logAudit({
+        tenantId,
+        userId,
+        action: 'inventory.receiveOrder',
+        entityType: 'purchase_orders',
+        entityId: input.id,
+        oldValue: { status: po.status },
+        newValue: updated,
+      });
       return updated!;
     });
   }

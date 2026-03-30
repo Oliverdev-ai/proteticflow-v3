@@ -65,6 +65,7 @@ import PlanosPage from './app/(dashboard)/planos';
 import TicketsPage from './app/(dashboard)/suporte/tickets';
 import ChatbotConfigPage from './app/(dashboard)/suporte/chatbot-config';
 import ReportsHubPage from './app/(dashboard)/relatorios/index';
+import AuditPage from './app/(dashboard)/auditoria/index';
 import DashboardPage from './app/(dashboard)/dashboard';
 import PublicPortalPage from './app/portal/[token]';
 
@@ -147,6 +148,7 @@ function AppContent() {
           <Route path="/suporte/tickets" element={<TicketsPage />} />
           <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
+          <Route path="/auditoria" element={<AuditPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

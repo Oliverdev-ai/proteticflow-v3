@@ -54,3 +54,6 @@ export * from './licensing.js';
 
 // Fiscal (boletos + NFS-e)
 export * from './fiscal.js';
+
+// Auditoria
+export * from './audit.js';

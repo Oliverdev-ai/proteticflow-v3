@@ -1,8 +1,8 @@
 import { initTRPC, TRPCError } from '@trpc/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { ZodError } from 'zod';
 import { db } from '../db/index.js';
-import { tenants } from '../db/schema/tenants.js';
+import { tenantMembers, tenants } from '../db/schema/tenants.js';
 import type { TrpcContext } from './context.js';
 
 const t = initTRPC.context<TrpcContext>().create({
@@ -52,7 +52,35 @@ const enforceTenant = t.middleware(({ ctx, next }) => {
   });
 });
 
-export const tenantProcedure = t.procedure.use(enforceAuth).use(enforceTenant);
+const enforceNotBlocked = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.user || !ctx.tenantId) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+
+  const [member] = await db
+    .select({
+      blockedAt: tenantMembers.blockedAt,
+      blockedReason: tenantMembers.blockedReason,
+    })
+    .from(tenantMembers)
+    .where(and(
+      eq(tenantMembers.tenantId, ctx.tenantId),
+      eq(tenantMembers.userId, ctx.user.id),
+      eq(tenantMembers.isActive, true),
+    ))
+    .limit(1);
+
+  if (member?.blockedAt) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `Acesso bloqueado: ${member.blockedReason ?? 'Contate o administrador'}`,
+    });
+  }
+
+  return next({ ctx });
+});
+
+export const tenantProcedure = t.procedure.use(enforceAuth).use(enforceTenant).use(enforceNotBlocked);
 
 const enforceAdmin = t.middleware(({ ctx, next }) => {
   if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });

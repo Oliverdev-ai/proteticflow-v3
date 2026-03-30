@@ -56,6 +56,9 @@ export const tenantMembers = pgTable('tenant_members', {
   userId: integer('user_id').notNull(),
   role: tenantMemberRoleEnum('role').default('recepcao').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
+  blockedAt: timestamp('blocked_at', { withTimezone: true }),
+  blockedReason: text('blocked_reason'),
+  blockedBy: integer('blocked_by'),
   joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
