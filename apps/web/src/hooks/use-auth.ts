@@ -1,30 +1,25 @@
-import { useEffect, useState } from 'react';
-import { trpc } from '../lib/trpc';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { trpc } from '../lib/trpc';
 
 export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
-
   const utils = trpc.useUtils();
-  
-  const { data: profile, isLoading, error } = trpc.auth.getProfile.useQuery(undefined, {
-    retry: false,
+
+  const { data: profile, isLoading, isFetching, error } = trpc.auth.getProfile.useQuery(undefined, {
+    retry: 2,
     refetchOnWindowFocus: true,
   });
 
-  useEffect(() => {
-    if (profile) {
-      setIsAuthenticated(true);
-    } else if (error?.data?.code === 'UNAUTHORIZED') {
-      setIsAuthenticated(false);
-      navigate('/login');
-    }
-  }, [profile, error, navigate]);
+  const isUnauthorized = error?.data?.code === 'UNAUTHORIZED';
+  const isAuthenticated = Boolean(profile);
+  const isAuthResolved = useMemo(
+    () => isAuthenticated || isUnauthorized,
+    [isAuthenticated, isUnauthorized],
+  );
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
-      setIsAuthenticated(true);
       utils.auth.getProfile.invalidate();
       navigate('/');
     },
@@ -32,17 +27,18 @@ export function useAuth() {
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
-      setIsAuthenticated(false);
       utils.auth.getProfile.invalidate();
       navigate('/login');
-    }
+    },
   });
 
   return {
     user: profile,
     isLoading,
+    isFetching,
+    isAuthResolved,
     isAuthenticated,
-    isError: !!error,
+    isError: !!error && !isUnauthorized,
     login: loginMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
   };
