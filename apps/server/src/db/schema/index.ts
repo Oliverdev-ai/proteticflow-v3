@@ -38,22 +38,22 @@ export * from './agenda';
 export * from './portal';
 
 // Simulador
-export * from './simulations.js';
+export * from './simulations';
 
 // IA Flow
-export * from './ai.js';
+export * from './ai';
 
 // IA Avancada
-export * from './ai-advanced.js';
+export * from './ai-advanced';
 
 // Suporte automatizado
-export * from './support.js';
+export * from './support';
 
 // Licenciamento + Stripe
-export * from './licensing.js';
+export * from './licensing';
 
 // Fiscal (boletos + NFS-e)
-export * from './fiscal.js';
+export * from './fiscal';
 
 // Auditoria
-export * from './audit.js';
+export * from './audit';

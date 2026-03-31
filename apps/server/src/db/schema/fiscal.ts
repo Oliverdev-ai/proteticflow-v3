@@ -9,9 +9,9 @@ import {
   numeric,
   index,
 } from 'drizzle-orm/pg-core';
-import { tenants } from './tenants.js';
-import { clients } from './clients.js';
-import { accountsReceivable } from './financials.js';
+import { tenants } from './tenants';
+import { clients } from './clients';
+import { accountsReceivable } from './financials';
 
 export const boletoStatusEnum = pgEnum('boleto_status', [
   'pending',

@@ -8,8 +8,8 @@ import {
   timestamp,
   index,
 } from 'drizzle-orm/pg-core';
-import { users } from './users.js';
-import { tenants } from './tenants.js';
+import { users } from './users';
+import { tenants } from './tenants';
 
 export const aiSessionStatusEnum = pgEnum('ai_session_status', ['active', 'archived']);
 export const aiMessageRoleEnum = pgEnum('ai_message_role', ['user', 'assistant', 'system']);

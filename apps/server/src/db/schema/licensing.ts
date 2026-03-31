@@ -9,8 +9,8 @@ import {
   boolean,
   index,
 } from 'drizzle-orm/pg-core';
-import { tenants } from './tenants.js';
-import { users } from './users.js';
+import { tenants } from './tenants';
+import { users } from './users';
 
 export const stripeEventStatusEnum = pgEnum('stripe_event_status', [
   'pending',

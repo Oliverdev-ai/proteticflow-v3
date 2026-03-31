@@ -8,10 +8,10 @@ import {
   pgEnum,
   index,
 } from 'drizzle-orm/pg-core';
-import { tenants } from './tenants.js';
-import { users } from './users.js';
-import { clients } from './clients.js';
-import { portalTokens } from './portal.js';
+import { tenants } from './tenants';
+import { users } from './users';
+import { clients } from './clients';
+import { portalTokens } from './portal';
 
 export const chatbotConversationStatusEnum = pgEnum('chatbot_conversation_status', [
   'open',
