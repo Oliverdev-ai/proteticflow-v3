@@ -1,13 +1,20 @@
 import { z } from 'zod';
 
+const emptyStringToUndefined = (value: unknown) => {
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined;
+  }
+  return value;
+};
+
 export const createTenantSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(255),
-  cnpj: z.string().max(18).optional(),
-  phone: z.string().max(32).optional(),
-  email: z.string().email().optional(),
-  address: z.string().optional(),
-  city: z.string().max(128).optional(),
-  state: z.string().length(2).optional(),
+  cnpj: z.preprocess(emptyStringToUndefined, z.string().max(18).optional()),
+  phone: z.preprocess(emptyStringToUndefined, z.string().max(32).optional()),
+  email: z.preprocess(emptyStringToUndefined, z.string().email().optional()),
+  address: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  city: z.preprocess(emptyStringToUndefined, z.string().max(128).optional()),
+  state: z.preprocess(emptyStringToUndefined, z.string().length(2).optional()),
 });
 
 export const updateTenantSchema = createTenantSchema.partial();

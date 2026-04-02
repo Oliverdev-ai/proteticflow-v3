@@ -9,8 +9,10 @@ import {
   moveKanbanSchema,
   createJobStageSchema,
   uploadPhotoSchema,
+  createOsBlockSchema,
 } from '@proteticflow/shared';
 import * as jobService from './service.js';
+import * as osBlockService from './os-blocks.service.js';
 
 export const jobRouter = router({
   // ── CRUD ────────────────────────────────────────────────────────────────────
@@ -149,5 +151,31 @@ export const jobRouter = router({
   getMetrics: tenantProcedure
     .query(async ({ ctx }) => {
       return jobService.getKanbanMetrics(ctx.tenantId!);
+    }),
+
+  // ── OS Blocks ──────────────────────────────────────────────────────────────────
+  createOsBlock: adminProcedure
+    .input(createOsBlockSchema)
+    .mutation(async ({ input, ctx }) => {
+      return osBlockService.createOsBlock(ctx.tenantId!, input);
+    }),
+
+  listOsBlocks: tenantProcedure
+    .input(z.object({ clientId: z.number().int().positive().optional() }))
+    .query(async ({ input, ctx }) => {
+      return osBlockService.listOsBlocks(ctx.tenantId!, input.clientId);
+    }),
+
+  deleteOsBlock: adminProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      await osBlockService.deleteOsBlock(ctx.tenantId!, input.id);
+      return { success: true };
+    }),
+
+  resolveClientByOsNumber: tenantProcedure
+    .input(z.object({ osNumber: z.number().int().positive() }))
+    .query(async ({ input, ctx }) => {
+      return osBlockService.resolveClientByOsNumber(ctx.tenantId!, input.osNumber);
     }),
 });

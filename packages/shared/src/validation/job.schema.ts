@@ -3,7 +3,8 @@ import { z } from 'zod';
 const JOB_STATUS_VALUES = ['pending', 'in_progress', 'quality_check', 'ready', 'delivered', 'cancelled'] as const;
 
 export const createJobSchema = z.object({
-  clientId: z.number().int().positive(),
+  clientId: z.number().int().positive().optional(),
+  osNumber: z.number().int().positive().optional(),
   patientName: z.string().max(255).optional(),
   prothesisType: z.string().max(128).optional(),
   material: z.string().max(128).optional(),
@@ -20,6 +21,9 @@ export const createJobSchema = z.object({
     unitPriceCents: z.number().int().min(0, 'Preço não pode ser negativo'),
     adjustmentPercent: z.number().min(-100).max(100).default(0),
   })).min(1, 'OS deve ter pelo menos 1 item'),
+}).refine(d => d.clientId || d.osNumber, {
+  message: 'Cliente ou número de OS é obrigatório',
+  path: ['clientId']
 });
 
 export const updateJobSchema = z.object({

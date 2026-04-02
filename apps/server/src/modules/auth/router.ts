@@ -107,8 +107,9 @@ export const authRouter = router({
     await authService.revokeSession(ctx.user!.id, input.sessionId);
     return { success: true };
   }),
-  getPermissions: protectedProcedure.query(async ({ ctx }) => {
-    return authService.getPermissions(ctx.user!.id, ctx.tenantId!);
+  getPermissions: protectedProcedure.input(z.object({ tenantId: z.number().optional() }).optional()).query(async ({ input, ctx }) => {
+    const tenantId = input?.tenantId ?? ctx.tenantId!;
+    return authService.getPermissions(ctx.user!.id, tenantId);
   }),
   exportData: protectedProcedure.query(async ({ ctx }) => {
     return authService.exportUserData(ctx.user!.id);

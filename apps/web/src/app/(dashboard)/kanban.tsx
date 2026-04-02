@@ -45,6 +45,7 @@ function JobCard({ job, dragging = false }: { job: KanbanJob; dragging?: boolean
         <div className={`w-2 h-2 rounded-full ${URGENCY_DOT[urgency] ?? 'bg-neutral-600'}`} title={urgency} />
       </div>
       {job.clientName && <p className="text-xs text-white font-medium line-clamp-1">{job.clientName}</p>}
+      {job.patientName && <p className="text-xs text-neutral-300 line-clamp-1">{job.patientName}</p>}
       {job.firstItemName && <p className="text-xs text-neutral-400 line-clamp-1">{job.firstItemName}</p>}
       <div className="flex items-center justify-between gap-2 pt-0.5">
         <span className={`flex items-center gap-1 text-xs ${urgency === 'overdue' ? 'text-red-400' : urgency === 'due24h' ? 'text-amber-400' : 'text-neutral-500'}`}>

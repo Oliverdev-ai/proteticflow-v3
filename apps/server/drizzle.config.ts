@@ -5,7 +5,7 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env['DATABASE_URL'] ?? 'postgresql://proteticflow:proteticflow_dev@localhost:5432/proteticflow_dev',
+    url: process.env['DATABASE_URL'] ?? 'postgresql://proteticflow:proteticflow_dev@127.0.0.1:5432/proteticflow_dev',
   },
   verbose: true,
   strict: false,

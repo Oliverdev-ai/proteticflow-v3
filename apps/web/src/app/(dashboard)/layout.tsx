@@ -5,9 +5,9 @@ import { LicenseBanner } from '../../components/licensing/license-banner';
 import { useAuth } from '../../hooks/use-auth';
 
 export function DashboardLayout() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, isFetching, isAuthResolved, user } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || isFetching || !isAuthResolved) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-950">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500" />

@@ -82,9 +82,20 @@ const enforceNotBlocked = t.middleware(async ({ ctx, next }) => {
 
 export const tenantProcedure = t.procedure.use(enforceAuth).use(enforceTenant).use(enforceNotBlocked);
 
-const enforceAdmin = t.middleware(({ ctx, next }) => {
-  if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
-  if (!['superadmin', 'gerente'].includes(ctx.user.role)) {
+const enforceAdmin = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.user || !ctx.tenantId) throw new TRPCError({ code: 'UNAUTHORIZED' });
+  
+  const [member] = await db
+    .select({ role: tenantMembers.role })
+    .from(tenantMembers)
+    .where(and(
+      eq(tenantMembers.tenantId, ctx.tenantId),
+      eq(tenantMembers.userId, ctx.user.id),
+      eq(tenantMembers.isActive, true)
+    ))
+    .limit(1);
+
+  if (!member || !['superadmin', 'gerente'].includes(member.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito a administradores' });
   }
   return next({ ctx: { ...ctx, user: ctx.user, tenantId: ctx.tenantId } });
@@ -92,9 +103,20 @@ const enforceAdmin = t.middleware(({ ctx, next }) => {
 
 export const adminProcedure = tenantProcedure.use(enforceAdmin);
 
-const enforceSuperadmin = t.middleware(({ ctx, next }) => {
-  if (!ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
-  if (ctx.user.role !== 'superadmin') {
+const enforceSuperadmin = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.user || !ctx.tenantId) throw new TRPCError({ code: 'UNAUTHORIZED' });
+
+  const [member] = await db
+    .select({ role: tenantMembers.role })
+    .from(tenantMembers)
+    .where(and(
+      eq(tenantMembers.tenantId, ctx.tenantId),
+      eq(tenantMembers.userId, ctx.user.id),
+      eq(tenantMembers.isActive, true)
+    ))
+    .limit(1);
+
+  if (!member || member.role !== 'superadmin') {
     throw new TRPCError({
       code: 'FORBIDDEN',
       message: 'Acesso restrito ao superadmin',

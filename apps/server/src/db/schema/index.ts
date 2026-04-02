@@ -57,3 +57,6 @@ export * from './fiscal';
 
 // Auditoria
 export * from './audit';
+
+// OS Blocks
+export * from './os-blocks';

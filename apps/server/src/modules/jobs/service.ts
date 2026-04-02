@@ -1,4 +1,4 @@
-﻿import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { jobs, jobItems, jobLogs, jobStages, jobPhotos } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
@@ -10,6 +10,9 @@ import { uploadBuffer, deleteObject } from '../../core/storage.js';
 import { autoCreateArFromJob } from '../financial/service.js';
 import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
 import { logAudit } from '../audit/service.js';
+import { resolveClientByOsNumber } from './os-blocks.service.js';
+import { events } from '../../db/schema/agenda.js';
+import { deliverySchedules, deliveryItems } from '../../db/schema/deliveries.js';
 import type {
   createJobSchema,
   updateJobSchema,
@@ -66,18 +69,35 @@ export async function getNextOrderNumber(tx: DbTransaction, tenantId: number): P
 export async function createJob(tenantId: number, input: CreateJobInput, createdBy: number) {
   await checkLimit(tenantId, 'jobsPerMonth', createdBy);
 
-  // 1. Verificar que o cliente pertence ao tenant
+  // 1. Resolver cliente se vier apenas osNumber
+  let resolvedClientId = input.clientId;
+  if (input.osNumber && !resolvedClientId) {
+    const resolved = await resolveClientByOsNumber(tenantId, input.osNumber);
+    if (!resolved) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente não encontrado para este bloco de OS físico' });
+    }
+    resolvedClientId = resolved.clientId;
+  }
+  if (!resolvedClientId) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cliente é obrigatório caso o número da OS não seja resolvível' });
+  }
+
+  // 1.1 Verificar que o cliente pertence ao tenant
   const [client] = await db.select().from(clients).where(
-    and(eq(clients.tenantId, tenantId), eq(clients.id, input.clientId), isNull(clients.deletedAt))
+    and(eq(clients.tenantId, tenantId), eq(clients.id, resolvedClientId), isNull(clients.deletedAt))
   );
-  if (!client) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente nÃ£o encontrado' });
+  if (!client) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente não encontrado' });
 
   const clientAdjustment = Number(client.priceAdjustmentPercent ?? 0);
 
   const job = await db.transaction(async (tx) => {
-    // 2. PAD-04: Gerar nÃºmero sequencial com lock
-    const orderNumber = await getNextOrderNumber(tx, tenantId);
-    const code = `OS-${orderNumber.toString().padStart(5, '0')}`;
+    // 2. PAD-04: Gerar número sequencial interno
+    const orderNumberInternal = await getNextOrderNumber(tx, tenantId);
+    // Usa o número da OS físico se existir, senão gera automático
+    const code = input.osNumber 
+      ? `OS-${String(input.osNumber).padStart(5, '0')}`
+      : `OS-${orderNumberInternal.toString().padStart(5, '0')}`;
+    const finalOrderNumber = input.osNumber ?? orderNumberInternal;
 
     // 3. AP-02: Processar itens congelando preÃ§os
     let jobTotalCents = 0;
@@ -124,8 +144,8 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
     const [createdJobRow] = await tx.insert(jobs).values({
       tenantId,
       code,
-      orderNumber,
-      clientId: input.clientId,
+      orderNumber: finalOrderNumber,
+      clientId: resolvedClientId!,
       patientName: input.patientName ?? null,
       prothesisType: input.prothesisType ?? null,
       material: input.material ?? null,
@@ -165,7 +185,7 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
 
     if (jobTotalCents > 0) {
       // 07.01: AR gerado automaticamente ao criar OS
-      await autoCreateArFromJob(tenantId, createdJob.id, input.clientId, jobTotalCents, new Date(input.deadline), tx);
+      await autoCreateArFromJob(tenantId, createdJob.id, resolvedClientId!, jobTotalCents, new Date(input.deadline), tx);
     }
 
     // 7. Atualizar contadores do cliente e tenant atomicamente (PAD-01)
@@ -173,12 +193,28 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
       UPDATE clients
       SET total_jobs = total_jobs + 1,
           total_revenue_cents = total_revenue_cents + ${jobTotalCents}
-      WHERE id = ${input.clientId} AND tenant_id = ${tenantId}
+      WHERE id = ${resolvedClientId!} AND tenant_id = ${tenantId}
     `);
 
     await incrementCounter(tenantId, 'jobsPerMonth', tx);
 
-    logger.info({ action: 'job.create', tenantId, jobId: createdJob.id, orderNumber, clientId: input.clientId, totalCents: jobTotalCents, itemCount: processedItems.length }, 'OS criada');
+    // 8. O.S. Inteligente: Upsert evento de entrega estimada na agenda
+    const deadlineDate = new Date(input.deadline);
+    const eventData = {
+      tenantId,
+      title: `Entrega estimada — ${code}`,
+      type: 'entrega' as const,
+      startAt: deadlineDate,
+      endAt: new Date(deadlineDate.getTime() + 30 * 60 * 1000), // +30min
+      jobId: createdJob.id,
+      clientId: resolvedClientId!,
+    };
+    await tx.insert(events).values(eventData).onConflictDoUpdate({
+      target: [events.tenantId, events.jobId],
+      set: { startAt: eventData.startAt, endAt: eventData.endAt, title: eventData.title }
+    });
+
+    logger.info({ action: 'job.create', tenantId, jobId: createdJob.id, orderNumber: finalOrderNumber, clientId: resolvedClientId!, totalCents: jobTotalCents, itemCount: processedItems.length }, 'OS criada');
     return createdJob;
   });
 
@@ -343,6 +379,42 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
         toStatus: input.newStatus,
         notes: input.notes ?? input.cancelReason ?? null,
       });
+
+      // Se pronto ou entregue, sincronizar rota de entregas (Logística Automática F30)
+      if (input.newStatus === 'ready') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // 1. Buscar ou criar schedule de hoje
+        let [schedule] = await tx.select().from(deliverySchedules)
+          .where(and(eq(deliverySchedules.tenantId, tenantId), eq(deliverySchedules.date, today)));
+        
+        if (!schedule) {
+          const [newSchedule] = await tx.insert(deliverySchedules).values({
+            tenantId,
+            date: today,
+            createdBy: userId,
+            notes: 'Gerado automaticamente via Status Pronto'
+          }).returning();
+          schedule = newSchedule!;
+        }
+
+        // 2. Upsert no delivery_items para evitar duplicados
+        const [existingItem] = await tx.select().from(deliveryItems).where(
+          and(eq(deliveryItems.jobId, input.jobId), eq(deliveryItems.scheduleId, schedule.id))
+        );
+
+        if (!existingItem) {
+          await tx.insert(deliveryItems).values({
+            tenantId,
+            scheduleId: schedule.id,
+            jobId: input.jobId,
+            clientId: job.clientId,
+            status: 'scheduled'
+          });
+          logger.info({ action: 'job.logistic_sync', job: job.id, scheduleId: schedule.id }, 'Logística sincronizada');
+        }
+      }
   });
 
   logger.info({ action: 'job.status_change', tenantId, jobId: input.jobId, from: job.status, to: input.newStatus, userId }, 'Status da OS alterado');

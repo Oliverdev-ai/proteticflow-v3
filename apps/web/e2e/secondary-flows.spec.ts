@@ -8,7 +8,7 @@ test.describe('fluxos secundarios e2e', () => {
     await page.getByPlaceholder('E-mail').fill('usuario.invalido@example.com');
     await page.getByPlaceholder('Senha').fill('senha-errada');
     await page.getByRole('button', { name: /entrar/i }).click();
-    await expect(page.getByText(/credenciais|erro|incorreto/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/credenciais|erro|incorreto|inv[aá]lid/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('rota protegida sem auth redireciona para login', async ({ page }) => {

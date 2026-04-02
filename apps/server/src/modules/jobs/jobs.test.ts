@@ -351,3 +351,94 @@ describe('Job Service — RBAC e Tenant Isolation', () => {
     expect(data.some(j => j.clientId === c2.id)).toBe(false);
   });
 });
+
+describe('OS Blocks — Logs, Sync & Resolution', () => {
+  beforeEach(cleanup);
+  afterEach(cleanup);
+
+  it('T01: createOsBlock registra bloco corretamente', async () => {
+    const u = await createTestUser('t01@test.com');
+    const t = await createTestTenant(u.id, 'T01');
+    const c = await createTestClient(t.id, u.id);
+    const { createOsBlock } = await import('./os-blocks.service.js');
+    
+    const block = await createOsBlock(t.id, {
+      clientId: c.id,
+      startNumber: 1000,
+      endNumber: 2000,
+      label: 'Bloco Teste',
+    });
+    
+    expect(block.id).toBeDefined();
+    expect(block.startNumber).toBe(1000);
+    expect(block.endNumber).toBe(2000);
+  });
+
+  it('T02: resolveClientByOsNumber retorna cliente correto', async () => {
+    const u = await createTestUser('t02@test.com');
+    const t = await createTestTenant(u.id, 'T02');
+    const c = await createTestClient(t.id, u.id);
+    const { createOsBlock, resolveClientByOsNumber } = await import('./os-blocks.service.js');
+    
+    await createOsBlock(t.id, { clientId: c.id, startNumber: 100, endNumber: 200 });
+    const resolved = await resolveClientByOsNumber(t.id, 150);
+    
+    expect(resolved?.clientId).toBe(c.id);
+  });
+
+  it('T03: resolveClientByOsNumber retorna null para número fora de range', async () => {
+    const u = await createTestUser('t03@test.com');
+    const t = await createTestTenant(u.id, 'T03');
+    const c = await createTestClient(t.id, u.id);
+    const { createOsBlock, resolveClientByOsNumber } = await import('./os-blocks.service.js');
+    
+    await createOsBlock(t.id, { clientId: c.id, startNumber: 100, endNumber: 200 });
+    const resolved = await resolveClientByOsNumber(t.id, 250);
+    
+    expect(resolved).toBeNull();
+  });
+
+  it('T04: createJob com osNumber auto-resolve cliente', async () => {
+    const u = await createTestUser('t04@test.com');
+    const t = await createTestTenant(u.id, 'T04');
+    const c = await createTestClient(t.id, u.id);
+    const { createOsBlock } = await import('./os-blocks.service.js');
+    
+    await createOsBlock(t.id, { clientId: c.id, startNumber: 50, endNumber: 100 });
+    const job = await jobService.createJob(t.id, {
+      osNumber: 75,
+      deadline: new Date(Date.now() + 86400000).toISOString(),
+      items: [baseItem]
+    }, u.id);
+    
+    expect(job.clientId).toBe(c.id);
+    expect(job.code).toBe('OS-00075');
+  });
+
+  it('T05: createJob sem osNumber mantém auto-increment', async () => {
+    const u = await createTestUser('t05@test.com');
+    const t = await createTestTenant(u.id, 'T05');
+    const c = await createTestClient(t.id, u.id);
+    
+    const job = await jobService.createJob(t.id, {
+      clientId: c.id,
+      deadline: new Date(Date.now() + 86400000).toISOString(),
+      items: [baseItem]
+    }, u.id);
+    
+    expect(job.orderNumber).toBe(1);
+    expect(job.code).toBe('OS-00001');
+  });
+
+  it('T06: changeStatus para ready cria evento e logs (logistic_sync chamado)', async () => {
+    const u = await createTestUser('t06@test.com');
+    const t = await createTestTenant(u.id, 'T06');
+    const c = await createTestClient(t.id, u.id);
+    const job = await jobService.createJob(t.id, {
+      clientId: c.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem]
+    }, u.id);
+    
+    const updated = await jobService.changeStatus(t.id, { jobId: job.id, newStatus: 'ready' }, u.id);
+    expect(updated?.status).toBe('ready');
+  });
+});

@@ -5,9 +5,93 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { updateClientSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import { ArrowLeft, Loader2, AlertCircle, ReceiptText, Pencil, Link2 } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, ReceiptText, Pencil, Link2, Plus, Trash2 } from 'lucide-react';
 
 type FormData = z.infer<typeof updateClientSchema>;
+
+function OsBlocksTab({ clientId }: { clientId: number }) {
+  const utils = trpc.useUtils();
+  const { data: blocks, isLoading } = trpc.job.listOsBlocks.useQuery({ clientId });
+  const [isAdding, setIsAdding] = useState(false);
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [label, setLabel] = useState('');
+  
+  const createBlock = trpc.job.createOsBlock.useMutation({
+    onSuccess: () => {
+      utils.job.listOsBlocks.invalidate({ clientId });
+      setIsAdding(false);
+      setStart(''); setEnd(''); setLabel('');
+    }
+  });
+
+  const deleteBlock = trpc.job.deleteOsBlock.useMutation({
+    onSuccess: () => utils.job.listOsBlocks.invalidate({ clientId })
+  });
+
+  if (isLoading) return <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-violet-400" /></div>;
+
+  return (
+    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-sm font-semibold text-neutral-300">Blocos Físicos de OS</h2>
+        <button onClick={() => setIsAdding(!isAdding)} className="flex items-center gap-1 text-xs px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors">
+          <Plus size={14} /> Novo Bloco
+        </button>
+      </div>
+
+      {isAdding && (
+        <div className="flex gap-2 items-end p-3 bg-neutral-800 rounded-xl border border-neutral-700">
+          <label className="flex flex-col text-xs text-neutral-400">Início
+            <input type="number" min="1" value={start} onChange={e => setStart(e.target.value)} className="input-field mt-1" />
+          </label>
+          <label className="flex flex-col text-xs text-neutral-400">Fim
+            <input type="number" min="1" value={end} onChange={e => setEnd(e.target.value)} className="input-field mt-1" />
+          </label>
+          <label className="flex flex-col text-xs text-neutral-400">Rótulo (opcional)
+            <input value={label} onChange={e => setLabel(e.target.value)} className="input-field mt-1" />
+          </label>
+          <button 
+            disabled={!start || !end || Number(start) >= Number(end) || createBlock.isPending}
+            onClick={() => createBlock.mutate({ clientId, startNumber: Number(start), endNumber: Number(end), label })}
+            className="h-[38px] px-4 text-xs font-semibold bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg">
+            Salvar
+          </button>
+        </div>
+      )}
+      {createBlock.isError && <p className="text-red-400 text-xs">{createBlock.error.message}</p>}
+
+      {blocks && blocks.length > 0 ? (
+        <div className="overflow-hidden border border-neutral-800 rounded-xl">
+          <table className="w-full text-left text-sm text-neutral-400">
+            <thead className="bg-neutral-800 text-xs uppercase text-neutral-500">
+              <tr>
+                <th className="px-4 py-2 font-medium">Intervalo</th>
+                <th className="px-4 py-2 font-medium">Rótulo</th>
+                <th className="px-4 py-2 font-medium text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-800">
+              {blocks.map(b => (
+                <tr key={b.id} className="hover:bg-neutral-800/50">
+                  <td className="px-4 py-3 font-medium text-white">{b.startNumber.toString().padStart(5, '0')} - {b.endNumber.toString().padStart(5, '0')}</td>
+                  <td className="px-4 py-3">{b.label || '—'}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button onClick={() => confirm('Remover bloco?') && deleteBlock.mutate({ id: b.id })} disabled={deleteBlock.isPending} className="text-neutral-500 hover:text-red-400">
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="text-sm text-neutral-500 italic">Nenhum bloco registrado.</p>
+      )}
+    </div>
+  );
+}
 
 function formatCents(cents: number) {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -17,7 +101,7 @@ export default function ClientEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const clientId = parseInt(id ?? '0', 10);
-  const [tab, setTab] = useState<'dados' | 'extrato'>('dados');
+  const [tab, setTab] = useState<'dados' | 'extrato' | 'blocos'>('dados');
   const utils = trpc.useUtils();
 
   const { data: client, isLoading, error } = trpc.clientes.get.useQuery({ id: clientId });
@@ -95,12 +179,12 @@ export default function ClientEditPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-neutral-900 p-1 rounded-xl w-fit">
-        {(['dados', 'extrato'] as const).map(t => (
+      <div className="flex gap-1 bg-neutral-900 p-1 rounded-xl w-fit flex-shrink-0">
+        {(['dados', 'extrato', 'blocos'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-medium transition-colors capitalize ${tab === t ? 'bg-neutral-800 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}>
-            {t === 'dados' ? <Pencil size={13} /> : <ReceiptText size={13} />}
-            {t === 'dados' ? 'Dados' : 'Extrato'}
+            {t === 'dados' ? <Pencil size={13} /> : t === 'extrato' ? <ReceiptText size={13} /> : <Link2 size={13} />}
+            {t === 'dados' ? 'Dados' : t === 'extrato' ? 'Extrato' : 'Blocos'}
           </button>
         ))}
       </div>
@@ -172,6 +256,9 @@ export default function ClientEditPage() {
           <p className="col-span-3 text-xs text-neutral-600">Dados de OS e financeiro disponíveis após Fases 6 e 8 respectivamente.</p>
         </div>
       )}
+
+      {/* Tab: Blocos */}
+      {tab === 'blocos' && <OsBlocksTab clientId={clientId} />}
     </div>
   );
 }

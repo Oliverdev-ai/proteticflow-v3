@@ -80,23 +80,6 @@ export const clients = pgTable('clients', {
   uniqueIndex('clients_tenant_document_idx').on(table.tenantId, table.document),
 ]);
 
-// ─── Blocos de numeração de OS por cliente ────────────────────────────────────
-export const orderBlocks = pgTable('order_blocks', {
-  id: serial('id').primaryKey(),
-  tenantId: integer('tenant_id').notNull(),
-  clientId: integer('client_id').notNull(),
-  blockStart: integer('block_start').notNull(),
-  blockEnd: integer('block_end').notNull(),
-  description: varchar('description', { length: 255 }),
-  isActive: boolean('is_active').default(true).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  ...softDeleteColumns,
-}, (table) => [
-  index('order_blocks_tenant_idx').on(table.tenantId),
-  index('order_blocks_client_idx').on(table.clientId),
-  index('order_blocks_start_idx').on(table.blockStart),
-]);
-
 // ─── Portal do cliente ────────────────────────────────────────────────────────
 export const clientPortalTokens = pgTable('client_portal_tokens', {
   id: serial('id').primaryKey(),

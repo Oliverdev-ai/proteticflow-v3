@@ -11,8 +11,12 @@ import { NotificationsTab } from '../../../components/settings/notifications-tab
 import { FiscalSettingsForm } from '../../../components/fiscal/fiscal-settings-form';
 
 export default function SettingsPage() {
-  const { hasAccess } = usePermissions();
+  const { hasAccess, isLoading: permsLoading } = usePermissions();
   const { overview } = useSettings();
+
+  if (permsLoading || overview.isLoading) {
+    return <p className="text-sm text-neutral-400">Carregando configuracoes...</p>;
+  }
 
   if (!hasAccess('settings')) {
     return (
@@ -23,9 +27,7 @@ export default function SettingsPage() {
     );
   }
 
-  if (overview.isLoading) {
-    return <p className="text-sm text-neutral-400">Carregando configuracoes...</p>;
-  }
+
 
   if (overview.error) {
     return <p className="text-sm text-red-400">Erro ao carregar configuracoes: {overview.error.message}</p>;

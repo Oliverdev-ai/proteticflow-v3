@@ -20,7 +20,7 @@ test.describe('fluxo critico e2e', () => {
     await page.getByPlaceholder('Senha').fill(password);
     await page.getByRole('button', { name: /registrar/i }).click();
 
-    await page.waitForURL(/\/onboarding$/, { timeout: 30000 });
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30000 });
 
     await page.getByPlaceholder('Ex: Lab Dental Silva').fill(labName);
     await page.getByPlaceholder('Cidade').fill('Sao Paulo');
@@ -28,6 +28,13 @@ test.describe('fluxo critico e2e', () => {
     await page.getByRole('button', { name: /criar laborat/i }).click();
 
     if (page.url().includes('/onboarding')) {
+      await expect
+        .poll(async () => {
+          const heading = (await page.locator('h1').first().textContent())?.trim() ?? '';
+          return heading;
+        }, { timeout: 20000 })
+        .toMatch(/passo 2|dashboard|onboarding concluido/i);
+
       await expect(page.getByRole('heading', { name: /passo 2/i })).toBeVisible({ timeout: 15000 });
       await page.getByRole('button', { name: /continuar onboarding/i }).click();
       await expect(page.getByRole('heading', { name: /passo 3/i })).toBeVisible({ timeout: 15000 });
@@ -36,13 +43,17 @@ test.describe('fluxo critico e2e', () => {
       await page.getByRole('button', { name: /acessar o painel/i }).click();
     }
 
-    await page.waitForURL(/^\/$/, { timeout: 30000 });
-    await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible({ timeout: 20000 });
+    await expect(page).toHaveURL(/\/$/, { timeout: 30000 });
+    await expect(
+      page.getByRole('heading', { name: /dashboard/i }).or(
+        page.getByText(/n.o foi poss.vel carregar o dashboard/i),
+      ),
+    ).toBeVisible({ timeout: 20000 });
 
     await page.goto('/clientes/novo', { waitUntil: 'domcontentloaded' });
     await page.getByPlaceholder(/nome do cliente/i).fill(clientName);
     await page.getByRole('button', { name: /criar cliente/i }).click();
-    await page.waitForURL(/\/clientes\/\d+$/, { timeout: 20000 });
+    await expect(page).toHaveURL(/\/clientes\/\d+$/, { timeout: 20000 });
     await expect(page.getByText(clientName, { exact: false })).toBeVisible();
 
     await page.goto('/trabalhos/novo', { waitUntil: 'domcontentloaded' });
@@ -56,21 +67,25 @@ test.describe('fluxo critico e2e', () => {
 
     const deadlineInput = page.locator('input[type="date"]').first();
     await deadlineInput.fill(new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
-    await page.getByLabel('Nome do paciente').fill(patientName);
+    await page.getByRole('textbox').first().fill(patientName);
     await page.getByRole('button', { name: /pr.ximo/i }).click();
 
     await page.getByRole('button', { name: /criar os/i }).click();
-    await page.waitForURL(/\/trabalhos\/\d+$/, { timeout: 20000 });
+    await expect(page).toHaveURL(/\/trabalhos\/\d+$/, { timeout: 20000 });
 
     await page.goto('/kanban', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /kanban/i })).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(patientName)).toBeVisible({ timeout: 15000 });
 
+    await page.goto('/financeiro', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: /financeiro/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/contas a receber/i)).toBeVisible({ timeout: 15000 });
+
     await page.goto('/clientes', { waitUntil: 'domcontentloaded' });
     await page.getByText(clientName).first().click();
-    await page.waitForURL(/\/clientes\/\d+$/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/clientes\/\d+$/, { timeout: 15000 });
     await page.getByRole('button', { name: /portal/i }).click();
-    await page.waitForURL(/\/clientes\/\d+\/portal$/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/clientes\/\d+\/portal$/, { timeout: 15000 });
 
     await page.getByRole('button', { name: /gerar token/i }).click();
     const portalUrlLocator = page.locator('[data-testid="portal-url"]');

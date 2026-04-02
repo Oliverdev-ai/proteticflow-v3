@@ -2,7 +2,16 @@ import Redis from 'ioredis';
 import { env } from './env.js';
 import { logger } from './logger.js';
 
-export const redis = new Redis(env.REDIS_URL, {
+const redisUrl =
+  process.platform === 'win32'
+    ? env.REDIS_URL.replace(/localhost(?=[:/])/i, '127.0.0.1')
+    : env.REDIS_URL;
+
+if (redisUrl !== env.REDIS_URL) {
+  logger.info({ action: 'redis.connection.normalize_ipv4' }, 'REDIS_URL normalizado para IPv4 no Windows');
+}
+
+export const redis = new Redis(redisUrl, {
   maxRetriesPerRequest: 3,
   retryStrategy(times) {
     const delay = Math.min(times * 50, 2000);
