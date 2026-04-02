@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { trpc } from '../../lib/trpc';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff, Lock } from 'lucide-react';
+import { trpc } from '../../lib/trpc';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
   const resetPassword = trpc.auth.resetPassword.useMutation({
     onSuccess: () => setSuccess(true),
-    onError: (err) => setError(err.message)
+    onError: (err) => setError(err.message),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,31 +24,57 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="text-center mt-10">
-        <h2 className="text-2xl font-bold">Senha Alterada!</h2>
-        <p className="mt-4">Sua senha foi redefinida com sucesso.</p>
-        <Link to="/login" className="mt-6 block text-indigo-600">Fazer Login</Link>
+      <div className="text-center space-y-3">
+        <h1 className="text-zinc-50 text-2xl font-semibold">Senha alterada</h1>
+        <p className="text-zinc-400 text-sm">Sua senha foi redefinida com sucesso.</p>
+        <Link to="/login" className="text-sky-400 hover:text-sky-300 font-medium text-sm">
+          Fazer login
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="mt-10">
-      <h2 className="text-center text-3xl font-bold">Redefinir Senha</h2>
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-        <input
-          type="password"
-          required
-          placeholder="Nova Senha (min 8 caracteres)"
-          className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit" disabled={resetPassword.isPending} className="w-full justify-center rounded-md bg-indigo-600 py-2 text-white">
-          Alterar Senha
+    <div>
+      <h1 className="text-zinc-50 text-2xl font-semibold text-center">Redefinir senha</h1>
+      <p className="text-zinc-400 text-sm text-center mt-2">Defina uma nova senha para sua conta.</p>
+
+      <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+        {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        <div className="relative">
+          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            required
+            placeholder="Nova senha (min 8 caracteres)"
+            className="input-field"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200"
+            aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          disabled={resetPassword.isPending}
+          className="w-full h-11 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium disabled:opacity-50 transition-colors"
+        >
+          {resetPassword.isPending ? 'Alterando...' : 'Alterar senha'}
         </button>
       </form>
     </div>
   );
 }
+

@@ -24,6 +24,7 @@ import {
   updateProfileSchema,
   createUserSchema,
   ROLE_PERMISSIONS,
+  type Role,
 } from '@proteticflow/shared';
 
 // Infer types from schemas
@@ -306,12 +307,22 @@ export async function revokeSession(userId: number, sessionId: number) {
     .where(and(eq(refreshTokens.id, sessionId), eq(refreshTokens.userId, userId)));
 }
 
-export async function getPermissions(userId: number, _tenantId: number) {
-  // Implementations for Phase 2
-  const [user] = await db.select().from(users).where(eq(users.id, userId));
-  if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario nao encontrado' });
-  const permissions = ROLE_PERMISSIONS[user.role as keyof typeof ROLE_PERMISSIONS] ?? ROLE_PERMISSIONS.recepcao;
-  return { role: user.role, modules: permissions.modules };
+export async function getPermissions(userId: number, tenantId: number) {
+  const [membership] = await db
+    .select({ role: tenantMembers.role })
+    .from(tenantMembers)
+    .where(
+      and(
+        eq(tenantMembers.userId, userId),
+        eq(tenantMembers.tenantId, tenantId),
+        eq(tenantMembers.isActive, true),
+      ),
+    )
+    .limit(1);
+
+  const role = (membership?.role ?? 'recepcao') as Role;
+  const permissions = ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.recepcao;
+  return { role, modules: permissions.modules };
 }
 
 export async function listUsers(tenantId: number) {

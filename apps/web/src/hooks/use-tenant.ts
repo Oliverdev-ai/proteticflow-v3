@@ -6,17 +6,21 @@ export function useTenant() {
   const switchMutation = trpc.tenant.switchTenant.useMutation();
   const utils = trpc.useUtils();
 
-  const current = list?.find(t => t.id === profile?.activeTenantId) ?? list?.[0] ?? null;
+  const current = list?.find((t) => t.id === profile?.activeTenantId) ?? list?.[0] ?? null;
 
   const switchTenant = (tenantId: number) => {
-    switchMutation.mutate({ tenantId }, {
-      onSuccess: () => {
-        // Após switch, invalidar queries para forçar re-fetch com novo contexto
-        utils.auth.getProfile.invalidate();
-        utils.tenant.list.invalidate();
+    switchMutation.mutate(
+      { tenantId },
+      {
+        onSuccess: () => {
+          utils.auth.getProfile.invalidate();
+          utils.auth.getPermissions.invalidate();
+          utils.tenant.list.invalidate();
+        },
       },
-    });
+    );
   };
 
   return { current, list, isLoading, switchTenant };
 }
+

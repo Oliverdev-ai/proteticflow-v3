@@ -1,29 +1,30 @@
 import React, { useState } from 'react';
-import { trpc } from '../../lib/trpc';
-import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/use-auth';
+import { z } from 'zod';
+import { Eye, EyeOff, Lock, Mail, UserRound } from 'lucide-react';
 import { registerSchema } from '@proteticflow/shared';
+import { trpc } from '../../lib/trpc';
+import { useAuth } from '../../hooks/use-auth';
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { login } = useAuth(); // or we can use the mutation directly from auth
-  
+
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: async () => {
-      // Auto-login after register
       await login({ email, password });
       navigate('/');
     },
     onError: (err) => {
-      setError(err.message || 'Erro ao registrar usuário.');
+      setError(err.message || 'Erro ao registrar usuario.');
       setLoading(false);
-    }
+    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,76 +35,87 @@ export default function RegisterPage() {
       setError('');
       await registerMutation.mutateAsync({ name, email, password });
     } catch (err: unknown) {
-      if (err instanceof z.ZodError) {
-        setError('Preencha os campos corretamente.');
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Erro inesperado.');
-      }
+      if (err instanceof z.ZodError) setError('Preencha os campos corretamente.');
+      else if (err instanceof Error) setError(err.message);
+      else setError('Erro inesperado.');
       setLoading(false);
     }
   };
 
   return (
     <div>
-      <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-        Crie sua conta
-      </h2>
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-        <div className="-space-y-px rounded-md shadow-sm">
-          <div>
-            <input
-              type="text"
-              required
-              className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-              placeholder="Nome"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={loading}
-            />
+      <h1 className="text-zinc-50 text-2xl font-semibold text-center">Criar conta</h1>
+      <p className="text-zinc-400 text-sm text-center mt-2">Comece seu laboratório digital em minutos.</p>
+
+      <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
+        {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            {error}
           </div>
-          <div>
-            <input
-              type="email"
-              required
-              className="relative block w-full border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-              placeholder="E-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              required
-              className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-              placeholder="Senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Já tem conta? Faça login
-            </Link>
-          </div>
-        </div>
-        <div>
-          <button
-            type="submit"
+        )}
+
+        <div className="relative">
+          <UserRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            required
+            className="input-field"
+            placeholder="Nome completo"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             disabled={loading}
-            className="group relative flex w-full justify-center rounded-md bg-indigo-600 py-2 px-3 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+          />
+        </div>
+
+        <div className="relative">
+          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="email"
+            required
+            className="input-field"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="relative">
+          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            required
+            className="input-field"
+            placeholder="Senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200"
+            aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
           >
-            {loading ? 'Registrando...' : 'Registrar'}
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+
+        <div className="text-sm pt-1">
+          <Link to="/login" className="text-zinc-400 hover:text-zinc-200">
+            Ja tem conta? Fazer login
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-11 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium disabled:opacity-50 transition-colors"
+        >
+          {loading ? 'Criando conta...' : 'Criar conta'}
+        </button>
       </form>
     </div>
   );
 }
+

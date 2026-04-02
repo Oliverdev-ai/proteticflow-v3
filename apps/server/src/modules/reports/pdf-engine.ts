@@ -83,7 +83,7 @@ export async function generateReportPdf(input: ReportPdfInput): Promise<Buffer> 
 
   const pageHeight = doc.internal.pageSize.getHeight();
   doc.setFontSize(8);
-  doc.text('ProteticFlow - Relatorio PDF', 14, pageHeight - 8);
+  doc.text('Powered by ProteticFlow', 14, pageHeight - 8);
 
   return Buffer.from(doc.output('arraybuffer') as ArrayBuffer);
 }

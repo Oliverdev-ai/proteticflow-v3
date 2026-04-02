@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
 import { Suspense, lazy, useState } from 'react';
 import { trpc, queryClient } from './lib/trpc';
+import { ThemeProvider } from './components/shared/theme-provider';
 import AuthLayout from './app/(auth)/layout';
 import LoginPage from './app/(auth)/login';
 import RegisterPage from './app/(auth)/register';
@@ -159,7 +160,9 @@ export default function App() {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <AppContent />
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );
