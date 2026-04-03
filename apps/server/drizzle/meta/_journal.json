@@ -134,6 +134,13 @@
       "when": 1775196000000,
       "tag": "0018_audit_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1775256425717,
+      "tag": "0019_os_blocks",
+      "breakpoints": true
     }
   ]
 }
