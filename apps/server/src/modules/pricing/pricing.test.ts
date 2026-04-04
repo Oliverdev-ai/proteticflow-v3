@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { pricingTables, priceItems } from '../../db/schema/clients.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as pricingService from './service.js';
 
@@ -20,6 +20,7 @@ async function createTestTenant(userId: number, name: string) {
 }
 
 async function cleanup() {
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
   await db.delete(priceItems);
   await db.delete(pricingTables);
   await db.delete(tenantMembers);

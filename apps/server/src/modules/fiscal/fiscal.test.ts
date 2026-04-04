@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { clients } from '../../db/schema/clients.js';
@@ -86,6 +86,7 @@ async function createAr(tenantId: number, clientId: number, amountCents = 12_000
 }
 
 async function cleanup() {
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
   await db.delete(cashbookEntries);
   await db.delete(boletos);
   await db.delete(nfseList);

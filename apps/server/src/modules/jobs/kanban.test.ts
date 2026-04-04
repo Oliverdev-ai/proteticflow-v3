@@ -3,7 +3,7 @@ import { db } from '../../db/index.js';
 import { users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as jobService from './service.js';
 
@@ -25,6 +25,7 @@ async function createTestClient(tenantId: number, userId: number, name = 'Clíni
 }
 
 async function cleanup() {
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
   await db.delete(jobLogs);
   await db.delete(jobItems);
   await db.delete(jobs);

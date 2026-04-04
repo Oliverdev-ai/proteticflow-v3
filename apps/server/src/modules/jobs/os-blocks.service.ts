@@ -24,8 +24,18 @@ export async function createOsBlock(tenantId: number, input: CreateOsBlockInput)
 
   const [block] = await db.insert(osBlocks).values({
     tenantId,
-    ...input,
+    clientId: input.clientId,
+    startNumber: input.startNumber,
+    endNumber: input.endNumber,
+    label: input.label ?? null,
   }).returning();
+
+  if (!block) {
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Falha ao criar bloco de OS',
+    });
+  }
 
   return block;
 }

@@ -51,6 +51,7 @@ async function createTestTenant(userId: number, name: string) {
 }
 
 async function cleanup() {
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
   await db.delete(auditLogs);
   await db.delete(tenantMembers);
   await db.delete(tenants);

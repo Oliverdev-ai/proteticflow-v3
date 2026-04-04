@@ -10,7 +10,7 @@ import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js'
 import { employees } from '../../db/schema/employees.js';
 import { payrollEntries, payrollPeriods, commissionPayments, employeeSkills, jobAssignments } from '../../db/schema/employees.js';
 import { hashPassword } from '../../core/auth.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import * as jobService from '../jobs/service.js';
 import * as agendaService from './service.js';
 import { eventReminders } from '../../cron/event-reminders.js';
@@ -59,6 +59,7 @@ async function createTestEmployee(tenantId: number, userId: number, name: string
 }
 
 async function cleanup() {
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
   await db.delete(notifications);
   await db.delete(events);
   await db.delete(scans);

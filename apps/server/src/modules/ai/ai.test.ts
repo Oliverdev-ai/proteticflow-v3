@@ -49,7 +49,7 @@ describe('ai prompts e fallback', () => {
     setAnthropicClientForTests(null);
 
     const chunks = [];
-    for await (const chunk of streamAiResponse(1, 'gerente', 'oi', [])) {
+    for await (const chunk of streamAiResponse(1, 'gerente', 'oi', [], 1)) {
       chunks.push(chunk);
     }
 

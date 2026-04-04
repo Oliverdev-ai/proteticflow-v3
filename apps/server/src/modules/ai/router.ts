@@ -61,6 +61,7 @@ export const aiRouter = router({
         ctx.user!.role,
         input.content,
         history,
+        ctx.user!.id,
       )) {
         if (chunk.type === 'delta') {
           assistantText += chunk.text;

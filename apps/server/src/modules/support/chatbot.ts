@@ -50,7 +50,8 @@ export async function generateChatbotResponse(
   }
 
   let fullText = '';
-  for await (const chunk of streamAiResponse(tenantId, 'recepcao', message, history)) {
+  // Passamos 0 como userId para identificar acoes do chatbot/sistema
+  for await (const chunk of streamAiResponse(tenantId, 'recepcao', message, history, 0)) {
     if (chunk.type === 'delta') {
       fullText += chunk.text;
     }

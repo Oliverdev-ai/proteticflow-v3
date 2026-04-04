@@ -1,8 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createOsBlock, resolveClientByOsNumber, listOsBlocks, deleteOsBlock } from './os-blocks.service.js';
+import { Mock, describe, it, expect, beforeEach, vi } from 'vitest';
+import { createOsBlock, resolveClientByOsNumber } from './os-blocks.service.js';
 import { db } from '../../db/index.js';
-import { osBlocks } from '../../db/schema/os-blocks.js';
-import { clients } from '../../db/schema/clients.js';
 
 vi.mock('../../db/index.js', () => ({
   db: {
@@ -23,7 +21,7 @@ describe('OS Blocks Service', () => {
   describe('createOsBlock', () => {
     it('should throw error if block overlaps existing one', async () => {
       // Mock conflicting block
-      (db.select as any).mockReturnValue({
+      (db.select as Mock).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ id: 10 }])
         })
@@ -38,13 +36,13 @@ describe('OS Blocks Service', () => {
     });
 
     it('should create block if no overlap', async () => {
-      (db.select as any).mockReturnValue({
+      (db.select as Mock).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([])
         })
       });
 
-      (db.insert as any).mockReturnValue({
+      (db.insert as Mock).mockReturnValue({
         values: vi.fn().mockReturnValue({
           returning: vi.fn().mockResolvedValue([{ id: 1, startNumber: 100, endNumber: 200 }])
         })
@@ -56,7 +54,7 @@ describe('OS Blocks Service', () => {
         endNumber: 200
       });
 
-      expect(result.id).toBe(1);
+      expect(result!.id).toBe(1);
     });
   });
 
@@ -67,7 +65,7 @@ describe('OS Blocks Service', () => {
         clients: { id: 5, name: 'Dr. Teste' }
       }];
 
-      (db.select as any).mockReturnValue({
+      (db.select as Mock).mockReturnValue({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue(mockResult)
@@ -81,7 +79,7 @@ describe('OS Blocks Service', () => {
     });
 
     it('should return null if no block found', async () => {
-      (db.select as any).mockReturnValue({
+      (db.select as Mock).mockReturnValue({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockResolvedValue([])

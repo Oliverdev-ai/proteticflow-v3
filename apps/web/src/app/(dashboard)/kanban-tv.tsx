@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layers3, RotateCcw } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
-import type { Job } from '@proteticflow/shared';
 
 // Helper local ou reaproveitado de utilitários
 function getStatusColor(status: string) {

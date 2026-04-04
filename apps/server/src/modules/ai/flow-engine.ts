@@ -75,14 +75,14 @@ export async function* streamAiResponse(
       tools: AI_TOOLS,
     });
 
-    let toolCallInput: any = null;
-    let toolCallName: string | null = null;
+    let toolCallInput: string | null = null;
+    let toolCallName: string| null = null;
 
     for await (const event of stream) {
       const eventType = (event as { type?: string }).type;
 
       if (eventType === 'content_block_delta') {
-        const delta = (event as any).delta;
+        const delta = (event as { delta?: { type?: string; text?: string; partial_json?: string } }).delta;
         if (delta?.type === 'text_delta' && typeof delta.text === 'string' && delta.text.length > 0) {
           yieldedAnyDelta = true;
           yield { type: 'delta', text: delta.text };
@@ -93,9 +93,9 @@ export async function* streamAiResponse(
       }
 
       if (eventType === 'content_block_start') {
-        const block = (event as any).content_block;
+        const block = (event as { content_block?: { type?: string; name?: string } }).content_block;
         if (block?.type === 'tool_use') {
-          toolCallName = block.name;
+          toolCallName = block.name ?? null;
         }
       }
 
@@ -115,13 +115,19 @@ export async function* streamAiResponse(
           yield { type: 'delta', text: `\nNão encontrei o cliente "${input.clientName}". Verifique o nome.` };
           yieldedAnyDelta = true;
         } else {
-          const items = await resolveServiceItems(tenantId, clientObj.priceTableId, input.items || []);
+          const items = await resolveServiceItems(tenantId, clientObj.pricingTableId, input.items || []);
           const deadline = parseNaturalDate(input.deadline);
           const job = await jobService.createJob(tenantId, {
             clientId: clientObj.id,
             osNumber: input.osNumber,
-            items: items as any,
-            deadline,
+            items: items.map(i => ({
+              priceItemId: i.priceItemId,
+              serviceNameSnapshot: i.serviceName,
+              quantity: i.quantity,
+              unitPriceCents: i.unitPriceCents,
+              adjustmentPercent: i.adjustmentPercent,
+            })),
+            deadline: deadline.toISOString(),
             notes: input.notes ?? 'Criado via Flow IA.',
           }, userId);
           yield { type: 'delta', text: `\nOS #${job.id} criada para ${clientObj.name}. Prazo: ${deadline.toLocaleDateString('pt-BR')}.` };

@@ -1,6 +1,7 @@
 import { db } from '../../db/index.js';
-import { clients, jobs, serviceItems, jobItems } from '../../db/schema.js';
+import { clients, priceItems, pricingTables } from '../../db/schema/clients.js';
 import { eq, ilike, and } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
 
 export function parseNaturalDate(input?: string): Date {
   const d = new Date();
@@ -28,11 +29,55 @@ export async function resolveClientByName(tenantId: number, name: string) {
   return results[0];
 }
 
-export async function resolveServiceItems(tenantId: number, priceTableId: number | null, items: any[]) {
-  // Mock resolver logic for the tool
-  return items.map(item => ({
-    serviceName: item.serviceName,
-    quantity: item.quantity ?? 1,
-    color: item.color,
-  }));
+type ServiceItemInput = {
+  serviceName: string;
+  quantity?: number;
+  color?: string;
+};
+
+type ResolvedItem = {
+  priceItemId: number;
+  serviceName: string;
+  quantity: number;
+  unitPriceCents: number;
+  adjustmentPercent: number;
+};
+
+export async function resolveServiceItems(
+  tenantId: number,
+  _priceTableId: number | null,
+  items: ServiceItemInput[],
+): Promise<ResolvedItem[]> {
+  if (!items.length) return [];
+
+  const resolved: ResolvedItem[] = [];
+
+  for (const item of items) {
+    const [found] = await db.select()
+      .from(priceItems)
+      .innerJoin(pricingTables, eq(priceItems.pricingTableId, pricingTables.id))
+      .where(and(
+        eq(pricingTables.tenantId, tenantId),
+        ilike(priceItems.name, `%${item.serviceName}%`),
+      ))
+      .limit(1);
+
+    if (!found) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: `Serviço "${item.serviceName}" não encontrado na tabela de preços`,
+      });
+    }
+
+    resolved.push({
+      priceItemId: found.price_items.id,
+      serviceName: found.price_items.name,
+      quantity: item.quantity ?? 1,
+      unitPriceCents: found.price_items.priceCents,
+      adjustmentPercent: 0,
+    });
+  }
+
+  return resolved;
 }
+
