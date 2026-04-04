@@ -7,6 +7,8 @@ import { clients } from '../../db/schema/clients.js';
 import { jobs } from '../../db/schema/jobs.js';
 import { cashbookEntries } from '../../db/schema/financials.js';
 import * as employeeService from './service.js';
+import * as timesheetService from './timesheet.js';
+import * as performanceService from './performance.js';
 import { eq, and, sql } from 'drizzle-orm';
 
 function assertExists<T>(value: T | undefined, label: string): T {
@@ -25,6 +27,7 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
   async function cleanup(tenantId: number | undefined, slug: string) {
     if (tenantId) {
       const run = (q: string) => db.execute(sql.raw(q)).catch(() => {});
+      await run(`DELETE FROM timesheets WHERE tenant_id = ${tenantId}`);
       await run(`DELETE FROM cashbook_entries WHERE tenant_id = ${tenantId}`);
       await run(`DELETE FROM commission_payments WHERE tenant_id = ${tenantId}`);
       await run(`DELETE FROM job_assignments WHERE tenant_id = ${tenantId}`);
@@ -299,5 +302,50 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
   it('18. Tenant isolation: Tenant A employees invisible to B', async () => {
     const { data } = await employeeService.listEmployees(otherTenantId, { page: 1, limit: 20 });
     expect(data.length).toBe(0);
+  });
+
+  it('19. T01 clockIn registra entrada', async () => {
+    const today = new Date();
+    const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const entry = await timesheetService.clockIn(testTenantId, createdEmployeeId, date, '08:00');
+    expect(entry.employeeId).toBe(createdEmployeeId);
+    expect(entry.clockIn?.startsWith('08:00')).toBe(true);
+  });
+
+  it('20. T02 clockOut calcula hoursWorked automaticamente', async () => {
+    const today = new Date();
+    const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const entry = await timesheetService.clockOut(testTenantId, createdEmployeeId, date, '17:30');
+    expect(entry.clockOut?.startsWith('17:30')).toBe(true);
+    expect(Number(entry.hoursWorked)).toBe(9.5);
+  });
+
+  it('21. T03 getMonthlyHoursSummary totaliza horas do mes', async () => {
+    const today = new Date();
+    const summary = await timesheetService.getMonthlyHoursSummary(
+      testTenantId,
+      createdEmployeeId,
+      today.getMonth() + 1,
+      today.getFullYear(),
+    );
+
+    expect(summary.totalHours).toBeGreaterThanOrEqual(9.5);
+    expect(summary.workedDays).toBeGreaterThanOrEqual(1);
+  });
+
+  it('22. T04 getEmployeePerformance retorna metricas corretas', async () => {
+    const performance = await performanceService.getEmployeePerformance(testTenantId, createdEmployeeId);
+    expect(performance.osCompleted).toBeGreaterThanOrEqual(1);
+    expect(performance.commissionsTotalCents).toBeGreaterThanOrEqual(20000);
+    expect(performance.hoursThisMonth).toBeGreaterThanOrEqual(9.5);
+  });
+
+  it('23. T05 Tenant isolation em timesheets', async () => {
+    const today = new Date();
+    await expect(
+      timesheetService.listTimesheets(otherTenantId, createdEmployeeId, today.getMonth() + 1, today.getFullYear()),
+    ).rejects.toThrow('Funcionario nao encontrado');
   });
 });

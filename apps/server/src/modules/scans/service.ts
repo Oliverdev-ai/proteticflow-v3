@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { XMLParser } from 'fast-xml-parser';
 import { db } from '../../db/index.js';
@@ -275,7 +275,11 @@ export async function listScans(tenantId: number, filters: ListScansInput) {
   const conditions = [eq(scans.tenantId, tenantId), isNull(scans.deletedAt)];
   if (filters.jobId) conditions.push(eq(scans.jobId, filters.jobId));
   if (filters.clientId) conditions.push(eq(scans.clientId, filters.clientId));
+  if (filters.scannerType) conditions.push(eq(scans.scannerType, filters.scannerType));
   if (filters.printStatus) conditions.push(eq(scans.printStatus, filters.printStatus));
+  if (filters.dateFrom) conditions.push(gte(scans.createdAt, new Date(filters.dateFrom)));
+  if (filters.dateTo) conditions.push(lte(scans.createdAt, new Date(filters.dateTo)));
+  if (filters.orphanOnly) conditions.push(sql`${scans.jobId} is null`);
 
   const offset = (filters.page - 1) * filters.limit;
   const data = await db.select({

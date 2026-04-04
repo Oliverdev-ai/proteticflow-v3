@@ -1,10 +1,12 @@
 import { z } from 'zod';
 import { router, tenantProcedure, adminProcedure, licensedProcedure } from '../../trpc/trpc.js';
 import * as employeeService from './service.js';
+import * as timesheetService from './timesheet.js';
+import * as performanceService from './performance.js';
 import { 
   createEmployeeSchema, updateEmployeeSchema, listEmployeesSchema,
   createSkillSchema, createAssignmentSchema, createCommissionPaymentSchema,
-  productionReportSchema
+  productionReportSchema, clockInSchema, clockOutSchema, timesheetFilterSchema, monthFilterSchema
 } from '@proteticflow/shared';
 
 export const employeeRouter = router({
@@ -54,5 +56,22 @@ export const employeeRouter = router({
     employeeService.getProductionReport(ctx.user!.tenantId, input)),
   commissionDetails: tenantProcedure.input(productionReportSchema).query(({ ctx, input }) =>
     employeeService.getCommissionDetails(ctx.user!.tenantId, input)),
+
+  // Ponto Digital (F31)
+  clockIn: tenantProcedure.input(clockInSchema).mutation(({ ctx, input }) =>
+    timesheetService.clockIn(ctx.user!.tenantId, input.employeeId, input.date, input.time, input.notes)),
+
+  clockOut: tenantProcedure.input(clockOutSchema).mutation(({ ctx, input }) =>
+    timesheetService.clockOut(ctx.user!.tenantId, input.employeeId, input.date, input.time, input.notes)),
+
+  timesheets: tenantProcedure.input(timesheetFilterSchema).query(({ ctx, input }) =>
+    timesheetService.listTimesheets(ctx.user!.tenantId, input.employeeId, input.month, input.year)),
+
+  monthlySummary: tenantProcedure.input(monthFilterSchema).query(({ ctx, input }) =>
+    timesheetService.getMonthlyHoursSummary(ctx.user!.tenantId, input.employeeId, input.month, input.year)),
+
+  performance: tenantProcedure
+    .input(z.object({ employeeId: z.number().int().positive() }))
+    .query(({ ctx, input }) => performanceService.getEmployeePerformance(ctx.user!.tenantId, input.employeeId)),
 });
 
