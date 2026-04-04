@@ -21,3 +21,4 @@ export function usePermissions() {
 
   return { role, modules: permissions.modules, hasAccess, isLoading };
 }
+

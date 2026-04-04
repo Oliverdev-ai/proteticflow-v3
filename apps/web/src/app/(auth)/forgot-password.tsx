@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { trpc } from '../../lib/trpc';
 import { Link } from 'react-router-dom';
+import { Mail } from 'lucide-react';
+import { trpc } from '../../lib/trpc';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [success, setSuccess] = useState(false);
-  
+
   const forgotPassword = trpc.auth.forgotPassword.useMutation({
-    onSuccess: () => setSuccess(true)
+    onSuccess: () => setSuccess(true),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,33 +18,50 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="text-center mt-10">
-        <h2 className="text-2xl font-bold">Instruções Enviadas!</h2>
-        <p className="mt-4">Verifique seu e-mail para redefinir a senha.</p>
-        <Link to="/login" className="mt-6 block text-indigo-600">Voltar para o Login</Link>
+      <div className="text-center space-y-3">
+        <h1 className="text-zinc-50 text-2xl font-semibold">Instrucoes enviadas</h1>
+        <p className="text-zinc-400 text-sm">Verifique seu e-mail para redefinir sua senha.</p>
+        <Link to="/login" className="text-sky-400 hover:text-sky-300 font-medium text-sm">
+          Voltar para o login
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="mt-10">
-      <h2 className="text-center text-3xl font-bold">Esqueci a Senha</h2>
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        <input
-          type="email"
-          required
-          placeholder="Seu e-mail"
-          className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ring-gray-300"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <button type="submit" disabled={forgotPassword.isPending} className="w-full justify-center rounded-md bg-indigo-600 py-2 text-white">
-          Recuperar Senha
+    <div>
+      <h1 className="text-zinc-50 text-2xl font-semibold text-center">Recuperar senha</h1>
+      <p className="text-zinc-400 text-sm text-center mt-2">
+        Digite seu e-mail para receber o link de redefinicao.
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+        <div className="relative">
+          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="email"
+            required
+            placeholder="Seu e-mail"
+            className="input-field"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={forgotPassword.isPending}
+          className="w-full h-11 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium disabled:opacity-50 transition-colors"
+        >
+          {forgotPassword.isPending ? 'Enviando...' : 'Recuperar senha'}
         </button>
       </form>
+
       <div className="mt-4 text-center">
-        <Link to="/login" className="text-sm font-medium text-indigo-600">Voltar para o Login</Link>
+        <Link to="/login" className="text-sm text-zinc-400 hover:text-zinc-200">
+          Voltar para o login
+        </Link>
       </div>
     </div>
   );
 }
+

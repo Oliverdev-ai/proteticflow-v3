@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../hooks/use-auth';
-import { z } from 'zod';
 import { Link } from 'react-router-dom';
+import { z } from 'zod';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { loginSchema } from '@proteticflow/shared';
+import { useAuth } from '../../hooks/use-auth';
 
 function getFriendlyLoginError(err: unknown): string {
-  if (err instanceof z.ZodError) {
-    return 'Preencha os campos corretamente.';
-  }
+  if (err instanceof z.ZodError) return 'Preencha os campos corretamente.';
 
   if (err instanceof Error) {
     const message = err.message.toLowerCase();
-
     if (
       message.includes("failed to execute 'json'") ||
       message.includes('failed to fetch') ||
@@ -21,11 +19,7 @@ function getFriendlyLoginError(err: unknown): string {
     ) {
       return 'Nao foi possivel conectar ao servidor. Verifique se o backend esta ativo e tente novamente.';
     }
-
-    if (message.includes('credenciais')) {
-      return 'Email ou senha invalidos.';
-    }
-
+    if (message.includes('credenciais')) return 'Email ou senha invalidos.';
     return 'Nao foi possivel concluir o login. Tente novamente.';
   }
 
@@ -36,6 +30,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -54,57 +49,68 @@ export default function LoginPage() {
 
   return (
     <div>
-      <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-        Faça login na sua conta
-      </h2>
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-        <div className="-space-y-px rounded-md shadow-sm">
-          <div>
-            <input
-              type="email"
-              required
-              className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-              placeholder="E-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
+      <h1 className="text-zinc-50 text-2xl font-semibold text-center">Entrar no ProteticFlow</h1>
+      <p className="text-zinc-400 text-sm text-center mt-2">Acesse sua operação com segurança.</p>
+
+      <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
+        {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            {error}
           </div>
-          <div>
-            <input
-              type="password"
-              required
-              className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-              placeholder="Senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Esqueceu a senha?
-            </Link>
-          </div>
-          <div className="text-sm">
-            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Criar conta
-            </Link>
-          </div>
-        </div>
-        <div>
-          <button
-            type="submit"
+        )}
+
+        <div className="relative">
+          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="email"
+            required
+            className="input-field"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
-            className="group relative flex w-full justify-center rounded-md bg-indigo-600 py-2 px-3 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+          />
+        </div>
+
+        <div className="relative">
+          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type={showPassword ? 'text' : 'password'}
+            required
+            className="input-field"
+            placeholder="Senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200"
+            aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
+
+        <div className="flex items-center justify-between text-sm pt-1">
+          <Link to="/forgot-password" className="text-zinc-400 hover:text-zinc-200">
+            Esqueci a senha
+          </Link>
+          <Link to="/register" className="text-sky-400 hover:text-sky-300 font-medium">
+            Criar conta
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-11 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium disabled:opacity-50 transition-colors"
+        >
+          {loading ? 'Entrando...' : 'Entrar'}
+        </button>
       </form>
     </div>
   );
 }
+

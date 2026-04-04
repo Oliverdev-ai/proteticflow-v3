@@ -1,96 +1,185 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Users,
   Briefcase,
-  Columns3,
-  DollarSign,
-  Package,
-  UserCog,
-  BarChart3,
-  Settings,
-  Stethoscope,
-  FileSpreadsheet,
-  Truck,
-  Coins,
-  Scan,
-  Calendar,
-  Calculator,
-  Sparkles,
   Brain,
-  Headphones,
+  Calculator,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Coins,
+  Columns3,
   CreditCard,
+  DollarSign,
+  FileSpreadsheet,
+  Headphones,
+  LayoutDashboard,
+  Package,
   Receipt,
+  Scan,
+  Settings,
   Shield,
+  Sparkles,
+  Stethoscope,
+  Truck,
+  UserCog,
+  Users,
+  BarChart3,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
 import { useTenant } from '../../hooks/use-tenant';
 import { PlanBadge } from '../licensing/plan-badge';
+import { NAV_ITEMS } from './navigation';
 
-const MENU_ITEMS = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/', module: 'dashboard' },
-  { label: 'Clientes', icon: Users, href: '/clientes', module: 'clients' },
-  { label: 'Tabelas de Precos', icon: FileSpreadsheet, href: '/precos', module: 'pricing' },
-  { label: 'Trabalhos', icon: Briefcase, href: '/trabalhos', module: 'jobs' },
-  { label: 'Kanban', icon: Columns3, href: '/kanban', module: 'kanban' },
-  { label: 'Scans 3D', icon: Scan, href: '/scans', module: 'scans' },
-  { label: 'Agenda', icon: Calendar, href: '/agenda', module: 'agenda' },
-  { label: 'Entregas', icon: Truck, href: '/entregas', module: 'deliveries' },
-  { label: 'Financeiro', icon: DollarSign, href: '/financeiro', module: 'financial' },
-  { label: 'Fiscal', icon: Receipt, href: '/fiscal/boletos', module: 'fiscal' },
-  { label: 'Estoque', icon: Package, href: '/estoque', module: 'inventory' },
-  { label: 'Funcionarios', icon: UserCog, href: '/funcionarios', module: 'employees' },
-  { label: 'Comissoes', icon: Coins, href: '/comissoes', module: 'commissions' },
-  { label: 'Folha de Pagamento', icon: DollarSign, href: '/payroll', module: 'payroll' },
-  { label: 'Relatorios', icon: BarChart3, href: '/relatorios', module: 'reports' },
-  { label: 'Simulador', icon: Calculator, href: '/simulador', module: 'simulator' },
-  { label: 'Planos', icon: CreditCard, href: '/planos', module: 'settings' },
-  { label: 'Flow IA', icon: Sparkles, href: '/flow-ia', module: 'ai' },
-  { label: 'IA Avancada', icon: Brain, href: '/ia-avancada', module: 'ai' },
-  { label: 'Suporte', icon: Headphones, href: '/suporte/tickets', module: 'support' },
-  { label: 'Configuracoes', icon: Settings, href: '/configuracoes', module: 'settings' },
-  { label: 'Auditoria', icon: Shield, href: '/auditoria', module: 'settings' },
-] as const;
+type SidebarProps = {
+  collapsed: boolean;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+  onToggleCollapse: () => void;
+};
 
-export function Sidebar() {
+const ICONS = {
+  '/': LayoutDashboard,
+  '/clientes': Users,
+  '/trabalhos': Briefcase,
+  '/kanban': Columns3,
+  '/scans': Scan,
+  '/agenda': Calendar,
+  '/entregas': Truck,
+  '/financeiro': DollarSign,
+  '/precos': FileSpreadsheet,
+  '/comissoes': Coins,
+  '/payroll': DollarSign,
+  '/fiscal/boletos': Receipt,
+  '/estoque': Package,
+  '/funcionarios': UserCog,
+  '/relatorios': BarChart3,
+  '/simulador': Calculator,
+  '/planos': CreditCard,
+  '/flow-ia': Sparkles,
+  '/ia-avancada': Brain,
+  '/suporte/tickets': Headphones,
+  '/configuracoes': Settings,
+  '/auditoria': Shield,
+} as const;
+
+function SidebarContent({
+  collapsed,
+  onToggleCollapse,
+}: {
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}) {
   const { hasAccess } = usePermissions();
   const { current } = useTenant();
 
+  const rootItems = NAV_ITEMS.filter((item) => !item.group && hasAccess(item.module));
+  const financeChildren = NAV_ITEMS.filter((item) => item.group === 'financeiro' && hasAccess(item.module));
+
   return (
-    <aside className="w-64 bg-neutral-900 border-r border-neutral-800 flex flex-col">
-      <div className="p-5 border-b border-neutral-800 flex items-center gap-2">
-        <Stethoscope className="text-violet-500" size={22} />
-        <span className="text-white font-semibold text-lg tracking-tight">ProteticFlow</span>
+    <aside
+      className={`h-full bg-card border-r border-border flex flex-col transition-all duration-200 ${
+        collapsed ? 'w-20' : 'w-64'
+      }`}
+    >
+      <div className="p-4 border-b border-border flex items-center gap-2">
+        <Stethoscope className="text-primary shrink-0" size={20} />
+        {!collapsed && <span className="text-foreground font-semibold text-base tracking-tight">ProteticFlow</span>}
       </div>
 
-      {current && (
+      {current && !collapsed && (
         <div className="px-4 pt-3 pb-1">
-          <p className="text-xs text-neutral-500 uppercase tracking-widest">Laboratorio</p>
-          <p className="text-sm text-neutral-200 font-medium truncate">{current.name}</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">Laboratorio</p>
+          <p className="text-sm text-foreground font-medium truncate">{current.name}</p>
         </div>
       )}
 
-      <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
-        {MENU_ITEMS.filter((item) => hasAccess(item.module)).map((item) => (
-          <NavLink
-            key={item.href}
-            to={item.href}
-            end={item.href === '/'}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-violet-600 text-white'
-                  : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
-              }`
-            }
-          >
-            <item.icon size={17} />
-            {item.label}
-          </NavLink>
-        ))}
+      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+        {rootItems.map((item) => {
+          const Icon = ICONS[item.href as keyof typeof ICONS] ?? LayoutDashboard;
+          const isDashboard = item.href === '/';
+          return (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              end={isDashboard}
+              title={collapsed ? item.label : undefined}
+              className={({ isActive }) =>
+                `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  isActive
+                    ? 'bg-primary text-[rgb(var(--primary-foreground))]'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                }`
+              }
+            >
+              <Icon size={17} />
+              {!collapsed && item.label}
+            </NavLink>
+          );
+        })}
+
+        {financeChildren.length > 0 && !collapsed && (
+          <>
+            <div className="pt-3 pb-1 px-2 text-[11px] uppercase tracking-widest text-muted-foreground">
+              Financeiro
+            </div>
+            {financeChildren.map((item) => {
+              const Icon = ICONS[item.href as keyof typeof ICONS] ?? DollarSign;
+              return (
+                <NavLink
+                  key={item.href}
+                  to={item.href}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 pl-6 pr-3 py-2 rounded-lg text-sm transition-colors ${
+                      isActive
+                        ? 'bg-primary text-[rgb(var(--primary-foreground))]'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                    }`
+                  }
+                >
+                  <Icon size={15} />
+                  {item.label}
+                </NavLink>
+              );
+            })}
+          </>
+        )}
       </nav>
 
-      <PlanBadge />
+      <div className="p-3 border-t border-border space-y-3">
+        <PlanBadge />
+        {!collapsed && <p className="text-[11px] text-muted-foreground text-center">Powered by ProteticFlow</p>}
+        <button
+          onClick={onToggleCollapse}
+          className="hidden lg:flex w-full items-center justify-center gap-2 h-9 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {!collapsed && 'Recolher'}
+        </button>
+      </div>
     </aside>
   );
 }
+
+export function Sidebar({ collapsed, mobileOpen, onCloseMobile, onToggleCollapse }: SidebarProps) {
+  return (
+    <>
+      <div className="hidden lg:block">
+        <SidebarContent collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
+      </div>
+
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            className="absolute inset-0 bg-black/50"
+            onClick={onCloseMobile}
+            aria-label="Fechar menu"
+          />
+          <div className="absolute left-0 top-0 bottom-0 z-50">
+            <SidebarContent collapsed={false} onToggleCollapse={onCloseMobile} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
