@@ -342,6 +342,44 @@ export async function exportCsv(tenantId: number, tableId: number): Promise<stri
   return [headers.join(','), ...rows].join('\n');
 }
 
+function detectSeparator(headerLine: string): ',' | ';' {
+  const commaCount = (headerLine.match(/,/g) ?? []).length;
+  const semicolonCount = (headerLine.match(/;/g) ?? []).length;
+  return semicolonCount > commaCount ? ';' : ',';
+}
+
+function parseCsvLine(line: string, separator: ',' | ';'): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === separator && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  result.push(current.trim());
+  return result;
+}
+
 export async function importCsv(
   tenantId: number,
   tableId: number,
@@ -349,8 +387,23 @@ export async function importCsv(
 ): Promise<{ created: number; updated: number; errors: { line: number; message: string }[] }> {
   await getTable(tenantId, tableId);
 
-  const lines = csvContent.trim().split('\n');
-  const header = lines[0]?.split(',').map((h) => h.replace(/"/g, '').trim()) ?? [];
+  const normalizedContent = csvContent
+    .replace(/^\uFEFF/, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+
+  if (!normalizedContent) {
+    return {
+      created: 0,
+      updated: 0,
+      errors: [{ line: 1, message: 'CSV vazio' }],
+    };
+  }
+
+  const lines = normalizedContent.split('\n').filter((line) => line.trim().length > 0);
+  const separator = detectSeparator(lines[0] ?? '');
+  const header = parseCsvLine(lines[0] ?? '', separator).map((h) => h.replace(/"/g, '').trim());
 
   const errors: { line: number; message: string }[] = [];
   let created = 0;
@@ -364,9 +417,7 @@ export async function importCsv(
       }
 
       try {
-        const values = line
-          .split(',')
-          .map((v) => v.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+        const values = parseCsvLine(line, separator);
         const row: Record<string, string> = {};
         header.forEach((h, idx) => {
           row[h] = values[idx] ?? '';
