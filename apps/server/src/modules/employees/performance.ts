@@ -4,6 +4,8 @@ import { db } from '../../db/index.js';
 import { commissionPayments, employees, jobAssignments, jobs, timesheets } from '../../db/schema/index.js';
 import type { EmployeePerformanceMetrics } from '@proteticflow/shared';
 
+type CommissionMode = 'month' | 'job';
+
 function monthRangeFromDate(baseDate: Date): { startDate: string; endDate: string } {
   const year = baseDate.getFullYear();
   const month = baseDate.getMonth() + 1;
@@ -42,6 +44,7 @@ async function assertEmployeeAccess(tenantId: number, employeeId: number) {
 export async function getEmployeePerformance(
   tenantId: number,
   employeeId: number,
+  commissionMode: CommissionMode = 'month',
 ): Promise<EmployeePerformanceMetrics> {
   await assertEmployeeAccess(tenantId, employeeId);
 
@@ -85,17 +88,34 @@ export async function getEmployeePerformance(
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
   const { startDate, endDate } = monthRangeFromDate(now);
 
-  const [commissionRow] = await db
-    .select({
-      total: sql<number>`coalesce(sum(${commissionPayments.totalCents}), 0)`,
-    })
-    .from(commissionPayments)
-    .where(and(
-      eq(commissionPayments.tenantId, tenantId),
-      eq(commissionPayments.employeeId, employeeId),
-      gte(commissionPayments.paidAt, monthStart),
-      lte(commissionPayments.paidAt, monthEnd),
-    ));
+  const [commissionRow] = commissionMode === 'job'
+    ? await db
+      .select({
+        total: sql<number>`coalesce(sum(${jobAssignments.commissionAmountCents}), 0)`,
+      })
+      .from(jobAssignments)
+      .innerJoin(jobs, and(
+        eq(jobs.id, jobAssignments.jobId),
+        eq(jobs.tenantId, tenantId),
+      ))
+      .where(and(
+        eq(jobAssignments.tenantId, tenantId),
+        eq(jobAssignments.employeeId, employeeId),
+        inArray(jobs.status, ['ready', 'delivered']),
+        gte(jobs.completedAt, monthStart),
+        lte(jobs.completedAt, monthEnd),
+      ))
+    : await db
+      .select({
+        total: sql<number>`coalesce(sum(${commissionPayments.totalCents}), 0)`,
+      })
+      .from(commissionPayments)
+      .where(and(
+        eq(commissionPayments.tenantId, tenantId),
+        eq(commissionPayments.employeeId, employeeId),
+        gte(commissionPayments.paidAt, monthStart),
+        lte(commissionPayments.paidAt, monthEnd),
+      ));
 
   const [hoursRow] = await db
     .select({

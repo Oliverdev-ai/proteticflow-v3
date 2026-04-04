@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
 import { FileBox, Plus, Printer, ScanLine } from 'lucide-react';
@@ -43,7 +43,9 @@ function statusLabel(value: string): string {
 }
 
 export default function ScanListPage() {
+  const pageSize = 100;
   const [activeTab, setActiveTab] = useState<'all' | 'received'>('all');
+  const [page, setPage] = useState(1);
   const [printStatus, setPrintStatus] = useState<string>('');
   const [clientId, setClientId] = useState<string>('');
   const [scannerType, setScannerType] = useState<string>('');
@@ -51,28 +53,28 @@ export default function ScanListPage() {
   const [dateTo, setDateTo] = useState<string>('');
   const [orphanOnly, setOrphanOnly] = useState<boolean>(false);
 
-  const clientsQuery = trpc.clientes.list.useQuery({ page: 1, limit: 200 });
+  const clientsQuery = trpc.clientes.list.useQuery({ page: 1, limit: 100 });
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, printStatus, clientId, scannerType, dateFrom, dateTo, orphanOnly]);
+
   const query = trpc.scan.list.useQuery({
-    page: 1,
-    limit: 200,
+    page,
+    limit: pageSize,
     printStatus: printStatus ? (printStatus as PrintStatus) : undefined,
     clientId: clientId ? Number(clientId) : undefined,
     scannerType: scannerType ? (scannerType as ScannerType) : undefined,
     dateFrom: dateFrom ? toIsoDate(dateFrom) : undefined,
     dateTo: dateTo ? toIsoDate(dateTo, true) : undefined,
     orphanOnly: activeTab === 'received' ? orphanOnly : undefined,
+    hasFile: activeTab === 'received' ? true : undefined,
   });
 
   const rows = useMemo(() => query.data?.data ?? [], [query.data]);
-  const receivedRows = useMemo(
-    () =>
-      rows.filter((row) =>
-        Boolean(row.scan.xmlUrl ?? row.scan.stlUpperUrl ?? row.scan.stlLowerUrl ?? row.scan.galleryImageUrl),
-      ),
-    [rows],
-  );
-
-  const currentRows = activeTab === 'received' ? receivedRows : rows;
+  const total = query.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentRows = rows;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -296,6 +298,33 @@ export default function ScanListPage() {
           </div>
         )}
       </div>
+
+      {total > 0 && (
+        <div className="mt-4 flex items-center justify-between text-sm text-neutral-400">
+          <span>
+            {activeTab === 'received' ? 'Recebidos' : 'Scans'}: {total}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page <= 1}
+              className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <span>
+              Página {page} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 disabled:opacity-50"
+            >
+              Próxima
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

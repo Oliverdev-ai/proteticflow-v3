@@ -1,4 +1,4 @@
-import { date, index, integer, numeric, pgTable, serial, text, time, timestamp } from 'drizzle-orm/pg-core';
+import { date, index, integer, numeric, pgTable, serial, text, time, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
 import { employees } from './employees';
 
@@ -16,4 +16,5 @@ export const timesheets = pgTable('timesheets', {
   index('timesheets_tenant_idx').on(table.tenantId),
   index('timesheets_employee_idx').on(table.employeeId),
   index('timesheets_date_idx').on(table.date),
+  uniqueIndex('timesheets_tenant_employee_date_uq').on(table.tenantId, table.employeeId, table.date),
 ]);

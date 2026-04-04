@@ -31,3 +31,5 @@ END $$;
 CREATE INDEX IF NOT EXISTS "timesheets_tenant_idx" ON "timesheets" ("tenant_id");
 CREATE INDEX IF NOT EXISTS "timesheets_employee_idx" ON "timesheets" ("employee_id");
 CREATE INDEX IF NOT EXISTS "timesheets_date_idx" ON "timesheets" ("date");
+CREATE UNIQUE INDEX IF NOT EXISTS "timesheets_tenant_employee_date_uq"
+  ON "timesheets" ("tenant_id", "employee_id", "date");

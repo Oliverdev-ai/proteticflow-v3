@@ -37,6 +37,7 @@ export default function EmployeeEditPage() {
   const utils = trpc.useUtils();
   const [isEditing, setIsEditing] = useState(false);
   const [showSkillForm, setShowSkillForm] = useState(false);
+  const [commissionMode, setCommissionMode] = useState<'month' | 'job'>('month');
   const [clockDate, setClockDate] = useState(getLocalDateString());
   const [clockTime, setClockTime] = useState(getCurrentTimeString());
   const today = new Date();
@@ -56,7 +57,7 @@ export default function EmployeeEditPage() {
     { enabled: canLoadEmployeeContext },
   );
   const { data: performance } = trpc.employee.performance.useQuery(
-    { employeeId },
+    { employeeId, commissionMode },
     { enabled: canLoadEmployeeContext },
   );
 
@@ -93,7 +94,7 @@ export default function EmployeeEditPage() {
   const refreshTimesheetData = () => {
     utils.employee.timesheets.invalidate({ employeeId, month: currentMonth, year: currentYear });
     utils.employee.monthlySummary.invalidate({ employeeId, month: currentMonth, year: currentYear });
-    utils.employee.performance.invalidate({ employeeId });
+    utils.employee.performance.invalidate({ employeeId, commissionMode });
   };
 
   const clockInMutation = trpc.employee.clockIn.useMutation({
@@ -279,9 +280,19 @@ export default function EmployeeEditPage() {
                <h2 className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
                  <BarChart3 size={16} className="text-violet-500" /> Desempenho e Ponto
                </h2>
-               <span className="text-[10px] uppercase tracking-widest text-neutral-500">
-                 {String(currentMonth).padStart(2, '0')}/{currentYear}
-               </span>
+               <div className="flex items-center gap-2">
+                 <span className="text-[10px] uppercase tracking-widest text-neutral-500">
+                   {String(currentMonth).padStart(2, '0')}/{currentYear}
+                 </span>
+                 <select
+                   value={commissionMode}
+                   onChange={(e) => setCommissionMode(e.target.value as 'month' | 'job')}
+                   className="input-field py-1 text-xs min-w-[170px]"
+                 >
+                   <option value="month">Comissão por mês</option>
+                   <option value="job">Comissão por trabalho</option>
+                 </select>
+               </div>
              </div>
 
              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -299,11 +310,13 @@ export default function EmployeeEditPage() {
                  <div className="text-[10px] uppercase text-neutral-500">Taxa atraso</div>
                  <div className="text-lg font-semibold text-white mt-1">{performance?.overdueRate ?? 0}%</div>
                </div>
-               <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-3">
-                 <div className="text-[10px] uppercase text-neutral-500">Comissões mês</div>
-                 <div className="text-sm font-semibold text-white mt-1">
-                   {((performance?.commissionsTotalCents ?? 0) / 100).toLocaleString('pt-BR', {
-                     style: 'currency',
+                <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-3">
+                  <div className="text-[10px] uppercase text-neutral-500">
+                    {commissionMode === 'month' ? 'Comissões mês' : 'Comissões por trabalho'}
+                  </div>
+                  <div className="text-sm font-semibold text-white mt-1">
+                    {((performance?.commissionsTotalCents ?? 0) / 100).toLocaleString('pt-BR', {
+                      style: 'currency',
                      currency: 'BRL',
                    })}
                  </div>

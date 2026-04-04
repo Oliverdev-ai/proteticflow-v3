@@ -71,7 +71,14 @@ export const employeeRouter = router({
     timesheetService.getMonthlyHoursSummary(ctx.user!.tenantId, input.employeeId, input.month, input.year)),
 
   performance: tenantProcedure
-    .input(z.object({ employeeId: z.number().int().positive() }))
-    .query(({ ctx, input }) => performanceService.getEmployeePerformance(ctx.user!.tenantId, input.employeeId)),
+    .input(z.object({
+      employeeId: z.number().int().positive(),
+      commissionMode: z.enum(['month', 'job']).default('month'),
+    }))
+    .query(({ ctx, input }) => performanceService.getEmployeePerformance(
+      ctx.user!.tenantId,
+      input.employeeId,
+      input.commissionMode,
+    )),
 });
 

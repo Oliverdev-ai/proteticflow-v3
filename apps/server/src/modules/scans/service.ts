@@ -280,6 +280,14 @@ export async function listScans(tenantId: number, filters: ListScansInput) {
   if (filters.dateFrom) conditions.push(gte(scans.createdAt, new Date(filters.dateFrom)));
   if (filters.dateTo) conditions.push(lte(scans.createdAt, new Date(filters.dateTo)));
   if (filters.orphanOnly) conditions.push(sql`${scans.jobId} is null`);
+  if (filters.hasFile) {
+    conditions.push(sql`(
+      ${scans.xmlUrl} is not null
+      or ${scans.stlUpperUrl} is not null
+      or ${scans.stlLowerUrl} is not null
+      or ${scans.galleryImageUrl} is not null
+    )`);
+  }
 
   const offset = (filters.page - 1) * filters.limit;
   const data = await db.select({

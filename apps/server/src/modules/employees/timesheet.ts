@@ -36,6 +36,13 @@ function parseNumeric(value: unknown): number {
   return 0;
 }
 
+function isUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('code' in error)) {
+    return false;
+  }
+  return (error as { code?: string }).code === '23505';
+}
+
 async function ensureEmployeeOwnedByTenant(tenantId: number, employeeId: number) {
   const [employee] = await db
     .select({ id: employees.id })
@@ -89,16 +96,24 @@ export async function clockIn(
     return updated;
   }
 
-  const [created] = await db
-    .insert(timesheets)
-    .values({
-      tenantId,
-      employeeId,
-      date,
-      clockIn: time,
-      notes: notes ?? null,
-    })
-    .returning();
+  let created: typeof timesheets.$inferSelect | undefined;
+  try {
+    [created] = await db
+      .insert(timesheets)
+      .values({
+        tenantId,
+        employeeId,
+        date,
+        clockIn: time,
+        notes: notes ?? null,
+      })
+      .returning();
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Entrada ja registrada para este dia' });
+    }
+    throw error;
+  }
 
   if (!created) {
     throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao registrar entrada' });

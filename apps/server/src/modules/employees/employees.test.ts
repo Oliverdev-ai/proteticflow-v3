@@ -336,10 +336,13 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
   });
 
   it('22. T04 getEmployeePerformance retorna metricas corretas', async () => {
-    const performance = await performanceService.getEmployeePerformance(testTenantId, createdEmployeeId);
-    expect(performance.osCompleted).toBeGreaterThanOrEqual(1);
-    expect(performance.commissionsTotalCents).toBeGreaterThanOrEqual(20000);
-    expect(performance.hoursThisMonth).toBeGreaterThanOrEqual(9.5);
+    const performanceByMonth = await performanceService.getEmployeePerformance(testTenantId, createdEmployeeId, 'month');
+    expect(performanceByMonth.osCompleted).toBeGreaterThanOrEqual(1);
+    expect(performanceByMonth.commissionsTotalCents).toBeGreaterThanOrEqual(20000);
+    expect(performanceByMonth.hoursThisMonth).toBeGreaterThanOrEqual(9.5);
+
+    const performanceByJob = await performanceService.getEmployeePerformance(testTenantId, createdEmployeeId, 'job');
+    expect(performanceByJob.commissionsTotalCents).toBeGreaterThanOrEqual(20000);
   });
 
   it('23. T05 Tenant isolation em timesheets', async () => {
