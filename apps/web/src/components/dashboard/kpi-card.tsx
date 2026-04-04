@@ -1,6 +1,8 @@
 import type { LucideIcon } from 'lucide-react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { SparklineData } from '@proteticflow/shared';
+import { cn } from '../../lib/utils';
+import { ScaleIn } from '../shared/page-transition';
 
 type KpiCardProps = {
   label: string;
@@ -12,14 +14,14 @@ type KpiCardProps = {
 };
 
 const variantColor: Record<NonNullable<KpiCardProps['variant']>, string> = {
-  default: 'bg-violet-600',
+  default: 'bg-primary',
   warning: 'bg-amber-500',
-  danger: 'bg-rose-600',
-  success: 'bg-emerald-600',
+  danger: 'bg-destructive',
+  success: 'bg-emerald-500',
 };
 
 const TrendIcon = { up: TrendingUp, down: TrendingDown, neutral: Minus };
-const trendColor = { up: 'text-emerald-400', down: 'text-rose-400', neutral: 'text-neutral-400' };
+const trendColor = { up: 'text-emerald-500', down: 'text-destructive', neutral: 'text-muted-foreground' };
 
 function Sparkline({ data }: { data: SparklineData }) {
   const { points } = data;
@@ -64,18 +66,18 @@ export function KpiCard({
   const Trend = sparkline ? TrendIcon[sparkline.trend] : null;
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 flex items-start gap-4">
-      <div className={`p-2.5 rounded-lg shrink-0 ${variantColor[variant]}`}>
-        <Icon size={20} className="text-white" />
+    <ScaleIn className={cn("premium-card p-5 flex items-start gap-4")}>
+      <div className={cn("p-2.5 rounded-2xl shrink-0 text-white shadow-sm", variantColor[variant])}>
+        <Icon size={20} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-neutral-500 uppercase tracking-widest mb-1">{label}</p>
-        <p className="text-xl font-bold text-white truncate">{value}</p>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-2xl font-bold text-foreground truncate">{value}</p>
         <div className="flex items-center gap-1.5 mt-0.5">
-          {sub && <p className="text-xs text-neutral-400">{sub}</p>}
+          {sub && <p className="text-xs text-muted-foreground/80">{sub}</p>}
           {Trend && sparkline && (
             <span
-              className={`flex items-center gap-0.5 text-xs ${trendColor[sparkline.trend]}`}
+              className={cn("flex items-center gap-0.5 text-xs font-semibold", trendColor[sparkline.trend])}
             >
               <Trend size={11} />
               {sparkline.changePercent > 0 ? '+' : ''}
@@ -85,6 +87,6 @@ export function KpiCard({
         </div>
       </div>
       {sparkline && <Sparkline data={sparkline} />}
-    </div>
+    </ScaleIn>
   );
 }

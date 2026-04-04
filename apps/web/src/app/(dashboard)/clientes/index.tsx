@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Plus, Search, ToggleLeft, ToggleRight, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { Users, Plus, Search, ToggleLeft, ToggleRight, Trash2, AlertCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { usePermissions } from '../../../hooks/use-permissions';
+import { PageTransition } from '../../../components/shared/page-transition';
+import { H1, Subtitle, Muted } from '../../../components/shared/typography';
+import { EmptyState } from '../../../components/shared/empty-state';
+import { cn } from '../../../lib/utils';
 
 export default function ClientListPage() {
   const navigate = useNavigate();
@@ -26,146 +30,205 @@ export default function ClientListPage() {
   // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-violet-400" size={32} />
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <Loader2 className="animate-spin text-primary" size={32} />
+        <Muted>Carregando parceiros...</Muted>
       </div>
     );
   }
 
-  // ── Error ──────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <AlertCircle className="text-red-400" size={32} />
-        <p className="text-red-400 text-sm">{error.message}</p>
-        <button onClick={() => refetch()} className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Tentar novamente</button>
+      <div className="flex flex-col items-center justify-center h-64 gap-4 p-8 bg-destructive/5 rounded-3xl border border-destructive/20">
+        <AlertCircle className="text-destructive font-black" size={32} />
+        <div className="text-center">
+          <p className="text-destructive font-bold text-sm uppercase tracking-widest">{error.message}</p>
+          <button 
+            onClick={() => refetch()} 
+            className="mt-4 text-xs font-black text-primary hover:text-primary/80 transition-all uppercase tracking-[0.2em] underline underline-offset-4"
+          >
+            Tentar novamente
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6 h-full overflow-auto">
+    <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="text-violet-400" size={22} />
-          <h1 className="text-xl font-bold text-white">Clientes</h1>
-          {data?.total !== undefined && (
-            <span className="text-xs text-neutral-500 bg-neutral-800 px-2 py-0.5 rounded-full">{data.total}</span>
-          )}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/5">
+            <Users className="text-primary" size={24} />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <H1>Parceiros</H1>
+              {data?.total !== undefined && (
+                <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
+                  {data.total}
+                </span>
+              )}
+            </div>
+            <Subtitle>Gerencie dentistas, clínicas e laboratórios parceiros</Subtitle>
+          </div>
         </div>
         <button
           onClick={() => navigate('/clientes/novo')}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+          className="flex items-center gap-2 bg-primary text-primary-foreground text-xs font-black px-6 py-3 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em]"
         >
-          <Plus size={16} /> Novo cliente
+          <Plus size={16} strokeWidth={3} /> Cadastrar Parceiro
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+      <div className="flex flex-wrap gap-4 bg-card/50 p-4 rounded-3xl border border-border/50 backdrop-blur-sm">
+        <div className="relative flex-1 min-w-[280px]">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Buscar por nome, documento ou telefone..."
-            className="w-full bg-neutral-800 border border-neutral-700 rounded-xl pl-9 pr-4 py-2.5 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+            placeholder="Buscar por nome, clínica, CPF/CNPJ..."
+            className="w-full bg-muted border border-border rounded-2xl pl-12 pr-4 py-3 text-foreground placeholder:text-muted-foreground/30 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
           />
         </div>
-        <select
-          value={status ?? ''}
-          onChange={e => { setStatus(e.target.value as 'active' | 'inactive' | undefined || undefined); setPage(1); }}
-          className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-violet-500 transition-colors"
-        >
-          <option value="">Todos</option>
-          <option value="active">Ativos</option>
-          <option value="inactive">Inativos</option>
-        </select>
+        <div className="flex items-center gap-2 bg-muted border border-border rounded-2xl px-4 py-1.5 min-w-[180px]">
+          <div className="p-1.5 bg-background rounded-lg text-muted-foreground"><Users size={14} /></div>
+          <select
+            value={status ?? ''}
+            onChange={e => { setStatus(e.target.value as 'active' | 'inactive' | undefined || undefined); setPage(1); }}
+            className="bg-transparent border-none text-foreground text-[10px] font-black uppercase tracking-widest focus:outline-none flex-1 cursor-pointer"
+          >
+            <option value="">TODOS OS STATUS</option>
+            <option value="active">ATIVOS APENAS</option>
+            <option value="inactive">INATIVOS APENAS</option>
+          </select>
+        </div>
       </div>
 
-      {/* Empty */}
+      {/* Body Content */}
       {data?.data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 gap-3">
-          <Users size={40} className="text-neutral-700" />
-          <p className="text-neutral-500 text-sm">Nenhum cliente encontrado.</p>
-          <button onClick={() => navigate('/clientes/novo')} className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
-            + Adicionar primeiro cliente
+        <EmptyState
+          icon={Users}
+          title="Nenhum parceiro encontrado"
+          description={search ? "Ajuste seus filtros de busca para encontrar o que procura." : "Comece cadastrando seu primeiro parceiro de trabalho."}
+        >
+          <button 
+            onClick={() => search ? setSearch('') : navigate('/clientes/novo')}
+            className="flex items-center gap-2 bg-primary text-primary-foreground text-[10px] font-black px-6 py-3 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em]"
+          >
+            {search ? "Limpar Busca" : "Novo Parceiro"}
           </button>
-        </div>
+        </EmptyState>
       ) : (
-        <>
-          {/* Table */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-neutral-800">
-                  <th className="text-left text-xs font-semibold text-neutral-500 px-5 py-3">Nome</th>
-                  <th className="text-left text-xs font-semibold text-neutral-500 px-5 py-3 hidden md:table-cell">Clínica</th>
-                  <th className="text-left text-xs font-semibold text-neutral-500 px-5 py-3 hidden sm:table-cell">Telefone</th>
-                  <th className="text-left text-xs font-semibold text-neutral-500 px-5 py-3">Status</th>
-                  <th className="px-5 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.data.map((client, idx) => (
-                  <tr key={client.id} className={`border-b border-neutral-800/50 hover:bg-neutral-800/40 transition-colors ${idx === (data.data.length - 1) ? 'border-0' : ''}`}>
-                    <td className="px-5 py-3.5">
-                      <Link to={`/clientes/${client.id}`} className="text-white text-sm font-medium hover:text-violet-400 transition-colors">
-                        {client.name}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3.5 hidden md:table-cell">
-                      <span className="text-neutral-400 text-sm">{client.clinic || '—'}</span>
-                    </td>
-                    <td className="px-5 py-3.5 hidden sm:table-cell">
-                      <span className="text-neutral-400 text-sm">{client.phone || '—'}</span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${client.status === 'active' ? 'bg-green-500/10 text-green-400' : 'bg-neutral-700/50 text-neutral-400'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${client.status === 'active' ? 'bg-green-400' : 'bg-neutral-500'}`} />
-                        {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2 justify-end">
-                        <button
-                          onClick={() => toggleMutation.mutate({ id: client.id })}
-                          title={client.status === 'active' ? 'Desativar' : 'Ativar'}
-                          className="text-neutral-500 hover:text-violet-400 transition-colors"
-                        >
-                          {client.status === 'active' ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-                        </button>
-                        {canDelete && (
-                          <button
-                            onClick={() => { if (confirm('Excluir cliente permanentemente?')) deleteMutation.mutate({ id: client.id }); }}
-                            className="text-neutral-500 hover:text-red-400 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
+        <div className="flex flex-col gap-6">
+          {/* Table Container */}
+          <div className="premium-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">Nome completo</th>
+                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4 hidden md:table-cell">Clínica / Empresa</th>
+                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4 hidden sm:table-cell">Contato</th>
+                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data?.data.map((client, idx) => (
+                    <tr 
+                      key={client.id} 
+                      className={cn(
+                        "group border-b border-border/50 hover:bg-primary/[0.02] transition-colors",
+                        idx === (data.data.length - 1) ? 'border-0' : ''
+                      )}
+                    >
+                      <td className="px-6 py-5">
+                        <Link to={`/clientes/${client.id}`} className="flex flex-col gap-0.5">
+                          <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{client.name}</span>
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">{client.document || 'Sem registro'}</span>
+                        </Link>
+                      </td>
+                      <td className="px-6 py-5 hidden md:table-cell">
+                        <span className="text-xs font-semibold text-muted-foreground">{client.clinic || 'Direto'}</span>
+                      </td>
+                      <td className="px-6 py-5 hidden sm:table-cell text-xs font-bold text-foreground opacity-80">
+                        {client.phone || 'N/A'}
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className={cn(
+                          "inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border",
+                          client.status === 'active' 
+                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                            : 'bg-muted text-muted-foreground border-border'
+                        )}>
+                          <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", client.status === 'active' ? 'bg-emerald-500' : 'bg-muted-foreground')} />
+                          {client.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2 justify-end">
+                          <button
+                            onClick={() => toggleMutation.mutate({ id: client.id })}
+                            className={cn(
+                              "p-2 rounded-xl transition-all border border-transparent hover:border-primary/20",
+                              client.status === 'active' ? 'text-primary' : 'text-muted-foreground opacity-50'
+                            )}
+                          >
+                            {client.status === 'active' ? <ToggleRight size={20} strokeWidth={2.5} /> : <ToggleLeft size={20} strokeWidth={2.5} />}
+                          </button>
+                          <div className="w-px h-4 bg-border/50 mx-1" />
+                          {canDelete && (
+                            <button
+                              onClick={() => { if (confirm('Excluir cliente permanentemente?')) deleteMutation.mutate({ id: client.id }); }}
+                              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                           <button onClick={() => navigate(`/clientes/${client.id}`)} className="p-2 text-muted-foreground hover:text-primary transition-all">
+                            <ChevronRight size={18} strokeWidth={3} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Pagination */}
           {data && data.total > 20 && (
-            <div className="flex items-center justify-between text-sm text-neutral-400">
-              <span>Mostrando {((page - 1) * 20) + 1}–{Math.min(page * 20, data.total)} de {data.total}</span>
+            <div className="flex items-center justify-between px-2">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                Mostrando <span className="text-foreground">{((page - 1) * 20) + 1} – {Math.min(page * 20, data.total)}</span> de <span className="text-foreground">{data.total}</span>
+              </span>
               <div className="flex gap-2">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="px-3 py-1.5 bg-neutral-800 rounded-lg disabled:opacity-40 hover:bg-neutral-700 transition-colors">← Anterior</button>
-                <button onClick={() => setPage(p => p + 1)} disabled={page * 20 >= data.total}
-                  className="px-3 py-1.5 bg-neutral-800 rounded-lg disabled:opacity-40 hover:bg-neutral-700 transition-colors">Próximo →</button>
+                <button 
+                  onClick={() => setPage(p => Math.max(1, p - 1))} 
+                  disabled={page === 1}
+                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all active:scale-95 shadow-sm"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="bg-muted px-4 py-2 rounded-xl border border-border text-xs font-black flex items-center">
+                  PÁGINA {page}
+                </div>
+                <button 
+                  onClick={() => setPage(p => p + 1)} 
+                  disabled={page * 20 >= data.total}
+                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all active:scale-95 shadow-sm"
+                >
+                  <ChevronRight size={18} />
+                </button>
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
-    </div>
+    </PageTransition>
   );
 }

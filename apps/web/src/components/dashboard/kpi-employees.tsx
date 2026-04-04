@@ -1,10 +1,7 @@
 import { Users2, Coins, ClipboardList } from 'lucide-react';
 import { KpiCard } from './kpi-card';
 import type { EmployeeKpis } from '@proteticflow/shared';
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
+import { formatBRL } from '../../lib/format';
 
 export function KpiEmployees({ data }: { data: EmployeeKpis }) {
   return (

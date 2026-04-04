@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
+import { 
+  BellRing, Mail, Smartphone, 
+  Send, Loader2, CheckCircle2,
+  Activity, Info
+} from 'lucide-react';
 import { trpc } from '../../lib/trpc';
 import { NOTIFICATION_EVENT_LABELS } from '@proteticflow/shared';
+import { cn } from '../../lib/utils';
+import { Large, Muted } from '../shared/typography';
 
 function base64ToUint8Array(base64: string) {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4);
@@ -27,125 +34,183 @@ export function NotificationsTab() {
 
   async function handlePushSubscribe() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Push nao suportado neste navegador.');
+      alert('Seu navegador não suporta a tecnologia de notificações PWA.');
       return;
     }
 
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      alert('Permissao de notificacao nao concedida.');
+      alert('A permissão de notificação foi negada pelo usuário.');
       return;
     }
 
     const vapidKey = vapidQuery.data?.key;
     if (!vapidKey) {
-      alert('VAPID public key nao configurada no servidor.');
+      alert('Motor de VAPID não configurado no servidor.');
       return;
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: base64ToUint8Array(vapidKey),
-    });
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64ToUint8Array(vapidKey),
+      });
 
-    const json = subscription.toJSON();
-    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-      alert('Nao foi possivel ler os dados da inscricao push.');
-      return;
+      const json = subscription.toJSON();
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+        alert('Falha na extração dos metadados de inscrição PWA.');
+        return;
+      }
+
+      await saveSubscriptionMutation.mutateAsync({
+        endpoint: json.endpoint,
+        keys: {
+          p256dh: json.keys.p256dh,
+          auth: json.keys.auth,
+        },
+      });
+
+      alert('Notificações nativas habilitadas com sucesso.');
+    } catch (e) {
+      console.error(e);
+      alert('Erro crítico ao registrar Service Worker para Push.');
     }
-
-    await saveSubscriptionMutation.mutateAsync({
-      endpoint: json.endpoint,
-      keys: {
-        p256dh: json.keys.p256dh,
-        auth: json.keys.auth,
-      },
-    });
-
-    alert('Push habilitado com sucesso.');
   }
 
+  const Switch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) => (
+    <label className={cn("relative inline-flex items-center cursor-pointer group", disabled && "opacity-30 cursor-not-allowed grayscale")}>
+      <input 
+        type="checkbox" 
+        className="sr-only peer" 
+        checked={checked} 
+        onChange={e => !disabled && onChange(e.target.checked)} 
+        disabled={disabled}
+      />
+      <div className="w-11 h-6 bg-muted rounded-full border border-border peer-checked:bg-primary/20 peer-checked:border-primary/40 transition-all duration-300 shadow-inner group-hover:border-primary/20" />
+      <div className="absolute left-1 top-1 w-4 h-4 bg-muted-foreground rounded-full transition-all duration-300 peer-checked:left-6 peer-checked:bg-primary shadow-sm" />
+    </label>
+  );
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-white">Notificacoes</h2>
-        <p className="text-sm text-neutral-400 mt-1">Preferencias de notificacoes por canal.</p>
-      </div>
+    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Table Section */}
+      <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] overflow-hidden group/notif shadow-xl shadow-black/5">
+        <div className="p-8 border-b border-border/50 bg-card/30 flex flex-wrap items-center justify-between gap-6">
+           <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
+                 <BellRing size={20} strokeWidth={2.5} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                 <Large className="tracking-tight text-lg font-black uppercase">Matriz de Conectividade</Large>
+                 <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Configure os canais de recebimento por gatilho operacional</Muted>
+              </div>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <button 
+                onClick={handlePushSubscribe}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
+              >
+                 <Smartphone size={14} strokeWidth={3} /> Ativar Push (PWA)
+              </button>
+              <button 
+                onClick={() => testDispatchMutation.mutate({ message: 'Auditória de conectividade V3' })}
+                disabled={testDispatchMutation.isPending}
+                className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-muted border border-border text-foreground hover:bg-muted/80 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+              >
+                 {testDispatchMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} strokeWidth={3} />}
+                 Disparo de Teste
+              </button>
+           </div>
+        </div>
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-neutral-800 bg-neutral-950/50">
-              <th className="px-4 py-3 text-left text-xs uppercase text-neutral-500">Evento</th>
-              <th className="px-4 py-3 text-left text-xs uppercase text-neutral-500">In-app</th>
-              <th className="px-4 py-3 text-left text-xs uppercase text-neutral-500">Push</th>
-              <th className="px-4 py-3 text-left text-xs uppercase text-neutral-500">Email</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-800">
-            {preferences.map((pref) => (
-              <tr key={pref.eventKey}>
-                <td className="px-4 py-3 text-sm text-neutral-200">
-                  {NOTIFICATION_EVENT_LABELS[pref.eventKey]}
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={pref.inAppEnabled}
-                    onChange={(event) =>
-                      updatePreferenceMutation.mutate({
-                        ...pref,
-                        inAppEnabled: event.target.checked,
-                      })
-                    }
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={pref.pushEnabled}
-                    onChange={(event) =>
-                      updatePreferenceMutation.mutate({
-                        ...pref,
-                        pushEnabled: event.target.checked,
-                      })
-                    }
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={pref.emailEnabled}
-                    onChange={(event) =>
-                      updatePreferenceMutation.mutate({
-                        ...pref,
-                        emailEnabled: event.target.checked,
-                      })
-                    }
-                  />
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-border bg-muted/20">
+                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Evento Operacional</th>
+                <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6 flex items-center justify-center gap-2">
+                   <Activity size={12} className="text-primary/40" /> In-App
+                </th>
+                <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">
+                   <div className="flex items-center justify-center gap-2">
+                      <Smartphone size={12} className="text-primary/40" /> Push Native
+                   </div>
+                </th>
+                <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">
+                   <div className="flex items-center justify-center gap-2">
+                      <Mail size={12} className="text-primary/40" /> E-mail
+                   </div>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {preferences.map((pref) => (
+                <tr key={pref.eventKey} className="group/row hover:bg-primary/[0.01] transition-all duration-300">
+                  <td className="px-10 py-6">
+                     <div className="flex items-center gap-4">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover/row:bg-primary transition-colors" />
+                        <span className="text-sm font-black text-foreground tracking-tight group-hover/row:text-primary transition-colors">
+                           {NOTIFICATION_EVENT_LABELS[pref.eventKey] || pref.eventKey}
+                        </span>
+                     </div>
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <Switch 
+                      checked={pref.inAppEnabled} 
+                      onChange={(checked) => updatePreferenceMutation.mutate({ ...pref, inAppEnabled: checked })}
+                      disabled={updatePreferenceMutation.isPending}
+                    />
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <Switch 
+                      checked={pref.pushEnabled} 
+                      onChange={(checked) => updatePreferenceMutation.mutate({ ...pref, pushEnabled: checked })}
+                      disabled={updatePreferenceMutation.isPending}
+                    />
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <Switch 
+                      checked={pref.emailEnabled} 
+                      onChange={(checked) => updatePreferenceMutation.mutate({ ...pref, emailEnabled: checked })}
+                      disabled={updatePreferenceMutation.isPending}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="p-8 bg-muted/30 border-t border-border flex items-start gap-4">
+           <Info size={18} className="text-primary mt-0.5 shrink-0" />
+           <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sincronização de Canais</span>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight leading-relaxed opacity-60">
+                 As notificações PWA requerem que o aplicativo esteja instalado ou adicionado à tela inicial no iOS/Android. O disparo de e-mail é processado por filas assíncronas para garantir entrega imediata.
+              </p>
+           </div>
+        </div>
+
+        {/* Decorative backdrop */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.01] rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none group-hover/notif:bg-primary/[0.02] transition-colors duration-1000" />
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={handlePushSubscribe}
-          className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium"
-        >
-          Habilitar Push (PWA)
-        </button>
-        <button
-          type="button"
-          onClick={() => testDispatchMutation.mutate({ message: 'Teste manual de notificacao' })}
-          className="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-sm font-medium"
-        >
-          Enviar Notificacao de Teste
-        </button>
+      {/* Persistence State Feedback */}
+      <div className="fixed bottom-10 right-10 z-[100] flex flex-col gap-3">
+         {updatePreferenceMutation.isPending && (
+            <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
+               <Loader2 size={16} className="animate-spin text-primary" />
+               <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronizando Preferências...</span>
+            </div>
+         )}
+         {testDispatchMutation.isSuccess && (
+            <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-2xl">
+               <CheckCircle2 size={16} className="text-emerald-500" />
+               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Disparo de Teste Efetuado</span>
+            </div>
+         )}
       </div>
     </div>
   );

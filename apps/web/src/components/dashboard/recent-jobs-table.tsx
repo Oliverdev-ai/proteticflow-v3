@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { RecentJob } from '@proteticflow/shared';
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
+import { formatBRL } from '../../lib/format';
+import { FadeIn } from '../shared/page-transition';
 
 function formatDate(iso: string | null) {
   if (!iso) return '—';
@@ -11,32 +9,32 @@ function formatDate(iso: string | null) {
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pendente', color: 'bg-neutral-800 text-neutral-300' },
-  in_progress: { label: 'Em andamento', color: 'bg-blue-900/40 text-blue-300' },
-  quality_check: { label: 'Qualidade', color: 'bg-yellow-900/40 text-yellow-300' },
-  ready: { label: 'Pronto', color: 'bg-emerald-900/40 text-emerald-300' },
-  delivered: { label: 'Entregue', color: 'bg-violet-900/40 text-violet-300' },
-  cancelled: { label: 'Cancelado', color: 'bg-rose-900/40 text-rose-300' },
+  pending: { label: 'Pendente', color: 'bg-muted text-muted-foreground' },
+  in_progress: { label: 'Em andamento', color: 'bg-blue-500/20 text-blue-400' },
+  quality_check: { label: 'Qualidade', color: 'bg-yellow-500/20 text-yellow-500' },
+  ready: { label: 'Pronto', color: 'bg-emerald-500/20 text-emerald-400' },
+  delivered: { label: 'Entregue', color: 'bg-primary/20 text-primary' },
+  cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive' },
 };
 
 export function RecentJobsTable({ jobs }: { jobs: RecentJob[] }) {
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
-      <div className="px-5 py-4 border-b border-neutral-800">
-        <h3 className="text-sm font-medium text-neutral-300">Trabalhos Recentes</h3>
+    <FadeIn className="premium-card overflow-hidden">
+      <div className="px-5 py-4 border-b border-border">
+        <h3 className="text-sm font-semibold text-foreground">Trabalhos Recentes</h3>
       </div>
       {jobs.length === 0 ? (
-        <p className="text-xs text-neutral-500 p-5 text-center">Nenhum trabalho cadastrado</p>
+        <p className="text-sm text-muted-foreground p-8 text-center">Nenhum trabalho cadastrado</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-neutral-800 text-left">
-                <th className="px-5 py-3 text-xs text-neutral-500 font-medium uppercase tracking-wider">Código</th>
-                <th className="px-5 py-3 text-xs text-neutral-500 font-medium uppercase tracking-wider">Cliente</th>
-                <th className="px-5 py-3 text-xs text-neutral-500 font-medium uppercase tracking-wider">Status</th>
-                <th className="px-5 py-3 text-xs text-neutral-500 font-medium uppercase tracking-wider">Prazo</th>
-                <th className="px-5 py-3 text-xs text-neutral-500 font-medium uppercase tracking-wider text-right">Valor</th>
+              <tr className="border-b border-border text-left">
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Código</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Cliente</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Status</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Prazo</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider text-right">Valor</th>
               </tr>
             </thead>
             <tbody>
@@ -48,26 +46,26 @@ export function RecentJobsTable({ jobs }: { jobs: RecentJob[] }) {
                   !['delivered', 'cancelled'].includes(job.status);
 
                 return (
-                  <tr key={job.id} className="border-b border-neutral-800/50 hover:bg-neutral-800/40 transition-colors">
+                  <tr key={job.id} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
                     <td className="px-5 py-3">
                       <Link
                         to={`/trabalhos/${job.id}`}
-                        className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
+                        className="text-primary hover:text-primary-foreground/80 font-semibold transition-colors"
                       >
                         {job.code}
                       </Link>
                     </td>
-                    <td className="px-5 py-3 text-neutral-300 max-w-[180px] truncate">{job.clientName}</td>
+                    <td className="px-5 py-3 text-foreground max-w-[180px] truncate">{job.clientName}</td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
                         {statusInfo.label}
                       </span>
                     </td>
-                    <td className={`px-5 py-3 text-xs ${isOverdue ? 'text-rose-400 font-medium' : 'text-neutral-400'}`}>
+                    <td className={`px-5 py-3 text-xs ${isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
                       {formatDate(job.dueDate)}
                       {isOverdue && ' ⚠'}
                     </td>
-                    <td className="px-5 py-3 text-right text-neutral-300 font-medium tabular-nums">
+                    <td className="px-5 py-3 text-right text-foreground font-semibold tabular-nums">
                       {formatBRL(job.totalCents)}
                     </td>
                   </tr>
@@ -77,6 +75,6 @@ export function RecentJobsTable({ jobs }: { jobs: RecentJob[] }) {
           </table>
         </div>
       )}
-    </div>
+    </FadeIn>
   );
 }

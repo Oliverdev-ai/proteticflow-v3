@@ -1,10 +1,7 @@
 import { TrendingUp, AlertTriangle, DollarSign, Activity } from 'lucide-react';
 import { KpiCard } from './kpi-card';
 import type { FinancialKpis, SparklineData } from '@proteticflow/shared';
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
+import { formatBRL } from '../../lib/format';
 
 export function KpiFinancial({
   data,

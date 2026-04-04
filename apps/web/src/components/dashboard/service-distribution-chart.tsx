@@ -7,23 +7,26 @@ import {
   Legend,
 } from 'recharts';
 import type { ServiceDistribution } from '@proteticflow/shared';
+import { formatBRL } from '../../lib/format';
+import { FadeIn } from '../shared/page-transition';
+import { EmptyState } from '../shared/empty-state';
+import { PieChart as PieChartIcon } from 'lucide-react';
 
-const COLORS = ['#7c3aed', '#2563eb', '#0891b2', '#059669', '#d97706', '#dc2626'];
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
+const COLORS = ['#818cf8', '#a78bfa', '#6366f1', '#4f46e5', '#3b82f6', '#0ea5e9'];
 
 export function ServiceDistributionChart({ data }: { data: ServiceDistribution[] }) {
   const hasData = data.some((d) => d.totalCents > 0);
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-      <h3 className="text-sm font-medium text-neutral-300 mb-4">Distribuição de Serviços</h3>
+    <FadeIn className="premium-card p-5">
+      <h3 className="text-sm font-semibold text-foreground mb-6">Distribuição de Serviços</h3>
       {!hasData ? (
-        <p className="text-xs text-neutral-500 py-12 text-center">
-          Nenhum serviço faturado este mês
-        </p>
+        <EmptyState
+          icon={PieChartIcon}
+          title="Sem dados"
+          description="Nenhum serviço faturado este mês"
+          className="py-6"
+        />
       ) : (
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
@@ -42,12 +45,14 @@ export function ServiceDistributionChart({ data }: { data: ServiceDistribution[]
             </Pie>
             <Tooltip
               contentStyle={{
-                background: '#171717',
-                border: '1px solid #404040',
-                borderRadius: 8,
-                color: '#e5e5e5',
+                background: 'rgb(var(--card))',
+                border: '1px solid rgb(var(--border))',
+                borderRadius: 'var(--radius)',
+                color: 'rgb(var(--foreground))',
                 fontSize: 12,
+                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
               }}
+              itemStyle={{ color: 'rgb(var(--primary))' }}
               formatter={(value) => [formatBRL(Number(value ?? 0)), 'Receita']}
             />
             <Legend
@@ -59,6 +64,6 @@ export function ServiceDistributionChart({ data }: { data: ServiceDistribution[]
           </PieChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </FadeIn>
   );
 }

@@ -77,7 +77,7 @@ function SidebarContent({
 
   return (
     <aside
-      className={`h-full bg-card border-r border-border flex flex-col transition-all duration-200 ${
+      className={`h-full bg-card border-r border-border flex flex-col transition-all duration-200 shadow-sm ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -87,9 +87,9 @@ function SidebarContent({
       </div>
 
       {current && !collapsed && (
-        <div className="px-4 pt-3 pb-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest">Laboratorio</p>
-          <p className="text-sm text-foreground font-medium truncate">{current.name}</p>
+        <div className="px-5 pt-4 pb-2">
+          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-1">Laboratório</p>
+          <p className="text-sm text-foreground font-semibold truncate">{current.name}</p>
         </div>
       )}
 
@@ -104,9 +104,9 @@ function SidebarContent({
               end={isDashboard}
               title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-primary text-[rgb(var(--primary-foreground))]'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                 }`
               }
@@ -119,7 +119,7 @@ function SidebarContent({
 
         {financeChildren.length > 0 && !collapsed && (
           <>
-            <div className="pt-3 pb-1 px-2 text-[11px] uppercase tracking-widest text-muted-foreground">
+            <div className="pt-4 pb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
               Financeiro
             </div>
             {financeChildren.map((item) => {
@@ -129,9 +129,9 @@ function SidebarContent({
                   key={item.href}
                   to={item.href}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 pl-6 pr-3 py-2 rounded-lg text-sm transition-colors ${
+                    `flex items-center gap-3 pl-6 pr-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? 'bg-primary text-[rgb(var(--primary-foreground))]'
+                        ? 'bg-primary/10 text-primary'
                         : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                     }`
                   }
