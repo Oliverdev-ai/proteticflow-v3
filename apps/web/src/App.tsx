@@ -27,6 +27,7 @@ const JobListPage = lazy(() => import('./app/(dashboard)/trabalhos/index'));
 const JobCreatePage = lazy(() => import('./app/(dashboard)/trabalhos/novo'));
 const JobDetailPage = lazy(() => import('./app/(dashboard)/trabalhos/[id]'));
 const KanbanPage = lazy(() => import('./app/(dashboard)/kanban'));
+const KanbanTvPage = lazy(() => import('./app/(dashboard)/kanban-tv'));
 const FinancialDashboard = lazy(() => import('./app/(dashboard)/financeiro/index'));
 const ContasReceberPage = lazy(() => import('./app/(dashboard)/financeiro/contas-receber'));
 const ContasPagarPage = lazy(() => import('./app/(dashboard)/financeiro/contas-pagar'));
@@ -82,6 +83,7 @@ function AppContent() {
 
           <Route path="/portal/:token" element={<PublicPortalPage />} />
           <Route path="/onboarding" element={<OnboardingWizard />} />
+          <Route path="/kanban-tv" element={<KanbanTvPage />} />
 
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<DashboardPage />} />
