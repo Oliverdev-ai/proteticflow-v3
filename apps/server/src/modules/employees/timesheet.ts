@@ -13,18 +13,23 @@ function toMonthRange(month: number, year: number): { startDate: string; endDate
 }
 
 function parseTimeToMinutes(timeValue: string): number {
-  const parts = timeValue.split(':');
-  if (parts.length !== 2) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Hora invalida' });
+  const raw = timeValue.trim();
+  const plainTimeMatch = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/);
+  if (plainTimeMatch) {
+    const hour = Number(plainTimeMatch[1]);
+    const minute = Number(plainTimeMatch[2]);
+    if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Hora invalida' });
+    }
+    return hour * 60 + minute;
   }
 
-  const hour = Number(parts[0]);
-  const minute = Number(parts[1]);
-  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Hora invalida' });
+  const parsedDate = new Date(raw);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return parsedDate.getUTCHours() * 60 + parsedDate.getUTCMinutes();
   }
 
-  return hour * 60 + minute;
+  throw new TRPCError({ code: 'BAD_REQUEST', message: 'Hora invalida' });
 }
 
 function parseNumeric(value: unknown): number {

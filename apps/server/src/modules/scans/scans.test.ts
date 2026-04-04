@@ -5,6 +5,7 @@ import { tenants, tenantMembers } from '../../db/schema/tenants.js';
 import { scans } from '../../db/schema/scans.js';
 import { clients, priceItems, pricingTables } from '../../db/schema/clients.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
+import { featureUsageLogs, licenseChecks, stripeCustomers } from '../../db/schema/licensing.js';
 import { hashPassword } from '../../core/auth.js';
 import { eq } from 'drizzle-orm';
 import * as jobService from '../jobs/service.js';
@@ -51,6 +52,9 @@ async function cleanup() {
   await db.delete(priceItems);
   await db.delete(pricingTables);
   await db.delete(clients);
+  await db.delete(featureUsageLogs);
+  await db.delete(licenseChecks);
+  await db.delete(stripeCustomers);
   await db.delete(tenantMembers);
   await db.delete(tenants);
   await db.delete(users);

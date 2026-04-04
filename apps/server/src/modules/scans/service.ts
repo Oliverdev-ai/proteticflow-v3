@@ -151,16 +151,25 @@ export function parseScannerXml(xmlContent: string, scannerType: string): Parsed
       notes: pickFirst(order.Notes, order.Comment),
     };
   } else {
+    const rootNode = (() => {
+      if (parsed.root && typeof parsed.root === 'object') return parsed.root as Record<string, unknown>;
+      const values = Object.values(parsed);
+      if (values.length === 1 && values[0] && typeof values[0] === 'object') {
+        return values[0] as Record<string, unknown>;
+      }
+      return parsed;
+    })();
+
     result = {
-      orderId: pickFirst(parsed.orderId, parsed.order_id, parsed.id),
-      dentist: pickFirst(parsed.dentist, parsed.doctor, parsed.practitioner),
-      cro: pickFirst(parsed.cro, parsed.license),
-      patient: pickFirst(parsed.patient, parsed.patientName),
-      procedure: pickFirst(parsed.procedure, parsed.treatment),
-      date: toDateOrUndefined(pickFirst(parsed.date, parsed.createdAt)),
-      deadline: toDateOrUndefined(pickFirst(parsed.deadline, parsed.deliveryDate)),
-      address: pickFirst(parsed.address),
-      notes: pickFirst(parsed.notes, parsed.comment),
+      orderId: pickFirst(rootNode.orderId, rootNode.order_id, rootNode.id),
+      dentist: pickFirst(rootNode.dentist, rootNode.doctor, rootNode.practitioner),
+      cro: pickFirst(rootNode.cro, rootNode.license),
+      patient: pickFirst(rootNode.patient, rootNode.patientName),
+      procedure: pickFirst(rootNode.procedure, rootNode.treatment),
+      date: toDateOrUndefined(pickFirst(rootNode.date, rootNode.createdAt)),
+      deadline: toDateOrUndefined(pickFirst(rootNode.deadline, rootNode.deliveryDate)),
+      address: pickFirst(rootNode.address),
+      notes: pickFirst(rootNode.notes, rootNode.comment),
     };
   }
 

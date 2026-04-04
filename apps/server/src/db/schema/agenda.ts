@@ -8,6 +8,7 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 export const eventTypeEnum = pgEnum('event_type', [
@@ -54,6 +55,7 @@ export const events = pgTable('events', {
   index('events_tenant_idx').on(table.tenantId),
   index('events_start_idx').on(table.tenantId, table.startAt),
   index('events_job_idx').on(table.jobId),
+  uniqueIndex('events_tenant_job_unique').on(table.tenantId, table.jobId),
   index('events_client_idx').on(table.clientId),
   index('events_employee_idx').on(table.employeeId),
 ]);
