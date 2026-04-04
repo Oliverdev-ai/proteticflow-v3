@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Printer, Send, Download } from 'lucide-react';
+import { StlViewer } from '../../../components/scans/stl-viewer';
 
 const NEXT_STATUS: Record<string, Array<'sent' | 'printing' | 'completed' | 'error'>> = {
   waiting: ['sent'],
@@ -45,7 +46,12 @@ export default function ScanDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-3">
           <h2 className="text-white font-semibold">Arquivos</h2>
-          {row.downloadUrls.stlUpper && <a className="text-violet-400 hover:text-violet-300 flex items-center gap-2" href={row.downloadUrls.stlUpper} target="_blank" rel="noreferrer"><Download size={14} />Download STL Superior</a>}
+          {row.downloadUrls.stlUpper && (
+            <div className="mb-4">
+              <StlViewer url={row.downloadUrls.stlUpper} />
+              <a className="text-violet-400 hover:text-violet-300 flex items-center gap-2 mt-2" href={row.downloadUrls.stlUpper} target="_blank" rel="noreferrer"><Download size={14} />Download STL Superior</a>
+            </div>
+          )}
           {row.downloadUrls.stlLower && <a className="text-violet-400 hover:text-violet-300 flex items-center gap-2" href={row.downloadUrls.stlLower} target="_blank" rel="noreferrer"><Download size={14} />Download STL Inferior</a>}
           {row.downloadUrls.xml && <a className="text-violet-400 hover:text-violet-300 flex items-center gap-2" href={row.downloadUrls.xml} target="_blank" rel="noreferrer"><Download size={14} />Download XML</a>}
           {row.downloadUrls.gallery && <a className="text-violet-400 hover:text-violet-300 flex items-center gap-2" href={row.downloadUrls.gallery} target="_blank" rel="noreferrer"><Download size={14} />Abrir Imagem</a>}

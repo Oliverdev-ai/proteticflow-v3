@@ -10,7 +10,7 @@ import { ServiceDistributionChart } from '../../components/dashboard/service-dis
 import { JobsTrendChart } from '../../components/dashboard/jobs-trend-chart';
 import { TodayDeliveriesCard } from '../../components/dashboard/today-deliveries';
 import { RecentJobsTable } from '../../components/dashboard/recent-jobs-table';
-
+import { PredictionCard } from '../../components/dashboard/prediction-card';
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonBox({ className }: { className?: string }) {
@@ -110,6 +110,31 @@ export default function DashboardPage() {
         <RevenueChart data={data.charts.monthlyRevenue} />
         <ServiceDistributionChart data={data.charts.serviceDistribution} />
         <JobsTrendChart data={data.charts.jobsTrend} />
+      </div>
+
+      {/* DASHBOARD PREDITIVO (FASE 32) */}
+      <div className="pt-4 pb-2 border-t border-zinc-800/50 mt-8 mb-2">
+        <h2 className="text-xl font-bold tracking-tight text-white mb-4">Análises Preditivas IA</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <PredictionCard 
+            title="Previsão de Atraso" 
+            prediction="3 Trabalhos podem atrasar nesta sexta devido ao alto volume acumulado no preparo." 
+            confidence={87} 
+            type="warning" 
+          />
+          <PredictionCard 
+            title="Previsão de Demanda" 
+            prediction="Alta probabilidade de novos pedidos do Dr. Mendes (histórico regular)." 
+            confidence={92} 
+            type="positive" 
+          />
+          <PredictionCard 
+            title="Estoque Crítico Futuro" 
+            prediction="Zircônia A2 pode esgotar em 4 dias com base na taxa de uso atual." 
+            confidence={80} 
+            type="info" 
+          />
+        </div>
       </div>
 
       {/* 19.07 + últimos trabalhos */}

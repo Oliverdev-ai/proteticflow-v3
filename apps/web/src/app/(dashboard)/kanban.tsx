@@ -134,6 +134,9 @@ export default function KanbanPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-xl font-bold text-white">Kanban</h1>
         <div className="flex items-center gap-2">
+          <button onClick={() => navigate('/kanban-tv')} className="text-xs px-3 py-2 rounded-xl border border-sky-500/30 text-sky-400 hover:bg-sky-500/10 transition-colors">
+            📺 Modo TV
+          </button>
           <button onClick={() => setOverdueOnly(v => !v)} className={`text-xs px-3 py-2 rounded-xl border transition-colors ${overdueOnly ? 'bg-red-500/20 border-red-600 text-red-400' : 'border-neutral-700 text-neutral-400 hover:text-white'}`}>
             ⚠️ Atrasadas
           </button>
