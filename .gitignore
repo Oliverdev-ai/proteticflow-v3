@@ -64,3 +64,21 @@ media/
 apply-migration.ts
 check-migrations.ts
 list-tables.ts
+
+# Ferramentas de IA / Agentes (Codex, Claude-Flow, MCP)
+.claude/
+.claude-flow/
+.mcp.json
+.antigravity/
+.codex*/
+brain/
+tmp/extract*
+tmp/extracted*
+tmp/f29/
+tmp/mcp-*/
+.gemini/
+
+# Agent artifacts
+.tmp/
+tmp/
+CLAUDE.md
