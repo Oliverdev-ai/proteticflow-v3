@@ -723,11 +723,17 @@ export async function emitNfseInBatch(tenantId: number, input: EmitNfseInBatchIn
 
   for (const row of rows) {
     try {
-      await emitNfse(tenantId, userId, {
+      const nfse = await emitNfse(tenantId, userId, {
         clientId: row.clientId,
         grossValueCents: Number(row.total ?? 0),
         closingId: input.closingId,
       });
+
+      if (nfse.status === 'error') {
+        errors += 1;
+        continue;
+      }
+
       issued += 1;
     } catch {
       errors += 1;

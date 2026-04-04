@@ -181,7 +181,7 @@ export async function closePeriod(tenantId: number, periodId: number, userId: nu
 }
 
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export async function generatePayslipPdf(tenantId: number, periodId: number, employeeId: number) {
   const [period] = await db.select().from(payrollPeriods).where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
@@ -205,7 +205,6 @@ export async function generatePayslipPdf(tenantId: number, periodId: number, emp
   if (!entry) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lançamento não encontrado para este funcionário' });
 
   type JsPdfWithAutoTable = jsPDF & {
-    autoTable: (options: unknown) => void;
     lastAutoTable?: { finalY: number };
   };
   const doc = new jsPDF() as JsPdfWithAutoTable;
@@ -228,7 +227,7 @@ export async function generatePayslipPdf(tenantId: number, periodId: number, emp
     ['Descontos', '', `R$ ${(entry.discountsCents / 100).toFixed(2)}`],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 55,
     head: [['Descrição', 'Proventos', 'Descontos']],
     body: tableRows,

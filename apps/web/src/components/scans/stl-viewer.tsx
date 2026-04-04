@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 type Props = { url: string; color?: string };
 
@@ -11,6 +11,7 @@ export function StlViewer({ url, color = '#a78bfa' }: Props) {
   useEffect(() => {
     if (!mountRef.current) return;
     const currentMount = mountRef.current;
+    let animationFrameId: number | null = null;
 
     // Cenário e câmera
     const scene = new THREE.Scene();
@@ -41,9 +42,9 @@ export function StlViewer({ url, color = '#a78bfa' }: Props) {
 
     // Carregar STL
     const loader = new STLLoader();
-    let mesh: THREE.Mesh;
+    let mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhongMaterial> | null = null;
     
-    loader.load(url, (geometry) => {
+    loader.load(url, (geometry: THREE.BufferGeometry) => {
       const material = new THREE.MeshPhongMaterial({
         color: new THREE.Color(color),
         specular: 0x111111,
@@ -63,7 +64,7 @@ export function StlViewer({ url, color = '#a78bfa' }: Props) {
     });
 
     const animate = () => {
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
       if (mesh) {
         mesh.rotation.z += 0.005;
       }
@@ -84,6 +85,10 @@ export function StlViewer({ url, color = '#a78bfa' }: Props) {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      controls.dispose();
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
       currentMount.removeChild(renderer.domElement);
       renderer.dispose();
     };

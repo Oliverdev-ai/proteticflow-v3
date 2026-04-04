@@ -7,7 +7,8 @@ import { updateClientSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Loader2, AlertCircle, ReceiptText, Pencil, Link2, Plus, Trash2 } from 'lucide-react';
 
-type FormData = z.infer<typeof updateClientSchema>;
+type ClientEditFormInput = z.input<typeof updateClientSchema>;
+type ClientEditFormData = z.output<typeof updateClientSchema>;
 
 function OsBlocksTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
@@ -107,7 +108,7 @@ export default function ClientEditPage() {
   const { data: client, isLoading, error } = trpc.clientes.get.useQuery({ id: clientId });
   const { data: extract } = trpc.clientes.getExtract.useQuery({ id: clientId }, { enabled: tab === 'extrato' });
 
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<ClientEditFormInput, unknown, ClientEditFormData>({
     resolver: zodResolver(updateClientSchema),
   });
 
@@ -139,7 +140,7 @@ export default function ClientEditPage() {
     onSuccess: () => { utils.clientes.list.invalidate(); utils.clientes.get.invalidate({ id: clientId }); },
   });
 
-  const onSubmit: SubmitHandler<FormData> = (data) => updateMutation.mutate({ id: clientId, ...data });
+  const onSubmit: SubmitHandler<ClientEditFormData> = (data) => updateMutation.mutate({ id: clientId, ...data });
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-violet-400" size={32} /></div>;

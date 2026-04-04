@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { users, tenants, tenantMembers } from '../../db/schema/index.js';
+import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { clients } from '../../db/schema/clients.js';
 import { accountsReceivable, cashbookEntries, financialClosings } from '../../db/schema/financials.js';
 import { boletos, fiscalSettings, nfseList } from '../../db/schema/fiscal.js';
@@ -57,7 +57,10 @@ async function createTestUser(email: string) {
 
 async function createTestTenant(userId: number, name: string) {
   const { createTenant } = await import('../tenants/service.js');
-  return createTenant(userId, { name });
+  return createTenant(userId, {
+    name,
+    cnpj: String(10_000_000_000_000 + Math.floor(Math.random() * 9_000_000_000_000)),
+  });
 }
 
 async function createTestClient(tenantId: number, userId: number, name = 'Cliente Fiscal') {
@@ -87,12 +90,14 @@ async function createAr(tenantId: number, clientId: number, amountCents = 12_000
 
 async function cleanup() {
   await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(cashbookEntries);
   await db.delete(boletos);
   await db.delete(nfseList);
   await db.delete(fiscalSettings);
   await db.delete(financialClosings);
   await db.delete(accountsReceivable);
+  await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);

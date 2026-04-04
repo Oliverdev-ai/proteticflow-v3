@@ -117,6 +117,35 @@ async function regenerateFutureInstances(tenantId: number, parentEvent: typeof e
 }
 
 export async function createEvent(tenantId: number, input: CreateEventInput, userId: number) {
+  if (input.jobId !== undefined) {
+    const [existingJobEvent] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(and(
+        eq(events.tenantId, tenantId),
+        eq(events.jobId, input.jobId),
+      ))
+      .limit(1);
+
+    if (existingJobEvent) {
+      return updateEvent(tenantId, existingJobEvent.id, {
+        title: input.title,
+        description: input.description,
+        type: input.type,
+        startAt: input.startAt,
+        endAt: input.endAt,
+        allDay: input.allDay,
+        jobId: input.jobId,
+        clientId: input.clientId,
+        employeeId: input.employeeId,
+        recurrence: input.recurrence,
+        recurrenceEndDate: input.recurrenceEndDate,
+        reminderMinutesBefore: input.reminderMinutesBefore,
+        color: input.color,
+      }, userId);
+    }
+  }
+
   const eventData: typeof events.$inferInsert = {
     tenantId,
     title: input.title,

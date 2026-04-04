@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { portalTokens, tenantMembers, tenants, users } from '../../db/schema/index.js';
+import { osBlocks, portalTokens, tenantMembers, tenants, users } from '../../db/schema/index.js';
 import { clients } from '../../db/schema/clients.js';
 import { hashPassword } from '../../core/auth.js';
 import { __testOnly } from './service.js';
@@ -36,7 +36,10 @@ async function createClient(tenantId: number, name: string) {
 }
 
 async function cleanup() {
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(portalTokens);
+  await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);

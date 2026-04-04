@@ -76,6 +76,7 @@ function DraggableCard({ job }: { job: KanbanJob }) {
 }
 
 export default function KanbanPage() {
+  const navigate = useNavigate();
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [activeJob, setActiveJob] = useState<KanbanJob | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);

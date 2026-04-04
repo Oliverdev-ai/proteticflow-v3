@@ -6,7 +6,7 @@ import { clients } from '../../db/schema/clients.js';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import type {
   CreateDeliveryScheduleInput,
   UpdateDeliveryItemStatusInput,
@@ -14,7 +14,6 @@ import type {
 } from '@proteticflow/shared';
 
 type JsPdfDoc = jsPDF & {
-  autoTable: (options: unknown) => void;
   output(type: 'arraybuffer'): ArrayBuffer;
 };
 
@@ -216,7 +215,7 @@ export async function generateRoutePdf(tenantId: number, scheduleId: number): Pr
     r.item.status,
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 40,
     head: [['#', 'Cliente', 'Endereço', 'Bairro', 'Telefone', 'OS', 'Status']],
     body: rows,

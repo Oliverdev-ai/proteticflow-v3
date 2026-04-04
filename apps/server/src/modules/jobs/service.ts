@@ -567,6 +567,21 @@ export async function seedDefaultStages(tenantId: number) {
 // â”€â”€â”€ Kanban â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
+  type KanbanCard = {
+    id: number;
+    code: string;
+    status: NonNullable<typeof jobs.$inferSelect['status']>;
+    deadline: Date;
+    createdAt: Date;
+    patientName: string | null;
+    assignedTo: number | null;
+    clientId: number;
+    clientName: string | null;
+    prothesisType: string | null;
+    totalCents: number;
+    firstItemName: string;
+    urgency: 'overdue' | 'due24h' | 'onTime';
+  };
   const conditions = [
     eq(jobs.tenantId, tenantId),
     isNull(jobs.deletedAt),
@@ -582,6 +597,7 @@ export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
     .select({
       id: jobs.id, code: jobs.code, status: jobs.status,
       deadline: jobs.deadline, patientName: jobs.patientName,
+      createdAt: jobs.createdAt,
       assignedTo: jobs.assignedTo, clientId: jobs.clientId,
       clientName: clients.name, prothesisType: jobs.prothesisType,
       totalCents: jobs.totalCents,
@@ -605,7 +621,7 @@ export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
   }
 
   // Agrupar por status + calcular indicadores (05.08)
-  const columns: Record<string, typeof data> = {
+  const columns: Record<'pending' | 'in_progress' | 'quality_check' | 'ready' | 'delivered', KanbanCard[]> = {
     pending: [], in_progress: [], quality_check: [], ready: [], delivered: [],
   };
 
@@ -614,16 +630,20 @@ export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
     const diffMs = deadline.getTime() - now.getTime();
     const urgency = diffMs < 0 ? 'overdue' : diffMs < 24 * 60 * 60 * 1000 ? 'due24h' : 'onTime';
 
-    const card = { ...job, firstItemName: firstItems[job.id] ?? '', urgency };
+    const card: KanbanCard = {
+      ...job,
+      firstItemName: firstItems[job.id] ?? '',
+      urgency,
+    };
 
-    const col = columns[job.status];
-    if (col) col.push(card as typeof data[0]);
+    const col = columns[job.status as keyof typeof columns];
+    if (col) col.push(card);
   }
 
   // Se filtro overdue â€” retornar apenas jobs atrasados
   if (filters.overdue) {
-    for (const key of Object.keys(columns)) {
-      columns[key] = (columns[key] as Array<typeof data[0] & { urgency: string }>).filter(j => j.urgency === 'overdue') as typeof data;
+    for (const key of Object.keys(columns) as Array<keyof typeof columns>) {
+      columns[key] = columns[key].filter((job) => job.urgency === 'overdue');
     }
   }
 

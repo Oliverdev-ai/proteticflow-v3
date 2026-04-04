@@ -28,6 +28,7 @@ describe('Employees Module - Phase 11 (Full 18 Tests)', () => {
     if (tenantId) {
       const run = (q: string) => db.execute(sql.raw(q)).catch(() => {});
       await run(`DELETE FROM feature_usage_logs WHERE tenant_id = ${tenantId}`);
+      await run(`DELETE FROM license_checks WHERE tenant_id = ${tenantId}`);
       await run(`DELETE FROM timesheets WHERE tenant_id = ${tenantId}`);
       await run(`DELETE FROM cashbook_entries WHERE tenant_id = ${tenantId}`);
       await run(`DELETE FROM commission_payments WHERE tenant_id = ${tenantId}`);

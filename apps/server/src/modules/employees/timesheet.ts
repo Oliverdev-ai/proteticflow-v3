@@ -13,14 +13,25 @@ function toMonthRange(month: number, year: number): { startDate: string; endDate
 }
 
 function parseTimeToMinutes(timeValue: string): number {
-  const parts = timeValue.split(':');
-  if (parts.length !== 2) {
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/.exec(timeValue.trim());
+  if (!match) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Hora invalida' });
   }
 
-  const hour = Number(parts[0]);
-  const minute = Number(parts[1]);
-  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  const second = match[3] === undefined ? 0 : Number(match[3]);
+  if (
+    !Number.isInteger(hour)
+    || !Number.isInteger(minute)
+    || !Number.isInteger(second)
+    || hour < 0
+    || hour > 23
+    || minute < 0
+    || minute > 59
+    || second < 0
+    || second > 59
+  ) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Hora invalida' });
   }
 

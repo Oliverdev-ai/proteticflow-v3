@@ -67,6 +67,30 @@ function pickFirst(...values: unknown[]): string | undefined {
   return undefined;
 }
 
+function pickNestedFirst(source: unknown, ...keys: string[]): string | undefined {
+  if (!source || typeof source !== 'object') return undefined;
+
+  const queue: unknown[] = [source];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || typeof current !== 'object') continue;
+
+    const record = current as Record<string, unknown>;
+    for (const key of keys) {
+      const parsed = asText(record[key]);
+      if (parsed) return parsed;
+    }
+
+    for (const value of Object.values(record)) {
+      if (value && typeof value === 'object') {
+        queue.push(value);
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function withDate(base: Date, deltaDays: number): Date {
   const next = new Date(base);
   next.setDate(next.getDate() + deltaDays);
@@ -152,15 +176,25 @@ export function parseScannerXml(xmlContent: string, scannerType: string): Parsed
     };
   } else {
     result = {
-      orderId: pickFirst(parsed.orderId, parsed.order_id, parsed.id),
-      dentist: pickFirst(parsed.dentist, parsed.doctor, parsed.practitioner),
-      cro: pickFirst(parsed.cro, parsed.license),
-      patient: pickFirst(parsed.patient, parsed.patientName),
-      procedure: pickFirst(parsed.procedure, parsed.treatment),
-      date: toDateOrUndefined(pickFirst(parsed.date, parsed.createdAt)),
-      deadline: toDateOrUndefined(pickFirst(parsed.deadline, parsed.deliveryDate)),
-      address: pickFirst(parsed.address),
-      notes: pickFirst(parsed.notes, parsed.comment),
+      orderId: pickFirst(
+        parsed.orderId,
+        parsed.order_id,
+        parsed.id,
+        pickNestedFirst(parsed, 'orderId', 'order_id', 'id'),
+      ),
+      dentist: pickFirst(
+        parsed.dentist,
+        parsed.doctor,
+        parsed.practitioner,
+        pickNestedFirst(parsed, 'dentist', 'doctor', 'practitioner'),
+      ),
+      cro: pickFirst(parsed.cro, parsed.license, pickNestedFirst(parsed, 'cro', 'license')),
+      patient: pickFirst(parsed.patient, parsed.patientName, pickNestedFirst(parsed, 'patient', 'patientName')),
+      procedure: pickFirst(parsed.procedure, parsed.treatment, pickNestedFirst(parsed, 'procedure', 'treatment')),
+      date: toDateOrUndefined(pickFirst(parsed.date, parsed.createdAt, pickNestedFirst(parsed, 'date', 'createdAt'))),
+      deadline: toDateOrUndefined(pickFirst(parsed.deadline, parsed.deliveryDate, pickNestedFirst(parsed, 'deadline', 'deliveryDate'))),
+      address: pickFirst(parsed.address, pickNestedFirst(parsed, 'address')),
+      notes: pickFirst(parsed.notes, parsed.comment, pickNestedFirst(parsed, 'notes', 'comment')),
     };
   }
 

@@ -207,12 +207,15 @@ export async function createMovement(tenantId: number, input: CreateMovementInpu
     // AP-13 + 09.05: custo médio ponderado no mesmo UPDATE atômico
     const updatedResult = await db.execute<{ current_stock: string; }>(sql`
       UPDATE materials SET
-        current_stock = current_stock + ${qty},
+        current_stock = current_stock + ${qty}::numeric,
         average_cost_cents = CASE
-          WHEN (current_stock + ${qty}) = 0 THEN ${unitCost}
-          ELSE ROUND((current_stock * average_cost_cents + ${qty} * ${unitCost}) / (current_stock + ${qty}))
+          WHEN (current_stock + ${qty}::numeric) = 0 THEN ${unitCost}::integer
+          ELSE ROUND(
+            (current_stock * average_cost_cents + ${qty}::numeric * ${unitCost}::numeric)
+            / NULLIF(current_stock + ${qty}::numeric, 0)
+          )::integer
         END,
-        last_purchase_price_cents = ${unitCost},
+        last_purchase_price_cents = ${unitCost}::integer,
         updated_at = NOW()
       WHERE tenant_id = ${tenantId} AND id = ${input.materialId} AND deleted_at IS NULL
       RETURNING current_stock
@@ -225,9 +228,9 @@ export async function createMovement(tenantId: number, input: CreateMovementInpu
     // AP-13: WHERE current_stock >= qty — se rows = 0 → estoque insuficiente
     const updatedResult = await db.execute<{ current_stock: string; }>(sql`
       UPDATE materials SET
-        current_stock = current_stock - ${qty},
+        current_stock = current_stock - ${qty}::numeric,
         updated_at = NOW()
-      WHERE tenant_id = ${tenantId} AND id = ${input.materialId} AND current_stock >= ${qty} AND deleted_at IS NULL
+      WHERE tenant_id = ${tenantId} AND id = ${input.materialId} AND current_stock >= ${qty}::numeric AND deleted_at IS NULL
       RETURNING current_stock
     `);
     const updated = updatedResult.rows[0];
@@ -240,7 +243,7 @@ export async function createMovement(tenantId: number, input: CreateMovementInpu
     // adjustment: setar valor absoluto
     const updatedResult = await db.execute<{ current_stock: string; }>(sql`
       UPDATE materials SET
-        current_stock = ${qty},
+        current_stock = ${qty}::numeric,
         updated_at = NOW()
       WHERE tenant_id = ${tenantId} AND id = ${input.materialId} AND deleted_at IS NULL
       RETURNING current_stock

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
 import { sql } from 'drizzle-orm';
-import { users, tenants, tenantMembers } from '../../db/schema/index.js';
+import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import {
   materialCategories, suppliers, materials, stockMovements,
   purchaseOrders, purchaseOrderItems,
@@ -23,12 +23,14 @@ async function createTestTenant(userId: number, name: string) {
 
 async function cleanup() {
   await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(purchaseOrderItems);
   await db.delete(purchaseOrders);
   await db.delete(stockMovements);
   await db.delete(materials);
   await db.delete(materialCategories);
   await db.delete(suppliers);
+  await db.delete(osBlocks);
   await db.delete(tenantMembers);
   await db.delete(tenants);
   await db.delete(users);
@@ -90,6 +92,7 @@ describe('Inventory Service — Ordens de Compra e Dashboard', () => {
       ],
     }, user.id);
 
+    await inventoryService.changePurchaseOrderStatus(tenant.id, { id: po.id, status: 'sent' }, user.id);
     await inventoryService.changePurchaseOrderStatus(tenant.id, { id: po.id, status: 'received' }, user.id);
 
     const m1 = await inventoryService.getMaterial(tenant.id, mat1.id);
@@ -106,6 +109,7 @@ describe('Inventory Service — Ordens de Compra e Dashboard', () => {
     const po = await inventoryService.createPurchaseOrder(tenant.id, {
       items: [{ materialId: mat.id, quantity: 100, unitPriceCents: 5000 }],
     }, user.id);
+    await inventoryService.changePurchaseOrderStatus(tenant.id, { id: po.id, status: 'sent' }, user.id);
     await inventoryService.changePurchaseOrderStatus(tenant.id, { id: po.id, status: 'received' }, user.id);
 
     const updated = await inventoryService.getMaterial(tenant.id, mat.id);

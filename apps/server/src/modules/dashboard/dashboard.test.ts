@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
 import { sql } from 'drizzle-orm';
-import { users, tenants, tenantMembers } from '../../db/schema/index.js';
+import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients, priceItems, pricingTables } from '../../db/schema/clients.js';
 import { accountsReceivable, accountsPayable, financialClosings } from '../../db/schema/financials.js';
@@ -44,6 +44,7 @@ async function createTestClient(tenantId: number, userId: number, name = 'Clíni
 
 async function cleanup() {
   await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(deliveryItems);
   await db.delete(deliverySchedules);
   await db.delete(stockMovements);
@@ -59,6 +60,7 @@ async function cleanup() {
   await db.delete(orderCounters);
   await db.delete(priceItems);
   await db.delete(pricingTables);
+  await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);

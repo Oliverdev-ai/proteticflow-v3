@@ -2,37 +2,22 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layers3, RotateCcw } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
+import { JOB_STATUS_LABELS, KANBAN_COLUMNS, type JobStatus } from '@proteticflow/shared';
 
-// Helper local ou reaproveitado de utilitários
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'entrada': return 'bg-zinc-800 border-zinc-700';
-    case 'preparo': return 'bg-blue-900/30 border-blue-800/50';
-    case 'producao': return 'bg-amber-900/30 border-amber-800/50';
-    case 'acabamento': return 'bg-fuchsia-900/30 border-fuchsia-800/50';
-    case 'pronto': return 'bg-emerald-900/30 border-emerald-800/50';
-    case 'entregue': return 'bg-zinc-900/30 border-zinc-800/50 opacity-50';
-    default: return 'bg-zinc-800 border-zinc-700';
-  }
-}
-
-function getStatusLabel(status: string) {
-  switch (status) {
-    case 'entrada': return 'ENTRADA';
-    case 'preparo': return 'PREPARO';
-    case 'producao': return 'PRODUÇÃO';
-    case 'acabamento': return 'ACABAMENTO';
-    case 'pronto': return 'PRONTO';
-    case 'entregue': return 'ENTREGUE';
-    default: return status.toUpperCase();
-  }
-}
+const STATUS_COLORS: Record<JobStatus, string> = {
+  pending: 'bg-zinc-800 border-zinc-700',
+  in_progress: 'bg-blue-900/30 border-blue-800/50',
+  quality_check: 'bg-amber-900/30 border-amber-800/50',
+  ready: 'bg-emerald-900/30 border-emerald-800/50',
+  delivered: 'bg-zinc-900/30 border-zinc-800/50 opacity-50',
+  cancelled: 'bg-red-900/30 border-red-800/50 opacity-50',
+};
 
 export default function KanbanTvPage() {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  const jobsQuery = trpc.jobs.list.useQuery({ limit: 100 }, {
+  const boardQuery = trpc.job.getBoard.useQuery({}, {
     refetchInterval: 30000, 
   });
 
@@ -49,14 +34,16 @@ export default function KanbanTvPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  if (jobsQuery.isLoading) {
+  if (boardQuery.isLoading) {
     return <div className="h-screen w-screen bg-black text-white flex items-center justify-center text-2xl">Carregando painel...</div>;
   }
 
-  const jobs = jobsQuery.data?.data || [];
-  const activeJobs = jobs.filter(j => j.status !== 'entregue' && j.status !== 'cancelado');
+  if (boardQuery.error) {
+    return <div className="h-screen w-screen bg-black text-red-400 flex items-center justify-center text-xl">{boardQuery.error.message}</div>;
+  }
 
-  const columns = ['entrada', 'preparo', 'producao', 'acabamento', 'pronto'] as const;
+  const columns = KANBAN_COLUMNS.filter((status) => status !== 'delivered');
+  const boardColumns = boardQuery.data?.columns ?? [];
 
   return (
     <div className="h-screen w-screen bg-neutral-950 text-neutral-100 overflow-hidden flex flex-col p-6 cursor-none">
@@ -69,7 +56,7 @@ export default function KanbanTvPage() {
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 text-neutral-500 text-lg">
-            <RotateCcw size={20} className={jobsQuery.isFetching ? 'animate-spin' : ''} />
+            <RotateCcw size={20} className={boardQuery.isFetching ? 'animate-spin' : ''} />
             <span>Atualiza a cada 30s</span>
           </div>
           <div className="text-4xl font-light tracking-tighter text-white tabular-nums">
@@ -79,23 +66,23 @@ export default function KanbanTvPage() {
       </header>
 
       <main className="flex-1 min-h-0 pt-6 flex gap-6">
-        {columns.map(col => {
-          const colJobs = activeJobs.filter(j => j.status === col);
+        {columns.map((status) => {
+          const colJobs = boardColumns.find((column) => column.status === status)?.jobs ?? [];
           return (
-            <div key={col} className="flex-1 flex flex-col bg-neutral-900/50 rounded-2xl border border-neutral-800/80 overflow-hidden">
+            <div key={status} className="flex-1 flex flex-col bg-neutral-900/50 rounded-2xl border border-neutral-800/80 overflow-hidden">
               <div className="p-4 border-b border-neutral-800 bg-neutral-900/80 flex items-center justify-between">
-                <h2 className="text-xl font-bold tracking-wider">{getStatusLabel(col)}</h2>
+                <h2 className="text-xl font-bold tracking-wider">{JOB_STATUS_LABELS[status]}</h2>
                 <span className="text-xl font-medium px-3 py-1 bg-neutral-800 rounded-lg text-neutral-300">{colJobs.length}</span>
               </div>
               <div className="flex-1 overflow-hidden p-4 flex flex-col gap-4">
                 {colJobs.slice(0, 5).map(job => (
-                  <div key={job.id} className={`p-5 rounded-xl border-2 shadow-lg ${getStatusColor(job.status)} flex flex-col gap-2`}>
+                  <div key={job.id} className={`p-5 rounded-xl border-2 shadow-lg ${STATUS_COLORS[job.status]} flex flex-col gap-2`}>
                     <div className="flex items-start justify-between text-2xl font-bold">
                       <span className="truncate pr-4 text-white">OS #{job.code}</span>
-                      <span className="shrink-0 text-sky-400">Dr(a). {job.client?.name.split(' ')[0]}</span>
+                      <span className="shrink-0 text-sky-400">{job.clientName ? `Dr(a). ${job.clientName.split(' ')[0]}` : 'Sem cliente'}</span>
                     </div>
-                    {job.items?.[0] && (
-                      <p className="text-xl text-neutral-300 truncate">{job.items[0].serviceName}</p>
+                    {job.firstItemName && (
+                      <p className="text-xl text-neutral-300 truncate">{job.firstItemName}</p>
                     )}
                     <div className="mt-2 pt-2 border-t border-white/10 flex justify-between items-center text-lg">
                       <span className="text-neutral-400">

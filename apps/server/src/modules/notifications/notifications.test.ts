@@ -5,6 +5,7 @@ import {
   deadlineNotifLog,
   notificationPreferences,
   notifications,
+  osBlocks,
   pushSubscriptions,
   tenantMembers,
   tenants,
@@ -32,10 +33,12 @@ async function createTenantFor(userId: number, name: string) {
 
 async function cleanup() {
   await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(deadlineNotifLog);
   await db.delete(notificationPreferences);
   await db.delete(notifications);
   await db.delete(pushSubscriptions);
+  await db.delete(osBlocks);
   await db.delete(tenantMembers);
   await db.delete(tenants);
   await db.delete(users);

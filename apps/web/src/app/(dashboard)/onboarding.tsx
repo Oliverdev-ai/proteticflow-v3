@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createTenantSchema } from '@proteticflow/shared';
 import { trpc } from '../../lib/trpc';
 
-type CreateTenantInput = z.infer<typeof createTenantSchema>;
+type CreateTenantFormInput = z.input<typeof createTenantSchema>;
+type CreateTenantInput = z.output<typeof createTenantSchema>;
 type Step = 1 | 2 | 3 | 4;
 
 function StepBadge({ current }: { current: Step }) {
@@ -53,11 +54,19 @@ export function OnboardingWizard() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateTenantInput>({
+  } = useForm<CreateTenantFormInput, unknown, CreateTenantInput>({
     resolver: zodResolver(createTenantSchema),
   });
 
-  const onSubmit = (data: CreateTenantInput) => createTenant.mutate(data);
+  const onSubmit = (data: CreateTenantInput) => createTenant.mutate({
+    name: data.name,
+    cnpj: data.cnpj,
+    phone: data.phone,
+    email: data.email,
+    address: data.address,
+    city: data.city,
+    state: data.state,
+  });
 
   if (step === 2) {
     return (

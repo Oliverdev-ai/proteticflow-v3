@@ -45,7 +45,7 @@ type ResolvedItem = {
 
 export async function resolveServiceItems(
   tenantId: number,
-  _priceTableId: number | null,
+  priceTableId: number | null,
   items: ServiceItemInput[],
 ): Promise<ResolvedItem[]> {
   if (!items.length) return [];
@@ -53,13 +53,19 @@ export async function resolveServiceItems(
   const resolved: ResolvedItem[] = [];
 
   for (const item of items) {
+    const conditions = [
+      eq(pricingTables.tenantId, tenantId),
+      ilike(priceItems.name, `%${item.serviceName}%`),
+    ];
+
+    if (priceTableId !== null) {
+      conditions.push(eq(priceItems.pricingTableId, priceTableId));
+    }
+
     const [found] = await db.select()
       .from(priceItems)
       .innerJoin(pricingTables, eq(priceItems.pricingTableId, pricingTables.id))
-      .where(and(
-        eq(pricingTables.tenantId, tenantId),
-        ilike(priceItems.name, `%${item.serviceName}%`),
-      ))
+      .where(and(...conditions))
       .limit(1);
 
     if (!found) {

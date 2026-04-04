@@ -7,12 +7,13 @@ import { createClientSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 
-type FormData = z.input<typeof createClientSchema>;
+type ClientFormInput = z.input<typeof createClientSchema>;
+type ClientFormData = z.output<typeof createClientSchema>;
 
 export default function ClientCreatePage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<ClientFormInput, unknown, ClientFormData>({
     resolver: zodResolver(createClientSchema),
     defaultValues: { priceAdjustmentPercent: 0 },
   });
@@ -26,9 +27,10 @@ export default function ClientCreatePage() {
 
   // Busca CEP automática (03.02)
   const zipCode = watch('zipCode');
+  const zipCodeDigits = typeof zipCode === 'string' ? zipCode.replace(/\D/g, '') : '';
   const lookupQuery = trpc.clientes.lookupCep.useQuery(
-    { cep: (zipCode ?? '').replace(/\D/g, '') },
-    { enabled: (zipCode ?? '').replace(/\D/g, '').length === 8, retry: false }
+    { cep: zipCodeDigits },
+    { enabled: zipCodeDigits.length === 8, retry: false }
   );
 
   useEffect(() => {
@@ -40,7 +42,26 @@ export default function ClientCreatePage() {
     }
   }, [lookupQuery.data, setValue]);
 
-  const onSubmit: SubmitHandler<FormData> = (data) => createMutation.mutate(data);
+  const onSubmit: SubmitHandler<ClientFormData> = (data) => createMutation.mutate({
+    name: data.name,
+    clinic: data.clinic,
+    email: data.email,
+    phone: data.phone,
+    phone2: data.phone2,
+    documentType: data.documentType,
+    document: data.document,
+    contactPerson: data.contactPerson,
+    street: data.street,
+    addressNumber: data.addressNumber,
+    complement: data.complement,
+    neighborhood: data.neighborhood,
+    city: data.city,
+    state: data.state,
+    zipCode: data.zipCode,
+    technicalPreferences: data.technicalPreferences,
+    priceAdjustmentPercent: data.priceAdjustmentPercent,
+    pricingTableId: data.pricingTableId,
+  });
 
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto max-w-2xl">

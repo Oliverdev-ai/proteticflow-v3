@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
-import { users, tenants, tenantMembers } from '../../db/schema/index.js';
+import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { clients } from '../../db/schema/clients.js';
 import { jobs } from '../../db/schema/jobs.js';
 import { eq, sql } from 'drizzle-orm';
@@ -21,6 +21,8 @@ async function createTestTenant(userId: number, name: string) {
 
 async function cleanup() {
   await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+  await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);

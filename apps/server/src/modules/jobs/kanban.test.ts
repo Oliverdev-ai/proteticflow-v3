@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
-import { users, tenants, tenantMembers } from '../../db/schema/index.js';
+import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
 import { eq, sql } from 'drizzle-orm';
@@ -26,10 +26,12 @@ async function createTestClient(tenantId: number, userId: number, name = 'Clíni
 
 async function cleanup() {
   await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(jobLogs);
   await db.delete(jobItems);
   await db.delete(jobs);
   await db.delete(orderCounters);
+  await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);

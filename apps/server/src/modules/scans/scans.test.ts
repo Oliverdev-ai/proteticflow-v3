@@ -5,8 +5,9 @@ import { tenants, tenantMembers } from '../../db/schema/tenants.js';
 import { scans } from '../../db/schema/scans.js';
 import { clients, priceItems, pricingTables } from '../../db/schema/clients.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
+import { osBlocks } from '../../db/schema/os-blocks.js';
 import { hashPassword } from '../../core/auth.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import * as jobService from '../jobs/service.js';
 import * as scanService from './service.js';
 
@@ -43,6 +44,8 @@ async function createTestJob(tenantId: number, clientId: number, userId: number)
 }
 
 async function cleanup() {
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(scans);
   await db.delete(jobLogs);
   await db.delete(jobItems);
@@ -50,6 +53,7 @@ async function cleanup() {
   await db.delete(orderCounters);
   await db.delete(priceItems);
   await db.delete(pricingTables);
+  await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
   await db.delete(tenants);

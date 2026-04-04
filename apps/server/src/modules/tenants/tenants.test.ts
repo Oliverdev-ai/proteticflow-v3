@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
-import { users, tenants, tenantMembers, invites } from '../../db/schema/index.js';
+import { invites, osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as tenantService from './service.js';
@@ -26,7 +26,9 @@ async function createTestUser(email: string) {
 
 async function cleanup() {
   await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(invites);
+  await db.delete(osBlocks);
   await db.delete(tenantMembers);
   await db.delete(tenants);
   await db.delete(users);
