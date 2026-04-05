@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { 
-  Upload, X, Image as ImageIcon, 
+  Upload, Image as ImageIcon, 
   CheckCircle2, AlertCircle, Loader2,
   CloudUpload, Trash2
 } from 'lucide-react';
@@ -56,7 +56,7 @@ export function LogoUpload() {
         filename: file.name,
         sizeBytes: file.size,
       });
-    } catch (e) {
+    } catch {
       setError('Erro ao processar imagem para upload.');
     }
   };

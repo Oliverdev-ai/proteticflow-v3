@@ -74,13 +74,13 @@ export default function NotasFiscaisPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Fiscal - Notas Fiscais</h1>
-        <p className="text-sm text-neutral-400">Emissao, acompanhamento e cancelamento de NFS-e.</p>
+        <p className="text-sm text-zinc-400">Emissao, acompanhamento e cancelamento de NFS-e.</p>
       </div>
 
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-4">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
         <h2 className="text-lg font-semibold text-white">Filtros</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             Status
             <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="input-field mt-1 w-full">
               <option value="">Todos</option>
@@ -92,7 +92,7 @@ export default function NotasFiscaisPage() {
             </select>
           </label>
 
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             Cliente
             <select
               value={clientId ?? ''}
@@ -106,12 +106,12 @@ export default function NotasFiscaisPage() {
             </select>
           </label>
 
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             De
             <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="input-field mt-1 w-full" />
           </label>
 
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             Ate
             <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="input-field mt-1 w-full" />
           </label>

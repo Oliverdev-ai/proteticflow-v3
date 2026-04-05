@@ -32,6 +32,12 @@ export function useAuth() {
     },
   });
 
+  const updateProfileMutation = trpc.auth.updateProfile.useMutation({
+    onSuccess: () => {
+      utils.auth.getProfile.invalidate();
+    },
+  });
+
   return {
     user: profile,
     isLoading,
@@ -41,5 +47,6 @@ export function useAuth() {
     isError: !!error && !isUnauthorized,
     login: loginMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
+    updateProfile: updateProfileMutation,
   };
 }

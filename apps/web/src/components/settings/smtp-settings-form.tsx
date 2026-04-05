@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Server, Key, 
   Send, Loader2, CheckCircle2,
-  Activity, Info, Lock, Network
+  Activity, Info, Lock, Network, Save
 } from 'lucide-react';
 import { useSettings } from '../../hooks/use-settings';
 import { cn } from '../../lib/utils';

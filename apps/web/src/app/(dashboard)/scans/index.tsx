@@ -81,14 +81,14 @@ export default function ScanListPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ScanLine className="text-violet-500" size={24} />
+            <ScanLine className="text-primary" size={24} />
             Scans 3D
           </h1>
-          <p className="text-neutral-400 text-sm mt-1">Controle de arquivos STL/XML e impressao</p>
+          <p className="text-zinc-400 text-sm mt-1">Controle de arquivos STL/XML e impressao</p>
         </div>
         <Link
           to="/scans/upload"
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Novo Upload
@@ -100,8 +100,8 @@ export default function ScanListPage() {
           onClick={() => setActiveTab('all')}
           className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
             activeTab === 'all'
-              ? 'bg-violet-600 text-white'
-              : 'bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-neutral-700'
+              ? 'bg-primary text-white'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-700'
           }`}
         >
           Visao Geral
@@ -110,8 +110,8 @@ export default function ScanListPage() {
           onClick={() => setActiveTab('received')}
           className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
             activeTab === 'received'
-              ? 'bg-violet-600 text-white'
-              : 'bg-neutral-900 border border-neutral-800 text-neutral-300 hover:border-neutral-700'
+              ? 'bg-primary text-white'
+              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-700'
           }`}
         >
           Arquivos Recebidos
@@ -169,12 +169,12 @@ export default function ScanListPage() {
       </div>
 
       {activeTab === 'received' && (
-        <label className="mb-4 inline-flex items-center gap-2 text-sm text-neutral-300">
+        <label className="mb-4 inline-flex items-center gap-2 text-sm text-zinc-300">
           <input
             type="checkbox"
             checked={orphanOnly}
             onChange={(e) => setOrphanOnly(e.target.checked)}
-            className="h-4 w-4 rounded border-neutral-700 bg-neutral-900"
+            className="h-4 w-4 rounded border-zinc-700 bg-zinc-900"
           />
           Mostrar somente scans orfaos (sem vinculo com OS)
         </label>
@@ -186,16 +186,16 @@ export default function ScanListPage() {
         </div>
       )}
       {query.isLoading && (
-        <div className="mb-4 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
           Carregando scans...
         </div>
       )}
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
         {activeTab === 'all' ? (
           <table className="w-full text-sm">
-            <thead className="bg-neutral-850 border-b border-neutral-800">
-              <tr className="text-left text-neutral-400">
+            <thead className="bg-zinc-850 border-b border-zinc-800">
+              <tr className="text-left text-zinc-400">
                 <th className="px-4 py-3">ID</th>
                 <th className="px-4 py-3">Scanner</th>
                 <th className="px-4 py-3">OS</th>
@@ -207,20 +207,20 @@ export default function ScanListPage() {
             </thead>
             <tbody>
               {currentRows.map((row) => (
-                <tr key={row.scan.id} className="border-b border-neutral-800 last:border-b-0">
-                  <td className="px-4 py-3 text-neutral-300">#{row.scan.id}</td>
+                <tr key={row.scan.id} className="border-b border-zinc-800 last:border-b-0">
+                  <td className="px-4 py-3 text-zinc-300">#{row.scan.id}</td>
                   <td className="px-4 py-3 text-white">{scannerLabel(row.scan.scannerType)}</td>
-                  <td className="px-4 py-3 text-neutral-300">{row.jobCode ?? '-'}</td>
-                  <td className="px-4 py-3 text-neutral-300">{row.clientName ?? '-'}</td>
+                  <td className="px-4 py-3 text-zinc-300">{row.jobCode ?? '-'}</td>
+                  <td className="px-4 py-3 text-zinc-300">{row.clientName ?? '-'}</td>
                   <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-neutral-800 text-neutral-300 text-xs">
+                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-zinc-800 text-zinc-300 text-xs">
                       <Printer size={12} />
                       {statusLabel(row.scan.printStatus)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-400">{new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}</td>
+                  <td className="px-4 py-3 text-zinc-400">{new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link to={`/scans/${row.scan.id}`} className="text-violet-400 hover:text-violet-300">
+                    <Link to={`/scans/${row.scan.id}`} className="text-primary hover:text-primary">
                       Ver detalhe
                     </Link>
                   </td>
@@ -230,8 +230,8 @@ export default function ScanListPage() {
           </table>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-neutral-850 border-b border-neutral-800">
-              <tr className="text-left text-neutral-400">
+            <thead className="bg-zinc-850 border-b border-zinc-800">
+              <tr className="text-left text-zinc-400">
                 <th className="px-4 py-3">Data</th>
                 <th className="px-4 py-3">Arquivo</th>
                 <th className="px-4 py-3">Scanner</th>
@@ -252,23 +252,23 @@ export default function ScanListPage() {
                 ].filter(Boolean) as string[];
 
                 return (
-                  <tr key={row.scan.id} className="border-b border-neutral-800 last:border-b-0">
-                    <td className="px-4 py-3 text-neutral-300">{new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}</td>
+                  <tr key={row.scan.id} className="border-b border-zinc-800 last:border-b-0">
+                    <td className="px-4 py-3 text-zinc-300">{new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
                         {files.map((file) => (
-                          <span key={`${row.scan.id}-${file}`} className="inline-flex items-center gap-1 text-xs text-neutral-300">
-                            <FileBox size={12} className="text-violet-400" />
+                          <span key={`${row.scan.id}-${file}`} className="inline-flex items-center gap-1 text-xs text-zinc-300">
+                            <FileBox size={12} className="text-primary" />
                             {file}
                           </span>
                         ))}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-white">{scannerLabel(row.scan.scannerType)}</td>
-                    <td className="px-4 py-3 text-neutral-300">{row.clientName ?? '-'}</td>
-                    <td className="px-4 py-3 text-neutral-300">{row.jobCode ?? '-'}</td>
+                    <td className="px-4 py-3 text-zinc-300">{row.clientName ?? '-'}</td>
+                    <td className="px-4 py-3 text-zinc-300">{row.jobCode ?? '-'}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-neutral-800 text-neutral-300 text-xs">
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-zinc-800 text-zinc-300 text-xs">
                         <Printer size={12} />
                         {statusLabel(row.scan.printStatus)}
                       </span>
@@ -281,7 +281,7 @@ export default function ScanListPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link to={`/scans/${row.scan.id}`} className="text-violet-400 hover:text-violet-300">
+                      <Link to={`/scans/${row.scan.id}`} className="text-primary hover:text-primary">
                         Ver detalhe
                       </Link>
                     </td>
@@ -293,14 +293,14 @@ export default function ScanListPage() {
         )}
 
         {currentRows.length === 0 && (
-          <div className="p-10 text-center text-neutral-500 text-sm">
+          <div className="p-10 text-center text-zinc-500 text-sm">
             {activeTab === 'received' ? 'Nenhum arquivo recebido encontrado.' : 'Nenhum scan encontrado.'}
           </div>
         )}
       </div>
 
       {total > 0 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-neutral-400">
+        <div className="mt-4 flex items-center justify-between text-sm text-zinc-400">
           <span>
             {activeTab === 'received' ? 'Recebidos' : 'Scans'}: {total}
           </span>
@@ -308,7 +308,7 @@ export default function ScanListPage() {
             <button
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               disabled={page <= 1}
-              className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 disabled:opacity-50"
             >
               Anterior
             </button>
@@ -318,7 +318,7 @@ export default function ScanListPage() {
             <button
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               disabled={page >= totalPages}
-              className="px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 disabled:opacity-50"
             >
               Próxima
             </button>

@@ -11,24 +11,24 @@ export function TicketForm({ busy, onSubmit }: TicketFormProps) {
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
 
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4 space-y-3">
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
       <h2 className="text-sm font-semibold text-white">Novo ticket</h2>
       <input
         value={subject}
         onChange={(event) => setSubject(event.target.value)}
         placeholder="Assunto"
-        className="w-full rounded-lg bg-neutral-950 border border-neutral-800 px-3 py-2 text-sm text-neutral-100"
+        className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
       />
       <textarea
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         placeholder="Descrição do problema"
-        className="w-full min-h-[90px] rounded-lg bg-neutral-950 border border-neutral-800 px-3 py-2 text-sm text-neutral-100"
+        className="w-full min-h-[90px] rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
       />
       <select
         value={priority}
         onChange={(event) => setPriority(event.target.value as 'low' | 'medium' | 'high' | 'urgent')}
-        className="rounded-lg bg-neutral-950 border border-neutral-800 px-3 py-2 text-sm text-neutral-100"
+        className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
       >
         <option value="low">Baixa</option>
         <option value="medium">Média</option>

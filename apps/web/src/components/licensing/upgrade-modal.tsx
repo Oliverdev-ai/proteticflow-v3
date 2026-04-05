@@ -30,16 +30,16 @@ export function UpgradeModal({ open, targetPlan, isLoading, onClose, onConfirm }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-xl border border-neutral-800 bg-neutral-900 p-5 shadow-2xl">
+      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl">
         <h3 className="text-lg font-semibold text-white">{copy.title}</h3>
-        <p className="mt-2 text-sm text-neutral-400">{copy.subtitle}</p>
+        <p className="mt-2 text-sm text-zinc-400">{copy.subtitle}</p>
 
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="rounded-md border border-neutral-700 px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 disabled:opacity-60"
+            className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-60"
           >
             Cancelar
           </button>
@@ -47,7 +47,7 @@ export function UpgradeModal({ open, targetPlan, isLoading, onClose, onConfirm }
             type="button"
             onClick={() => onConfirm(targetPlan)}
             disabled={isLoading}
-            className="rounded-md bg-violet-600 px-3 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+            className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary disabled:opacity-60"
           >
             {isLoading ? 'Redirecionando...' : 'Continuar para pagamento'}
           </button>

@@ -44,10 +44,10 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
   }
 
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-4">
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
       <h2 className="text-lg font-semibold text-white">Emitir NFS-e (unitaria)</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        <label className="text-sm text-neutral-300">
+        <label className="text-sm text-zinc-300">
           Cliente
           <select
             value={clientId ?? ''}
@@ -61,7 +61,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           </select>
         </label>
 
-        <label className="text-sm text-neutral-300">
+        <label className="text-sm text-zinc-300">
           Valor bruto (R$)
           <input
             type="number"
@@ -73,7 +73,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           />
         </label>
 
-        <label className="text-sm text-neutral-300">
+        <label className="text-sm text-zinc-300">
           AR vinculada (opcional)
           <input
             type="number"
@@ -85,7 +85,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           />
         </label>
 
-        <label className="text-sm text-neutral-300">
+        <label className="text-sm text-zinc-300">
           Nome do servico (opcional)
           <input
             type="text"
@@ -96,7 +96,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           />
         </label>
 
-        <label className="text-sm text-neutral-300">
+        <label className="text-sm text-zinc-300">
           Codigo do servico (opcional)
           <input
             type="text"
@@ -112,7 +112,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
         type="button"
         onClick={handleSubmit}
         disabled={isBusy || !clientId}
-        className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-50"
+        className="px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm font-medium disabled:opacity-50"
       >
         Emitir NFS-e
       </button>

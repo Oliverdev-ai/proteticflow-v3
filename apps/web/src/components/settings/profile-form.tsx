@@ -41,11 +41,11 @@ export function ProfileForm() {
         <div className="lg:col-span-2 bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-8 relative overflow-hidden group/profile shadow-xl shadow-black/5">
            <div className="flex items-center gap-6 relative">
               <div className="w-20 h-20 rounded-[28px] bg-primary/10 border-2 border-primary/20 flex items-center justify-center p-1 group-hover/profile:border-primary/40 transition-all shadow-inner overflow-hidden">
-                 {user?.image ? (
-                   <img src={user.image} alt={user.name} className="w-full h-full object-cover rounded-[22px]" />
-                 ) : (
-                   <User size={32} className="text-primary" strokeWidth={2.5} />
-                 )}
+                 {user?.avatarUrl ? (
+                   <img src={user.avatarUrl} alt={user.name ?? 'Avatar'} className="w-full h-full object-cover rounded-[22px]" />
+                  ) : (
+                    <User size={32} className="text-primary" strokeWidth={2.5} />
+                  )}
               </div>
               <div className="flex flex-col gap-1">
                  <Large className="text-2xl font-black uppercase tracking-tight">{user?.name || 'Comandante'}</Large>

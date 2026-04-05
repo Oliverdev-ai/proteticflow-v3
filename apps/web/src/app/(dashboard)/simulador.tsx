@@ -160,7 +160,7 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6 text-sm text-neutral-300">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-300">
           Carregando dados do simulador...
         </div>
       </div>
@@ -182,9 +182,9 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-          <p className="text-sm text-neutral-300">Cadastre ao menos um cliente para gerar simulacoes e PDF.</p>
-          <Link to="/clientes/novo" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <p className="text-sm text-zinc-300">Cadastre ao menos um cliente para gerar simulacoes e PDF.</p>
+          <Link to="/clientes/novo" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm">
             Cadastrar primeiro cliente
           </Link>
         </div>
@@ -196,9 +196,9 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-          <p className="text-sm text-neutral-300">Nenhuma tabela de preco ativa. Crie uma tabela antes de simular.</p>
-          <Link to="/precos" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <p className="text-sm text-zinc-300">Nenhuma tabela de preco ativa. Crie uma tabela antes de simular.</p>
+          <Link to="/precos" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm">
             Ir para tabelas de preco
           </Link>
         </div>
@@ -210,7 +210,7 @@ export default function SimulatorPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
-        <p className="text-sm text-neutral-400">Simule, compare tabelas, envie PDF e converta em OS.</p>
+        <p className="text-sm text-zinc-400">Simule, compare tabelas, envie PDF e converta em OS.</p>
       </div>
 
       <SimulatorForm
@@ -230,7 +230,7 @@ export default function SimulatorPage() {
 
       <ScenarioPanel preview={preview} onPreview={handlePreview} />
 
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-3">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
         <h2 className="text-lg font-semibold text-white">Selecionar tabelas para comparar</h2>
         <div className="flex flex-wrap gap-2">
           {tables.map((table) => {
@@ -240,7 +240,7 @@ export default function SimulatorPage() {
                 key={table.id}
                 type="button"
                 onClick={() => setTableIdsForCompare((prev) => checked ? prev.filter((id) => id !== table.id) : [...prev, table.id])}
-                className={`px-3 py-1.5 rounded-lg text-sm border ${checked ? 'bg-sky-600 border-sky-500 text-white' : 'border-neutral-700 text-neutral-300 hover:border-neutral-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-sm border ${checked ? 'bg-sky-600 border-sky-500 text-white' : 'border-zinc-700 text-zinc-300 hover:border-zinc-500'}`}
               >
                 {table.name}
               </button>
@@ -258,10 +258,10 @@ export default function SimulatorPage() {
           onSelect={setSelectedSimulationId}
         />
 
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-3">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
           <h2 className="text-lg font-semibold text-white">Acoes</h2>
           <div className="space-y-2">
-            <label className="text-sm text-neutral-300">
+            <label className="text-sm text-zinc-300">
               Email de destino
               <input
                 type="email"
@@ -281,8 +281,8 @@ export default function SimulatorPage() {
             </button>
           </div>
 
-          <div className="space-y-2 border-t border-neutral-800 pt-3">
-            <label className="text-sm text-neutral-300">
+          <div className="space-y-2 border-t border-zinc-800 pt-3">
+            <label className="text-sm text-zinc-300">
               Prazo da OS
               <input
                 type="date"
@@ -304,7 +304,7 @@ export default function SimulatorPage() {
           {simulationQuery.data?.convertedJobId ? (
             <p className="text-sm text-emerald-400">OS criada: #{simulationQuery.data.convertedJobId}</p>
           ) : null}
-          {historyQuery.isLoading && <p className="text-xs text-neutral-500">Carregando historico...</p>}
+          {historyQuery.isLoading && <p className="text-xs text-zinc-500">Carregando historico...</p>}
           {historyQuery.error && <p className="text-xs text-red-400">Erro ao carregar historico: {historyQuery.error.message}</p>}
           {sendMutation.error && <p className="text-xs text-red-400">Erro ao enviar email: {sendMutation.error.message}</p>}
           {approveMutation.error && <p className="text-xs text-red-400">Erro ao aprovar simulacao: {approveMutation.error.message}</p>}

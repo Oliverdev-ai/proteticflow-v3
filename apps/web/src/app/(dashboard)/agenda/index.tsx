@@ -82,10 +82,10 @@ function EventCard({ row, dragging = false }: { row: EventRow; dragging?: boolea
       style={{ backgroundColor: `${color}30`, borderColor: `${color}80` }}
     >
       <p className="font-medium truncate">{event.title} {row.jobCode ? `#${row.jobCode}` : ''}</p>
-      <p className="text-[11px] text-neutral-200 truncate">
+      <p className="text-[11px] text-zinc-200 truncate">
         {start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {row.clientName ?? '-'}
       </p>
-      <p className="text-[11px] text-neutral-300 truncate">{row.employeeName ?? 'Sem responsavel'}</p>
+      <p className="text-[11px] text-zinc-300 truncate">{row.employeeName ?? 'Sem responsavel'}</p>
     </div>
   );
 }
@@ -116,9 +116,9 @@ function DayCell({
   return (
     <div
       ref={setNodeRef}
-      className={`border border-neutral-800 rounded-lg p-2 min-h-28 space-y-1 ${isCurrentMonth ? 'bg-neutral-900/50' : 'bg-neutral-950/60'} ${isOver ? 'ring-1 ring-violet-500' : ''}`}
+      className={`border border-zinc-800 rounded-lg p-2 min-h-28 space-y-1 ${isCurrentMonth ? 'bg-zinc-900/50' : 'bg-zinc-950/60'} ${isOver ? 'ring-1 ring-primary' : ''}`}
     >
-      <div className="text-xs text-neutral-500">{day.getDate()}</div>
+      <div className="text-xs text-zinc-500">{day.getDate()}</div>
       {rows.map((row) => (
         <DraggableEvent key={row.event.id} row={row} />
       ))}
@@ -212,24 +212,24 @@ export default function AgendaPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <CalendarDays className="text-violet-500" size={24} />
+            <CalendarDays className="text-primary" size={24} />
             Agenda
           </h1>
-          <p className="text-neutral-400 text-sm mt-1">Calendario semanal/mensal com drag-and-drop.</p>
+          <p className="text-zinc-400 text-sm mt-1">Calendario semanal/mensal com drag-and-drop.</p>
         </div>
-        <Link to="/agenda/novo" className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium">
+        <Link to="/agenda/novo" className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium">
           <Plus size={16} />
           Novo Evento
         </Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={goPrev} className="px-3 py-2 bg-neutral-800 text-neutral-200 rounded-lg">Anterior</button>
-        <button onClick={goNext} className="px-3 py-2 bg-neutral-800 text-neutral-200 rounded-lg">Proximo</button>
-        <button onClick={() => setCurrent(new Date())} className="px-3 py-2 bg-neutral-800 text-neutral-200 rounded-lg">Hoje</button>
-        <div className="text-sm text-neutral-300 mx-2">{headerText}</div>
-        <button onClick={() => setMode('week')} className={`px-3 py-2 rounded-lg ${mode === 'week' ? 'bg-violet-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}>Semana</button>
-        <button onClick={() => setMode('month')} className={`px-3 py-2 rounded-lg ${mode === 'month' ? 'bg-violet-600 text-white' : 'bg-neutral-800 text-neutral-300'}`}>Mes</button>
+        <button onClick={goPrev} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">Anterior</button>
+        <button onClick={goNext} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">Proximo</button>
+        <button onClick={() => setCurrent(new Date())} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">Hoje</button>
+        <div className="text-sm text-zinc-300 mx-2">{headerText}</div>
+        <button onClick={() => setMode('week')} className={`px-3 py-2 rounded-lg ${mode === 'week' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}>Semana</button>
+        <button onClick={() => setMode('month')} className={`px-3 py-2 rounded-lg ${mode === 'month' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}>Mes</button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -248,16 +248,16 @@ export default function AgendaPage() {
 
       {listQuery.error && <p className="text-sm text-red-400">{listQuery.error.message}</p>}
       {listQuery.isLoading && (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
           Carregando eventos da agenda...
         </div>
       )}
       {!listQuery.isLoading && !listQuery.error && (listQuery.data?.length ?? 0) === 0 && (
-        <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
           Nenhum evento encontrado para o periodo e filtros selecionados.
         </div>
       )}
-      {moveMutation.isPending && <p className="text-xs text-neutral-500">Atualizando evento...</p>}
+      {moveMutation.isPending && <p className="text-xs text-zinc-500">Atualizando evento...</p>}
       {moveMutation.error && <p className="text-xs text-red-400">Falha ao mover evento: {moveMutation.error.message}</p>}
 
       {!listQuery.isLoading && (

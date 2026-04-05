@@ -36,10 +36,10 @@ function formatAiLabel(value: boolean | 'basic' | 'full') {
 
 export function PlanComparisonTable({ currentPlan, onSelectPlan, loadingPlan }: PlanComparisonTableProps) {
   return (
-    <div className="rounded-xl border border-neutral-800 overflow-hidden">
+    <div className="rounded-xl border border-zinc-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-neutral-900 text-neutral-200">
+          <thead className="bg-zinc-900 text-zinc-200">
             <tr>
               <th className="px-4 py-3 text-left font-semibold">Plano</th>
               <th className="px-4 py-3 text-left font-semibold">Clientes</th>
@@ -63,19 +63,19 @@ export function PlanComparisonTable({ currentPlan, onSelectPlan, loadingPlan }: 
               return (
                 <tr
                   key={plan}
-                  className={isCurrent ? 'bg-emerald-950/30 border-y border-emerald-700/30' : 'bg-neutral-950'}
+                  className={isCurrent ? 'bg-emerald-950/30 border-y border-emerald-700/30' : 'bg-zinc-950'}
                 >
-                  <td className="px-4 py-3 text-neutral-100 font-medium">
+                  <td className="px-4 py-3 text-zinc-100 font-medium">
                     {PLAN_LABEL[plan]}
                     {isCurrent ? <span className="ml-2 text-xs text-emerald-300">Atual</span> : null}
                   </td>
-                  <td className="px-4 py-3 text-neutral-300">{formatLimit(limits.clients)}</td>
-                  <td className="px-4 py-3 text-neutral-300">{formatLimit(limits.jobsPerMonth)}</td>
-                  <td className="px-4 py-3 text-neutral-300">{formatLimit(limits.users)}</td>
-                  <td className="px-4 py-3 text-neutral-300">{formatLimit(limits.priceTables)}</td>
-                  <td className="px-4 py-3 text-neutral-300">{limits.features.portal ? 'Sim' : 'Nao'}</td>
-                  <td className="px-4 py-3 text-neutral-300">{formatAiLabel(limits.features.ai)}</td>
-                  <td className="px-4 py-3 text-neutral-300">{limits.features.api ? 'Sim' : 'Nao'}</td>
+                  <td className="px-4 py-3 text-zinc-300">{formatLimit(limits.clients)}</td>
+                  <td className="px-4 py-3 text-zinc-300">{formatLimit(limits.jobsPerMonth)}</td>
+                  <td className="px-4 py-3 text-zinc-300">{formatLimit(limits.users)}</td>
+                  <td className="px-4 py-3 text-zinc-300">{formatLimit(limits.priceTables)}</td>
+                  <td className="px-4 py-3 text-zinc-300">{limits.features.portal ? 'Sim' : 'Nao'}</td>
+                  <td className="px-4 py-3 text-zinc-300">{formatAiLabel(limits.features.ai)}</td>
+                  <td className="px-4 py-3 text-zinc-300">{limits.features.api ? 'Sim' : 'Nao'}</td>
                   <td className="px-4 py-3 text-right">
                     {isCurrent ? (
                       <span className="inline-flex rounded-md bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-300">
@@ -86,12 +86,12 @@ export function PlanComparisonTable({ currentPlan, onSelectPlan, loadingPlan }: 
                         type="button"
                         onClick={() => onSelectPlan(plan)}
                         disabled={loadingPlan === plan}
-                        className="rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-60 px-3 py-1.5 text-xs font-semibold text-white"
+                        className="rounded-md bg-primary hover:bg-primary disabled:opacity-60 px-3 py-1.5 text-xs font-semibold text-white"
                       >
                         {loadingPlan === plan ? 'Abrindo...' : 'Assinar'}
                       </button>
                     ) : (
-                      <span className="text-xs text-neutral-500">Nao disponivel</span>
+                      <span className="text-xs text-zinc-500">Nao disponivel</span>
                     )}
                   </td>
                 </tr>

@@ -105,13 +105,13 @@ export default function BoletosPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Fiscal - Boletos</h1>
-        <p className="text-sm text-neutral-400">Geracao, consulta e cancelamento de boletos.</p>
+        <p className="text-sm text-zinc-400">Geracao, consulta e cancelamento de boletos.</p>
       </div>
 
-      <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-4">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
         <h2 className="text-lg font-semibold text-white">Filtros</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             Status
             <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="input-field mt-1 w-full">
               <option value="">Todos</option>
@@ -123,7 +123,7 @@ export default function BoletosPage() {
             </select>
           </label>
 
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             Cliente
             <select
               value={clientId ?? ''}
@@ -137,12 +137,12 @@ export default function BoletosPage() {
             </select>
           </label>
 
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             De
             <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="input-field mt-1 w-full" />
           </label>
 
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             Ate
             <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="input-field mt-1 w-full" />
           </label>
@@ -150,9 +150,9 @@ export default function BoletosPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-3">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
           <h2 className="text-lg font-semibold text-white">Gerar por AR</h2>
-          <label className="text-sm text-neutral-300 block">
+          <label className="text-sm text-zinc-300 block">
             ID da conta a receber
             <input
               type="number"
@@ -166,16 +166,16 @@ export default function BoletosPage() {
             type="button"
             onClick={handleGenerateFromAr}
             disabled={busy || !arIdToGenerate}
-            className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm font-medium disabled:opacity-50"
           >
             Gerar boleto da AR
           </button>
         </div>
 
-        <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-3">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
           <h2 className="text-lg font-semibold text-white">Gerar boleto manual</h2>
           <div className="grid md:grid-cols-2 gap-3">
-            <label className="text-sm text-neutral-300">
+            <label className="text-sm text-zinc-300">
               Cliente
               <select
                 value={manualClientId ?? ''}
@@ -189,7 +189,7 @@ export default function BoletosPage() {
               </select>
             </label>
 
-            <label className="text-sm text-neutral-300">
+            <label className="text-sm text-zinc-300">
               Valor (R$)
               <input
                 type="number"
@@ -201,7 +201,7 @@ export default function BoletosPage() {
               />
             </label>
 
-            <label className="text-sm text-neutral-300">
+            <label className="text-sm text-zinc-300">
               Vencimento
               <input
                 type="date"
@@ -211,7 +211,7 @@ export default function BoletosPage() {
               />
             </label>
 
-            <label className="text-sm text-neutral-300">
+            <label className="text-sm text-zinc-300">
               Descricao
               <input
                 type="text"

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { trpc } from '../../../lib/trpc';
 import { 
-  CheckCircle, XCircle, Loader2, ChevronLeft, 
-  Search, Filter, MoreHorizontal, ArrowRight,
-  TrendingUp, Calendar, User, Receipt, Hash,
+  XCircle, Loader2, ChevronLeft, 
+  ArrowRight, Calendar, Receipt, Hash,
   CheckCircle2, X, AlertCircle, Ban
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
@@ -15,7 +15,7 @@ import { cn } from '../../../lib/utils';
 
 type ArStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 
-const STATUS_MAP: Record<ArStatus, { label: string; cls: string; icon: any }> = {
+const STATUS_MAP: Record<ArStatus, { label: string; cls: string; icon: LucideIcon }> = {
   pending:   { label: 'Pendente',  cls: 'bg-amber-500/10 text-amber-500 border-amber-500/20', icon: AlertCircle },
   paid:      { label: 'Pago',      cls: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', icon: CheckCircle2 },
   overdue:   { label: 'Vencido',   cls: 'bg-destructive/10 text-destructive border-destructive/20', icon: Ban },

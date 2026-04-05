@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { ReportType, ReportPreviewResult } from '@proteticflow/shared';
 import { 
-  BarChart3, Loader2, AlertCircle, TrendingUp, 
-  Activity, PieChart, Info, ChevronRight, 
-  Send, Database, ShieldCheck, CheckCircle2 
+  Loader2, AlertCircle, TrendingUp,
+  PieChart, Info, Database, CheckCircle2
 } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { ReportList } from '../../../components/reports/report-list';
@@ -13,8 +12,6 @@ import { ReportPreviewTable } from '../../../components/reports/report-preview-t
 import { ReportChart } from '../../../components/reports/report-chart';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
-import { EmptyState } from '../../../components/shared/empty-state';
-import { cn } from '../../../lib/utils';
 
 function toIsoRange(date: string, mode: 'start' | 'end') {
   return new Date(`${date}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();

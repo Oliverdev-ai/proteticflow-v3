@@ -23,11 +23,11 @@ export function NfseBatchModal({ closings, isBusy = false, onEmitBatch }: NfseBa
   );
 
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5 space-y-3">
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
       <h2 className="text-lg font-semibold text-white">Emissao em lote por fechamento</h2>
-      <p className="text-sm text-neutral-400">Emite 1 NFS-e por cliente para o fechamento selecionado.</p>
+      <p className="text-sm text-zinc-400">Emite 1 NFS-e por cliente para o fechamento selecionado.</p>
 
-      <label className="text-sm text-neutral-300 block">
+      <label className="text-sm text-zinc-300 block">
         Fechamento
         <select
           value={selectedClosingId ?? ''}
@@ -44,8 +44,8 @@ export function NfseBatchModal({ closings, isBusy = false, onEmitBatch }: NfseBa
       </label>
 
       {selectedClosing ? (
-        <p className="text-sm text-neutral-300">
-          Total do fechamento: <span className="text-neutral-100">{formatCurrency(selectedClosing.totalAmountCents)}</span>
+        <p className="text-sm text-zinc-300">
+          Total do fechamento: <span className="text-zinc-100">{formatCurrency(selectedClosing.totalAmountCents)}</span>
         </p>
       ) : null}
 

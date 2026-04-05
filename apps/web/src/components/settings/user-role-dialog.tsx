@@ -11,7 +11,7 @@ export function UserRoleDialog({ user }: { user: SettingsUserItem }) {
       <select
         value={role}
         onChange={(e) => setRole(e.target.value as SettingsUserItem['role'])}
-        className="bg-neutral-800 border border-neutral-700 rounded px-2 py-1 text-xs text-white"
+        className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-white"
       >
         <option value="superadmin">superadmin</option>
         <option value="gerente">gerente</option>
@@ -21,7 +21,7 @@ export function UserRoleDialog({ user }: { user: SettingsUserItem }) {
       </select>
       <button
         onClick={() => updateRole.mutate({ memberId: user.id, role })}
-        className="bg-violet-600 hover:bg-violet-700 text-white text-xs px-2 py-1 rounded"
+        className="bg-primary hover:bg-primary text-white text-xs px-2 py-1 rounded"
       >
         Salvar role
       </button>

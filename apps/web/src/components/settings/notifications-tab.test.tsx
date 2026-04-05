@@ -37,8 +37,8 @@ describe('notifications-tab', () => {
   it('renderiza preferencias por canal', () => {
     const html = renderToString(<NotificationsTab />);
 
-    expect(html).toContain('Preferencias de notificacoes por canal');
+    expect(html).toContain('Matriz de Conectividade');
     expect(html).toContain('Alerta de prazo em 24h');
-    expect(html).toContain('Habilitar Push (PWA)');
+    expect(html).toContain('Ativar Push (PWA)');
   });
 });

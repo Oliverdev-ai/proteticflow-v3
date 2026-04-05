@@ -40,10 +40,10 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
         <h2 className="text-white font-semibold mb-3">Gerar novo token</h2>
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-sm text-neutral-300">
+          <label className="text-sm text-zinc-300">
             Expira em (dias)
             <input
               type="number"
@@ -57,7 +57,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
           <button
             type="button"
             onClick={() => createMutation.mutate({ clientId, expiresInDays })}
-            className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm"
+            className="px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm"
           >
             Gerar token
           </button>
@@ -71,20 +71,20 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
           </button>
         </div>
         {latestPortalUrl ? (
-          <p className="text-xs text-neutral-300 mt-3 break-all" data-testid="portal-url">{latestPortalUrl}</p>
+          <p className="text-xs text-zinc-300 mt-3 break-all" data-testid="portal-url">{latestPortalUrl}</p>
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
         <h2 className="text-white font-semibold mb-3">Tokens do cliente</h2>
         <div className="space-y-3">
           {tokens.map((token) => {
             const rawToken = rawTokenById.get(token.id);
             return (
-              <article key={token.id} className="rounded-xl border border-neutral-700 p-4">
-                <p className="text-sm text-neutral-200">Token #{token.id}</p>
-                <p className="text-xs text-neutral-400 mt-1">Expira em: {new Date(token.expiresAt).toLocaleString('pt-BR')}</p>
-                <p className="text-xs text-neutral-400">Status: {token.isActive ? 'Ativo' : 'Inativo'}</p>
+              <article key={token.id} className="rounded-xl border border-zinc-700 p-4">
+                <p className="text-sm text-zinc-200">Token #{token.id}</p>
+                <p className="text-xs text-zinc-400 mt-1">Expira em: {new Date(token.expiresAt).toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-zinc-400">Status: {token.isActive ? 'Ativo' : 'Inativo'}</p>
                 <div className="flex flex-wrap gap-2 mt-3">
                   {rawToken ? (
                     <button
@@ -100,7 +100,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
                       Enviar link por email
                     </button>
                   ) : (
-                    <span className="px-3 py-1.5 text-xs rounded bg-neutral-800 text-neutral-500 cursor-not-allowed">
+                    <span className="px-3 py-1.5 text-xs rounded bg-zinc-800 text-zinc-500 cursor-not-allowed">
                       Link visivel apenas na geracao
                     </span>
                   )}
@@ -116,12 +116,12 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
             );
           })}
           {tokens.length === 0 ? (
-            <p className="text-sm text-neutral-500">Nenhum token gerado para este cliente.</p>
+            <p className="text-sm text-zinc-500">Nenhum token gerado para este cliente.</p>
           ) : null}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
         <h2 className="text-white font-semibold mb-3">Destino de email</h2>
         <input
           type="email"
@@ -130,7 +130,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
           placeholder="destinatario@exemplo.com"
           className="input-field w-full md:w-80"
         />
-        <p className="text-xs text-neutral-500 mt-2">Usado na acao de enviar link por email.</p>
+        <p className="text-xs text-zinc-500 mt-2">Usado na acao de enviar link por email.</p>
       </section>
     </div>
   );

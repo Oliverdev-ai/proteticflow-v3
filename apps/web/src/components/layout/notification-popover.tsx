@@ -43,7 +43,7 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative text-neutral-400 hover:text-white transition-colors"
+        className="relative text-zinc-400 hover:text-white transition-colors"
         aria-label="Notificacoes"
       >
         <Bell size={18} />
@@ -55,13 +55,13 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-9 z-50 w-[360px] max-h-[420px] overflow-auto bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800">
-            <p className="text-sm font-semibold text-neutral-200">Notificacoes</p>
+        <div className="absolute right-0 top-9 z-50 w-[360px] max-h-[420px] overflow-auto bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
+            <p className="text-sm font-semibold text-zinc-200">Notificacoes</p>
             <button
               type="button"
               onClick={() => markAllReadMutation.mutate()}
-              className="text-xs text-violet-400 hover:text-violet-300 disabled:opacity-40"
+              className="text-xs text-primary hover:text-primary disabled:opacity-40"
               disabled={markAllReadMutation.isPending}
             >
               Marcar todas como lidas
@@ -69,16 +69,16 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
           </div>
 
           {listQuery.isLoading ? (
-            <div className="p-5 text-sm text-neutral-400 flex items-center gap-2">
+            <div className="p-5 text-sm text-zinc-400 flex items-center gap-2">
               <Loader2 size={14} className="animate-spin" />
               Carregando notificacoes...
             </div>
           ) : items.length === 0 ? (
-            <div className="p-5 text-sm text-neutral-500">Sem notificacoes recentes.</div>
+            <div className="p-5 text-sm text-zinc-500">Sem notificacoes recentes.</div>
           ) : (
-            <ul className="divide-y divide-neutral-800">
+            <ul className="divide-y divide-zinc-800">
               {items.map((item) => (
-                <li key={item.id} className={`px-3 py-3 ${item.isRead ? 'bg-transparent' : 'bg-violet-500/5'}`}>
+                <li key={item.id} className={`px-3 py-3 ${item.isRead ? 'bg-transparent' : 'bg-primary/5'}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       {(() => {
@@ -92,14 +92,14 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
                       </span>
                         );
                       })()}
-                      <p className="text-sm text-neutral-200 font-medium">{item.title}</p>
-                      <p className="text-xs text-neutral-400 mt-1">{item.message}</p>
+                      <p className="text-sm text-zinc-200 font-medium">{item.title}</p>
+                      <p className="text-xs text-zinc-400 mt-1">{item.message}</p>
                     </div>
                     {!item.isRead ? (
                       <button
                         type="button"
                         onClick={() => markReadMutation.mutate({ ids: [item.id] })}
-                        className="text-neutral-400 hover:text-green-400"
+                        className="text-zinc-400 hover:text-green-400"
                         title="Marcar como lida"
                       >
                         <CheckCheck size={14} />

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { 
-  Palette, Sun, Moon, Layout, 
-  Type, Save, Loader2, CheckCircle2,
-  Activity, Eye, Layers
+  Palette, Layout, Save, Loader2, CheckCircle2,
+  Eye, Layers
 } from 'lucide-react';
 import { useSettings } from '../../hooks/use-settings';
 import { cn } from '../../lib/utils';

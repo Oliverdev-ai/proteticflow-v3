@@ -89,7 +89,7 @@ export default function ScanUploadPage() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <button
         onClick={() => navigate('/scans')}
-        className="flex items-center gap-2 text-neutral-400 hover:text-white text-sm"
+        className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm"
       >
         <ArrowLeft size={14} />
         Voltar
@@ -97,13 +97,13 @@ export default function ScanUploadPage() {
 
       <div>
         <h1 className="text-2xl font-bold text-white">Upload de Scan 3D</h1>
-        <p className="text-neutral-400 text-sm mt-1">Envie STL superior/inferior, XML e imagem de referencia.</p>
+        <p className="text-zinc-400 text-sm mt-1">Envie STL superior/inferior, XML e imagem de referencia.</p>
       </div>
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">Scanner</label>
+            <label className="block text-xs text-zinc-400 mb-1">Scanner</label>
             <select value={scannerType} onChange={(e) => setScannerType(e.target.value as typeof scannerType)} className="input-field w-full">
               <option value="outro">Outro</option>
               <option value="itero">iTero</option>
@@ -113,34 +113,34 @@ export default function ScanUploadPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">ID da OS (opcional)</label>
+            <label className="block text-xs text-zinc-400 mb-1">ID da OS (opcional)</label>
             <input value={jobId} onChange={(e) => setJobId(e.target.value)} type="number" className="input-field w-full" />
           </div>
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">ID do cliente (opcional)</label>
+            <label className="block text-xs text-zinc-400 mb-1">ID do cliente (opcional)</label>
             <input value={clientId} onChange={(e) => setClientId(e.target.value)} type="number" className="input-field w-full" />
           </div>
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">Observacoes</label>
+            <label className="block text-xs text-zinc-400 mb-1">Observacoes</label>
             <input value={notes} onChange={(e) => setNotes(e.target.value)} className="input-field w-full" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">STL Arcada Superior</label>
+            <label className="block text-xs text-zinc-400 mb-1">STL Arcada Superior</label>
             <input type="file" accept=".stl" onChange={(e) => setFiles((prev) => ({ ...prev, stlUpper: e.target.files?.[0] ?? null }))} />
           </div>
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">STL Arcada Inferior</label>
+            <label className="block text-xs text-zinc-400 mb-1">STL Arcada Inferior</label>
             <input type="file" accept=".stl" onChange={(e) => setFiles((prev) => ({ ...prev, stlLower: e.target.files?.[0] ?? null }))} />
           </div>
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">XML do Scanner</label>
+            <label className="block text-xs text-zinc-400 mb-1">XML do Scanner</label>
             <input type="file" accept=".xml,text/xml" onChange={(e) => setFiles((prev) => ({ ...prev, xml: e.target.files?.[0] ?? null }))} />
           </div>
           <div>
-            <label className="block text-xs text-neutral-400 mb-1">Imagem de Referencia</label>
+            <label className="block text-xs text-zinc-400 mb-1">Imagem de Referencia</label>
             <input type="file" accept="image/*" onChange={(e) => setFiles((prev) => ({ ...prev, gallery: e.target.files?.[0] ?? null }))} />
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function ScanUploadPage() {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full px-4 py-3 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-xl font-medium flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 bg-primary hover:bg-primary disabled:opacity-60 text-white rounded-xl font-medium flex items-center justify-center gap-2"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
           Enviar Scan

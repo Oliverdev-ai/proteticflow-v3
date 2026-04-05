@@ -1,4 +1,4 @@
-import { Calendar, Filter, BarChart3, Users, ChevronDown } from 'lucide-react';
+import { Calendar, Filter, ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export type ReportFiltersState = {

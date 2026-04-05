@@ -8,7 +8,7 @@ export function RolesMatrix() {
 
   const roleColors: Record<string, string> = {
     admin: "text-primary bg-primary/10 border-primary/20",
-    manager: "text-indigo-400 bg-indigo-400/10 border-indigo-400/20",
+    manager: "text-primary bg-primary/10 border-primary/20",
     technician: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
     receptionist: "text-amber-500 bg-amber-500/10 border-amber-500/20",
     user: "text-muted-foreground bg-muted border-border",

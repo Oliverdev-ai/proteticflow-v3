@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { trpc } from '../../../lib/trpc';
 import { 
   Plus, TrendingUp, TrendingDown, Loader2, ChevronLeft,
-  Calendar, ArrowRight, BookOpen, Activity, Tag,
-  CheckCircle2, X, AlertCircle, DollarSign, ArrowUpRight,
-  ArrowDownRight, Landmark, Receipt
+  Calendar, BookOpen, Activity, Tag,
+  CheckCircle2, X, DollarSign, ArrowUpRight,
+  ArrowDownRight, Landmark, Receipt, FileText
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatBRL } from '../../../lib/format';

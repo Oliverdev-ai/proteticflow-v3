@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, Loader2, AlertCircle, FileText, Package, Clock, 
-  Camera, Download, CheckCircle, XCircle, ChevronRight,
+  Camera, Download, XCircle, ChevronRight,
   Activity, Calendar, DollarSign, User, Building2, Hash,
   Zap, ShieldCheck, CheckCircle2, MoreHorizontal, HelpCircle,
-  FileCheck, Truck, Ban, Info, X
+  FileCheck, Truck, Ban, Info, X, Landmark
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { canTransition, JOB_STATUS_LABELS, JOB_STATUS_COLORS } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
@@ -35,7 +36,7 @@ const TABS = [
 
 const STATUS_FLOW: JobStatus[] = ['pending', 'in_progress', 'quality_check', 'ready', 'delivered'];
 
-const STATUS_ICONS: Record<string, any> = {
+const STATUS_ICONS: Record<JobStatus, LucideIcon> = {
   pending: Clock,
   in_progress: Activity,
   quality_check: ShieldCheck,
@@ -386,7 +387,6 @@ export default function JobDetailPage() {
 
                <div className="space-y-12 relative before:absolute before:left-6 before:top-2 before:bottom-2 before:w-px before:bg-gradient-to-b before:from-primary/60 before:via-border before:to-transparent">
                 {job.logs.map((log, idx) => {
-                  const isLast = idx === job.logs.length - 1;
                   return (
                     <div key={log.id} className="flex gap-10 relative animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
                       <div className="relative z-10">

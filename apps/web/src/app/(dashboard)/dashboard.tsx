@@ -14,7 +14,7 @@ import { PredictionCard } from '../../components/dashboard/prediction-card';
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonBox({ className }: { className?: string }) {
-  return <div className={`bg-neutral-800 animate-pulse rounded-xl ${className ?? ''}`} />;
+  return <div className={`bg-zinc-800 animate-pulse rounded-xl ${className ?? ''}`} />;
 }
 
 function DashboardSkeleton() {
@@ -67,7 +67,7 @@ export default function DashboardPage() {
   if (!data) {
     return (
       <div className="p-6">
-        <p className="text-neutral-400 text-sm">Não foi possível carregar o dashboard.</p>
+        <p className="text-zinc-400 text-sm">Não foi possível carregar o dashboard.</p>
       </div>
     );
   }
@@ -78,12 +78,12 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-neutral-400 text-sm mt-0.5">Visão geral do laboratório</p>
+          <p className="text-zinc-400 text-sm mt-0.5">Visão geral do laboratório</p>
         </div>
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-300 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
           Atualizar

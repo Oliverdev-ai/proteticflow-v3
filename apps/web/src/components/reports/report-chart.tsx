@@ -1,6 +1,5 @@
 import type { ReportPreviewResult } from '@proteticflow/shared';
-import { BarChart3, TrendingUp, Info, Activity, PieChart } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { BarChart3, TrendingUp, Info, PieChart } from 'lucide-react';
 import { Large, Muted } from '../shared/typography';
 import { EmptyState } from '../shared/empty-state';
 

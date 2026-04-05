@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Plus, Search, Loader2, AlertCircle, Clock, Eye, 
-  Briefcase, ChevronRight, Filter, Hash, User, 
+  Briefcase, Filter, Hash,
   Building2, Calendar, DollarSign, Activity, X
 } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
@@ -170,8 +170,14 @@ export default function JobListPage() {
             icon={Briefcase} 
             title="Nenhuma OS disponível" 
             description="Não encontramos nenhuma ordem de serviço que corresponda aos seus filtros de pesquisa." 
-            action={{ label: "Gerar OS Manual", onClick: () => navigate('/trabalhos/novo') }}
-          />
+          >
+            <button
+              onClick={() => navigate('/trabalhos/novo')}
+              className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+            >
+              Gerar OS Manual
+            </button>
+          </EmptyState>
         ) : (
           <div className="premium-card overflow-hidden">
             <div className="overflow-x-auto">

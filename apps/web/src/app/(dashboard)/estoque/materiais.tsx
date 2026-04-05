@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
 import { 
   Search, Plus, AlertTriangle, ChevronLeft, 
-  PackagePlus, X, Box, Tag, Ruler, AlertCircle, ChevronRight
+  PackagePlus, X, Box, Tag, Ruler, AlertCircle, ChevronRight, Database, Loader2
 } from 'lucide-react';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Large } from '../../../components/shared/typography';
+import { H1, Subtitle, Large, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 

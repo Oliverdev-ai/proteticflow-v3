@@ -31,8 +31,8 @@ export function JobsTrendChart({ data }: { data: JobsTrend[] }) {
   }));
 
   return (
-    <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
-      <h3 className="text-sm font-medium text-neutral-300 mb-4">Tendência de Trabalhos</h3>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+      <h3 className="text-sm font-medium text-zinc-300 mb-4">Tendência de Trabalhos</h3>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />

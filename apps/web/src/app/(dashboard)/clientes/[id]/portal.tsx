@@ -17,13 +17,13 @@ export default function ClientPortalManagementPage() {
         <button
           type="button"
           onClick={() => navigate(`/clientes/${clientId}`)}
-          className="text-neutral-400 hover:text-white"
+          className="text-zinc-400 hover:text-white"
         >
           <ArrowLeft size={18} />
         </button>
         <div>
           <h1 className="text-2xl font-bold text-white">Portal do cliente</h1>
-          <p className="text-sm text-neutral-400">Gestao de token de acesso publico por cliente.</p>
+          <p className="text-sm text-zinc-400">Gestao de token de acesso publico por cliente.</p>
         </div>
       </div>
 

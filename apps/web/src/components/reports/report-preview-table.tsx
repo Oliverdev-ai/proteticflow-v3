@@ -1,6 +1,5 @@
 import type { ReportPreviewResult } from '@proteticflow/shared';
-import { Table, Eye, Search, Info, Activity } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { Table, Search, Info, Activity } from 'lucide-react';
 import { Large, Muted } from '../shared/typography';
 import { EmptyState } from '../shared/empty-state';
 
@@ -45,7 +44,7 @@ export function ReportPreviewTable({ preview }: ReportPreviewTableProps) {
               {preview.columns.map((column) => (
                 <th key={column} className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5 whitespace-nowrap">
                   {column.replace(/([A-Z])/g, ' $1').trim()}
-                th>
+                </th>
               ))}
             </tr>
           </thead>

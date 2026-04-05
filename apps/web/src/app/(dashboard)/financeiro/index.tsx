@@ -18,7 +18,7 @@ function SummaryCard({
   value: string; 
   icon: React.ElementType; 
   sub?: string; 
-  color: "emerald" | "destructive" | "amber" | "primary" | "indigo";
+  color: "emerald" | "destructive" | "amber" | "primary";
   trend?: { value: string; positive: boolean };
 }) {
   const colorMap = {
@@ -26,7 +26,6 @@ function SummaryCard({
     destructive: "bg-destructive/10 text-destructive border-destructive/20",
     amber: "bg-amber-500/10 text-amber-500 border-amber-500/20",
     primary: "bg-primary/10 text-primary border-primary/20",
-    indigo: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
   };
 
   return (

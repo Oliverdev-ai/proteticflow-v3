@@ -94,5 +94,5 @@ export function StlViewer({ url, color = '#a78bfa' }: Props) {
     };
   }, [url, color]);
 
-  return <div ref={mountRef} className="w-full h-full min-h-[300px] rounded-2xl overflow-hidden cursor-move border border-neutral-800" />;
+  return <div ref={mountRef} className="w-full h-full min-h-[300px] rounded-2xl overflow-hidden cursor-move border border-zinc-800" />;
 }

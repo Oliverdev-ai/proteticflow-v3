@@ -71,7 +71,7 @@ export default function AuditPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Auditoria</h1>
-        <p className="text-sm text-neutral-400">
+        <p className="text-sm text-zinc-400">
           Rastreabilidade de operacoes, uso do plano e controle de bloqueio de membros.
         </p>
       </div>
@@ -85,7 +85,7 @@ export default function AuditPage() {
             className={`px-3 py-2 rounded-lg text-sm border ${
               activeTab === tab.key
                 ? 'bg-blue-700 border-blue-600 text-white'
-                : 'border-neutral-700 text-neutral-300 hover:border-neutral-500'
+                : 'border-zinc-700 text-zinc-300 hover:border-zinc-500'
             }`}
           >
             {tab.label}
@@ -126,16 +126,16 @@ export default function AuditPage() {
           </div>
 
           {logsQuery.isLoading ? (
-            <p className="text-sm text-neutral-400">Carregando logs...</p>
+            <p className="text-sm text-zinc-400">Carregando logs...</p>
           ) : logsQuery.error ? (
             <p className="text-sm text-red-400">Erro ao carregar logs: {logsQuery.error.message}</p>
           ) : (logsQuery.data?.items.length ?? 0) === 0 ? (
-            <p className="text-sm text-neutral-400">Nenhum log encontrado.</p>
+            <p className="text-sm text-zinc-400">Nenhum log encontrado.</p>
           ) : (
             <>
-              <div className="overflow-x-auto rounded-xl border border-neutral-800">
+              <div className="overflow-x-auto rounded-xl border border-zinc-800">
                 <table className="w-full text-sm">
-                  <thead className="bg-neutral-900 text-neutral-400">
+                  <thead className="bg-zinc-900 text-zinc-400">
                     <tr>
                       <th className="text-left px-3 py-2">Data</th>
                       <th className="text-left px-3 py-2">Usuario</th>
@@ -146,16 +146,16 @@ export default function AuditPage() {
                   </thead>
                   <tbody>
                     {logsQuery.data?.items.map((item) => (
-                      <tr key={item.id} className="border-t border-neutral-800">
-                        <td className="px-3 py-2 text-neutral-300">
+                      <tr key={item.id} className="border-t border-zinc-800">
+                        <td className="px-3 py-2 text-zinc-300">
                           {new Date(item.createdAt).toLocaleString('pt-BR')}
                         </td>
-                        <td className="px-3 py-2 text-neutral-100">
+                        <td className="px-3 py-2 text-zinc-100">
                           {memberByUserId.get(item.userId) ?? `#${item.userId}`}
                         </td>
-                        <td className="px-3 py-2 text-neutral-100">{item.action}</td>
-                        <td className="px-3 py-2 text-neutral-300">{item.entityType}</td>
-                        <td className="px-3 py-2 text-neutral-300">{item.entityId ?? '-'}</td>
+                        <td className="px-3 py-2 text-zinc-100">{item.action}</td>
+                        <td className="px-3 py-2 text-zinc-300">{item.entityType}</td>
+                        <td className="px-3 py-2 text-zinc-300">{item.entityId ?? '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -163,7 +163,7 @@ export default function AuditPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-zinc-500">
                   Pagina {page} de {totalPages}
                 </p>
                 <div className="flex gap-2">
@@ -171,7 +171,7 @@ export default function AuditPage() {
                     type="button"
                     onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                     disabled={!canPrev}
-                    className="px-3 py-1.5 rounded-md border border-neutral-700 text-neutral-200 disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-md border border-zinc-700 text-zinc-200 disabled:opacity-50"
                   >
                     Anterior
                   </button>
@@ -179,7 +179,7 @@ export default function AuditPage() {
                     type="button"
                     onClick={() => setPage((prev) => prev + 1)}
                     disabled={!canNext}
-                    className="px-3 py-1.5 rounded-md border border-neutral-700 text-neutral-200 disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-md border border-zinc-700 text-zinc-200 disabled:opacity-50"
                   >
                     Proxima
                   </button>
@@ -192,10 +192,10 @@ export default function AuditPage() {
 
       {activeTab === 'usage' ? (
         <div className="space-y-4">
-          {usageQuery.isLoading ? <p className="text-sm text-neutral-400">Carregando uso...</p> : null}
+          {usageQuery.isLoading ? <p className="text-sm text-zinc-400">Carregando uso...</p> : null}
           {usageQuery.error ? <p className="text-sm text-red-400">{usageQuery.error.message}</p> : null}
           {!usageQuery.isLoading && !usageQuery.error && !usageQuery.data ? (
-            <p className="text-sm text-neutral-400">Nao foi possivel obter o sumario de uso.</p>
+            <p className="text-sm text-zinc-400">Nao foi possivel obter o sumario de uso.</p>
           ) : null}
           {usageQuery.data ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -234,18 +234,18 @@ function UsageCard({
   limit: number | null;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 space-y-1">
-      <p className="text-xs uppercase tracking-wide text-neutral-500">{label}</p>
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-1">
+      <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
       {typeof used === 'number' ? (
         <p className="text-lg font-semibold text-white">
           {used}
-          {limit !== null ? <span className="text-sm text-neutral-400"> / {limit}</span> : null}
+          {limit !== null ? <span className="text-sm text-zinc-400"> / {limit}</span> : null}
         </p>
       ) : (
         <p className="text-lg font-semibold text-white">{used}</p>
       )}
       {typeof used === 'number' && limit !== null && limit > 0 ? (
-        <div className="w-full h-2 rounded bg-neutral-800 overflow-hidden">
+        <div className="w-full h-2 rounded bg-zinc-800 overflow-hidden">
           <div
             className="h-full bg-blue-600"
             style={{ width: `${Math.min(100, Math.round((used / limit) * 100))}%` }}

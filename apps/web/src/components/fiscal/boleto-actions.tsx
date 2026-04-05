@@ -25,7 +25,7 @@ export function BoletoActions({ boleto, isBusy = false, onSync, onCancel }: Bole
         type="button"
         onClick={() => onSync(boleto.id)}
         disabled={isBusy}
-        className="px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-200 disabled:opacity-50"
+        className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 disabled:opacity-50"
       >
         Sincronizar
       </button>

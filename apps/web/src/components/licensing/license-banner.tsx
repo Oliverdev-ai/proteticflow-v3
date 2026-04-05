@@ -58,7 +58,7 @@ export function LicenseBanner() {
         </div>
         <Link
           to="/planos"
-          className="shrink-0 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-neutral-950 hover:bg-amber-400"
+          className="shrink-0 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-amber-400"
         >
           Fazer upgrade
         </Link>

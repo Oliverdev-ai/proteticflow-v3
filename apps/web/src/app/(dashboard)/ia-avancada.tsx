@@ -42,25 +42,25 @@ export default function IAAvancadaPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">IA Avancada</h1>
-        <p className="text-sm text-neutral-400">
+        <p className="text-sm text-zinc-400">
           Predicoes, recomendacoes e execucoes de modelos por tenant.
         </p>
       </div>
 
-      <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 space-y-3">
+      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
         <h2 className="text-white font-semibold">Predicoes</h2>
-        {predictionsQuery.isLoading && <p className="text-sm text-neutral-400">Carregando predicoes...</p>}
+        {predictionsQuery.isLoading && <p className="text-sm text-zinc-400">Carregando predicoes...</p>}
         {predictionsQuery.error && (
           <p className="text-sm text-red-400">Erro ao carregar predicoes: {predictionsQuery.error.message}</p>
         )}
         {!predictionsQuery.isLoading && !predictionsQuery.error && predictions.length === 0 && (
-          <p className="text-sm text-neutral-400">Nenhuma predicao encontrada.</p>
+          <p className="text-sm text-zinc-400">Nenhuma predicao encontrada.</p>
         )}
         {!predictionsQuery.isLoading && !predictionsQuery.error && predictions.length > 0 && (
           <div className="overflow-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-neutral-400">
+                <tr className="text-left text-zinc-400">
                   <th className="py-2 pr-4">Tipo</th>
                   <th className="py-2 pr-4">Valor</th>
                   <th className="py-2 pr-4">Confianca</th>
@@ -69,7 +69,7 @@ export default function IAAvancadaPage() {
               </thead>
               <tbody>
                 {predictions.map((row) => (
-                  <tr key={row.prediction.id} className="border-t border-neutral-800 text-neutral-200">
+                  <tr key={row.prediction.id} className="border-t border-zinc-800 text-zinc-200">
                     <td className="py-2 pr-4">{row.prediction.predictionType}</td>
                     <td className="py-2 pr-4">
                       {formatNumeric(row.prediction.predictedValue)} {row.prediction.unit}
@@ -86,28 +86,28 @@ export default function IAAvancadaPage() {
         )}
       </section>
 
-      <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 space-y-3">
+      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
         <h2 className="text-white font-semibold">Recomendacoes</h2>
-        {recommendationsQuery.isLoading && <p className="text-sm text-neutral-400">Carregando recomendacoes...</p>}
+        {recommendationsQuery.isLoading && <p className="text-sm text-zinc-400">Carregando recomendacoes...</p>}
         {recommendationsQuery.error && (
           <p className="text-sm text-red-400">Erro ao carregar recomendacoes: {recommendationsQuery.error.message}</p>
         )}
         {!recommendationsQuery.isLoading && !recommendationsQuery.error && recommendations.length === 0 && (
-          <p className="text-sm text-neutral-400">Nenhuma recomendacao encontrada.</p>
+          <p className="text-sm text-zinc-400">Nenhuma recomendacao encontrada.</p>
         )}
         {!recommendationsQuery.isLoading && !recommendationsQuery.error && recommendations.length > 0 && (
           <div className="space-y-3">
             {recommendations.map((row) => (
               <article
                 key={row.recommendation.id}
-                className="border border-neutral-800 rounded-lg p-3 space-y-2 bg-neutral-950"
+                className="border border-zinc-800 rounded-lg p-3 space-y-2 bg-zinc-950"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold text-white">{row.recommendation.recommendationType}</h3>
-                  <span className="text-xs text-neutral-400">status: {row.recommendation.status}</span>
+                  <span className="text-xs text-zinc-400">status: {row.recommendation.status}</span>
                 </div>
-                <p className="text-sm text-neutral-300">{row.recommendation.rationale ?? 'Sem racional detalhado.'}</p>
-                <p className="text-xs text-neutral-400">
+                <p className="text-sm text-zinc-300">{row.recommendation.rationale ?? 'Sem racional detalhado.'}</p>
+                <p className="text-xs text-zinc-400">
                   prioridade: {formatNumeric(row.recommendation.priorityScore)} | confianca: {formatNumeric(row.recommendation.confidenceScore)}
                 </p>
                 <div className="flex gap-2">
@@ -134,18 +134,18 @@ export default function IAAvancadaPage() {
         )}
       </section>
 
-      <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 space-y-3">
+      <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
         <h2 className="text-white font-semibold">Runs de Modelo</h2>
-        {runsQuery.isLoading && <p className="text-sm text-neutral-400">Carregando runs...</p>}
+        {runsQuery.isLoading && <p className="text-sm text-zinc-400">Carregando runs...</p>}
         {runsQuery.error && <p className="text-sm text-red-400">Erro ao carregar runs: {runsQuery.error.message}</p>}
         {!runsQuery.isLoading && !runsQuery.error && runs.length === 0 && (
-          <p className="text-sm text-neutral-400">Nenhum run de modelo encontrado.</p>
+          <p className="text-sm text-zinc-400">Nenhum run de modelo encontrado.</p>
         )}
         {!runsQuery.isLoading && !runsQuery.error && runs.length > 0 && (
           <div className="overflow-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-neutral-400">
+                <tr className="text-left text-zinc-400">
                   <th className="py-2 pr-4">Dominio</th>
                   <th className="py-2 pr-4">Status</th>
                   <th className="py-2 pr-4">Duracao</th>
@@ -154,7 +154,7 @@ export default function IAAvancadaPage() {
               </thead>
               <tbody>
                 {runs.map((run) => (
-                  <tr key={run.id} className="border-t border-neutral-800 text-neutral-200">
+                  <tr key={run.id} className="border-t border-zinc-800 text-zinc-200">
                     <td className="py-2 pr-4">{run.domain}</td>
                     <td className="py-2 pr-4">{run.status}</td>
                     <td className="py-2 pr-4">

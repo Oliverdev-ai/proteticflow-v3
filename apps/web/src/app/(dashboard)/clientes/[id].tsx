@@ -5,10 +5,11 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { updateClientSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
+import { formatBRL } from '../../../lib/format';
 import { 
   ArrowLeft, Loader2, AlertCircle, ReceiptText, Pencil, 
   Link2, Plus, Trash2, ExternalLink, Hash, Calendar, 
-  TrendingUp, Wallet, CheckCircle2, XCircle
+  TrendingUp, Wallet, CheckCircle2, XCircle, User, Percent
 } from 'lucide-react';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted } from '../../../components/shared/typography';
@@ -16,10 +17,6 @@ import { cn } from '../../../lib/utils';
 
 type ClientEditFormInput = z.input<typeof updateClientSchema>;
 type ClientEditFormData = z.output<typeof updateClientSchema>;
-
-function formatBRL(cents: number) {
-  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
 
 function OsBlocksTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();

@@ -44,14 +44,14 @@ export default function DeliveryListPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Truck className="text-violet-500" size={24} />
+            <Truck className="text-primary" size={24} />
             Roteiros de Entrega
           </h1>
-          <p className="text-neutral-400 text-sm mt-1">Calendario semanal dos roteiros</p>
+          <p className="text-zinc-400 text-sm mt-1">Calendario semanal dos roteiros</p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} /> Novo Roteiro
         </button>
@@ -63,25 +63,25 @@ export default function DeliveryListPage() {
         </div>
       )}
       {isLoading && (
-        <div className="mb-4 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
           Carregando roteiros da semana...
         </div>
       )}
       {!isLoading && schedules.length === 0 && (
-        <div className="mb-4 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
           Nenhum roteiro cadastrado nesta semana.
         </div>
       )}
 
       {/* Week header */}
-      <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
-        <div className="grid grid-cols-7 border-b border-neutral-800">
+      <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+        <div className="grid grid-cols-7 border-b border-zinc-800">
           {weekDays.map((day, i) => {
             const isToday = day.toDateString() === new Date().toDateString();
             return (
-              <div key={i} className={`p-3 text-center border-r border-neutral-800 last:border-r-0 ${isToday ? 'bg-violet-900/20' : ''}`}>
-                <p className="text-xs text-neutral-500">{dayLabels[i]}</p>
-                <p className={`text-lg font-semibold ${isToday ? 'text-violet-400' : 'text-white'}`}>
+              <div key={i} className={`p-3 text-center border-r border-zinc-800 last:border-r-0 ${isToday ? 'bg-primary/20' : ''}`}>
+                <p className="text-xs text-zinc-500">{dayLabels[i]}</p>
+                <p className={`text-lg font-semibold ${isToday ? 'text-primary' : 'text-white'}`}>
                   {day.getDate()}
                 </p>
               </div>
@@ -95,10 +95,10 @@ export default function DeliveryListPage() {
             const key = day.toISOString().split('T')[0]!;
             const daySchedules = byDay[key] ?? [];
             return (
-              <div key={i} className="p-2 border-r border-neutral-800 last:border-r-0 space-y-2">
+              <div key={i} className="p-2 border-r border-zinc-800 last:border-r-0 space-y-2">
                 {daySchedules.length === 0 && (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-xs text-neutral-700">Sem roteiros</p>
+                    <p className="text-xs text-zinc-700">Sem roteiros</p>
                   </div>
                 )}
                 {daySchedules.map(s => {
@@ -107,14 +107,14 @@ export default function DeliveryListPage() {
                     <Link
                       key={s.id}
                       to={`/entregas/${s.id}`}
-                      className="block p-2 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors group"
+                      className="block p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors group"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-white font-medium truncate">{s.driverName ?? 'Sem motorista'}</span>
-                        <ChevronRight size={12} className="text-neutral-500 group-hover:text-neutral-300" />
+                        <ChevronRight size={12} className="text-zinc-500 group-hover:text-zinc-300" />
                       </div>
-                      <p className="text-xs text-neutral-500 mt-0.5">{itemCount} {itemCount === 1 ? 'OS' : 'OSs'}</p>
-                      {s.vehicle && <p className="text-xs text-neutral-600">{s.vehicle}</p>}
+                      <p className="text-xs text-zinc-500 mt-0.5">{itemCount} {itemCount === 1 ? 'OS' : 'OSs'}</p>
+                      {s.vehicle && <p className="text-xs text-zinc-600">{s.vehicle}</p>}
                     </Link>
                   );
                 })}
@@ -127,26 +127,26 @@ export default function DeliveryListPage() {
       {/* New Schedule modal placeholder */}
       {createOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-full max-w-md">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Calendar size={18} className="text-violet-400" /> Novo Roteiro de Entrega
+              <Calendar size={18} className="text-primary" /> Novo Roteiro de Entrega
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-neutral-400 mb-1">Data do roteiro</label>
-                <input type="date" className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm" />
+                <label className="block text-sm text-zinc-400 mb-1">Data do roteiro</label>
+                <input type="date" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm" />
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-1">Motorista (opcional)</label>
-                <input type="text" placeholder="Nome do motorista" className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm placeholder-neutral-600" />
+                <label className="block text-sm text-zinc-400 mb-1">Motorista (opcional)</label>
+                <input type="text" placeholder="Nome do motorista" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600" />
               </div>
               <div>
-                <label className="block text-sm text-neutral-400 mb-1">Veiculo (opcional)</label>
-                <input type="text" placeholder="Placa ou modelo" className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm placeholder-neutral-600" />
+                <label className="block text-sm text-zinc-400 mb-1">Veiculo (opcional)</label>
+                <input type="text" placeholder="Placa ou modelo" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600" />
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setCreateOpen(false)} className="flex-1 px-4 py-2 border border-neutral-700 text-neutral-300 rounded-lg hover:bg-neutral-800 text-sm transition-colors">Cancelar</button>
-                <button className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors">Criar Roteiro</button>
+                <button onClick={() => setCreateOpen(false)} className="flex-1 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-800 text-sm transition-colors">Cancelar</button>
+                <button className="flex-1 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors">Criar Roteiro</button>
               </div>
             </div>
           </div>

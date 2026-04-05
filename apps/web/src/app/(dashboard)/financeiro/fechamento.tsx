@@ -2,17 +2,18 @@ import { useState } from 'react';
 import { trpc } from '../../../lib/trpc';
 import { 
   Plus, FileText, Loader2, ChevronLeft, 
-  Calendar, ArrowRight, TrendingUp, CheckCircle2,
+  Calendar, TrendingUp, CheckCircle2,
   AlertCircle, DollarSign, Activity, FileCheck, X
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { H1, Subtitle, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
-const STATUS_MAP: Record<string, { label: string; cls: string; icon: any }> = {
+const STATUS_MAP: Record<string, { label: string; cls: string; icon: LucideIcon }> = {
   open:   { label: 'Aberto',   cls: 'bg-amber-500/10 text-amber-500 border-amber-500/20', icon: AlertCircle },
   closed: { label: 'Fechado',  cls: 'bg-primary/10 text-primary border-primary/20', icon: FileCheck },
   paid:   { label: 'Liquidado', cls: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', icon: CheckCircle2 },

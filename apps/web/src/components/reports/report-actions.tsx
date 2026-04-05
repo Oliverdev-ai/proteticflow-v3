@@ -1,7 +1,6 @@
 import { 
-  FileText, Mail, Download, Table, 
-  Eye, Send, Loader2, AlertCircle, 
-  FileCheck, ShieldCheck, Activity, Globe, X
+  Mail, Download, Table, 
+  Eye, Send, Loader2, Activity, Globe, X
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Large, Muted } from '../shared/typography';

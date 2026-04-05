@@ -4,7 +4,7 @@ import { trpc } from '../../../lib/trpc';
 import { ShoppingCart, ChevronLeft, CheckCircle, Clock, Send, XCircle, ArrowRight } from 'lucide-react';
 
 const STATUS_CONFIG = {
-  draft:      { label: 'Rascunho',  color: 'text-neutral-400', bg: 'bg-neutral-800', icon: Clock },
+  draft:      { label: 'Rascunho',  color: 'text-zinc-400', bg: 'bg-zinc-800', icon: Clock },
   sent:       { label: 'Enviada',   color: 'text-blue-400',    bg: 'bg-blue-900/20', icon: Send },
   received:   { label: 'Recebida',  color: 'text-green-400',   bg: 'bg-green-900/20', icon: CheckCircle },
   cancelled:  { label: 'Cancelada', color: 'text-red-400',     bg: 'bg-red-900/20', icon: XCircle },
@@ -26,8 +26,8 @@ export default function PurchaseOrdersPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Link to="/estoque" className="text-neutral-400 hover:text-white"><ChevronLeft size={20} /></Link>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2"><ShoppingCart size={22} className="text-violet-500" />Ordens de Compra</h1>
+        <Link to="/estoque" className="text-zinc-400 hover:text-white"><ChevronLeft size={20} /></Link>
+        <h1 className="text-2xl font-bold text-white flex items-center gap-2"><ShoppingCart size={22} className="text-primary" />Ordens de Compra</h1>
       </div>
 
       {/* Filter */}
@@ -36,7 +36,7 @@ export default function PurchaseOrdersPage() {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${statusFilter === s ? 'bg-violet-600 text-white' : 'bg-neutral-800 text-neutral-400 hover:text-white'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${statusFilter === s ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
           >
             {s === '' ? 'Todas' : STATUS_CONFIG[s as keyof typeof STATUS_CONFIG].label}
           </button>
@@ -49,7 +49,7 @@ export default function PurchaseOrdersPage() {
         </div>
       )}
       {isLoading && (
-        <div className="mb-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        <div className="mb-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
           Carregando ordens de compra...
         </div>
       )}
@@ -60,13 +60,13 @@ export default function PurchaseOrdersPage() {
       )}
 
       <div className="space-y-3">
-        {pos.length === 0 && <p className="text-neutral-500 text-center py-10">Nenhuma ordem de compra encontrada</p>}
+        {pos.length === 0 && <p className="text-zinc-500 text-center py-10">Nenhuma ordem de compra encontrada</p>}
         {pos.map((po: typeof pos[number]) => {
           const cfg = STATUS_CONFIG[po.status as keyof typeof STATUS_CONFIG];
           const StatusIcon = cfg.icon;
           const totalBRL = (po.totalCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
           return (
-            <div key={po.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
+            <div key={po.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
@@ -75,11 +75,11 @@ export default function PurchaseOrdersPage() {
                       <StatusIcon size={11} /> {cfg.label}
                     </span>
                   </div>
-                  <p className="text-neutral-500 text-xs mt-1">{new Date(po.createdAt).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-zinc-500 text-xs mt-1">{new Date(po.createdAt).toLocaleDateString('pt-BR')}</p>
                   <p className="text-white font-semibold my-1">{totalBRL}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <Link to={`/estoque/oc/${po.id}`} className="text-violet-400 hover:text-violet-300 text-xs flex items-center gap-1">
+                  <Link to={`/estoque/oc/${po.id}`} className="text-primary hover:text-primary text-xs flex items-center gap-1">
                     Ver detalhes <ArrowRight size={12} />
                   </Link>
                   {po.status === 'draft' && (

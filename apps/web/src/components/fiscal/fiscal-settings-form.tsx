@@ -164,7 +164,7 @@ export function FiscalSettingsForm() {
          <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-6 relative overflow-hidden group/focus">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center shadow-inner">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
                      <Globe size={18} strokeWidth={3} />
                   </div>
                   <Large className="text-base font-black uppercase tracking-tight">Focus NFe API</Large>

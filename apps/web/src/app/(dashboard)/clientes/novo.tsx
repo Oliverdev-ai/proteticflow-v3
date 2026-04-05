@@ -5,18 +5,18 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createClientSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import { ArrowLeft, Loader2, MapPin, Building2, User, Phone, Mail, FileText, Percent, ChevronRight, Globe, Share2 } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Building2, User, Mail, Percent, ChevronRight, Share2 } from 'lucide-react';
 import { PageTransition } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted } from '../../../components/shared/typography';
 import { cn } from '../../../lib/utils';
 
 type ClientFormInput = z.input<typeof createClientSchema>;
-type ClientFormData = z.output<typeof createClientSchema>;
+type ClientFormOutput = z.output<typeof createClientSchema>;
 
 export default function ClientCreatePage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<ClientFormInput, unknown, ClientFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<ClientFormInput, unknown, ClientFormOutput>({
     resolver: zodResolver(createClientSchema),
     defaultValues: { priceAdjustmentPercent: 0 },
   });
@@ -44,7 +44,30 @@ export default function ClientCreatePage() {
     }
   }, [lookupQuery.data, setValue]);
 
-  const onSubmit: SubmitHandler<ClientFormData> = (data) => createMutation.mutate(data);
+  const onSubmit: SubmitHandler<ClientFormOutput> = (data) => {
+    const payload: ClientFormInput = {
+      name: data.name,
+      clinic: data.clinic,
+      email: data.email,
+      phone: data.phone,
+      phone2: data.phone2,
+      documentType: data.documentType,
+      document: data.document,
+      contactPerson: data.contactPerson,
+      street: data.street,
+      addressNumber: data.addressNumber,
+      complement: data.complement,
+      neighborhood: data.neighborhood,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zipCode,
+      technicalPreferences: data.technicalPreferences,
+      priceAdjustmentPercent: data.priceAdjustmentPercent,
+      pricingTableId: data.pricingTableId,
+    };
+
+    createMutation.mutate(payload);
+  };
 
   const inputClass = "w-full bg-muted border border-border rounded-xl px-4 py-2 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all";
   const labelClass = "block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1";

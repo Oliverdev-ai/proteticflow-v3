@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { trpc } from '../../../lib/trpc';
 import { 
   TrendingUp, TrendingDown, Clock, Loader2, Activity,
-  ChevronLeft, Calendar, BarChart3, ArrowUpRight, 
-  ArrowDownRight, Landmark, Info
+  ChevronLeft, BarChart3, ArrowUpRight,
+  ArrowDownRight, Info
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatBRL } from '../../../lib/format';
@@ -161,7 +161,7 @@ export default function FluxoCaixaPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {[...months].reverse().map((m, idx) => (
+              {[...months].reverse().map((m, _idx) => (
                 <div 
                   key={m.month} 
                   className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-6 border border-border/40 hover:border-primary/30 hover:bg-primary/[0.01] rounded-3xl transition-all duration-500 group relative"

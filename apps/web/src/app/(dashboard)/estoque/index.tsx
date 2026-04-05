@@ -3,22 +3,22 @@ import { trpc } from '../../../lib/trpc';
 import {
   ShoppingCart, TrendingUp, BarChart3,
   ArrowUpRight, Box, History, Settings2,
-  PackageCheck,
+  PackageCheck, Package, AlertTriangle,
 } from 'lucide-react';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle } from '../../../components/shared/typography';
 import { cn } from '../../../lib/utils';
 
-function SummaryCard({ icon: Icon, label, value, sub, accent = false, color = "indigo" }: {
+function SummaryCard({ icon: Icon, label, value, sub, accent = false, color = "primary" }: {
   icon: React.ElementType; 
   label: string; 
   value: string | number; 
   sub?: string; 
   accent?: boolean;
-  color?: "indigo" | "red" | "emerald" | "orange";
+  color?: "primary" | "red" | "emerald" | "orange";
 }) {
   const colorMap = {
-    indigo: "bg-primary/10 text-primary border-primary/20",
+    primary: "bg-primary/10 text-primary border-primary/20",
     red: "bg-destructive/10 text-destructive border-destructive/20",
     emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     orange: "bg-orange-500/10 text-orange-500 border-orange-500/20",
@@ -96,14 +96,14 @@ export default function InventoryDashboard() {
         </div>
       ) : (
         <ScaleIn className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <SummaryCard icon={Box} label="Itens em Catálogo" value={dash?.totalMaterials ?? 0} color="indigo" />
+          <SummaryCard icon={Box} label="Itens em Catálogo" value={dash?.totalMaterials ?? 0} color="primary" />
           <SummaryCard 
             icon={AlertTriangle} 
             label="Insumos Críticos" 
             value={dash?.belowMinimum ?? 0} 
             sub="Abaixo do estoque mínimo" 
             accent={(dash?.belowMinimum ?? 0) > 0} 
-            color={(dash?.belowMinimum ?? 0) > 0 ? "red" : "indigo"}
+            color={(dash?.belowMinimum ?? 0) > 0 ? "red" : "primary"}
           />
           <SummaryCard icon={BarChart3} label="Patrimônio em Estoque" value={totalValue} color="emerald" />
           <SummaryCard 
@@ -112,7 +112,7 @@ export default function InventoryDashboard() {
             value={dash?.pendingPOs ?? 0} 
             sub="Aguardando recebimento" 
             accent={(dash?.pendingPOs ?? 0) > 0} 
-            color={(dash?.pendingPOs ?? 0) > 0 ? "orange" : "indigo"}
+            color={(dash?.pendingPOs ?? 0) > 0 ? "orange" : "primary"}
           />
         </ScaleIn>
       )}

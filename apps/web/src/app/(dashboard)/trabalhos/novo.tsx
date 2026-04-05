@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, ArrowRight, Check, Plus, Trash2, Loader2, 
-  User, Search, Briefcase, Calendar, Info, Hash,
-  Zap, ChevronRight, CheckCircle2, ShieldCheck, DollarSign,
-  Activity, Clock, FileText, Landmark
+  User, Briefcase, Calendar, Info, Hash,
+  Zap, ChevronRight, CheckCircle2, ShieldCheck,
+  Activity, FileText, Landmark, AlertCircle
 } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';

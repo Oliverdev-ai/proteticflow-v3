@@ -34,7 +34,7 @@ export default function EmployeeCreatePage() {
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto max-w-4xl mx-auto">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/funcionarios')} className="text-neutral-500 hover:text-white transition-colors">
+        <button onClick={() => navigate('/funcionarios')} className="text-zinc-500 hover:text-white transition-colors">
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-2xl font-bold text-white">Novo Funcionário</h1>
@@ -43,37 +43,37 @@ export default function EmployeeCreatePage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Informações Pessoais */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <User size={16} className="text-violet-500" /> Informações Pessoais
+          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+              <User size={16} className="text-primary" /> Informações Pessoais
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-neutral-400 mb-1.5">Nome Completo *</label>
+                <label className="block text-xs text-zinc-400 mb-1.5">Nome Completo *</label>
                 <input {...register('name')} placeholder="Nome do funcionário" className="input-field w-full" />
                 {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">CPF</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">CPF</label>
                   <input {...register('cpf')} placeholder="000.000.000-00" className="input-field w-full" />
                 </div>
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">RG</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">RG</label>
                   <input {...register('rg')} placeholder="00.000.000-0" className="input-field w-full" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-neutral-400 mb-1.5">Email</label>
+                <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
                 <input {...register('email')} type="email" placeholder="email@exemplo.com" className="input-field w-full" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">Telefone</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Telefone</label>
                   <input {...register('phone')} placeholder="(00) 00000-0000" className="input-field w-full" />
                 </div>
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">Nascimento</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Nascimento</label>
                   <input {...register('birthDate')} type="date" className="input-field w-full" />
                 </div>
               </div>
@@ -81,38 +81,38 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Endereço */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <MapPin size={16} className="text-violet-500" /> Endereço
+          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+              <MapPin size={16} className="text-primary" /> Endereço
             </h2>
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="block text-xs text-neutral-400 mb-1.5">CEP</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">CEP</label>
                   <input {...register('zipCode')} placeholder="00000-000" className="input-field w-full" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-neutral-400 mb-1.5">Rua</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Rua</label>
                   <input {...register('street')} className="input-field w-full" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">Número</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Número</label>
                   <input {...register('addressNumber')} className="input-field w-full" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-neutral-400 mb-1.5">Bairro</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Bairro</label>
                   <input {...register('neighborhood')} className="input-field w-full" />
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div className="col-span-3">
-                  <label className="block text-xs text-neutral-400 mb-1.5">Cidade</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Cidade</label>
                   <input {...register('city')} className="input-field w-full" />
                 </div>
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">UF</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">UF</label>
                   <input {...register('state')} maxLength={2} className="input-field w-full uppercase" />
                 </div>
               </div>
@@ -120,24 +120,24 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Vínculo e Cargo */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <Briefcase size={16} className="text-violet-500" /> Vínculo Empregatício
+          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+              <Briefcase size={16} className="text-primary" /> Vínculo Empregatício
             </h2>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">Função / Cargo</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Função / Cargo</label>
                   <input {...register('position')} placeholder="Ex: Protesista Sênior" className="input-field w-full" />
                 </div>
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">Departamento</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Departamento</label>
                   <input {...register('department')} placeholder="Ex: Produção" className="input-field w-full" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">Tipo Profissional</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Tipo Profissional</label>
                   <select {...register('type')} className="input-field w-full">
                     <option value="protesista">Protesista</option>
                     <option value="auxiliar">Auxiliar</option>
@@ -148,7 +148,7 @@ export default function EmployeeCreatePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-neutral-400 mb-1.5">Tipo Contrato</label>
+                  <label className="block text-xs text-zinc-400 mb-1.5">Tipo Contrato</label>
                   <select {...register('contractType')} className="input-field w-full">
                     <option value="clt">CLT</option>
                     <option value="pj_mei">PJ / MEI</option>
@@ -159,37 +159,37 @@ export default function EmployeeCreatePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-neutral-400 mb-1.5">Data de Admissão</label>
+                <label className="block text-xs text-zinc-400 mb-1.5">Data de Admissão</label>
                 <input {...register('admissionDate')} type="date" className="input-field w-full" />
               </div>
             </div>
           </section>
 
           {/* Remuneração e Comissão */}
-          <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <CreditCard size={16} className="text-violet-500" /> Remuneração
+          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+              <CreditCard size={16} className="text-primary" /> Remuneração
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-neutral-400 mb-1.5">Salário Base (Cents)</label>
+                <label className="block text-xs text-zinc-400 mb-1.5">Salário Base (Cents)</label>
                 <input {...register('baseSalaryCents', { valueAsNumber: true })} type="number" className="input-field w-full" />
-                <p className="text-[10px] text-neutral-500 mt-1">Ex: 300000 para R$ 3.000,00</p>
+                <p className="text-[10px] text-zinc-500 mt-1">Ex: 300000 para R$ 3.000,00</p>
               </div>
               <div>
-                <label className="block text-xs text-neutral-400 mb-1.5 flex items-center justify-between">
+                <label className="block text-xs text-zinc-400 mb-1.5 flex items-center justify-between">
                   Comissão Padrão (%)
-                  <Percent size={12} className="text-neutral-500" />
+                  <Percent size={12} className="text-zinc-500" />
                 </label>
                 <input {...register('defaultCommissionPercent', { valueAsNumber: true })} type="number" step="0.1" className="input-field w-full" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                   <label className="block text-xs text-neutral-400 mb-1.5">Vale Transp. (Cents)</label>
+                   <label className="block text-xs text-zinc-400 mb-1.5">Vale Transp. (Cents)</label>
                    <input {...register('transportAllowanceCents', { valueAsNumber: true })} type="number" className="input-field w-full" />
                 </div>
                 <div>
-                   <label className="block text-xs text-neutral-400 mb-1.5">Vale Ref. (Cents)</label>
+                   <label className="block text-xs text-zinc-400 mb-1.5">Vale Ref. (Cents)</label>
                    <input {...register('mealAllowanceCents', { valueAsNumber: true })} type="number" className="input-field w-full" />
                 </div>
               </div>
@@ -207,14 +207,14 @@ export default function EmployeeCreatePage() {
           <button 
             type="button" 
             onClick={() => navigate('/funcionarios')} 
-            className="flex-1 py-3 rounded-xl border border-neutral-800 text-neutral-400 text-sm font-semibold hover:bg-neutral-800 hover:text-white transition-all"
+            className="flex-1 py-3 rounded-xl border border-zinc-800 text-zinc-400 text-sm font-semibold hover:bg-zinc-800 hover:text-white transition-all"
           >
             Cancelar
           </button>
           <button 
             type="submit" 
             disabled={isSubmitting || createMutation.isPending} 
-            className="flex-[2] py-3 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20"
+            className="flex-[2] py-3 rounded-xl bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
           >
             {createMutation.isPending ? <><Loader2 size={16} className="animate-spin" /> Salvando...</> : 'Cadastrar Funcionário'}
           </button>

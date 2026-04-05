@@ -2,13 +2,6 @@ import { ShieldAlert, Loader2, Settings2, ShieldCheck, Activity } from 'lucide-r
 import { usePermissions } from '../../../hooks/use-permissions';
 import { useSettings } from '../../../hooks/use-settings';
 import { SettingsTabs } from '../../../components/settings/settings-tabs';
-import { ProfileTab } from '../../../components/settings/profile-tab';
-import { LabTab } from '../../../components/settings/lab-tab';
-import { EmployeesTab } from '../../../components/settings/employees-tab';
-import { AuthorizationsTab } from '../../../components/settings/authorizations-tab';
-import { PlansTab } from '../../../components/settings/plans-tab';
-import { NotificationsTab } from '../../../components/settings/notifications-tab';
-import { FiscalSettingsForm } from '../../../components/fiscal/fiscal-settings-form';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
 
@@ -75,15 +68,7 @@ export default function SettingsPage() {
 
       {/* Settings Grid Navigation & Content */}
       <ScaleIn delay={0.1}>
-        <SettingsTabs
-          perfil={<ProfileTab />}
-          laboratorio={<LabTab />}
-          funcionarios={<EmployeesTab />}
-          autorizacoes={<AuthorizationsTab />}
-          planos={<PlansTab />}
-          notificacoes={<NotificationsTab />}
-          fiscal={<FiscalSettingsForm />}
-        />
+        <SettingsTabs />
       </ScaleIn>
 
       <ScaleIn delay={0.2} className="bg-muted/30 border border-border/50 rounded-[32px] p-8 flex items-start gap-6 mt-4">

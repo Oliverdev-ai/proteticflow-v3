@@ -6,7 +6,7 @@ export function TeamTab() {
     <div className="space-y-6">
       <div>
         <h4 className="text-white font-medium">Equipe</h4>
-        <p className="text-sm text-neutral-400">Gestao de roles e visualizacao de permissoes.</p>
+        <p className="text-sm text-zinc-400">Gestao de roles e visualizacao de permissoes.</p>
       </div>
       <TeamUsersTable />
       <RolesMatrix />

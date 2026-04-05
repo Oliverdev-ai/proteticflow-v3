@@ -33,7 +33,7 @@ export function ChatInput({ onSend, disabled, isSending }: Props) {
   });
 
   return (
-    <div className="flex items-end gap-2 bg-zinc-900 border border-zinc-800 rounded-xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-violet-500/50 transition-all">
+    <div className="flex items-end gap-2 bg-zinc-900 border border-zinc-800 rounded-xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-primary/50 transition-all">
       <div className="flex-1 py-1">
         <EditorContent editor={editor} />
       </div>
@@ -45,7 +45,7 @@ export function ChatInput({ onSend, disabled, isSending }: Props) {
           if (t) { void onSend(t); editor.commands.clearContent(); } 
         }}
         disabled={disabled || isSending} 
-        className="p-2.5 rounded-lg bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-50 transition-colors shrink-0 mb-0.5"
+        className="p-2.5 rounded-lg bg-primary text-white hover:bg-primary disabled:opacity-50 transition-colors shrink-0 mb-0.5"
       >
         <SendHorizontal size={16} />
       </button>

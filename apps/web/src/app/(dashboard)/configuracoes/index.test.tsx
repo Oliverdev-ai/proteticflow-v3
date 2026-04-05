@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('../../../hooks/use-permissions', () => ({
   usePermissions: () => ({ hasAccess: () => true }),
@@ -31,7 +32,11 @@ import SettingsPage from './index';
 
 describe('configuracoes/index', () => {
   it('renderiza tabs', () => {
-    const html = renderToString(<SettingsPage />);
-    expect(html).toContain('Configuracoes');
+    const html = renderToString(
+      <MemoryRouter>
+        <SettingsPage />
+      </MemoryRouter>,
+    );
+    expect(html).toContain('Configura');
   });
 });

@@ -39,7 +39,7 @@ export function RecentJobsTable({ jobs }: { jobs: RecentJob[] }) {
             </thead>
             <tbody>
               {jobs.map((job) => {
-                const statusInfo = STATUS_LABEL[job.status] ?? { label: job.status, color: 'bg-neutral-800 text-neutral-300' };
+                const statusInfo = STATUS_LABEL[job.status] ?? { label: job.status, color: 'bg-zinc-800 text-zinc-300' };
                 const isOverdue =
                   job.dueDate &&
                   new Date(job.dueDate) < new Date() &&

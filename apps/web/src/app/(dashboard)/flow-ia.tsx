@@ -85,7 +85,7 @@ export default function FlowIAPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Flow IA</h1>
-        <p className="text-sm text-neutral-400">
+        <p className="text-sm text-zinc-400">
           Assistente contextual do laboratório com histórico de sessões e comandos por linguagem natural.
         </p>
       </div>

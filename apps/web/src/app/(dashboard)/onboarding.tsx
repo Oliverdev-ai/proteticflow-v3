@@ -25,12 +25,12 @@ function StepBadge({ current }: { current: Step }) {
         <div key={step.id} className="flex items-center gap-2">
           <div
             className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ${
-              step.id <= current ? 'bg-violet-600 text-white' : 'bg-neutral-800 text-neutral-500'
+              step.id <= current ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-500'
             }`}
           >
             {step.id}
           </div>
-          <span className={`text-xs ${step.id === current ? 'text-white' : 'text-neutral-500'}`}>{step.label}</span>
+          <span className={`text-xs ${step.id === current ? 'text-white' : 'text-zinc-500'}`}>{step.label}</span>
         </div>
       ))}
     </div>
@@ -70,26 +70,26 @@ export function OnboardingWizard() {
 
   if (step === 2) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <StepBadge current={step} />
           <div className="flex justify-center">
-            <Users className="text-violet-300" size={48} />
+            <Users className="text-primary" size={48} />
           </div>
           <h1 className="text-2xl font-bold text-white">Passo 2: cadastre seu primeiro cliente</h1>
-          <p className="text-neutral-400">
+          <p className="text-zinc-400">
             Criar o primeiro cliente garante que a equipe ja consiga emitir OS sem retrabalho.
           </p>
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigate('/clientes/novo')}
-              className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors"
+              className="w-full bg-primary hover:bg-primary text-white text-sm font-semibold py-3 rounded-xl transition-colors"
             >
               Ir para cadastro de cliente
             </button>
             <button
               onClick={() => setStep(3)}
-              className="w-full border border-neutral-700 hover:bg-neutral-800 text-neutral-200 text-sm font-semibold py-3 rounded-xl transition-colors"
+              className="w-full border border-zinc-700 hover:bg-zinc-800 text-zinc-200 text-sm font-semibold py-3 rounded-xl transition-colors"
             >
               Continuar onboarding
             </button>
@@ -101,26 +101,26 @@ export function OnboardingWizard() {
 
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <StepBadge current={step} />
           <div className="flex justify-center">
-            <Wrench className="text-violet-300" size={48} />
+            <Wrench className="text-primary" size={48} />
           </div>
           <h1 className="text-2xl font-bold text-white">Passo 3: gere sua primeira OS</h1>
-          <p className="text-neutral-400">
+          <p className="text-zinc-400">
             Com cliente e OS cadastrados, o Kanban, financeiro e relatorios passam a refletir seu fluxo real.
           </p>
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigate('/trabalhos/novo')}
-              className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors"
+              className="w-full bg-primary hover:bg-primary text-white text-sm font-semibold py-3 rounded-xl transition-colors"
             >
               Ir para criacao de OS
             </button>
             <button
               onClick={() => setStep(4)}
-              className="w-full border border-neutral-700 hover:bg-neutral-800 text-neutral-200 text-sm font-semibold py-3 rounded-xl transition-colors"
+              className="w-full border border-zinc-700 hover:bg-zinc-800 text-zinc-200 text-sm font-semibold py-3 rounded-xl transition-colors"
             >
               Finalizar onboarding
             </button>
@@ -132,17 +132,17 @@ export function OnboardingWizard() {
 
   if (step === 4) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <StepBadge current={step} />
           <div className="flex justify-center">
             <CheckCircle2 className="text-green-400" size={56} />
           </div>
           <h1 className="text-2xl font-bold text-white">Onboarding concluido</h1>
-          <p className="text-neutral-400">Tudo pronto para operar seu laboratorio no painel principal.</p>
+          <p className="text-zinc-400">Tudo pronto para operar seu laboratorio no painel principal.</p>
           <button
             onClick={() => navigate('/')}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-primary hover:bg-primary text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             Acessar o painel <ArrowRight size={16} />
           </button>
@@ -152,66 +152,66 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         <StepBadge current={step} />
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Building2 className="text-violet-400" size={40} />
+            <Building2 className="text-primary" size={40} />
           </div>
           <h1 className="text-2xl font-bold text-white">Configure seu laboratorio</h1>
-          <p className="text-neutral-400 text-sm">Esses dados aparecem em relatorios, PDFs e comunicacao com clientes.</p>
+          <p className="text-zinc-400 text-sm">Esses dados aparecem em relatorios, PDFs e comunicacao com clientes.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm text-neutral-300 mb-1.5">Nome do laboratorio *</label>
+            <label className="block text-sm text-zinc-300 mb-1.5">Nome do laboratorio *</label>
             <input
               {...register('name')}
               placeholder="Ex: Lab Dental Silva"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
             />
             {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm text-neutral-300 mb-1.5">CNPJ</label>
+            <label className="block text-sm text-zinc-300 mb-1.5">CNPJ</label>
             <input
               {...register('cnpj')}
               placeholder="00.000.000/0001-00"
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm text-neutral-300 mb-1.5">Telefone</label>
+              <label className="block text-sm text-zinc-300 mb-1.5">Telefone</label>
               <input
                 {...register('phone')}
                 placeholder="(00) 00000-0000"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm text-neutral-300 mb-1.5">Email</label>
+              <label className="block text-sm text-zinc-300 mb-1.5">Email</label>
               <input
                 {...register('email')}
                 placeholder="contato@lab.com"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm text-neutral-300 mb-1.5 flex items-center gap-1">
-              <MapPin size={13} className="text-neutral-500" /> Cidade / UF
+            <label className="block text-sm text-zinc-300 mb-1.5 flex items-center gap-1">
+              <MapPin size={13} className="text-zinc-500" /> Cidade / UF
             </label>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
                 <input
                   {...register('city')}
                   placeholder="Cidade"
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-violet-500 transition-colors"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
               <div>
@@ -219,7 +219,7 @@ export function OnboardingWizard() {
                   {...register('state')}
                   placeholder="UF"
                   maxLength={2}
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-violet-500 transition-colors uppercase"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors uppercase"
                 />
               </div>
             </div>
@@ -230,7 +230,7 @@ export function OnboardingWizard() {
           <button
             type="submit"
             disabled={isSubmitting || createTenant.isPending}
-            className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
+            className="w-full bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
           >
             {createTenant.isPending ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
