@@ -58,7 +58,7 @@ export async function deleteOsBlock(tenantId: number, blockId: number) {
     throw new TRPCError({ code: 'NOT_FOUND', message: 'Bloco de OS não encontrado' });
   }
 
-  await db.delete(osBlocks).where(eq(osBlocks.id, blockId));
+  await db.delete(osBlocks).where(and(eq(osBlocks.id, blockId), eq(osBlocks.tenantId, tenantId)));
 }
 
 export async function resolveClientByOsNumber(tenantId: number, osNumber: number) {

@@ -222,7 +222,10 @@ export async function acceptInvite(token: string, userId: number): Promise<void>
   }
 
   if (invite.expiresAt < new Date()) {
-    await db.update(invites).set({ status: 'expired' }).where(eq(invites.id, invite.id));
+    await db
+      .update(invites)
+      .set({ status: 'expired' })
+      .where(and(eq(invites.id, invite.id), eq(invites.tenantId, invite.tenantId)));
     const { TRPCError } = await import('@trpc/server');
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Convite expirado' });
   }
@@ -323,7 +326,10 @@ export async function updateMemberRole(tenantId: number, memberId: number, role:
     }
   }
 
-  await db.update(tenantMembers).set({ role, updatedAt: new Date() }).where(eq(tenantMembers.id, memberId));
+  await db
+    .update(tenantMembers)
+    .set({ role, updatedAt: new Date() })
+    .where(and(eq(tenantMembers.id, memberId), eq(tenantMembers.tenantId, tenantId)));
   logger.info({ action: 'tenant.member.role_changed', tenantId, memberId, role }, 'Role de membro alterado');
 }
 

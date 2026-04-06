@@ -382,8 +382,11 @@ export async function listPendingReminders(now: Date) {
   });
 }
 
-export async function markReminderSent(eventId: number) {
-  await db.update(events).set({ reminderSent: true, updatedAt: new Date() }).where(eq(events.id, eventId));
+export async function markReminderSent(tenantId: number, eventId: number) {
+  await db
+    .update(events)
+    .set({ reminderSent: true, updatedAt: new Date() })
+    .where(and(eq(events.id, eventId), eq(events.tenantId, tenantId)));
 }
 
 export const __testOnly = {

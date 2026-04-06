@@ -209,10 +209,19 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
       jobId: createdJob.id,
       clientId: resolvedClientId!,
     };
-    await tx.insert(events).values(eventData).onConflictDoUpdate({
-      target: [events.tenantId, events.jobId],
-      set: { startAt: eventData.startAt, endAt: eventData.endAt, title: eventData.title }
-    });
+    const [existingEvent] = await tx
+      .select({ id: events.id })
+      .from(events)
+      .where(and(eq(events.tenantId, tenantId), eq(events.jobId, createdJob.id)));
+
+    if (existingEvent) {
+      await tx
+        .update(events)
+        .set({ startAt: eventData.startAt, endAt: eventData.endAt, title: eventData.title })
+        .where(eq(events.id, existingEvent.id));
+    } else {
+      await tx.insert(events).values(eventData);
+    }
 
     logger.info({ action: 'job.create', tenantId, jobId: createdJob.id, orderNumber: finalOrderNumber, clientId: resolvedClientId!, totalCents: jobTotalCents, itemCount: processedItems.length }, 'OS criada');
     return createdJob;
@@ -515,7 +524,7 @@ export async function deletePhoto(tenantId: number, photoId: number) {
   } catch {
     // Ignorar erro de S3 se arquivo nÃ£o existir
   }
-  await db.delete(jobPhotos).where(eq(jobPhotos.id, photoId));
+  await db.delete(jobPhotos).where(and(eq(jobPhotos.id, photoId), eq(jobPhotos.tenantId, tenantId)));
 }
 
 // â”€â”€â”€ Etapas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -613,7 +622,7 @@ export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
   if (jobIds.length > 0) {
     const items = await db.select({ jobId: jobItems.jobId, name: jobItems.serviceNameSnapshot })
       .from(jobItems)
-      .where(inArray(jobItems.jobId, jobIds))
+      .where(and(eq(jobItems.tenantId, tenantId), inArray(jobItems.jobId, jobIds)))
       .orderBy(sql`${jobItems.id} ASC`);
     for (const item of items) {
       if (!firstItems[item.jobId]) firstItems[item.jobId] = item.name;

@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:baseline": "tsx ../../scripts/baseline-drizzle-migrations.ts",
+    "db:migrate": "tsx ../../scripts/baseline-drizzle-migrations.ts && drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "check:tenant-isolation": "tsx ../../scripts/check-tenant-isolation.ts"

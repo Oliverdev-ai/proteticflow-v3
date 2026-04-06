@@ -89,7 +89,10 @@ export async function getEmployee(tenantId: number, id: number) {
   
   if (!employee) throw new TRPCError({ code: 'NOT_FOUND', message: 'Funcionário não encontrado' });
 
-  const skills = await db.select().from(employeeSkills).where(eq(employeeSkills.employeeId, id));
+  const skills = await db
+    .select()
+    .from(employeeSkills)
+    .where(and(eq(employeeSkills.employeeId, id), eq(employeeSkills.tenantId, tenantId)));
   
   return { ...employee, skills };
 }

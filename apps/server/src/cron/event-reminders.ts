@@ -10,7 +10,7 @@ export async function eventReminders() {
   let sent = 0;
   for (const event of pending) {
     if (!event.createdBy) {
-      await markReminderSent(event.id);
+      await markReminderSent(event.tenantId, event.id);
       continue;
     }
 
@@ -23,7 +23,7 @@ export async function eventReminders() {
       relatedJobId: event.jobId ?? null,
     });
 
-    await markReminderSent(event.id);
+    await markReminderSent(event.tenantId, event.id);
     sent++;
     logger.info({
       action: 'agenda.reminder',

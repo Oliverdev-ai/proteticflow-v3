@@ -173,7 +173,7 @@ export async function closePeriod(tenantId: number, periodId: number, userId: nu
       closedBy: userId,
       updatedAt: new Date(),
     })
-    .where(eq(payrollPeriods.id, periodId))
+    .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)))
     .returning();
 
   logger.info({ action: 'payroll.close', tenantId, periodId }, 'Payroll period closed');
@@ -200,7 +200,14 @@ export async function generatePayslipPdf(tenantId: number, periodId: number, emp
   })
   .from(payrollEntries)
   .innerJoin(employees, eq(employees.id, payrollEntries.employeeId))
-  .where(and(eq(payrollEntries.periodId, periodId), eq(payrollEntries.employeeId, employeeId)));
+  .where(
+    and(
+      eq(payrollEntries.periodId, periodId),
+      eq(payrollEntries.employeeId, employeeId),
+      eq(payrollEntries.tenantId, tenantId),
+      eq(employees.tenantId, tenantId),
+    ),
+  );
 
   if (!entry) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lançamento não encontrado para este funcionário' });
 
@@ -267,7 +274,13 @@ export async function getPeriodReport(tenantId: number, periodId: number) {
   })
   .from(payrollEntries)
   .innerJoin(employees, eq(employees.id, payrollEntries.employeeId))
-  .where(eq(payrollEntries.periodId, periodId));
+  .where(
+    and(
+      eq(payrollEntries.periodId, periodId),
+      eq(payrollEntries.tenantId, tenantId),
+      eq(employees.tenantId, tenantId),
+    ),
+  );
 
   return {
     period,
