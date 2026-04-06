@@ -133,6 +133,7 @@ describe('F35 — Purchases Service', () => {
 
     // 1. Status da OC
     expect(purchase.status).toBe('received');
+    expect(purchase.receivedBy).toBe(user.id);
 
     // 2. Estoque atualizado
     const [m1] = await db.select({ stock: materials.currentStock })

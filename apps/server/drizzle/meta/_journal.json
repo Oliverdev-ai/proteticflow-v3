@@ -162,6 +162,13 @@
       "when": 1775499600000,
       "tag": "0022_purchases_ap_link",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1775503200000,
+      "tag": "0023_purchases_received_by",
+      "breakpoints": true
     }
   ]
 }

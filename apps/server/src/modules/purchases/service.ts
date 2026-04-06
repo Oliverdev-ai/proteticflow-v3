@@ -380,7 +380,12 @@ export async function receivePurchase(
 
     const [poUpdated] = await tx
       .update(purchaseOrders)
-      .set({ status: 'received', receivedAt: new Date(), updatedAt: new Date() })
+      .set({
+        status: 'received',
+        receivedAt: new Date(),
+        receivedBy: userId,
+        updatedAt: new Date(),
+      })
       .where(
         and(
           eq(purchaseOrders.id, poId),
@@ -417,7 +422,7 @@ export async function receivePurchase(
       entityType: 'purchase_orders',
       entityId: poId,
       oldValue: { status: purchase.po.status },
-      newValue: { status: 'received', apId: ap.id },
+      newValue: { status: 'received', apId: ap.id, receivedBy: userId },
     });
 
     return { purchase: poUpdated, ap };
