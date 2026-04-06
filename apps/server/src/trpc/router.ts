@@ -22,6 +22,7 @@ import { licensingRouter } from '../modules/licensing/router.js';
 import { fiscalRouter } from '../modules/fiscal/router.js';
 import { dashboardRouter } from '../modules/dashboard/router.js';
 import { auditRouter } from '../modules/audit/router.js';
+import { purchasesRouter } from '../modules/purchases/router.js';
 
 export const appRouter = router({
   dashboard: dashboardRouter,
@@ -47,6 +48,7 @@ export const appRouter = router({
   ai: aiRouter,
   support: supportRouter,
   audit: auditRouter,
+  purchases: purchasesRouter,
 });
 
 export type AppRouter = typeof appRouter;

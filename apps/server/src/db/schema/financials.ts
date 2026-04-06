@@ -80,12 +80,16 @@ export const accountsPayable = pgTable('accounts_payable', {
   cancelReason: text('cancel_reason'),
   cancelledBy: integer('cancelled_by'),
   createdBy: integer('created_by'),
+  // F35: rastreamento da origem do lançamento (ex: 'purchase_order')
+  referenceId: integer('reference_id'),
+  referenceType: varchar('reference_type', { length: 64 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   index('ap_tenant_idx').on(table.tenantId),
   index('ap_status_idx').on(table.status),
   index('ap_due_date_idx').on(table.dueDate),
+  index('ap_reference_idx').on(table.referenceType, table.referenceId),
 ]);
 
 export const cashbookEntries = pgTable('cashbook_entries', {

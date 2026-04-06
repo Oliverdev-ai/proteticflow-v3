@@ -115,6 +115,7 @@ export const purchaseOrders = pgTable('purchase_orders', {
   totalCents: integer('total_cents').notNull().default(0),
   notes: text('notes'),
   receivedAt: timestamp('received_at', { withTimezone: true }),
+  receivedBy: integer('received_by'),
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   createdBy: integer('created_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

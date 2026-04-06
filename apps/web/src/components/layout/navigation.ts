@@ -20,6 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Folha de Pagamento', href: '/payroll', module: 'payroll', group: 'financeiro', keywords: ['holerite'] },
   { label: 'Fiscal', href: '/fiscal/boletos', module: 'fiscal', keywords: ['boleto', 'nfse'] },
   { label: 'Estoque', href: '/estoque', module: 'inventory', keywords: ['materiais'] },
+  { label: 'Compras', href: '/compras', module: 'inventory', keywords: ['fornecedor', 'pedido', 'oc'] },
   { label: 'Funcionarios', href: '/funcionarios', module: 'employees', keywords: ['equipe'] },
   { label: 'Relatorios', href: '/relatorios', module: 'reports', keywords: ['pdf'] },
   { label: 'Simulador', href: '/simulador', module: 'simulator' },

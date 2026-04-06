@@ -43,6 +43,9 @@ const MaterialsPage = lazy(() => import('./app/(dashboard)/estoque/materiais'));
 const SuppliersPage = lazy(() => import('./app/(dashboard)/estoque/fornecedores'));
 const PurchaseOrdersPage = lazy(() => import('./app/(dashboard)/estoque/ordens-compra'));
 const PODetailPage = lazy(() => import('./app/(dashboard)/estoque/oc/[id]'));
+const PurchasesListPage = lazy(() => import('./app/(dashboard)/compras/index'));
+const PurchaseFormPage = lazy(() => import('./app/(dashboard)/compras/novo'));
+const PurchaseDetailPage = lazy(() => import('./app/(dashboard)/compras/[id]'));
 const EmployeeListPage = lazy(() => import('./app/(dashboard)/funcionarios/index'));
 const EmployeeCreatePage = lazy(() => import('./app/(dashboard)/funcionarios/novo'));
 const EmployeeEditPage = lazy(() => import('./app/(dashboard)/funcionarios/[id]'));
@@ -118,6 +121,10 @@ function AppContent() {
             <Route path="/estoque/fornecedores" element={<SuppliersPage />} />
             <Route path="/estoque/ordens-compra" element={<PurchaseOrdersPage />} />
             <Route path="/estoque/oc/:id" element={<PODetailPage />} />
+
+            <Route path="/compras" element={<PurchasesListPage />} />
+            <Route path="/compras/novo" element={<PurchaseFormPage />} />
+            <Route path="/compras/:id" element={<PurchaseDetailPage />} />
 
             <Route path="/funcionarios" element={<EmployeeListPage />} />
             <Route path="/funcionarios/novo" element={<EmployeeCreatePage />} />
