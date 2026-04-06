@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
-import { invites, osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
+import { invites, osBlocks, users, tenants, tenantMembers, fiscalSettings } from '../../db/schema/index.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as tenantService from './service.js';
@@ -30,6 +30,7 @@ async function cleanup() {
   await db.delete(invites);
   await db.delete(osBlocks);
   await db.delete(tenantMembers);
+  await db.delete(fiscalSettings);
   await db.delete(tenants);
   await db.delete(users);
 }
