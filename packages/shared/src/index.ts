@@ -29,6 +29,8 @@ export * from './validation/fiscal.schema';
 export * from './validation/audit.schema';
 export * from './validation/os-blocks.schema';
 export * from './validation/timesheet.schema';
+export * from './validation/purchase.schema';
+
 export * from './types/auth';
 export * from './types/tenant';
 export * from './types/settings';

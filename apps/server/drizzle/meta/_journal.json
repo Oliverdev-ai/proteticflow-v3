@@ -155,6 +155,13 @@
       "when": 1775276400000,
       "tag": "0021_job_subtypes",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1775499600000,
+      "tag": "0022_purchases_ap_link",
+      "breakpoints": true
     }
   ]
 }
