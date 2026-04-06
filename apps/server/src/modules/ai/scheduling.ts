@@ -13,7 +13,7 @@ type JobCandidate = {
   deadline: Date;
   totalCents: number;
   assignedTo: number | null;
-  status: 'pending' | 'in_progress' | 'quality_check' | 'ready' | 'delivered' | 'cancelled';
+  status: 'pending' | 'in_progress' | 'quality_check' | 'ready' | 'completed_with_rework' | 'delivered' | 'cancelled';
 };
 
 function hoursUntil(date: Date): number {

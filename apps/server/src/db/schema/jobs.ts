@@ -20,8 +20,15 @@ export const jobStatusEnum = pgEnum('job_status', [
   'in_progress',
   'quality_check',
   'ready',
+  'completed_with_rework',
   'delivered',
   'cancelled',
+]);
+
+export const jobSubTypeEnum = pgEnum('job_sub_type', [
+  'standard',
+  'proof',
+  'rework',
 ]);
 
 // ─── OS / Trabalho ───────────────────────────────────────────────────────────
@@ -39,6 +46,15 @@ export const jobs = pgTable('jobs', {
   color: varchar('color', { length: 64 }),
   instructions: text('instructions'),
   status: jobStatusEnum('status').default('pending').notNull(),
+  jobSubType: jobSubTypeEnum('job_sub_type').default('standard').notNull(),
+  isUrgent: boolean('is_urgent').notNull().default(false),
+  suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+  suspendedBy: integer('suspended_by'),
+  suspendReason: text('suspend_reason'),
+  reworkReason: text('rework_reason'),
+  reworkParentId: integer('rework_parent_id'),
+  proofDueDate: timestamp('proof_due_date', { withTimezone: true }),
+  proofReturnedAt: timestamp('proof_returned_at', { withTimezone: true }),
   // AP-02: totalCents é soma denormalizada dos job_items (atualizada via app)
   totalCents: integer('total_cents').notNull().default(0),
   deadline: timestamp('deadline', { withTimezone: true }).notNull(),
@@ -63,6 +79,10 @@ export const jobs = pgTable('jobs', {
   index('jobs_client_idx').on(table.clientId),
   index('jobs_assigned_to_idx').on(table.assignedTo),
   index('jobs_deadline_idx').on(table.deadline),
+  index('jobs_subtype_idx').on(table.jobSubType),
+  index('jobs_urgent_idx').on(table.isUrgent),
+  index('jobs_suspended_at_idx').on(table.suspendedAt),
+  index('jobs_rework_parent_idx').on(table.reworkParentId),
 ]);
 
 // AP-02: Itens da OS com preço congelado no momento do pedido.

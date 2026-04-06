@@ -1,10 +1,16 @@
 import { z } from 'zod';
 
-const JOB_STATUS_VALUES = ['pending', 'in_progress', 'quality_check', 'ready', 'delivered', 'cancelled'] as const;
+const JOB_STATUS_VALUES = ['pending', 'in_progress', 'quality_check', 'ready', 'completed_with_rework', 'delivered', 'cancelled'] as const;
+const JOB_SUBTYPE_VALUES = ['standard', 'proof', 'rework'] as const;
 
 export const createJobSchema = z.object({
   clientId: z.number().int().positive().optional(),
   osNumber: z.number().int().positive().optional(),
+  jobSubType: z.enum(JOB_SUBTYPE_VALUES).optional(),
+  isUrgent: z.boolean().optional(),
+  proofDueDate: z.string().datetime().optional(),
+  reworkReason: z.string().min(3).optional(),
+  reworkParentId: z.number().int().positive().optional(),
   patientName: z.string().max(255).optional(),
   prothesisType: z.string().max(128).optional(),
   material: z.string().max(128).optional(),
@@ -24,9 +30,30 @@ export const createJobSchema = z.object({
 }).refine(d => d.clientId || d.osNumber, {
   message: 'Cliente ou número de OS é obrigatório',
   path: ['clientId']
+}).superRefine((data, ctx) => {
+  if (data.jobSubType === 'proof' && !data.proofDueDate) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'Prazo da prova é obrigatório para OS de prova',
+      path: ['proofDueDate'],
+    });
+  }
+  if (data.jobSubType === 'rework' && !data.reworkReason) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'Motivo da remoldagem é obrigatório',
+      path: ['reworkReason'],
+    });
+  }
 });
 
 export const updateJobSchema = z.object({
+  jobSubType: z.enum(JOB_SUBTYPE_VALUES).optional(),
+  isUrgent: z.boolean().optional(),
+  proofDueDate: z.string().datetime().nullable().optional(),
+  proofReturnedAt: z.string().datetime().nullable().optional(),
+  reworkReason: z.string().min(3).nullable().optional(),
+  reworkParentId: z.number().int().positive().nullable().optional(),
   patientName: z.string().max(255).optional(),
   prothesisType: z.string().max(128).optional(),
   material: z.string().max(128).optional(),
@@ -65,6 +92,42 @@ export const kanbanFiltersSchema = z.object({
 export const moveKanbanSchema = z.object({
   jobId: z.number().int().positive(),
   newStatus: z.enum(['pending', 'in_progress', 'quality_check', 'ready', 'delivered'] as const),
+});
+
+export const suspendJobSchema = z.object({
+  jobId: z.number().int().positive(),
+  reason: z.string().min(3),
+});
+
+export const unsuspendJobSchema = z.object({
+  jobId: z.number().int().positive(),
+});
+
+export const markProofSchema = z.object({
+  jobId: z.number().int().positive(),
+  proofDueDate: z.string().datetime(),
+});
+
+export const returnProofSchema = z.object({
+  jobId: z.number().int().positive(),
+});
+
+export const toggleUrgentSchema = z.object({
+  jobId: z.number().int().positive(),
+  isUrgent: z.boolean(),
+});
+
+export const createReworkSchema = z.object({
+  originalJobId: z.number().int().positive(),
+  reason: z.string().min(3),
+  deadline: z.string().datetime(),
+  patientName: z.string().max(255).optional(),
+  prothesisType: z.string().max(128).optional(),
+  material: z.string().max(128).optional(),
+  color: z.string().max(64).optional(),
+  instructions: z.string().optional(),
+  notes: z.string().optional(),
+  assignedTo: z.number().int().positive().nullable().optional(),
 });
 
 export const createJobStageSchema = z.object({

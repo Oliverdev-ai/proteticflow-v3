@@ -11,6 +11,7 @@ const STATUS_THEMES: Record<JobStatus, { border: string; bg: string; text: strin
   in_progress: { border: 'border-blue-500/30', bg: 'bg-blue-500/5', text: 'text-blue-400', iconBg: 'bg-blue-500/20' },
   quality_check: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', iconBg: 'bg-amber-500/20' },
   ready: { border: 'border-primary/50', bg: 'bg-primary/5', text: 'text-primary', iconBg: 'bg-primary/20' },
+  completed_with_rework: { border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', iconBg: 'bg-amber-500/20' },
   delivered: { border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', text: 'text-emerald-400', iconBg: 'bg-emerald-500/20' },
   cancelled: { border: 'border-destructive/30', bg: 'bg-destructive/5', text: 'text-destructive', iconBg: 'bg-destructive/20' },
 };
@@ -59,7 +60,9 @@ export default function KanbanTvPage() {
     );
   }
 
-  const columns = KANBAN_COLUMNS.filter((status) => status !== 'delivered' && status !== 'cancelled');
+  const columns = KANBAN_COLUMNS.filter(
+    (status) => status !== 'delivered' && status !== 'cancelled' && status !== 'completed_with_rework',
+  );
   const boardColumns = boardQuery.data?.columns ?? [];
 
   return (
