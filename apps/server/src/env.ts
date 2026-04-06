@@ -31,6 +31,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
+  REDIS_REQUIRED: z.coerce.boolean().default(false),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),

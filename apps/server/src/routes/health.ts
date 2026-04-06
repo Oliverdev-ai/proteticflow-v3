@@ -10,8 +10,8 @@ healthRouter.get('/health', async (_req, res) => {
   const dbOk = await checkDbConnection();
   const redisOk = await checkRedisConnection();
 
-  const status = (dbOk && redisOk) ? 'ok' : 'degraded';
-  const httpStatus = (dbOk && redisOk) ? 200 : 503;
+  const status = dbOk ? (redisOk ? 'ok' : 'degraded') : 'error';
+  const httpStatus = dbOk ? 200 : 503;
 
   logger.info({ status, dbOk, redisOk }, 'Health check');
 
