@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, ArrowRight, Check, Plus, Trash2, Loader2, 
@@ -21,10 +21,10 @@ type Item = {
 };
 
 const STEPS = [
-  { id: 'cliente', label: 'Mandatário', icon: User, desc: 'Identificação do parceiro' },
-  { id: 'itens', label: 'Composição', icon: Briefcase, desc: 'Serviços e valoração' },
-  { id: 'detalhes', label: 'Específicos', icon: Calendar, desc: 'Dados técnicos e prazo' },
-  { id: 'revisao', label: 'Revisão', icon: ShieldCheck, desc: 'Validação final' },
+  { id: 'cliente', label: 'MandatÃ¡rio', icon: User, desc: 'IdentificaÃ§Ã£o do parceiro' },
+  { id: 'itens', label: 'ComposiÃ§Ã£o', icon: Briefcase, desc: 'ServiÃ§os e valoraÃ§Ã£o' },
+  { id: 'detalhes', label: 'EspecÃ­ficos', icon: Calendar, desc: 'Dados tÃ©cnicos e prazo' },
+  { id: 'revisao', label: 'RevisÃ£o', icon: ShieldCheck, desc: 'ValidaÃ§Ã£o final' },
 ];
 
 export default function JobCreatePage() {
@@ -33,10 +33,15 @@ export default function JobCreatePage() {
   const [clientId, setClientId] = useState<number | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [details, setDetails] = useState({ patientName: '', prothesisType: '', material: '', color: '', instructions: '', deadline: '', notes: '' });
+  const [jobSubType, setJobSubType] = useState<'standard' | 'proof' | 'rework'>('standard');
+  const [isUrgent, setIsUrgent] = useState(false);
+  const [proofDueDate, setProofDueDate] = useState('');
+  const [reworkParentId, setReworkParentId] = useState('');
+  const [reworkReason, setReworkReason] = useState('');
   const [osNumber, setOsNumber] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-resolver cliente pelo número da OS (F30)
+  // Auto-resolver cliente pelo nÃºmero da OS (F30)
   const resolveQuery = trpc.job.resolveClientByOsNumber.useQuery(
     { osNumber: Number(osNumber) },
     { enabled: osNumber.length >= 1 && !isNaN(Number(osNumber)), retry: false }
@@ -92,7 +97,12 @@ export default function JobCreatePage() {
   function canNext() {
     if (step === 0) return !!clientId;
     if (step === 1) return items.length > 0 && items.every(i => i.serviceNameSnapshot && i.unitPriceCents > 0);
-    if (step === 2) return !!details.deadline;
+    if (step === 2) {
+      if (!details.deadline) return false;
+      if (jobSubType === 'proof') return !!proofDueDate;
+      if (jobSubType === 'rework') return reworkReason.trim().length >= 3 && Number(reworkParentId) > 0;
+      return true;
+    }
     return true;
   }
 
@@ -101,6 +111,11 @@ export default function JobCreatePage() {
     createMutation.mutate({
       clientId: clientId ?? undefined,
       osNumber: osNumber ? Number(osNumber) : undefined,
+      jobSubType,
+      isUrgent,
+      proofDueDate: jobSubType === 'proof' && proofDueDate ? new Date(proofDueDate).toISOString() : undefined,
+      reworkParentId: jobSubType === 'rework' && Number(reworkParentId) > 0 ? Number(reworkParentId) : undefined,
+      reworkReason: jobSubType === 'rework' ? reworkReason.trim() || undefined : undefined,
       patientName: details.patientName || undefined,
       prothesisType: details.prothesisType || undefined,
       material: details.material || undefined,
@@ -127,7 +142,7 @@ export default function JobCreatePage() {
         </button>
         <div className="flex flex-col gap-0.5">
           <H1 className="tracking-tight">Iniciando OS</H1>
-          <Subtitle>Configuração e registro de nova ordem de serviço técnica</Subtitle>
+          <Subtitle>ConfiguraÃ§Ã£o e registro de nova ordem de serviÃ§o tÃ©cnica</Subtitle>
         </div>
       </div>
 
@@ -168,7 +183,7 @@ export default function JobCreatePage() {
       </div>
 
       <div className="premium-card p-2 min-h-[500px] relative overflow-hidden">
-        {/* Step 0: Mandatário (Cliente) */}
+        {/* Step 0: MandatÃ¡rio (Cliente) */}
         {step === 0 && (
           <ScaleIn className="p-8 flex flex-col gap-10">
             {/* OS Physycal Resolver */}
@@ -182,12 +197,12 @@ export default function JobCreatePage() {
                      </div>
                      <div className="flex flex-col gap-0.5">
                         <Large className="tracking-tight">Resgate Automatizado</Large>
-                        <Muted className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Identificação por OS Física</Muted>
+                        <Muted className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">IdentificaÃ§Ã£o por OS FÃ­sica</Muted>
                      </div>
                   </div>
                   
                   <div className="flex flex-col gap-2">
-                    <label className={labelClass}>Número Sequencial (Ficha)</label>
+                    <label className={labelClass}>NÃºmero Sequencial (Ficha)</label>
                     <div className="relative">
                        <input 
                           type="number" 
@@ -199,7 +214,7 @@ export default function JobCreatePage() {
                        <Hash className="absolute right-6 top-1/2 -translate-y-1/2 text-primary/30" size={20} strokeWidth={3} />
                     </div>
                     <p className="text-[10px] text-muted-foreground/60 font-medium ml-1">
-                      A identificação do parceiro ocorrerá em tempo real baseado no prefixo da OS.
+                      A identificaÃ§Ã£o do parceiro ocorrerÃ¡ em tempo real baseado no prefixo da OS.
                     </p>
                   </div>
                </div>
@@ -210,7 +225,7 @@ export default function JobCreatePage() {
                <div className="flex items-center justify-between ml-1 border-b border-border/50 pb-4">
                   <div className="flex items-center gap-3">
                      <div className="w-1 h-3 bg-primary rounded-full" />
-                     <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">Seleção Direta de Parceiro</Muted>
+                     <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">SeleÃ§Ã£o Direta de Parceiro</Muted>
                   </div>
                   {!clientId && osNumber && (
                     <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full animate-pulse">
@@ -268,7 +283,7 @@ export default function JobCreatePage() {
           </ScaleIn>
         )}
 
-        {/* Step 1: Composição (Itens) */}
+        {/* Step 1: ComposiÃ§Ã£o (Itens) */}
         {step === 1 && (
           <ScaleIn className="p-8 flex flex-col gap-10">
              <div className="flex items-center justify-between pb-8 border-b border-border/50 relative">
@@ -277,8 +292,8 @@ export default function JobCreatePage() {
                       <Briefcase size={22} strokeWidth={2.5} />
                    </div>
                    <div className="flex flex-col gap-0.5">
-                      <Large className="tracking-tight">Catálogo de Serviços</Large>
-                      <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">Seleção técnica e valoração parcial</Muted>
+                      <Large className="tracking-tight">CatÃ¡logo de ServiÃ§os</Large>
+                      <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">SeleÃ§Ã£o tÃ©cnica e valoraÃ§Ã£o parcial</Muted>
                    </div>
                 </div>
                 
@@ -301,7 +316,7 @@ export default function JobCreatePage() {
                           onChange={e => setSelectedTableId(e.target.value ? Number(e.target.value) : null)} 
                           className={cn(inputClass, "px-5 pr-10 appearance-none cursor-pointer")}
                         >
-                          <option value="">— SELECIONAR TABELA —</option>
+                          <option value="">â€” SELECIONAR TABELA â€”</option>
                           {priceTablesData?.data.map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}
                         </select>
                         <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/30 rotate-90" size={18} strokeWidth={3} />
@@ -310,7 +325,7 @@ export default function JobCreatePage() {
 
                    {selectedTableId && (
                      <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                        <Muted className="text-[9px] font-bold uppercase tracking-widest ml-1 mb-1">Itens Disponíveis</Muted>
+                        <Muted className="text-[9px] font-bold uppercase tracking-widest ml-1 mb-1">Itens DisponÃ­veis</Muted>
                         {priceItemsData?.data.map(pi => (
                           <button 
                             key={pi.id} 
@@ -341,7 +356,7 @@ export default function JobCreatePage() {
                 <div className="md:col-span-8 space-y-4">
                    <div className="flex items-center gap-3 ml-1 mb-2">
                        <div className="w-1 h-3 bg-primary rounded-full" />
-                       <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">Composição da OS</Muted>
+                       <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">ComposiÃ§Ã£o da OS</Muted>
                        <div className="flex-1 border-t border-border/40" />
                    </div>
 
@@ -355,7 +370,7 @@ export default function JobCreatePage() {
                               <input 
                                 value={item.serviceNameSnapshot} 
                                 onChange={e => updateItem(i, 'serviceNameSnapshot', e.target.value)} 
-                                placeholder="Descrição do Serviço..." 
+                                placeholder="DescriÃ§Ã£o do ServiÃ§o..." 
                                 className="w-full bg-transparent border-none text-sm font-black text-foreground placeholder:text-muted-foreground/30 focus:ring-0 p-0" 
                               />
                               <div className="flex items-center gap-4">
@@ -402,8 +417,8 @@ export default function JobCreatePage() {
                              <Briefcase size={32} strokeWidth={2.5} />
                            </div>
                            <div className="text-center space-y-1">
-                              <p className="text-sm font-black text-foreground uppercase tracking-widest">Nenhum Serviço Composto</p>
-                              <p className="text-[10px] text-muted-foreground font-medium max-w-[200px]">Utilize o seletor lateral para compor a ficha técnica desta OS.</p>
+                              <p className="text-sm font-black text-foreground uppercase tracking-widest">Nenhum ServiÃ§o Composto</p>
+                              <p className="text-[10px] text-muted-foreground font-medium max-w-[200px]">Utilize o seletor lateral para compor a ficha tÃ©cnica desta OS.</p>
                            </div>
                         </div>
                       )}
@@ -413,7 +428,7 @@ export default function JobCreatePage() {
           </ScaleIn>
         )}
 
-        {/* Step 2: Específicos (Detalhes) */}
+        {/* Step 2: EspecÃ­ficos (Detalhes) */}
         {step === 2 && (
           <ScaleIn className="p-8 flex flex-col gap-10">
              <div className="flex items-center justify-between pb-8 border-b border-border/50 relative">
@@ -422,8 +437,8 @@ export default function JobCreatePage() {
                       <Calendar size={22} strokeWidth={2.5} />
                    </div>
                    <div className="flex flex-col gap-0.5">
-                      <Large className="tracking-tight">Detalhamento Técnico</Large>
-                      <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">Metadados da produção e cronograma</Muted>
+                      <Large className="tracking-tight">Detalhamento TÃ©cnico</Large>
+                      <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">Metadados da produÃ§Ã£o e cronograma</Muted>
                    </div>
                 </div>
              </div>
@@ -448,7 +463,7 @@ export default function JobCreatePage() {
                 </div>
 
                 <div className="group/field relative">
-                  <label className={labelClass}>Tipo de Prótese</label>
+                  <label className={labelClass}>Tipo de PrÃ³tese</label>
                    <div className="relative">
                       <Zap className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/30 group-focus-within/field:text-primary transition-colors duration-300" size={18} strokeWidth={2.5} />
                       <input 
@@ -465,7 +480,7 @@ export default function JobCreatePage() {
                    <div className="relative">
                       <Landmark className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/30 group-focus-within/field:text-primary transition-colors duration-300" size={18} strokeWidth={2.5} />
                       <input 
-                        placeholder="Ex. Zircônia, Resina, Dissilicato..."
+                        placeholder="Ex. ZircÃ´nia, Resina, Dissilicato..."
                         value={details.material} 
                         onChange={e => setDetails(d => ({ ...d, material: e.target.value }))} 
                         className={cn(inputClass, "pl-12")} 
@@ -499,11 +514,81 @@ export default function JobCreatePage() {
                   </div>
                 </div>
 
+                <div className="md:col-span-2 rounded-3xl border border-border/60 bg-muted/20 p-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="group/field relative">
+                      <label className={labelClass}>Tipo da OS</label>
+                      <select
+                        value={jobSubType}
+                        onChange={(event) => setJobSubType(event.target.value as 'standard' | 'proof' | 'rework')}
+                        className={cn(inputClass, 'cursor-pointer appearance-none')}
+                      >
+                        <option value="standard">Padrão</option>
+                        <option value="proof">Prova</option>
+                        <option value="rework">Remoldagem</option>
+                      </select>
+                    </div>
+
+                    <div className="group/field relative">
+                      <label className={labelClass}>Prioridade</label>
+                      <button
+                        type="button"
+                        onClick={() => setIsUrgent((value) => !value)}
+                        className={cn(
+                          'w-full rounded-xl border px-4 py-3 text-left text-xs font-black uppercase tracking-widest transition-all',
+                          isUrgent
+                            ? 'border-destructive/40 bg-destructive/10 text-destructive'
+                            : 'border-border bg-muted text-muted-foreground hover:border-primary/40 hover:text-foreground',
+                        )}
+                      >
+                        {isUrgent ? 'Urgente (ativo)' : 'Padrão (toque para marcar urgente)'}
+                      </button>
+                    </div>
+
+                    {jobSubType === 'proof' ? (
+                      <div className="group/field relative">
+                        <label className={labelClass}>Prazo de Retorno da Prova *</label>
+                        <input
+                          type="date"
+                          value={proofDueDate}
+                          onChange={(event) => setProofDueDate(event.target.value)}
+                          className={cn(inputClass, 'cursor-pointer')}
+                        />
+                      </div>
+                    ) : null}
+
+                    {jobSubType === 'rework' ? (
+                      <>
+                        <div className="group/field relative">
+                          <label className={labelClass}>OS Pai (ID) *</label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={reworkParentId}
+                            onChange={(event) => setReworkParentId(event.target.value)}
+                            placeholder="Ex.: 1024"
+                            className={cn(inputClass)}
+                          />
+                        </div>
+                        <div className="group/field relative md:col-span-2">
+                          <label className={labelClass}>Motivo da Remoldagem *</label>
+                          <input
+                            value={reworkReason}
+                            onChange={(event) => setReworkReason(event.target.value)}
+                            placeholder="Ex.: ajuste marginal e nova moldagem"
+                            className={cn(inputClass)}
+                          />
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+
                 <div className="md:col-span-2 group/field relative">
-                  <label className={labelClass}>Instruções Laboratoriais / Observações Técnicas</label>
+                  <label className={labelClass}>InstruÃ§Ãµes Laboratoriais / ObservaÃ§Ãµes TÃ©cnicas</label>
                   <div className="relative">
                     <textarea 
-                      placeholder="Descreva detalhes anatômicos, exigências estéticas ou observações críticas para a produção..."
+                      placeholder="Descreva detalhes anatÃ´micos, exigÃªncias estÃ©ticas ou observaÃ§Ãµes crÃ­ticas para a produÃ§Ã£o..."
                       value={details.instructions} 
                       onChange={e => setDetails(d => ({ ...d, instructions: e.target.value }))} 
                       rows={6} 
@@ -515,7 +600,7 @@ export default function JobCreatePage() {
           </ScaleIn>
         )}
 
-        {/* Step 3: Revisão */}
+        {/* Step 3: RevisÃ£o */}
         {step === 3 && (
           <ScaleIn className="p-8 flex flex-col gap-10">
              <div className="flex items-center justify-between pb-8 border-b border-border/50 relative">
@@ -524,8 +609,8 @@ export default function JobCreatePage() {
                       <ShieldCheck size={24} strokeWidth={2.5} />
                    </div>
                    <div className="flex flex-col gap-0.5">
-                      <Large className="tracking-tight">Revisão e Auditoria Final</Large>
-                      <Muted className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Validação de faturamento e registro OS</Muted>
+                      <Large className="tracking-tight">RevisÃ£o e Auditoria Final</Large>
+                      <Muted className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">ValidaÃ§Ã£o de faturamento e registro OS</Muted>
                    </div>
                 </div>
              </div>
@@ -535,27 +620,27 @@ export default function JobCreatePage() {
                 <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div className="p-8 rounded-[32px] bg-muted/40 border border-border/50 flex flex-col gap-6 relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl -mr-8 -mt-8" />
-                      <Muted className="text-[10px] font-black uppercase tracking-[0.3em] ml-1">Mandatário</Muted>
+                      <Muted className="text-[10px] font-black uppercase tracking-[0.3em] ml-1">MandatÃ¡rio</Muted>
                       <div className="flex items-center gap-4 relative">
                          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-card border border-border shadow-inner font-black text-primary text-xs">
                             {selectedClient?.name.substring(0, 2).toUpperCase() || '??'}
                          </div>
                          <div className="flex flex-col gap-0.5">
                             <span className="text-sm font-black text-foreground tracking-tight">{selectedClient?.name}</span>
-                            {osNumber && <span className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">OS Física # {osNumber}</span>}
+                            {osNumber && <span className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none">OS FÃ­sica # {osNumber}</span>}
                          </div>
                       </div>
                    </div>
 
                    <div className="p-8 rounded-[32px] bg-muted/40 border border-border/50 flex flex-col gap-6 relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl -mr-8 -mt-8" />
-                      <Muted className="text-[10px] font-black uppercase tracking-[0.3em] ml-1">Workflow Produção</Muted>
+                      <Muted className="text-[10px] font-black uppercase tracking-[0.3em] ml-1">Workflow ProduÃ§Ã£o</Muted>
                       <div className="flex items-center gap-4 relative">
                          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-card border border-border shadow-inner text-primary">
                             <Calendar size={22} strokeWidth={2.5} />
                          </div>
                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-black text-foreground tracking-tight uppercase">{details.patientName || 'Paciente não informado'}</span>
+                            <span className="text-sm font-black text-foreground tracking-tight uppercase">{details.patientName || 'Paciente nÃ£o informado'}</span>
                             <span className="text-[10px] font-bold text-primary tracking-widest leading-none uppercase">Entrega em {details.deadline ? new Date(details.deadline).toLocaleDateString('pt-BR') : 'Urgente'}</span>
                          </div>
                       </div>
@@ -564,7 +649,7 @@ export default function JobCreatePage() {
                    <div className="p-8 rounded-[32px] bg-primary/[0.04] border-2 border-primary/20 flex flex-col gap-6 relative shadow-2xl shadow-primary/5">
                       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl -mr-8 -mt-8" />
                       <div className="flex items-center justify-between relative">
-                        <Muted className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Valoração Final</Muted>
+                        <Muted className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">ValoraÃ§Ã£o Final</Muted>
                         <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
                            <Landmark size={20} strokeWidth={2.5} />
                         </div>
@@ -573,7 +658,7 @@ export default function JobCreatePage() {
                         <Large className="text-4xl font-black text-primary tracking-tighter tabular-nums leading-none">
                            {formatBRL(totalCents)}
                         </Large>
-                        <Muted className="text-[9px] font-bold uppercase tracking-widest text-primary/60">{items.length} Serviço(s) Composto(s)</Muted>
+                        <Muted className="text-[9px] font-bold uppercase tracking-widest text-primary/60">{items.length} ServiÃ§o(s) Composto(s)</Muted>
                       </div>
                    </div>
                 </div>
@@ -584,27 +669,27 @@ export default function JobCreatePage() {
                    
                    <div className="flex items-center gap-4 mb-10 relative">
                        <div className="w-1 h-4 bg-primary rounded-full" />
-                       <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">Composição Técnica Detalhada</Muted>
+                       <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">ComposiÃ§Ã£o TÃ©cnica Detalhada</Muted>
                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative items-start">
                       <div className="space-y-2">
-                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Prótese / Estrutura</span>
-                         <p className="text-xs font-black text-foreground tracking-tight leading-tight uppercase bg-muted/30 p-3 rounded-xl border border-border/40 italic">{details.prothesisType || 'Não definida'}</p>
+                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">PrÃ³tese / Estrutura</span>
+                         <p className="text-xs font-black text-foreground tracking-tight leading-tight uppercase bg-muted/30 p-3 rounded-xl border border-border/40 italic">{details.prothesisType || 'NÃ£o definida'}</p>
                       </div>
                       <div className="space-y-2">
-                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Material de Produção</span>
-                         <p className="text-xs font-black text-foreground tracking-tight leading-tight uppercase bg-muted/30 p-3 rounded-xl border border-border/40 italic">{details.material || 'Não definido'}</p>
+                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Material de ProduÃ§Ã£o</span>
+                         <p className="text-xs font-black text-foreground tracking-tight leading-tight uppercase bg-muted/30 p-3 rounded-xl border border-border/40 italic">{details.material || 'NÃ£o definido'}</p>
                       </div>
                       <div className="space-y-2">
-                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Referência Cromática</span>
-                         <p className="text-xs font-black text-foreground tracking-tight leading-tight uppercase bg-muted/30 p-3 rounded-xl border border-border/40 italic">{details.color || 'Não definida'}</p>
+                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">ReferÃªncia CromÃ¡tica</span>
+                         <p className="text-xs font-black text-foreground tracking-tight leading-tight uppercase bg-muted/30 p-3 rounded-xl border border-border/40 italic">{details.color || 'NÃ£o definida'}</p>
                       </div>
                       <div className="space-y-2">
-                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Ficha de Instruções</span>
+                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Ficha de InstruÃ§Ãµes</span>
                          <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 text-primary rounded-xl border border-primary/10 w-fit">
                             <Info size={12} strokeWidth={3} />
-                            <span className="text-[9px] font-black uppercase tracking-widest">Contém Observações</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest">ContÃ©m ObservaÃ§Ãµes</span>
                          </div>
                       </div>
                    </div>
@@ -617,7 +702,7 @@ export default function JobCreatePage() {
                     <AlertCircle size={20} strokeWidth={3} />
                  </div>
                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[10px] font-black text-destructive uppercase tracking-widest">Inconsistência de Registro</span>
+                    <span className="text-[10px] font-black text-destructive uppercase tracking-widest">InconsistÃªncia de Registro</span>
                     <p className="text-sm font-black text-destructive tracking-tight leading-tight">{error}</p>
                  </div>
                </div>
@@ -643,7 +728,7 @@ export default function JobCreatePage() {
               onClick={() => setStep(s => s + 1)} 
               className="flex-1 py-6 rounded-3xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 hover:brightness-110 disabled:opacity-30 disabled:grayscale transition-all duration-300 flex items-center justify-center gap-3 active:scale-[0.98] group"
             >
-              Próxima Etapa <ArrowRight size={16} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
+              PrÃ³xima Etapa <ArrowRight size={16} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
             </button>
           ) : (
             <button 
@@ -660,3 +745,4 @@ export default function JobCreatePage() {
     </PageTransition>
   );
 }
+

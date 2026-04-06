@@ -10,6 +10,12 @@ import {
   createJobStageSchema,
   uploadPhotoSchema,
   createOsBlockSchema,
+  suspendJobSchema,
+  unsuspendJobSchema,
+  markProofSchema,
+  returnProofSchema,
+  createReworkSchema,
+  toggleUrgentSchema,
 } from '@proteticflow/shared';
 import * as jobService from './service.js';
 import * as osBlockService from './os-blocks.service.js';
@@ -46,6 +52,42 @@ export const jobRouter = router({
     .input(changeStatusSchema)
     .mutation(async ({ input, ctx }) => {
       return jobService.changeStatus(ctx.tenantId!, input, ctx.user!.id);
+    }),
+
+  suspend: tenantProcedure
+    .input(suspendJobSchema)
+    .mutation(async ({ input, ctx }) => {
+      return jobService.suspendJob(ctx.tenantId!, input, ctx.user!.id);
+    }),
+
+  unsuspend: tenantProcedure
+    .input(unsuspendJobSchema)
+    .mutation(async ({ input, ctx }) => {
+      return jobService.unsuspendJob(ctx.tenantId!, input, ctx.user!.id);
+    }),
+
+  markAsProof: tenantProcedure
+    .input(markProofSchema)
+    .mutation(async ({ input, ctx }) => {
+      return jobService.markJobAsProof(ctx.tenantId!, input, ctx.user!.id);
+    }),
+
+  returnProof: tenantProcedure
+    .input(returnProofSchema)
+    .mutation(async ({ input, ctx }) => {
+      return jobService.returnJobProof(ctx.tenantId!, input, ctx.user!.id);
+    }),
+
+  createRework: tenantProcedure
+    .input(createReworkSchema)
+    .mutation(async ({ input, ctx }) => {
+      return jobService.createReworkJob(ctx.tenantId!, input, ctx.user!.id);
+    }),
+
+  toggleUrgent: tenantProcedure
+    .input(toggleUrgentSchema)
+    .mutation(async ({ input, ctx }) => {
+      return jobService.toggleJobUrgent(ctx.tenantId!, input, ctx.user!.id);
     }),
 
   delete: adminProcedure
@@ -132,6 +174,11 @@ export const jobRouter = router({
     .input(kanbanFiltersSchema)
     .query(async ({ input, ctx }) => {
       return jobService.getKanbanBoard(ctx.tenantId!, input);
+    }),
+
+  listSuspended: tenantProcedure
+    .query(async ({ ctx }) => {
+      return jobService.listSuspendedJobs(ctx.tenantId!);
     }),
 
   moveCard: tenantProcedure

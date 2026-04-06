@@ -13,7 +13,14 @@ import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 import { formatBRL } from '../../../lib/format';
 
-type JobStatus = 'pending' | 'in_progress' | 'quality_check' | 'ready' | 'delivered' | 'cancelled';
+type JobStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'quality_check'
+  | 'ready'
+  | 'completed_with_rework'
+  | 'delivered'
+  | 'cancelled';
 
 const COLOR_MAP: Record<string, string> = {
   slate:   'bg-muted text-muted-foreground border-border',
@@ -40,7 +47,7 @@ function DeadlineCell({ deadline, status }: { deadline: string; status: JobStatu
   const d = new Date(deadline);
   const now = new Date();
   const diff = d.getTime() - now.getTime();
-  const isOverdue = diff < 0 && !['delivered', 'cancelled'].includes(status);
+  const isOverdue = diff < 0 && !['delivered', 'cancelled', 'completed_with_rework'].includes(status);
   const isSoon = diff > 0 && diff < 24 * 60 * 60 * 1000;
   
   return (

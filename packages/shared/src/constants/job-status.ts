@@ -7,6 +7,7 @@ export const JOB_STATUS = {
   IN_PROGRESS:   'in_progress',
   QUALITY_CHECK: 'quality_check',
   READY:         'ready',
+  COMPLETED_WITH_REWORK: 'completed_with_rework',
   DELIVERED:     'delivered',
   CANCELLED:     'cancelled',
 } as const;
@@ -18,7 +19,8 @@ export const VALID_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
   pending:       ['in_progress', 'cancelled'],
   in_progress:   ['quality_check', 'cancelled'],
   quality_check: ['ready', 'in_progress', 'cancelled'],  // pode voltar para produção
-  ready:         ['delivered', 'cancelled'],
+  ready:         ['delivered', 'completed_with_rework', 'cancelled'],
+  completed_with_rework: [],
   delivered:     [],   // estado final
   cancelled:     [],   // estado final
 };
@@ -26,7 +28,7 @@ export const VALID_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
 // PAD-10: função pura, testável sem dependências externas
 export function canTransition(from: JobStatus, to: JobStatus): boolean {
   // cancelled acessível de QUALQUER estado exceto delivered e cancelled (já finais)
-  if (to === 'cancelled' && from !== 'delivered' && from !== 'cancelled') return true;
+  if (to === 'cancelled' && from !== 'delivered' && from !== 'cancelled' && from !== 'completed_with_rework') return true;
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
@@ -36,6 +38,7 @@ export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   in_progress:   'Em Produção',
   quality_check: 'Controle de Qualidade',
   ready:         'Concluído',
+  completed_with_rework: 'Concluído c/ Remoldagem',
   delivered:     'Entregue',
   cancelled:     'Cancelado',
 };
@@ -46,6 +49,7 @@ export const JOB_STATUS_COLORS: Record<JobStatus, string> = {
   in_progress:   'blue',
   quality_check: 'amber',
   ready:         'green',
+  completed_with_rework: 'amber',
   delivered:     'emerald',
   cancelled:     'red',
 };
