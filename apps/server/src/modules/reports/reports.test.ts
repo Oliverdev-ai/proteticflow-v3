@@ -29,10 +29,14 @@ describe('Reports PDF Engine', () => {
     expect(pdf.byteLength).toBeGreaterThan(1000);
   });
 
-  it('expoe definicoes de relatorio com fiscal desabilitado', () => {
-    const fiscal = reportRegistry.find((item) => item.type === 'fiscal');
-    expect(fiscal?.enabled).toBe(false);
-    expect(fiscal?.dependencyNote).toBeTruthy();
+  it('expoe definicoes fiscais habilitadas no registry', () => {
+    const revenue = reportRegistry.find((item) => item.type === 'fiscal-revenue');
+    const expenses = reportRegistry.find((item) => item.type === 'fiscal-expenses');
+    const dre = reportRegistry.find((item) => item.type === 'fiscal-dre');
+
+    expect(revenue?.enabled).toBe(true);
+    expect(expenses?.enabled).toBe(true);
+    expect(dre?.enabled).toBe(true);
   });
 
   it('serializa preview em CSV valido', () => {

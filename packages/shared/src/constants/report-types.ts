@@ -6,7 +6,9 @@ export const REPORT_TYPES = [
   'inventory',
   'deliveries',
   'purchases',
-  'fiscal',
+  'fiscal-revenue',
+  'fiscal-expenses',
+  'fiscal-dre',
 ] as const;
 
 export type ReportType = (typeof REPORT_TYPES)[number];

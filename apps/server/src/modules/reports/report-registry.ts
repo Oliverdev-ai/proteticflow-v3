@@ -1,8 +1,5 @@
 import type { ReportDefinition } from '@proteticflow/shared';
 
-const FISCAL_DEPENDENCY_NOTE =
-  'Dependente das Fases 24-25 (boletos e NFS-e). Retorna NOT_IMPLEMENTED nesta fase.';
-
 export const reportRegistry: ReportDefinition[] = [
   {
     type: 'monthly_closing',
@@ -75,15 +72,34 @@ export const reportRegistry: ReportDefinition[] = [
     enabled: true,
   },
   {
-    type: 'fiscal',
-    title: 'Relatorio Fiscal',
-    description: 'NFS-e e boletos por periodo.',
+    type: 'fiscal-revenue',
+    title: 'Faturamento por Periodo',
+    description: 'Receita por periodo com agrupamentos mensais, por dentista e por servico.',
     outputKind: 'table',
-    supportsPdf: false,
-    supportsCsv: false,
-    supportsEmail: false,
-    enabled: false,
-    dependencyNote: FISCAL_DEPENDENCY_NOTE,
+    supportsPdf: true,
+    supportsCsv: true,
+    supportsEmail: true,
+    enabled: true,
+  },
+  {
+    type: 'fiscal-expenses',
+    title: 'Despesas por Periodo',
+    description: 'Despesas pagas por periodo com agrupamentos mensais, por fornecedor e categoria.',
+    outputKind: 'table',
+    supportsPdf: true,
+    supportsCsv: true,
+    supportsEmail: true,
+    enabled: true,
+  },
+  {
+    type: 'fiscal-dre',
+    title: 'DRE Simplificado',
+    description: 'Receita menos despesas com resultado operacional e liquido.',
+    outputKind: 'summary',
+    supportsPdf: true,
+    supportsCsv: true,
+    supportsEmail: true,
+    enabled: true,
   },
 ];
 

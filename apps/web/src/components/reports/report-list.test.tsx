@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { ReportList } from './report-list';
 
 describe('ReportList', () => {
-  it('renderiza relatorios disponiveis e dependencias', () => {
+  it('renderiza relatorios disponiveis', () => {
     const html = renderToStaticMarkup(
       <ReportList
         reports={[
@@ -18,15 +18,14 @@ describe('ReportList', () => {
             enabled: true,
           },
           {
-            type: 'fiscal',
-            title: 'Fiscal',
-            description: 'NFS-e e boletos',
+            type: 'fiscal-revenue',
+            title: 'Faturamento por Periodo',
+            description: 'Resumo fiscal',
             outputKind: 'table',
-            supportsPdf: false,
-            supportsCsv: false,
-            supportsEmail: false,
-            enabled: false,
-            dependencyNote: 'Dependente de fases futuras',
+            supportsPdf: true,
+            supportsCsv: true,
+            supportsEmail: true,
+            enabled: true,
           },
         ]}
         selectedType="jobs_by_period"
@@ -35,6 +34,6 @@ describe('ReportList', () => {
     );
 
     expect(html).toContain('Jobs');
-    expect(html).toContain('Dependente de fases futuras');
+    expect(html).toContain('Faturamento por Periodo');
   });
 });
