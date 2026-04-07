@@ -1,21 +1,12 @@
 import { test, expect } from '@playwright/test';
-
-const managerEmail = process.env.E2E_MANAGER_EMAIL ?? '';
-const managerPassword = process.env.E2E_MANAGER_PASSWORD ?? '';
-
-async function login(page: import('@playwright/test').Page, email: string, password: string) {
-  await page.goto('/login');
-  await page.getByPlaceholder('E-mail').fill(email);
-  await page.getByPlaceholder('Senha').fill(password);
-  await page.getByRole('button', { name: 'Entrar' }).click();
-}
+import { loginManager, requireManagerE2E } from './support/auth';
 
 test.describe('notifications flow', () => {
   test('preferencias, permissao push e leitura no sino', async ({ page, context }) => {
-    test.skip(!managerEmail || !managerPassword, 'Defina E2E_MANAGER_EMAIL e E2E_MANAGER_PASSWORD');
+    requireManagerE2E();
 
     await context.grantPermissions(['notifications']);
-    await login(page, managerEmail, managerPassword);
+    await loginManager(page);
 
     await page.goto('/configuracoes');
     await page.getByRole('button', { name: 'Notificacoes' }).click();

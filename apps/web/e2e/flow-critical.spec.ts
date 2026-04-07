@@ -1,18 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
-
-const hasManagerE2E = Boolean(process.env.E2E_MANAGER_EMAIL && process.env.E2E_MANAGER_PASSWORD);
-
-async function loginManager(page: Page) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('E-mail').fill(process.env.E2E_MANAGER_EMAIL!);
-  await page.getByPlaceholder('Senha').fill(process.env.E2E_MANAGER_PASSWORD!);
-  await page.getByRole('button', { name: /entrar|login/i }).click();
-  await page.waitForURL(/^\/$/, { timeout: 30000 });
-}
+import { expect, test } from '@playwright/test';
+import { loginManager, requireManagerE2E } from './support/auth';
 
 test.describe('flow critical actions e2e', () => {
   test('comando critico abre etapa de confirmacao', async ({ page }) => {
-    test.skip(!hasManagerE2E, 'E2E manager vars nao configuradas');
+    requireManagerE2E();
     await loginManager(page);
 
     await page.goto('/flow-ia', { waitUntil: 'domcontentloaded' });
@@ -23,7 +14,7 @@ test.describe('flow critical actions e2e', () => {
   });
 
   test('comando critico permite cancelamento no card', async ({ page }) => {
-    test.skip(!hasManagerE2E, 'E2E manager vars nao configuradas');
+    requireManagerE2E();
     await loginManager(page);
 
     await page.goto('/flow-ia', { waitUntil: 'domcontentloaded' });

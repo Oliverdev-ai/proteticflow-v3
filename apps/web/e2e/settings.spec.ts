@@ -1,42 +1,17 @@
 import { test, expect } from '@playwright/test';
-
-const managerEmail = process.env.E2E_MANAGER_EMAIL ?? '';
-const managerPassword = process.env.E2E_MANAGER_PASSWORD ?? '';
-const recepcaoEmail = process.env.E2E_RECEPCAO_EMAIL ?? '';
-const recepcaoPassword = process.env.E2E_RECEPCAO_PASSWORD ?? '';
-
-async function login(page: import('@playwright/test').Page, email: string, password: string) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('E-mail').fill(email);
-  await page.getByPlaceholder('Senha').fill(password);
-  await page.getByRole('button', { name: 'Entrar' }).click();
-}
-
-async function registerAndOnboardManager(page: import('@playwright/test').Page) {
-  const suffix = Date.now().toString().slice(-8);
-  const email = `e2e.manager.${suffix}@example.com`;
-  const password = `Senha${suffix}A1`;
-
-  await page.goto('/register', { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('Nome').fill(`Gerente E2E ${suffix}`);
-  await page.getByPlaceholder('E-mail').fill(email);
-  await page.getByPlaceholder('Senha').fill(password);
-  await page.getByRole('button', { name: 'Registrar' }).click();
-
-  await page.waitForURL(/\/onboarding$/, { timeout: 30000 });
-  await page.getByPlaceholder('Ex: Lab Dental Silva').fill(`Lab E2E ${suffix}`);
-  await page.getByPlaceholder('Cidade').fill('Sao Paulo');
-  await page.getByPlaceholder('UF').fill('SP');
-  await page.getByRole('button', { name: /Criar laborat/ }).click();
-  await page.getByRole('button', { name: /Acessar o painel/ }).click();
-}
+import {
+  hasManagerE2E,
+  hasRecepcaoE2E,
+  loginWithCredentials,
+  managerEmail,
+  managerPassword,
+  recepcaoEmail,
+  recepcaoPassword,
+} from './support/auth';
 
 async function ensureManagerSession(page: import('@playwright/test').Page) {
-  if (managerEmail && managerPassword) {
-    await login(page, managerEmail, managerPassword);
-    return;
-  }
-  await registerAndOnboardManager(page);
+  test.skip(!hasManagerE2E, 'Defina E2E_MANAGER_EMAIL e E2E_MANAGER_PASSWORD');
+  await loginWithCredentials(page, managerEmail, managerPassword);
 }
 
 function profileInputs(page: import('@playwright/test').Page) {
@@ -108,9 +83,9 @@ test.describe('settings flow', () => {
   });
 
   test('role sem permissao nao acessa configuracoes', async ({ page }) => {
-    test.skip(!recepcaoEmail || !recepcaoPassword, 'Defina E2E_RECEPCAO_EMAIL e E2E_RECEPCAO_PASSWORD');
+    test.skip(!hasRecepcaoE2E, 'Defina E2E_RECEPCAO_EMAIL e E2E_RECEPCAO_PASSWORD');
 
-    await login(page, recepcaoEmail, recepcaoPassword);
+    await loginWithCredentials(page, recepcaoEmail, recepcaoPassword);
     await page.goto('/configuracoes');
 
     await expect(page.getByText('Voce nao possui permissao para acessar Configuracoes.')).toBeVisible();
