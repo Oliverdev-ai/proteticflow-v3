@@ -15,6 +15,7 @@ import { securityHeaders } from './middleware/security-headers.js';
 import { globalLimiter, authLimiter } from './middleware/rate-limit.js';
 import { requestLogger } from './middleware/request-logger.js';
 import { initSentry } from './core/sentry.js';
+import { ensureBucket } from './core/storage-bootstrap.js';
 
 const app = express();
 initSentry();
@@ -82,4 +83,8 @@ app.listen(env.PORT, () => {
   if (env.NODE_ENV !== 'test') {
     startCronJobs();
   }
+
+  ensureBucket().catch(() => {
+    logger.warn('Storage bucket bootstrap failed - uploads may fail');
+  });
 });
