@@ -6,6 +6,7 @@ import {
   reportSendByEmailSchema,
 } from '@proteticflow/shared';
 import * as reportsService from './service.js';
+import { abcCurveProcedure } from './abc-curve.router.js';
 
 type ReportFilters = {
   dateFrom: string;
@@ -46,6 +47,8 @@ function sanitizeFilters(filters: {
 }
 
 export const reportsRouter = router({
+  abcCurve: abcCurveProcedure,
+
   listDefinitions: tenantProcedure.query(({ ctx }) => reportsService.listDefinitions(ctx.tenantId!)),
 
   preview: tenantProcedure
