@@ -4,4 +4,10 @@
   description = "Allow test placeholders in .env.example and CI workflow"
   paths = [".env.example", ".github/workflows/ci.yml"]
   regexTarget = "line"
-  regexes = ["password", "minioadmin", "ci-test-secret"]
+  regexes = [
+    "password",
+    "minioadmin",
+    "ci-test-secret",
+    "test_password",
+    "proteticflow_test:test_password@localhost:5432/proteticflow_test"
+  ]
