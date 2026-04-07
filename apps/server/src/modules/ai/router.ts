@@ -15,6 +15,7 @@ import { adminProcedure, router, tenantProcedure } from '../../trpc/trpc.js';
 import * as aiService from './service.js';
 import { buildLabContext } from './context-builder.js';
 import { streamAiResponse } from './flow-engine.js';
+import { transcribeAudio } from './voice.service.js';
 
 const getSessionSchema = z.object({
   sessionId: z.number().int().positive(),
@@ -38,6 +39,12 @@ const listCommandRunsSchema = z.object({
   sessionId: z.number().int().positive().optional(),
   limit: z.number().int().min(1).max(50).default(20),
   cursor: z.number().int().positive().optional(),
+});
+
+const transcribeSchema = z.object({
+  audio: z.string().min(1),
+  mimeType: z.string().min(1).max(128),
+  durationMs: z.number().int().positive().max(60_000).optional(),
 });
 
 export const aiRouter = router({
@@ -126,6 +133,20 @@ export const aiRouter = router({
   listCommandRuns: tenantProcedure
     .input(listCommandRunsSchema)
     .query(({ ctx, input }) => aiService.listCommandRuns(ctx.tenantId!, ctx.user!.id, input)),
+
+  transcribe: tenantProcedure
+    .input(transcribeSchema)
+    .mutation(({ ctx, input }) => {
+      const payload = {
+        audioBuffer: Buffer.from(input.audio, 'base64'),
+        mimeType: input.mimeType,
+        tenantId: ctx.tenantId!,
+        userId: ctx.user!.id,
+        ...(input.durationMs !== undefined ? { durationMs: input.durationMs } : {}),
+      };
+
+      return transcribeAudio(payload);
+    }),
 
   getLabContext: tenantProcedure
     .query(({ ctx }) => buildLabContext(ctx.tenantId!)),

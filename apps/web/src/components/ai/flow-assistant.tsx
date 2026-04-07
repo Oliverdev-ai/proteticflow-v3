@@ -3,6 +3,8 @@ import type { Role } from '@proteticflow/shared';
 import { trpc } from '../../lib/trpc';
 import { FlowActionConfirmation } from './flow-action-confirmation';
 import { FlowQuickActions } from './flow-quick-actions';
+import { FlowTranscriptPreview } from './flow-transcript-preview';
+import { FlowVoiceButton } from './flow-voice-button';
 
 type CommandRunView = {
   id: number;
@@ -47,6 +49,10 @@ export function FlowAssistant({
 }: FlowAssistantProps) {
   const [lastResponse, setLastResponse] = useState<CommandResponse | null>(null);
   const [commandInput, setCommandInput] = useState('');
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [transcriptText, setTranscriptText] = useState('');
+  const [transcriptConfidence, setTranscriptConfidence] = useState<number | undefined>(undefined);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const executeCommandMutation = trpc.ai.executeCommand.useMutation();
   const confirmCommandMutation = trpc.ai.confirmCommand.useMutation();
@@ -57,6 +63,7 @@ export function FlowAssistant({
   );
 
   const isBusy = disabled
+    || voiceBusy
     || executeCommandMutation.isPending
     || confirmCommandMutation.isPending
     || cancelCommandMutation.isPending;
@@ -68,7 +75,7 @@ export function FlowAssistant({
     }
   }
 
-  async function runCommand(content: string) {
+  async function runCommand(content: string, channel: 'text' | 'voice' = 'text') {
     const payload = content.trim();
     if (!payload) return;
 
@@ -76,11 +83,26 @@ export function FlowAssistant({
     const response = await executeCommandMutation.mutateAsync({
       sessionId: targetSessionId,
       content: payload,
-      channel: 'text',
+      channel,
     });
 
     setLastResponse(response as CommandResponse);
     await refresh();
+  }
+
+  async function handleSendTranscript() {
+    const text = transcriptText.trim();
+    if (!text) return;
+    await runCommand(text, 'voice');
+    setTranscriptText('');
+    setTranscriptConfidence(undefined);
+    setVoiceError(null);
+  }
+
+  function handleDiscardTranscript() {
+    setTranscriptText('');
+    setTranscriptConfidence(undefined);
+    setVoiceError(null);
   }
 
   async function handleConfirm(runId: number) {
@@ -110,6 +132,17 @@ export function FlowAssistant({
     <div className="space-y-3">
       <FlowQuickActions disabled={isBusy} onAction={runCommand} />
 
+      {transcriptText ? (
+        <FlowTranscriptPreview
+          text={transcriptText}
+          {...(transcriptConfidence !== undefined ? { confidence: transcriptConfidence } : {})}
+          disabled={isBusy}
+          onChange={setTranscriptText}
+          onSend={handleSendTranscript}
+          onDiscard={handleDiscardTranscript}
+        />
+      ) : null}
+
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
         <p className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Comando estruturado</p>
         <div className="flex gap-2">
@@ -133,7 +166,20 @@ export function FlowAssistant({
           >
             Executar
           </button>
+          <FlowVoiceButton
+            disabled={isBusy}
+            onBusyChange={setVoiceBusy}
+            onError={setVoiceError}
+            onTranscribed={({ text, confidence }) => {
+              setTranscriptText(text);
+              setTranscriptConfidence(confidence);
+              setVoiceError(null);
+            }}
+          />
         </div>
+        {voiceError ? (
+          <p className="mt-2 text-xs text-amber-300">{voiceError}</p>
+        ) : null}
       </div>
 
       {lastResponse ? (
