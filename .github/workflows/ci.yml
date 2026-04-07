@@ -32,6 +32,8 @@ jobs:
         run: pnpm lint
       - name: Type Check
         run: pnpm typecheck
+      - name: Go-Live Static Gates
+        run: pnpm g1:go-live
 
   test:
     name: Tests
@@ -129,6 +131,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build all packages
         run: pnpm build
+      - name: Go-Live Bundle Gate
+        run: pnpm g1:go-live:bundle
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

@@ -8,6 +8,8 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
+    "g1:go-live": "tsx scripts/check-go-live-gates.ts",
+    "g1:go-live:bundle": "tsx scripts/check-go-live-gates.ts --check-bundle",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate"
