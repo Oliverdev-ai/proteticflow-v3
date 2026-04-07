@@ -11,6 +11,7 @@ import { JobsTrendChart } from '../../components/dashboard/jobs-trend-chart';
 import { TodayDeliveriesCard } from '../../components/dashboard/today-deliveries';
 import { RecentJobsTable } from '../../components/dashboard/recent-jobs-table';
 import { PredictionCard } from '../../components/dashboard/prediction-card';
+import { usePredictions } from '../../hooks/use-predictions';
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonBox({ className }: { className?: string }) {
@@ -61,6 +62,7 @@ export default function DashboardPage() {
     undefined,
     { refetchInterval: 5 * 60 * 1000 }, // 19.10 — polling 5 min
   );
+  const predictions = usePredictions(20);
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -81,11 +83,13 @@ export default function DashboardPage() {
           <p className="text-zinc-400 text-sm mt-0.5">Visão geral do laboratório</p>
         </div>
         <button
-          onClick={() => refetch()}
-          disabled={isFetching}
+          onClick={async () => {
+            await Promise.all([refetch(), predictions.refetch()]);
+          }}
+          disabled={isFetching || predictions.isFetching}
           className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
         >
-          <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
+          <RefreshCw size={14} className={isFetching || predictions.isFetching ? 'animate-spin' : ''} />
           Atualizar
         </button>
       </div>
@@ -115,26 +119,33 @@ export default function DashboardPage() {
       {/* DASHBOARD PREDITIVO (FASE 32) */}
       <div className="pt-4 pb-2 border-t border-zinc-800/50 mt-8 mb-2">
         <h2 className="text-xl font-bold tracking-tight text-white mb-4">Análises Preditivas IA</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PredictionCard 
-            title="Previsão de Atraso" 
-            prediction="3 Trabalhos podem atrasar nesta sexta devido ao alto volume acumulado no preparo." 
-            confidence={87} 
-            type="warning" 
-          />
-          <PredictionCard 
-            title="Previsão de Demanda" 
-            prediction="Alta probabilidade de novos pedidos do Dr. Mendes (histórico regular)." 
-            confidence={92} 
-            type="positive" 
-          />
-          <PredictionCard 
-            title="Estoque Crítico Futuro" 
-            prediction="Zircônia A2 pode esgotar em 4 dias com base na taxa de uso atual." 
-            confidence={80} 
-            type="info" 
-          />
-        </div>
+        {predictions.isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <SkeletonBox key={`prediction-skeleton-${index}`} className="h-[218px]" />
+            ))}
+          </div>
+        ) : predictions.error ? (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
+            Não foi possível carregar as análises preditivas agora.
+          </div>
+        ) : predictions.cards.length === 0 ? (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
+            Ainda não há previsões disponíveis para este tenant.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {predictions.cards.map((card) => (
+              <PredictionCard
+                key={card.id}
+                title={card.title}
+                prediction={card.prediction}
+                confidence={card.confidence}
+                type={card.type}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 19.07 + últimos trabalhos */}
