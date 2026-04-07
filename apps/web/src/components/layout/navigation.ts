@@ -23,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Compras', href: '/compras', module: 'inventory', keywords: ['fornecedor', 'pedido', 'oc'] },
   { label: 'Funcionarios', href: '/funcionarios', module: 'employees', keywords: ['equipe'] },
   { label: 'Relatorios', href: '/relatorios', module: 'reports', keywords: ['pdf'] },
+  { label: 'Curva ABC', href: '/relatorios/curva-abc', module: 'reports', keywords: ['pareto', 'abc'] },
   { label: 'Simulador', href: '/simulador', module: 'simulator' },
   { label: 'Planos', href: '/planos', module: 'settings', keywords: ['assinatura'] },
   { label: 'Flow IA', href: '/flow-ia', module: 'ai', keywords: ['assistente'] },

@@ -60,6 +60,7 @@ const EventCreatePage = lazy(() => import('./app/(dashboard)/agenda/novo'));
 const SettingsPage = lazy(() => import('./app/(dashboard)/configuracoes/index'));
 const SimulatorPage = lazy(() => import('./app/(dashboard)/simulador'));
 const ReportsHubPage = lazy(() => import('./app/(dashboard)/relatorios/index'));
+const AbcCurvePage = lazy(() => import('./pages/reports/abc-curve'));
 const PlanosPage = lazy(() => import('./app/(dashboard)/planos'));
 const FlowIAPage = lazy(() => import('./app/(dashboard)/flow-ia'));
 const IAAvancadaPage = lazy(() => import('./app/(dashboard)/ia-avancada'));
@@ -143,6 +144,7 @@ function AppContent() {
 
             <Route path="/simulador" element={<SimulatorPage />} />
             <Route path="/relatorios" element={<ReportsHubPage />} />
+            <Route path="/relatorios/curva-abc" element={<AbcCurvePage />} />
             <Route path="/planos" element={<PlanosPage />} />
             <Route path="/flow-ia" element={<FlowIAPage />} />
             <Route path="/ia-avancada" element={<IAAvancadaPage />} />

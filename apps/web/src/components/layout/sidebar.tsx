@@ -55,6 +55,7 @@ const ICONS = {
   '/compras': ShoppingCart,
   '/funcionarios': UserCog,
   '/relatorios': BarChart3,
+  '/relatorios/curva-abc': BarChart3,
   '/simulador': Calculator,
   '/planos': CreditCard,
   '/flow-ia': Sparkles,
