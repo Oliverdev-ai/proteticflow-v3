@@ -42,7 +42,7 @@ import {
   type ResolvedEntities,
   type RiskLevel,
 } from './command-parser.js';
-import { confirmAndExecute, executeTool } from './tool-executor.js';
+import { confirmAndExecute, executeTool, type ConfirmationStep } from './tool-executor.js';
 import * as predictions from './predictions.js';
 import * as risk from './risk.js';
 import * as scheduling from './scheduling.js';
@@ -90,6 +90,11 @@ type ExecuteCommandInput = {
 
 type ConfirmCommandInput = {
   commandRunId: number;
+};
+
+type ResolveCommandStepInput = {
+  commandRunId: number;
+  values: Record<string, unknown>;
 };
 
 type CancelCommandInput = {
@@ -145,6 +150,7 @@ type CommandExecutionResponse = {
     summary: string;
     details: Array<{ label: string; value: string }>;
   };
+  confirmationStep?: ConfirmationStep;
   ambiguities?: ResolvedEntities;
   missingFields?: string[];
   suggestedIntents?: FlowCommandName[];
@@ -661,6 +667,15 @@ function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities
     input.purchaseId = entities.purchaseId;
   }
 
+  if (intent === 'financial.closeAccount') {
+    if (typeof entities.arId === 'number') {
+      input.id = entities.arId;
+    }
+    if (typeof entities.clientId === 'number') {
+      input.clientId = entities.clientId;
+    }
+  }
+
   if (intent === 'jobs.toggleUrgent' && typeof entities.isUrgent !== 'boolean') {
     input.isUrgent = true;
   }
@@ -678,6 +693,93 @@ function hasAmbiguity(resolvedEntities: ResolvedEntities): boolean {
 
 function hasNotFound(resolvedEntities: ResolvedEntities): boolean {
   return Object.values(resolvedEntities).some((entry) => entry.status === 'not_found');
+}
+
+function mapResolvedEntityKeyToField(key: string): string {
+  if (key === 'clientName') return 'clientId';
+  if (key === 'serviceName') return 'serviceId';
+  if (key === 'materialName') return 'materialId';
+  if (key === 'supplierName') return 'supplierId';
+  if (key === 'userName' || key === 'technicianName') return 'assignedTo';
+  return key;
+}
+
+function normalizeFieldType(field: string): 'number' | 'boolean' | 'text' {
+  if (field.endsWith('Id') || field === 'quantity' || field === 'unitPriceCents') return 'number';
+  if (field.startsWith('is') || field.endsWith('Enabled')) return 'boolean';
+  return 'text';
+}
+
+function humanizeFieldLabel(field: string): string {
+  const labels: Record<string, string> = {
+    jobId: 'ID da OS',
+    originalJobId: 'ID da OS original',
+    clientId: 'ID do cliente',
+    serviceId: 'ID do servico',
+    materialId: 'ID do material',
+    supplierId: 'ID do fornecedor',
+    assignedTo: 'ID do responsavel',
+    purchaseId: 'ID da compra',
+    periodId: 'ID do periodo',
+    period: 'Periodo (YYYY-MM)',
+    reason: 'Motivo',
+    deadline: 'Prazo',
+    id: 'ID',
+  };
+  return labels[field] ?? field;
+}
+
+function buildFillMissingStep(fields: string[]): ConfirmationStep {
+  return {
+    type: 'fill_missing',
+    fields: fields.map((field) => ({
+      name: field,
+      label: humanizeFieldLabel(field),
+      type: normalizeFieldType(field),
+      required: true,
+    })),
+  };
+}
+
+function buildAmbiguityStep(resolved: ResolvedEntities): ConfirmationStep | null {
+  for (const [key, value] of Object.entries(resolved)) {
+    if (value.status !== 'ambiguous') continue;
+    return {
+      type: 'disambiguate',
+      field: mapResolvedEntityKeyToField(key),
+      options: value.candidates.map((candidate) => ({
+        id: candidate.id,
+        label: candidate.label,
+        ...(candidate.detail ? { detail: candidate.detail } : {}),
+      })),
+    };
+  }
+  return null;
+}
+
+function normalizeResolvedValue(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return trimmed;
+  if (trimmed === 'true') return true;
+  if (trimmed === 'false') return false;
+  const numeric = Number(trimmed);
+  if (Number.isFinite(numeric) && /^-?\d+(\.\d+)?$/.test(trimmed)) {
+    return numeric;
+  }
+  return trimmed;
+}
+
+function computeMissingFields(intent: FlowCommandName, entities: ParsedEntities): string[] {
+  const commandConfig = FLOW_COMMANDS[intent] as { requiredFields?: readonly string[] };
+  const requiredFields = [...(commandConfig.requiredFields ?? [])];
+  return requiredFields.filter((field) => {
+    const value = entities[field];
+    if (typeof value === 'boolean') return false;
+    if (typeof value === 'number') return !Number.isFinite(value);
+    if (typeof value === 'string') return value.trim().length === 0;
+    return true;
+  });
 }
 
 export async function executeCommand(
@@ -764,6 +866,7 @@ export async function executeCommand(
   }
 
   if (hasAmbiguity(resolvedEntities)) {
+    const ambiguityStep = buildAmbiguityStep(resolvedEntities);
     const run = await createCommandRun(tenantId, userId, {
       sessionId: input.sessionId,
       channel,
@@ -776,7 +879,10 @@ export async function executeCommand(
       riskLevel,
       executionStatus: 'pending',
       toolName: intent,
-      toolOutput: { resolvedEntities },
+      toolOutput: {
+        resolvedEntities,
+        ...(ambiguityStep ? { step: ambiguityStep } : {}),
+      },
     });
 
     const response: CommandExecutionResponse = {
@@ -784,6 +890,7 @@ export async function executeCommand(
       run: toCommandRunModel(run),
       ambiguities: resolvedEntities,
       missingFields,
+      ...(ambiguityStep ? { confirmationStep: ambiguityStep } : {}),
       message: summarizeCommandMessage('ambiguous', intent),
     };
 
@@ -795,6 +902,7 @@ export async function executeCommand(
   }
 
   if (missingFields.length > 0) {
+    const fillStep = buildFillMissingStep(missingFields);
     const run = await createCommandRun(tenantId, userId, {
       sessionId: input.sessionId,
       channel,
@@ -807,12 +915,16 @@ export async function executeCommand(
       riskLevel,
       executionStatus: 'pending',
       toolName: intent,
+      toolOutput: {
+        step: fillStep,
+      },
     });
 
     const response: CommandExecutionResponse = {
       status: 'missing_fields',
       run: toCommandRunModel(run),
       missingFields,
+      confirmationStep: fillStep,
       message: summarizeCommandMessage('missing_fields', intent),
     };
 
@@ -853,7 +965,10 @@ export async function executeCommand(
         executionStatus: 'awaiting_confirmation',
         requiresConfirmation: true,
         toolInput: result.validatedInput as Record<string, unknown>,
-        toolOutput: { preview: result.preview },
+        toolOutput: {
+          preview: result.preview,
+          step: result.step,
+        },
       });
 
       const response: CommandExecutionResponse = {
@@ -861,6 +976,7 @@ export async function executeCommand(
         run: toCommandRunModel(updated),
         message: summarizeCommandMessage('awaiting_confirmation', intent),
         preview: result.preview,
+        confirmationStep: result.step,
       };
 
       if (input.sessionId) {
@@ -927,6 +1043,175 @@ export async function executeCommand(
   }
 }
 
+export async function resolveCommandStep(
+  tenantId: number,
+  userId: number,
+  userRole: Role,
+  input: ResolveCommandStepInput,
+): Promise<CommandExecutionResponse> {
+  const run = await getCommandRunOrThrow(tenantId, input.commandRunId);
+  if (run.userId !== userId) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissao para atualizar este comando' });
+  }
+  if (!run.intent) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Comando sem intent nao pode ser atualizado' });
+  }
+  if (!['pending', 'awaiting_confirmation'].includes(run.executionStatus)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Este comando nao aceita atualizacao de etapas' });
+  }
+
+  const intent = run.intent as FlowCommandName;
+  if (!checkCommandAccess(intent, userRole)) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissao para atualizar este comando' });
+  }
+
+  const currentEntities = run.entitiesJson && typeof run.entitiesJson === 'object'
+    ? run.entitiesJson as ParsedEntities
+    : {} as ParsedEntities;
+
+  const normalizedValues = Object.fromEntries(
+    Object.entries(input.values).map(([key, value]) => [key, normalizeResolvedValue(value)]),
+  ) as ParsedEntities;
+
+  const candidateEntities: ParsedEntities = {
+    ...currentEntities,
+    ...normalizedValues,
+  };
+
+  const resolvedEntities = await resolveEntities(candidateEntities, tenantId);
+  const mergedEntities = applyResolvedEntities(candidateEntities, resolvedEntities);
+  const missingFields = computeMissingFields(intent, mergedEntities);
+  if (hasNotFound(resolvedEntities) && !missingFields.includes('entity_resolution')) {
+    missingFields.push('entity_resolution');
+  }
+
+  if (hasAmbiguity(resolvedEntities)) {
+    const ambiguityStep = buildAmbiguityStep(resolvedEntities);
+    const updated = await updateCommandRun(tenantId, run.id, {
+      executionStatus: 'pending',
+      entities: mergedEntities as Record<string, unknown>,
+      missingFields,
+      toolOutput: {
+        resolvedEntities,
+        ...(ambiguityStep ? { step: ambiguityStep } : {}),
+      },
+    });
+
+    return {
+      status: 'ambiguous',
+      run: toCommandRunModel(updated),
+      ambiguities: resolvedEntities,
+      missingFields,
+      ...(ambiguityStep ? { confirmationStep: ambiguityStep } : {}),
+      message: summarizeCommandMessage('ambiguous', intent),
+    };
+  }
+
+  if (missingFields.length > 0) {
+    const fillStep = buildFillMissingStep(missingFields);
+    const updated = await updateCommandRun(tenantId, run.id, {
+      executionStatus: 'pending',
+      entities: mergedEntities as Record<string, unknown>,
+      missingFields,
+      toolOutput: {
+        step: fillStep,
+      },
+    });
+
+    return {
+      status: 'missing_fields',
+      run: toCommandRunModel(updated),
+      missingFields,
+      confirmationStep: fillStep,
+      message: summarizeCommandMessage('missing_fields', intent),
+    };
+  }
+
+  const toolInput = toolInputFromEntities(intent, mergedEntities);
+  await updateCommandRun(tenantId, run.id, {
+    executionStatus: 'executing',
+    entities: mergedEntities as Record<string, unknown>,
+    missingFields,
+    toolInput,
+    errorCode: null,
+    errorMessage: null,
+  });
+
+  try {
+    const result = await executeTool(
+      { tenantId, userId, role: userRole, sessionId: run.sessionId ?? undefined },
+      intent,
+      toolInput,
+    );
+
+    if (result.status === 'awaiting_confirmation') {
+      const updated = await updateCommandRun(tenantId, run.id, {
+        executionStatus: 'awaiting_confirmation',
+        requiresConfirmation: true,
+        toolInput: result.validatedInput as Record<string, unknown>,
+        toolOutput: {
+          preview: result.preview,
+          step: result.step,
+        },
+      });
+
+      return {
+        status: 'awaiting_confirmation',
+        run: toCommandRunModel(updated),
+        message: summarizeCommandMessage('awaiting_confirmation', intent),
+        preview: result.preview,
+        confirmationStep: result.step,
+      };
+    }
+
+    const updated = await updateCommandRun(tenantId, run.id, {
+      executionStatus: 'success',
+      toolInput: result.validatedInput as Record<string, unknown>,
+      toolOutput: { output: result.output },
+      executedAt: new Date(),
+      errorCode: null,
+      errorMessage: null,
+    });
+
+    void logAudit({
+      tenantId,
+      userId,
+      action: 'ai.command.execute',
+      entityType: 'ai_command_runs',
+      entityId: updated.id,
+      newValue: { intent, riskLevel: result.riskLevel, source: 'resolve_step' },
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'executed',
+      run: toCommandRunModel(updated),
+      output: result.output,
+      message: summarizeCommandMessage('executed', intent, result.output),
+    };
+
+    if (run.sessionId) {
+      await saveMessage(tenantId, run.sessionId, userId, 'assistant', response.message);
+    }
+
+    return response;
+  } catch (error) {
+    const message = error instanceof TRPCError ? error.message : 'Falha ao processar etapa do comando';
+    const code = error instanceof TRPCError ? error.code : 'INTERNAL_SERVER_ERROR';
+    const updated = await updateCommandRun(tenantId, run.id, {
+      executionStatus: 'error',
+      errorCode: code,
+      errorMessage: message,
+      executedAt: new Date(),
+    });
+
+    return {
+      status: 'error',
+      run: toCommandRunModel(updated),
+      message: summarizeCommandMessage('error', intent),
+    };
+  }
+}
+
 export async function confirmCommand(
   tenantId: number,
   userId: number,
@@ -942,6 +1227,19 @@ export async function confirmCommand(
   }
   if (!run.intent) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Comando sem intent nao pode ser confirmado' });
+  }
+
+  const currentStep = run.toolOutputJson
+    && typeof run.toolOutputJson === 'object'
+    && 'step' in run.toolOutputJson
+    ? (run.toolOutputJson as Record<string, unknown>).step as { type?: string } | undefined
+    : undefined;
+
+  if (currentStep?.type === 'disambiguate' || currentStep?.type === 'fill_missing') {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'Resolva as etapas pendentes antes de confirmar este comando',
+    });
   }
 
   const intent = run.intent as FlowCommandName;

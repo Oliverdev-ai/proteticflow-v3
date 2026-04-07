@@ -7,7 +7,6 @@ import {
   listArSchema,
   listClientsSchema,
   listJobsSchema,
-  markArPaidSchema,
   suspendJobSchema,
   toggleUrgentSchema,
   type Role,
@@ -30,8 +29,25 @@ import * as clientService from '../clients/service.js';
 import * as deliveryService from '../deliveries/service.js';
 import * as financialService from '../financial/service.js';
 import * as jobService from '../jobs/service.js';
-import * as payrollService from '../payroll/service.js';
 import * as purchaseService from '../purchases/service.js';
+import {
+  buildFinancialCloseAccountPreviewStep,
+  buildFinancialMonthlyClosingPreviewStep,
+  executeFinancialCloseAccount,
+  executeFinancialMonthlyClosing,
+  financialCloseAccountToolSchema,
+  financialMonthlyClosingToolSchema,
+} from './tools/financial-tools.js';
+import {
+  buildPayrollGeneratePreviewStep,
+  executePayrollGenerate,
+  payrollGenerateToolSchema,
+} from './tools/payroll-tools.js';
+import {
+  buildPurchaseReceivePreviewStep,
+  executePurchaseReceive,
+  purchasesReceiveToolSchema,
+} from './tools/purchase-tools.js';
 
 const jobsGetSchema = z.object({
   jobId: z.coerce.number().int().positive(),
@@ -88,20 +104,6 @@ const purchasesCreateSchema = z.object({
   notes: z.string().optional(),
 });
 
-const purchasesReceiveSchema = z.object({
-  purchaseId: z.coerce.number().int().positive(),
-  dueDate: z.string().datetime().optional(),
-});
-
-const monthlyClosingSchema = z.object({
-  period: z.string().regex(/^\d{4}-\d{2}$/),
-  clientId: z.coerce.number().int().positive().optional(),
-});
-
-const payrollGenerateSchema = z.object({
-  periodId: z.coerce.number().int().positive(),
-});
-
 const commonDateRangeSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
@@ -124,9 +126,41 @@ export type CommandPreview = {
   details: Array<{ label: string; value: string }>;
 };
 
+export type ConfirmationStep =
+  | {
+    type: 'disambiguate';
+    field: string;
+    options: Array<{ id: number; label: string; detail?: string }>;
+  }
+  | {
+    type: 'fill_missing';
+    fields: Array<{ name: string; label: string; type: string; required: boolean }>;
+  }
+  | {
+    type: 'review';
+    preview: CommandPreview;
+  }
+  | {
+    type: 'confirm';
+    warning: string;
+    action: string;
+    preview?: CommandPreview;
+  };
+
+type PreviewStepBuildResult = {
+  step: ConfirmationStep;
+  preview: CommandPreview;
+  resolvedInput?: unknown;
+};
+
 export type ToolHandler<TInput = unknown, TOutput = unknown> = {
   name: FlowCommandName;
   inputSchema: z.ZodType<TInput>;
+  buildPreviewStep?: (
+    ctx: ToolContext,
+    input: TInput,
+    riskLevel: RiskLevel,
+  ) => Promise<PreviewStepBuildResult>;
   execute: (ctx: ToolContext, input: TInput) => Promise<TOutput>;
 };
 
@@ -137,6 +171,7 @@ export type ToolExecutionResult =
     status: 'awaiting_confirmation';
     riskLevel: RiskLevel;
     preview: CommandPreview;
+    step: ConfirmationStep;
     validatedInput: unknown;
   }
   | {
@@ -178,6 +213,33 @@ function buildPreview(command: FlowCommandName, input: unknown, riskLevel: RiskL
     }));
 
   return { title, summary, details };
+}
+
+function buildDefaultConfirmationStep(
+  command: FlowCommandName,
+  input: unknown,
+  riskLevel: RiskLevel,
+): PreviewStepBuildResult {
+  const preview = buildPreview(command, input, riskLevel);
+  if (riskLevel === 'critical') {
+    return {
+      preview,
+      step: {
+        type: 'confirm',
+        warning: 'Acao critica. Revise o resumo antes de confirmar.',
+        action: `Confirmar ${command}`,
+        preview,
+      },
+    };
+  }
+
+  return {
+    preview,
+    step: {
+      type: 'review',
+      preview,
+    },
+  };
 }
 
 const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
@@ -391,44 +453,35 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
   },
   'financial.closeAccount': {
     name: 'financial.closeAccount',
-    inputSchema: markArPaidSchema.extend({
-      notes: z.string().optional(),
-    }),
-    execute: async (ctx, input) => financialService.markArPaid(
-      ctx.tenantId,
-      markArPaidSchema.parse(input),
-      ctx.userId,
-    ),
+    inputSchema: financialCloseAccountToolSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildFinancialCloseAccountPreviewStep(ctx, financialCloseAccountToolSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executeFinancialCloseAccount(ctx, financialCloseAccountToolSchema.parse(input)),
   },
   'financial.monthlyClosing': {
     name: 'financial.monthlyClosing',
-    inputSchema: monthlyClosingSchema,
-    execute: async (ctx, input) => financialService.generateMonthlyClosing(
-      ctx.tenantId,
-      monthlyClosingSchema.parse(input),
-      ctx.userId,
-    ),
+    inputSchema: financialMonthlyClosingToolSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildFinancialMonthlyClosingPreviewStep(ctx, financialMonthlyClosingToolSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executeFinancialMonthlyClosing(ctx, financialMonthlyClosingToolSchema.parse(input)),
   },
   'payroll.generate': {
     name: 'payroll.generate',
-    inputSchema: payrollGenerateSchema,
-    execute: async (ctx, input) => {
-      const parsed = payrollGenerateSchema.parse(input);
-      return payrollService.generateEntries(ctx.tenantId, parsed.periodId, ctx.userId);
-    },
+    inputSchema: payrollGenerateToolSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildPayrollGeneratePreviewStep(ctx, payrollGenerateToolSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executePayrollGenerate(ctx, payrollGenerateToolSchema.parse(input)),
   },
   'purchases.receive': {
     name: 'purchases.receive',
-    inputSchema: purchasesReceiveSchema,
-    execute: async (ctx, input) => {
-      const parsed = purchasesReceiveSchema.parse(input);
-      return purchaseService.receivePurchase(
-        ctx.tenantId,
-        parsed.purchaseId,
-        ctx.userId,
-        parsed.dueDate ? new Date(parsed.dueDate) : undefined,
-      );
-    },
+    inputSchema: purchasesReceiveToolSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildPurchaseReceivePreviewStep(ctx, purchasesReceiveToolSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executePurchaseReceive(ctx, purchasesReceiveToolSchema.parse(input)),
   },
 };
 
@@ -454,11 +507,17 @@ export async function executeTool(
   const action = resolveAction(riskLevel);
 
   if (!options?.confirmed && action !== 'execute') {
+    const previewBuild = tool.buildPreviewStep
+      ? await tool.buildPreviewStep(ctx, validatedInput, riskLevel)
+      : buildDefaultConfirmationStep(command, validatedInput, riskLevel);
+
+    const nextInput = previewBuild.resolvedInput ?? validatedInput;
     return {
       status: 'awaiting_confirmation',
       riskLevel,
-      preview: buildPreview(command, validatedInput, riskLevel),
-      validatedInput,
+      preview: previewBuild.preview,
+      step: previewBuild.step,
+      validatedInput: nextInput,
     };
   }
 

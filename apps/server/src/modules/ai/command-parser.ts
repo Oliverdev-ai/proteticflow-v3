@@ -122,25 +122,21 @@ export const FLOW_COMMANDS = {
     risk: 'critical',
     roles: ['superadmin', 'gerente', 'contabil'],
     patterns: [/baixar conta/i, /fechar conta/i, /dar baixa/i],
-    requiredFields: ['arId'],
   },
   'financial.monthlyClosing': {
     risk: 'critical',
     roles: ['superadmin', 'gerente', 'contabil'],
     patterns: [/fechamento mensal/i, /fechar mes/i],
-    requiredFields: ['period'],
   },
   'payroll.generate': {
     risk: 'critical',
     roles: ['superadmin', 'gerente', 'contabil'],
     patterns: [/gerar folha/i, /processar folha/i],
-    requiredFields: ['periodId'],
   },
   'purchases.receive': {
     risk: 'critical',
     roles: ['superadmin', 'gerente'],
     patterns: [/receber compra/i, /dar entrada na compra/i],
-    requiredFields: ['purchaseId'],
   },
 } as const satisfies Record<string, FlowCommandConfig>;
 
