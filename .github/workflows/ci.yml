@@ -42,8 +42,8 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: proteticflow_test
-          POSTGRES_PASSWORD: test_password
           POSTGRES_DB: proteticflow_test
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -52,7 +52,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://proteticflow_test:test_password@localhost:5432/proteticflow_test
+      DATABASE_URL: postgresql://proteticflow_test@localhost:5432/proteticflow_test
       JWT_SECRET: ci-test-secret-do-not-use-in-production
       NODE_ENV: test
     steps:
@@ -100,10 +100,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@v2
-        with:
-          config-path: .gitleaks.toml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
