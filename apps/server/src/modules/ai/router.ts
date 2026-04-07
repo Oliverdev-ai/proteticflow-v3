@@ -20,6 +20,26 @@ const getSessionSchema = z.object({
   sessionId: z.number().int().positive(),
 });
 
+const executeCommandSchema = z.object({
+  sessionId: z.number().int().positive().optional(),
+  content: z.string().min(1).max(4000),
+  channel: z.enum(['text', 'voice']).default('text'),
+});
+
+const confirmCommandSchema = z.object({
+  commandRunId: z.number().int().positive(),
+});
+
+const cancelCommandSchema = z.object({
+  commandRunId: z.number().int().positive(),
+});
+
+const listCommandRunsSchema = z.object({
+  sessionId: z.number().int().positive().optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+  cursor: z.number().int().positive().optional(),
+});
+
 export const aiRouter = router({
   createSession: tenantProcedure
     .input(createSessionSchema)
@@ -88,6 +108,24 @@ export const aiRouter = router({
         tokensUsed,
       };
     }),
+
+  executeCommand: tenantProcedure
+    .input(executeCommandSchema)
+    .mutation(({ ctx, input }) =>
+      aiService.executeCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+
+  confirmCommand: tenantProcedure
+    .input(confirmCommandSchema)
+    .mutation(({ ctx, input }) =>
+      aiService.confirmCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+
+  cancelCommand: tenantProcedure
+    .input(cancelCommandSchema)
+    .mutation(({ ctx, input }) => aiService.cancelCommand(ctx.tenantId!, ctx.user!.id, input)),
+
+  listCommandRuns: tenantProcedure
+    .input(listCommandRunsSchema)
+    .query(({ ctx, input }) => aiService.listCommandRuns(ctx.tenantId!, ctx.user!.id, input)),
 
   getLabContext: tenantProcedure
     .query(({ ctx }) => buildLabContext(ctx.tenantId!)),

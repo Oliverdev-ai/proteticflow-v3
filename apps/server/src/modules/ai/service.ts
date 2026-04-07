@@ -8,6 +8,7 @@ import type {
   ListAiPredictionsInput,
   ListAiRecommendationsInput,
   RecordAiFeedbackInput,
+  Role,
 } from '@proteticflow/shared';
 import {
   PLAN_TIER,
@@ -16,7 +17,7 @@ import {
   listSessionsSchema,
 } from '@proteticflow/shared';
 import { db } from '../../db/index.js';
-import { aiMessages, aiSessions } from '../../db/schema/ai.js';
+import { aiCommandRuns, aiMessages, aiSessions } from '../../db/schema/ai.js';
 import {
   aiFeedback,
   aiFeatureSnapshots,
@@ -30,10 +31,23 @@ import {
   tenants,
 } from '../../db/schema/index.js';
 import { logger } from '../../logger.js';
+import { logAudit } from '../audit/service.js';
+import {
+  FLOW_COMMANDS,
+  checkCommandAccess,
+  parseIntent,
+  resolveEntities,
+  type FlowCommandName,
+  type ParsedEntities,
+  type ResolvedEntities,
+  type RiskLevel,
+} from './command-parser.js';
+import { confirmAndExecute, executeTool } from './tool-executor.js';
 import * as predictions from './predictions.js';
 import * as risk from './risk.js';
 import * as scheduling from './scheduling.js';
 import * as smartOrders from './smart-orders.js';
+import { parseNaturalDate } from './resolvers.js';
 
 type CreateSessionInput = z.infer<typeof createSessionSchema>;
 type ListSessionsInput = z.infer<typeof listSessionsSchema>;
@@ -41,6 +55,7 @@ type ArchiveSessionInput = z.infer<typeof archiveSessionSchema>;
 
 type SessionRow = typeof aiSessions.$inferSelect;
 type MessageRow = typeof aiMessages.$inferSelect;
+type CommandRunRow = typeof aiCommandRuns.$inferSelect;
 
 type AIDomain = 'forecasting' | 'operations' | 'recommendation' | 'risk_commercial';
 type AIPredictionType =
@@ -57,6 +72,83 @@ type AIRecommendationType =
   | 'production_sequence'
   | 'collection_strategy'
   | 'price_adjustment';
+
+type CommandChannel = 'text' | 'voice';
+type CommandExecutionStatus =
+  | 'pending'
+  | 'awaiting_confirmation'
+  | 'executing'
+  | 'success'
+  | 'error'
+  | 'cancelled';
+
+type ExecuteCommandInput = {
+  sessionId?: number | undefined;
+  content: string;
+  channel?: CommandChannel;
+};
+
+type ConfirmCommandInput = {
+  commandRunId: number;
+};
+
+type CancelCommandInput = {
+  commandRunId: number;
+};
+
+type ListCommandRunsInput = {
+  sessionId?: number | undefined;
+  limit: number;
+  cursor?: number | undefined;
+};
+
+type CommandRunModel = {
+  id: number;
+  tenantId: number;
+  userId: number;
+  sessionId: number | null;
+  channel: CommandChannel;
+  rawInput: string;
+  normalizedInput: string | null;
+  intent: string | null;
+  confidence: number | null;
+  entities: Record<string, unknown>;
+  missingFields: string[];
+  riskLevel: RiskLevel | null;
+  requiresConfirmation: boolean;
+  confirmedAt: string | null;
+  confirmedBy: number | null;
+  toolName: string | null;
+  toolInput: Record<string, unknown> | null;
+  toolOutput: Record<string, unknown> | null;
+  executionStatus: CommandExecutionStatus;
+  errorCode: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  executedAt: string | null;
+};
+
+type CommandExecutionResponse = {
+  status:
+    | 'executed'
+    | 'awaiting_confirmation'
+    | 'ambiguous'
+    | 'missing_fields'
+    | 'blocked'
+    | 'no_intent'
+    | 'error';
+  run: CommandRunModel;
+  message: string;
+  output?: unknown;
+  preview?: {
+    title: string;
+    summary: string;
+    details: Array<{ label: string; value: string }>;
+  };
+  ambiguities?: ResolvedEntities;
+  missingFields?: string[];
+  suggestedIntents?: FlowCommandName[];
+};
 
 const PLAN_RANK: Record<string, number> = {
   [PLAN_TIER.TRIAL]: 0,
@@ -98,6 +190,48 @@ function toMessageModel(row: MessageRow): AiMessage {
     commandDetected: row.commandDetected ?? null,
     tokensUsed: row.tokensUsed ?? null,
     createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function toCommandRunModel(row: CommandRunRow): CommandRunModel {
+  const entities = row.entitiesJson && typeof row.entitiesJson === 'object'
+    ? row.entitiesJson as Record<string, unknown>
+    : {};
+  const missingFields = Array.isArray(row.missingFields)
+    ? row.missingFields.filter((value): value is string => typeof value === 'string')
+    : [];
+  const toolInput = row.toolInputJson && typeof row.toolInputJson === 'object'
+    ? row.toolInputJson as Record<string, unknown>
+    : null;
+  const toolOutput = row.toolOutputJson && typeof row.toolOutputJson === 'object'
+    ? row.toolOutputJson as Record<string, unknown>
+    : null;
+  const confidence = row.confidence !== null ? parseNumeric(row.confidence) : null;
+
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    userId: row.userId,
+    sessionId: row.sessionId ?? null,
+    channel: row.channel,
+    rawInput: row.rawInput,
+    normalizedInput: row.normalizedInput ?? null,
+    intent: row.intent ?? null,
+    confidence,
+    entities,
+    missingFields,
+    riskLevel: row.riskLevel,
+    requiresConfirmation: row.requiresConfirmation,
+    confirmedAt: row.confirmedAt ? row.confirmedAt.toISOString() : null,
+    confirmedBy: row.confirmedBy ?? null,
+    toolName: row.toolName ?? null,
+    toolInput,
+    toolOutput,
+    executionStatus: row.executionStatus,
+    errorCode: row.errorCode ?? null,
+    errorMessage: row.errorMessage ?? null,
+    createdAt: row.createdAt.toISOString(),
+    executedAt: row.executedAt ? row.executedAt.toISOString() : null,
   };
 }
 
@@ -279,6 +413,666 @@ export async function getRecentMessages(
     .limit(limit);
 
   return rows.reverse().map(toMessageModel);
+}
+
+function confidenceToDb(value: number | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return value.toFixed(3);
+}
+
+type CreateCommandRunPayload = {
+  sessionId?: number | undefined;
+  channel: CommandChannel;
+  rawInput: string;
+  normalizedInput?: string | null;
+  intent?: string | null;
+  confidence?: number | null;
+  entities?: Record<string, unknown>;
+  missingFields?: string[];
+  riskLevel?: RiskLevel | null;
+  requiresConfirmation?: boolean;
+  toolName?: string | null;
+  toolInput?: Record<string, unknown> | null;
+  toolOutput?: Record<string, unknown> | null;
+  executionStatus: CommandExecutionStatus;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  executedAt?: Date | null;
+};
+
+type UpdateCommandRunPayload = Partial<{
+  normalizedInput: string | null;
+  intent: string | null;
+  confidence: number | null;
+  entities: Record<string, unknown>;
+  missingFields: string[];
+  riskLevel: RiskLevel | null;
+  requiresConfirmation: boolean;
+  confirmedAt: Date | null;
+  confirmedBy: number | null;
+  toolName: string | null;
+  toolInput: Record<string, unknown> | null;
+  toolOutput: Record<string, unknown> | null;
+  executionStatus: CommandExecutionStatus;
+  errorCode: string | null;
+  errorMessage: string | null;
+  executedAt: Date | null;
+}>;
+
+async function createCommandRun(
+  tenantId: number,
+  userId: number,
+  payload: CreateCommandRunPayload,
+): Promise<CommandRunRow> {
+  const insertData: typeof aiCommandRuns.$inferInsert = {
+    tenantId,
+    userId,
+    sessionId: payload.sessionId ?? null,
+    channel: payload.channel,
+    rawInput: payload.rawInput,
+    normalizedInput: payload.normalizedInput ?? null,
+    intent: payload.intent ?? null,
+    confidence: confidenceToDb(payload.confidence) ?? null,
+    entitiesJson: payload.entities ?? {},
+    missingFields: payload.missingFields ?? [],
+    riskLevel: payload.riskLevel ?? null,
+    requiresConfirmation: payload.requiresConfirmation ?? false,
+    toolName: payload.toolName ?? null,
+    toolInputJson: payload.toolInput ?? null,
+    toolOutputJson: payload.toolOutput ?? null,
+    executionStatus: payload.executionStatus,
+    errorCode: payload.errorCode ?? null,
+    errorMessage: payload.errorMessage ?? null,
+    executedAt: payload.executedAt ?? null,
+  };
+
+  const [created] = await db
+    .insert(aiCommandRuns)
+    .values(insertData)
+    .returning();
+
+  if (!created) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao registrar comando' });
+  }
+
+  return created;
+}
+
+async function updateCommandRun(
+  tenantId: number,
+  commandRunId: number,
+  payload: UpdateCommandRunPayload,
+): Promise<CommandRunRow> {
+  const updateData: Partial<typeof aiCommandRuns.$inferInsert> = {};
+
+  if (payload.normalizedInput !== undefined) updateData.normalizedInput = payload.normalizedInput;
+  if (payload.intent !== undefined) updateData.intent = payload.intent;
+  if (payload.confidence !== undefined) updateData.confidence = confidenceToDb(payload.confidence);
+  if (payload.entities !== undefined) updateData.entitiesJson = payload.entities;
+  if (payload.missingFields !== undefined) updateData.missingFields = payload.missingFields;
+  if (payload.riskLevel !== undefined) updateData.riskLevel = payload.riskLevel;
+  if (payload.requiresConfirmation !== undefined) updateData.requiresConfirmation = payload.requiresConfirmation;
+  if (payload.confirmedAt !== undefined) updateData.confirmedAt = payload.confirmedAt;
+  if (payload.confirmedBy !== undefined) updateData.confirmedBy = payload.confirmedBy;
+  if (payload.toolName !== undefined) updateData.toolName = payload.toolName;
+  if (payload.toolInput !== undefined) updateData.toolInputJson = payload.toolInput;
+  if (payload.toolOutput !== undefined) updateData.toolOutputJson = payload.toolOutput;
+  if (payload.executionStatus !== undefined) updateData.executionStatus = payload.executionStatus;
+  if (payload.errorCode !== undefined) updateData.errorCode = payload.errorCode;
+  if (payload.errorMessage !== undefined) updateData.errorMessage = payload.errorMessage;
+  if (payload.executedAt !== undefined) updateData.executedAt = payload.executedAt;
+
+  const [updated] = await db
+    .update(aiCommandRuns)
+    .set(updateData)
+    .where(and(eq(aiCommandRuns.tenantId, tenantId), eq(aiCommandRuns.id, commandRunId)))
+    .returning();
+
+  if (!updated) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Command run nao encontrado' });
+  }
+
+  return updated;
+}
+
+async function getCommandRunOrThrow(tenantId: number, commandRunId: number): Promise<CommandRunRow> {
+  const [row] = await db
+    .select()
+    .from(aiCommandRuns)
+    .where(and(eq(aiCommandRuns.tenantId, tenantId), eq(aiCommandRuns.id, commandRunId)));
+
+  if (!row) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Command run nao encontrado' });
+  }
+  return row;
+}
+
+function applyResolvedEntities(entities: ParsedEntities, resolved: ResolvedEntities): ParsedEntities {
+  const next: ParsedEntities = { ...entities };
+  for (const [key, value] of Object.entries(resolved)) {
+    if (value.status !== 'resolved') continue;
+    if (key === 'clientName') next.clientId = value.id;
+    if (key === 'serviceName') next.serviceId = value.id;
+    if (key === 'materialName') next.materialId = value.id;
+    if (key === 'supplierName') next.supplierId = value.id;
+    if (key === 'userName' || key === 'technicianName') next.assignedTo = value.id;
+  }
+  return next;
+}
+
+function serializeOutput(output: unknown): string {
+  if (output === null || output === undefined) return '';
+  if (typeof output === 'string') return output;
+  try {
+    const serialized = JSON.stringify(output, null, 2);
+    return serialized.length > 700 ? `${serialized.slice(0, 700)}...` : serialized;
+  } catch {
+    return '[resultado sem serializacao]';
+  }
+}
+
+function summarizeCommandMessage(
+  status: CommandExecutionResponse['status'],
+  command: string | null,
+  output?: unknown,
+): string {
+  if (status === 'executed') {
+    const outputText = serializeOutput(output);
+    return outputText
+      ? `Comando ${command ?? 'desconhecido'} executado com sucesso.\n${outputText}`
+      : `Comando ${command ?? 'desconhecido'} executado com sucesso.`;
+  }
+  if (status === 'awaiting_confirmation') {
+    return `Comando ${command ?? 'desconhecido'} pronto para confirmacao.`;
+  }
+  if (status === 'ambiguous') {
+    return 'Encontrei multiplas opcoes. Escolha uma para continuar.';
+  }
+  if (status === 'missing_fields') {
+    return 'Faltam campos obrigatorios para executar este comando.';
+  }
+  if (status === 'blocked') {
+    return 'Voce nao possui permissao para este comando.';
+  }
+  if (status === 'no_intent') {
+    return 'Nao consegui identificar um comando valido na sua mensagem.';
+  }
+  return 'Nao foi possivel executar o comando solicitado.';
+}
+
+function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities): Record<string, unknown> {
+  const input: Record<string, unknown> = { ...entities };
+
+  if (intent === 'clients.search' && typeof entities.clientName === 'string') {
+    input.term = entities.clientName;
+  }
+
+  if (intent === 'jobs.createDraft') {
+    if (typeof entities.deadline !== 'string') {
+      input.deadline = parseNaturalDate().toISOString();
+    } else {
+      input.deadline = parseNaturalDate(entities.deadline).toISOString();
+    }
+
+    if (typeof entities.quantity !== 'number') {
+      input.quantity = 1;
+    }
+    if (typeof entities.unitPriceCents !== 'number') {
+      input.unitPriceCents = 0;
+    }
+  }
+
+  if (intent === 'agenda.createEvent') {
+    const now = new Date();
+    if (typeof input.startAt !== 'string') {
+      const startAt = new Date(now);
+      startAt.setHours(startAt.getHours() + 1, 0, 0, 0);
+      input.startAt = startAt.toISOString();
+      const endAt = new Date(startAt.getTime() + 30 * 60 * 1000);
+      input.endAt = endAt.toISOString();
+    }
+    if (typeof input.title !== 'string') {
+      input.title = 'Evento Flow IA';
+    }
+    if (typeof input.type !== 'string') {
+      input.type = 'outro';
+    }
+    if (typeof input.allDay !== 'boolean') {
+      input.allDay = false;
+    }
+    if (typeof input.recurrence !== 'string') {
+      input.recurrence = 'none';
+    }
+    if (typeof input.reminderMinutesBefore !== 'number') {
+      input.reminderMinutesBefore = 60;
+    }
+  }
+
+  if (intent === 'purchases.create') {
+    const materialId = typeof entities.materialId === 'number' ? entities.materialId : undefined;
+    const quantity = typeof entities.quantity === 'number' ? entities.quantity : undefined;
+    const unitPriceCents = typeof entities.unitPriceCents === 'number' ? entities.unitPriceCents : undefined;
+    if (materialId && quantity && unitPriceCents) {
+      input.items = [{ materialId, quantity, unitPriceCents }];
+    }
+  }
+
+  if (intent === 'purchases.receive' && typeof entities.purchaseId === 'number') {
+    input.purchaseId = entities.purchaseId;
+  }
+
+  if (intent === 'jobs.toggleUrgent' && typeof entities.isUrgent !== 'boolean') {
+    input.isUrgent = true;
+  }
+
+  if (intent === 'jobs.finalize' && typeof entities.jobId === 'number') {
+    input.jobId = entities.jobId;
+  }
+
+  return input;
+}
+
+function hasAmbiguity(resolvedEntities: ResolvedEntities): boolean {
+  return Object.values(resolvedEntities).some((entry) => entry.status === 'ambiguous');
+}
+
+function hasNotFound(resolvedEntities: ResolvedEntities): boolean {
+  return Object.values(resolvedEntities).some((entry) => entry.status === 'not_found');
+}
+
+export async function executeCommand(
+  tenantId: number,
+  userId: number,
+  userRole: Role,
+  input: ExecuteCommandInput,
+): Promise<CommandExecutionResponse> {
+  if (input.sessionId) {
+    await assertSessionOwnership(tenantId, input.sessionId, userId);
+    await saveMessage(tenantId, input.sessionId, userId, 'user', input.content);
+  }
+
+  const parsed = await parseIntent(input.content, tenantId);
+  const channel = input.channel ?? 'text';
+
+  if (!parsed.intent) {
+    const run = await createCommandRun(tenantId, userId, {
+      sessionId: input.sessionId,
+      channel,
+      rawInput: input.content,
+      normalizedInput: parsed.normalizedInput,
+      intent: null,
+      confidence: parsed.confidence,
+      entities: parsed.entities as Record<string, unknown>,
+      executionStatus: 'error',
+      errorCode: 'INTENT_NOT_RECOGNIZED',
+      errorMessage: 'Nao foi possivel identificar um comando',
+      executedAt: new Date(),
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'no_intent',
+      run: toCommandRunModel(run),
+      message: summarizeCommandMessage('no_intent', null),
+      suggestedIntents: parsed.suggestedIntents,
+    };
+
+    if (input.sessionId) {
+      await saveMessage(tenantId, input.sessionId, userId, 'assistant', response.message);
+    }
+    return response;
+  }
+
+  const intent = parsed.intent;
+  const riskLevel = FLOW_COMMANDS[intent].risk;
+
+  if (!checkCommandAccess(intent, userRole)) {
+    const run = await createCommandRun(tenantId, userId, {
+      sessionId: input.sessionId,
+      channel,
+      rawInput: input.content,
+      normalizedInput: parsed.normalizedInput,
+      intent,
+      confidence: parsed.confidence,
+      entities: parsed.entities as Record<string, unknown>,
+      missingFields: parsed.missingFields,
+      riskLevel,
+      executionStatus: 'error',
+      errorCode: 'FORBIDDEN',
+      errorMessage: 'Sem permissao para executar este comando',
+      executedAt: new Date(),
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'blocked',
+      run: toCommandRunModel(run),
+      message: summarizeCommandMessage('blocked', intent),
+    };
+
+    if (input.sessionId) {
+      await saveMessage(tenantId, input.sessionId, userId, 'assistant', response.message);
+    }
+
+    return response;
+  }
+
+  const resolvedEntities = await resolveEntities(parsed.entities, tenantId);
+  const mergedEntities = applyResolvedEntities(parsed.entities, resolvedEntities);
+  const missingFields = [...parsed.missingFields];
+
+  if (hasNotFound(resolvedEntities) && !missingFields.includes('entity_resolution')) {
+    missingFields.push('entity_resolution');
+  }
+
+  if (hasAmbiguity(resolvedEntities)) {
+    const run = await createCommandRun(tenantId, userId, {
+      sessionId: input.sessionId,
+      channel,
+      rawInput: input.content,
+      normalizedInput: parsed.normalizedInput,
+      intent,
+      confidence: parsed.confidence,
+      entities: mergedEntities as Record<string, unknown>,
+      missingFields,
+      riskLevel,
+      executionStatus: 'pending',
+      toolName: intent,
+      toolOutput: { resolvedEntities },
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'ambiguous',
+      run: toCommandRunModel(run),
+      ambiguities: resolvedEntities,
+      missingFields,
+      message: summarizeCommandMessage('ambiguous', intent),
+    };
+
+    if (input.sessionId) {
+      await saveMessage(tenantId, input.sessionId, userId, 'assistant', response.message);
+    }
+
+    return response;
+  }
+
+  if (missingFields.length > 0) {
+    const run = await createCommandRun(tenantId, userId, {
+      sessionId: input.sessionId,
+      channel,
+      rawInput: input.content,
+      normalizedInput: parsed.normalizedInput,
+      intent,
+      confidence: parsed.confidence,
+      entities: mergedEntities as Record<string, unknown>,
+      missingFields,
+      riskLevel,
+      executionStatus: 'pending',
+      toolName: intent,
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'missing_fields',
+      run: toCommandRunModel(run),
+      missingFields,
+      message: summarizeCommandMessage('missing_fields', intent),
+    };
+
+    if (input.sessionId) {
+      await saveMessage(tenantId, input.sessionId, userId, 'assistant', response.message);
+    }
+
+    return response;
+  }
+
+  const toolInput = toolInputFromEntities(intent, mergedEntities);
+
+  const initialRun = await createCommandRun(tenantId, userId, {
+    sessionId: input.sessionId,
+    channel,
+    rawInput: input.content,
+    normalizedInput: parsed.normalizedInput,
+    intent,
+    confidence: parsed.confidence,
+    entities: mergedEntities as Record<string, unknown>,
+    missingFields,
+    riskLevel,
+    requiresConfirmation: riskLevel === 'transactional' || riskLevel === 'critical',
+    toolName: intent,
+    toolInput,
+    executionStatus: 'executing',
+  });
+
+  try {
+    const result = await executeTool(
+      { tenantId, userId, role: userRole, sessionId: input.sessionId },
+      intent,
+      toolInput,
+    );
+
+    if (result.status === 'awaiting_confirmation') {
+      const updated = await updateCommandRun(tenantId, initialRun.id, {
+        executionStatus: 'awaiting_confirmation',
+        requiresConfirmation: true,
+        toolInput: result.validatedInput as Record<string, unknown>,
+        toolOutput: { preview: result.preview },
+      });
+
+      const response: CommandExecutionResponse = {
+        status: 'awaiting_confirmation',
+        run: toCommandRunModel(updated),
+        message: summarizeCommandMessage('awaiting_confirmation', intent),
+        preview: result.preview,
+      };
+
+      if (input.sessionId) {
+        await saveMessage(tenantId, input.sessionId, userId, 'assistant', response.message);
+      }
+      return response;
+    }
+
+    const updated = await updateCommandRun(tenantId, initialRun.id, {
+      executionStatus: 'success',
+      toolInput: result.validatedInput as Record<string, unknown>,
+      toolOutput: { output: result.output },
+      executedAt: new Date(),
+      errorCode: null,
+      errorMessage: null,
+    });
+
+    void logAudit({
+      tenantId,
+      userId,
+      action: 'ai.command.execute',
+      entityType: 'ai_command_runs',
+      entityId: updated.id,
+      newValue: {
+        intent,
+        riskLevel: result.riskLevel,
+      },
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'executed',
+      run: toCommandRunModel(updated),
+      output: result.output,
+      message: summarizeCommandMessage('executed', intent, result.output),
+    };
+
+    if (input.sessionId) {
+      await saveMessage(tenantId, input.sessionId, userId, 'assistant', response.message);
+    }
+
+    return response;
+  } catch (error) {
+    const message = error instanceof TRPCError ? error.message : 'Erro inesperado no comando';
+    const code = error instanceof TRPCError ? error.code : 'INTERNAL_SERVER_ERROR';
+
+    const updated = await updateCommandRun(tenantId, initialRun.id, {
+      executionStatus: 'error',
+      executedAt: new Date(),
+      errorCode: code,
+      errorMessage: message,
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'error',
+      run: toCommandRunModel(updated),
+      message: summarizeCommandMessage('error', intent),
+    };
+
+    if (input.sessionId) {
+      await saveMessage(tenantId, input.sessionId, userId, 'assistant', `${response.message}\n${message}`);
+    }
+
+    return response;
+  }
+}
+
+export async function confirmCommand(
+  tenantId: number,
+  userId: number,
+  userRole: Role,
+  input: ConfirmCommandInput,
+): Promise<CommandExecutionResponse> {
+  const run = await getCommandRunOrThrow(tenantId, input.commandRunId);
+  if (run.userId !== userId) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissao para confirmar este comando' });
+  }
+  if (run.executionStatus !== 'awaiting_confirmation') {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Comando nao esta aguardando confirmacao' });
+  }
+  if (!run.intent) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Comando sem intent nao pode ser confirmado' });
+  }
+
+  const intent = run.intent as FlowCommandName;
+  const toolInput = run.toolInputJson && typeof run.toolInputJson === 'object'
+    ? run.toolInputJson
+    : {};
+
+  try {
+    const result = await confirmAndExecute(
+      { tenantId, userId, role: userRole, sessionId: run.sessionId ?? undefined },
+      intent,
+      toolInput,
+    );
+
+    const now = new Date();
+    if (result.status !== 'success') {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Confirmacao nao retornou sucesso' });
+    }
+
+    const updated = await updateCommandRun(tenantId, run.id, {
+      executionStatus: 'success',
+      confirmedAt: now,
+      confirmedBy: userId,
+      toolOutput: { output: result.output },
+      executedAt: now,
+      errorCode: null,
+      errorMessage: null,
+    });
+
+    void logAudit({
+      tenantId,
+      userId,
+      action: 'ai.command.confirm',
+      entityType: 'ai_command_runs',
+      entityId: updated.id,
+      oldValue: { executionStatus: run.executionStatus },
+      newValue: { executionStatus: updated.executionStatus, intent },
+    });
+
+    const response: CommandExecutionResponse = {
+      status: 'executed',
+      run: toCommandRunModel(updated),
+      output: result.output,
+      message: summarizeCommandMessage('executed', intent, result.output),
+    };
+
+    if (run.sessionId) {
+      await saveMessage(tenantId, run.sessionId, userId, 'assistant', response.message);
+    }
+
+    return response;
+  } catch (error) {
+    const message = error instanceof TRPCError ? error.message : 'Falha ao confirmar comando';
+    const code = error instanceof TRPCError ? error.code : 'INTERNAL_SERVER_ERROR';
+
+    const updated = await updateCommandRun(tenantId, run.id, {
+      executionStatus: 'error',
+      errorCode: code,
+      errorMessage: message,
+      executedAt: new Date(),
+    });
+
+    return {
+      status: 'error',
+      run: toCommandRunModel(updated),
+      message: summarizeCommandMessage('error', run.intent ?? null),
+    };
+  }
+}
+
+export async function cancelCommand(
+  tenantId: number,
+  userId: number,
+  input: CancelCommandInput,
+): Promise<{ success: true; run: CommandRunModel }> {
+  const run = await getCommandRunOrThrow(tenantId, input.commandRunId);
+  if (run.userId !== userId) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissao para cancelar este comando' });
+  }
+  if (!['pending', 'awaiting_confirmation', 'executing'].includes(run.executionStatus)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Comando nao pode ser cancelado neste estado' });
+  }
+
+  const updated = await updateCommandRun(tenantId, run.id, {
+    executionStatus: 'cancelled',
+    errorCode: 'CANCELLED_BY_USER',
+    errorMessage: 'Comando cancelado pelo usuario',
+    executedAt: new Date(),
+  });
+
+  void logAudit({
+    tenantId,
+    userId,
+    action: 'ai.command.cancel',
+    entityType: 'ai_command_runs',
+    entityId: updated.id,
+    oldValue: { executionStatus: run.executionStatus },
+    newValue: { executionStatus: 'cancelled' },
+  });
+
+  return { success: true, run: toCommandRunModel(updated) };
+}
+
+export async function listCommandRuns(
+  tenantId: number,
+  userId: number,
+  input: ListCommandRunsInput,
+): Promise<{ data: CommandRunModel[]; nextCursor: number | null }> {
+  const conditions = [eq(aiCommandRuns.tenantId, tenantId), eq(aiCommandRuns.userId, userId)];
+  if (input.sessionId !== undefined) {
+    conditions.push(eq(aiCommandRuns.sessionId, input.sessionId));
+  }
+  if (input.cursor) {
+    conditions.push(lt(aiCommandRuns.id, input.cursor));
+  }
+
+  const rows = await db
+    .select()
+    .from(aiCommandRuns)
+    .where(and(...conditions))
+    .orderBy(desc(aiCommandRuns.id))
+    .limit(input.limit + 1);
+
+  const pageRows = rows.slice(0, input.limit);
+  const hasMore = rows.length > input.limit;
+  const nextCursor = hasMore ? pageRows[pageRows.length - 1]?.id ?? null : null;
+
+  return {
+    data: pageRows.map(toCommandRunModel),
+    nextCursor,
+  };
 }
 
 export async function ensureTenantAISettings(tenantId: number): Promise<typeof aiTenantSettings.$inferSelect> {

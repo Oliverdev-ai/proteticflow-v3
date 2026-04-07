@@ -5,8 +5,8 @@ import { usePermissions } from '../../hooks/use-permissions';
 import { SessionList } from '../../components/ai/session-list';
 import { ChatWindow } from '../../components/ai/chat-window';
 import { ChatInput } from '../../components/ai/chat-input';
-import { QuickActions } from '../../components/ai/quick-actions';
 import { ProactiveBanner } from '../../components/ai/proactive-banner';
+import { FlowAssistant } from '../../components/ai/flow-assistant';
 
 export default function FlowIAPage() {
   const { role } = usePermissions();
@@ -50,6 +50,14 @@ export default function FlowIAPage() {
     await utils.ai.listSessions.invalidate();
   }
 
+  async function handleEnsureSession(): Promise<number> {
+    if (selectedSessionId) return selectedSessionId;
+    const created = await createSessionMutation.mutateAsync({});
+    setSelectedSessionId(created.id);
+    await utils.ai.listSessions.invalidate();
+    return created.id;
+  }
+
   async function handleArchiveSession(sessionId: number) {
     await archiveSessionMutation.mutateAsync({ sessionId });
     if (selectedSessionId === sessionId) {
@@ -75,6 +83,14 @@ export default function FlowIAPage() {
 
   async function handleQuickAction(prompt: string) {
     await handleSend(prompt);
+  }
+
+  async function handleCommandResolved() {
+    if (selectedSessionId) {
+      await refreshSessionState(selectedSessionId);
+      return;
+    }
+    await utils.ai.listSessions.invalidate();
   }
 
   const sessions: AiSession[] = sessionsQuery.data?.data ?? [];
@@ -105,7 +121,13 @@ export default function FlowIAPage() {
         </div>
 
         <div className="xl:col-span-3 space-y-4">
-          <QuickActions userRole={role} disabled={busy} onAction={handleQuickAction} />
+          <FlowAssistant
+            role={role}
+            sessionId={selectedSessionId}
+            disabled={busy}
+            onEnsureSession={handleEnsureSession}
+            onCommandResolved={handleCommandResolved}
+          />
           <ChatWindow messages={messages} isLoading={sendMessageMutation.isPending} />
           <ChatInput disabled={busy} isSending={sendMessageMutation.isPending} onSend={handleSend} />
         </div>
