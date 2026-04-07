@@ -169,6 +169,13 @@
       "when": 1775503200000,
       "tag": "0023_purchases_received_by",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1775520000000,
+      "tag": "0024_ai_command_runs",
+      "breakpoints": true
     }
   ]
 }
