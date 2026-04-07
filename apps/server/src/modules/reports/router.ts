@@ -7,6 +7,13 @@ import {
 } from '@proteticflow/shared';
 import * as reportsService from './service.js';
 import { abcCurveProcedure } from './abc-curve.router.js';
+import {
+  fiscalDreProcedure,
+  fiscalExpensesProcedure,
+  fiscalExportCsvProcedure,
+  fiscalExportPdfProcedure,
+  fiscalRevenueProcedure,
+} from './fiscal.router.js';
 
 type ReportFilters = {
   dateFrom: string;
@@ -48,6 +55,11 @@ function sanitizeFilters(filters: {
 
 export const reportsRouter = router({
   abcCurve: abcCurveProcedure,
+  fiscalRevenue: fiscalRevenueProcedure,
+  fiscalExpenses: fiscalExpensesProcedure,
+  fiscalDRE: fiscalDreProcedure,
+  exportCSV: fiscalExportCsvProcedure,
+  exportPDF: fiscalExportPdfProcedure,
 
   listDefinitions: tenantProcedure.query(({ ctx }) => reportsService.listDefinitions(ctx.tenantId!)),
 

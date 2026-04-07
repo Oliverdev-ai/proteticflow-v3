@@ -19,6 +19,7 @@ import { buildInventoryReport } from './adapters/inventory-report.js';
 import { buildPurchasesReport } from './adapters/purchases-report.js';
 import { serializeReportCsv } from './csv.js';
 import { sendReportByEmail } from './email.js';
+import { buildFiscalPreview } from './fiscal.service.js';
 
 type ReportFilters = {
   dateFrom: string;
@@ -42,7 +43,9 @@ const REPORT_MIN_ROLE: Record<ReportType, UserRole> = {
   inventory: 'gerente',
   deliveries: 'recepcao',
   purchases: 'gerente',
-  fiscal: 'contabil',
+  'fiscal-revenue': 'contabil',
+  'fiscal-expenses': 'contabil',
+  'fiscal-dre': 'contabil',
 };
 
 const ROLE_WEIGHT: Record<UserRole, number> = {
@@ -118,6 +121,12 @@ async function resolvePreview(
   }
   if (type === 'purchases') {
     return buildPurchasesReport(tenantId, filters);
+  }
+  if (type === 'fiscal-revenue' || type === 'fiscal-expenses' || type === 'fiscal-dre') {
+    return buildFiscalPreview(tenantId, type, {
+      startDate: filters.dateFrom,
+      endDate: filters.dateTo,
+    });
   }
 
   return buildPlaceholderPreview(type);
