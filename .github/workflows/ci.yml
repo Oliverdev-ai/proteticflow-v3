@@ -53,7 +53,8 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://proteticflow_test@localhost:5432/proteticflow_test
-      JWT_SECRET: ci-test-secret-do-not-use-in-production
+      JWT_SECRET: ${{ format('{0}{0}', github.sha) }}
+      SETTINGS_SECRET_KEY: ${{ format('{0}{0}', github.sha) }}
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
@@ -98,6 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@v2
         env:
