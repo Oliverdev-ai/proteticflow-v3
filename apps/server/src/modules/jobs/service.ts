@@ -823,15 +823,9 @@ export async function uploadPhoto(tenantId: number, input: UploadPhotoInput, upl
   const ext = input.filename.split('.').pop() ?? 'jpg';
   const key = `tenants/${tenantId}/jobs/${input.jobId}/photos/${Date.now()}.${ext}`;
 
-  let url = key; // fallback para dev sem MinIO
-  try {
-    const buffer = Buffer.from(input.fileBase64, 'base64');
-    await uploadBuffer(key, buffer, input.mimeType);
-    url = key;
-  } catch {
-    // MinIO nÃƒÂ£o configurado em dev Ã¢â‚¬â€ salva sÃƒÂ³ o path no banco
-    logger.warn({ action: 'job.photo.upload.minio_skip', tenantId, jobId: input.jobId }, 'MinIO nÃƒÂ£o disponÃƒÂ­vel, salvando path local');
-  }
+  const buffer = Buffer.from(input.fileBase64, 'base64');
+  await uploadBuffer(key, buffer, input.mimeType);
+  const url = key;
 
   const [photo] = await db.insert(jobPhotos).values({
     tenantId,

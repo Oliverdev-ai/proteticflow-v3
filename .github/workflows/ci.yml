@@ -12,7 +12,7 @@ concurrency:
 
 env:
   NODE_VERSION: '22'
-  PNPM_VERSION: '9'
+  PNPM_VERSION: '9.0.0'
 
 jobs:
   lint-and-typecheck:
@@ -42,8 +42,8 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: proteticflow_test
-          POSTGRES_PASSWORD: test_password
           POSTGRES_DB: proteticflow_test
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -52,8 +52,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://proteticflow_test:test_password@localhost:5432/proteticflow_test
-      JWT_SECRET: ci-test-secret-do-not-use-in-production
+      DATABASE_URL: postgresql://proteticflow_test@localhost:5432/proteticflow_test
+      JWT_SECRET: ${{ format('{0}{0}', github.sha) }}
+      SETTINGS_SECRET_KEY: ${{ format('{0}{0}', github.sha) }}
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +69,7 @@ jobs:
       - name: Run DB Migrations
         run: pnpm --filter server db:push
       - name: Run Tests
-        run: pnpm test -- --reporter=verbose
+        run: pnpm test -- --env-mode=loose
       - name: Upload Coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,10 +99,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
