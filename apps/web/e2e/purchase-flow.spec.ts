@@ -1,17 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-
-const hasManagerE2E = Boolean(process.env.E2E_MANAGER_EMAIL && process.env.E2E_MANAGER_PASSWORD);
+import { loginManager, requireManagerE2E } from './support/auth';
 
 function suffix() {
   return Date.now().toString().slice(-7);
-}
-
-async function loginManager(page: Page) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('E-mail').fill(process.env.E2E_MANAGER_EMAIL!);
-  await page.getByPlaceholder('Senha').fill(process.env.E2E_MANAGER_PASSWORD!);
-  await page.getByRole('button', { name: /entrar|login/i }).click();
-  await page.waitForURL(/^\/$/, { timeout: 30000 });
 }
 
 async function createSupplier(page: Page, supplierName: string) {
@@ -59,7 +50,7 @@ async function createPurchase(page: Page, supplierName: string, materialName: st
 
 test.describe('purchase flow e2e', () => {
   test('cria compra, confirma e recebe com lancamento em contas a pagar', async ({ page }) => {
-    test.skip(!hasManagerE2E, 'E2E manager vars nao configuradas');
+    requireManagerE2E();
 
     const token = suffix();
     const supplierName = `Fornecedor E2E ${token}`;

@@ -1,17 +1,8 @@
 ﻿import { expect, test, type Page } from '@playwright/test';
-
-const hasManagerE2E = Boolean(process.env.E2E_MANAGER_EMAIL && process.env.E2E_MANAGER_PASSWORD);
+import { loginManager, requireManagerE2E } from './support/auth';
 
 function suffix() {
   return Date.now().toString().slice(-7);
-}
-
-async function loginManager(page: Page) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('E-mail').fill(process.env.E2E_MANAGER_EMAIL!);
-  await page.getByPlaceholder('Senha').fill(process.env.E2E_MANAGER_PASSWORD!);
-  await page.getByRole('button', { name: /entrar|login/i }).click();
-  await page.waitForURL(/^\/$/, { timeout: 30000 });
 }
 
 async function createClient(page: Page, clientName: string) {
@@ -61,7 +52,7 @@ async function createJob(page: Page, clientName: string, patientName: string): P
 
 test.describe('job subtype e2e', () => {
   test('subtype urgente aparece no kanban', async ({ page }) => {
-    test.skip(!hasManagerE2E, 'E2E manager vars nao configuradas');
+    requireManagerE2E();
 
     const token = suffix();
     const clientName = `Cliente Subtype U ${token}`;
@@ -81,7 +72,7 @@ test.describe('job subtype e2e', () => {
   });
 
   test('subtype suspender remove do kanban ativo e reativar devolve', async ({ page }) => {
-    test.skip(!hasManagerE2E, 'E2E manager vars nao configuradas');
+    requireManagerE2E();
 
     const token = suffix();
     const clientName = `Cliente Subtype S ${token}`;
@@ -109,7 +100,7 @@ test.describe('job subtype e2e', () => {
   });
 
   test('subtype remoldagem cria nova OS filha', async ({ page }) => {
-    test.skip(!hasManagerE2E, 'E2E manager vars nao configuradas');
+    requireManagerE2E();
 
     const token = suffix();
     const clientName = `Cliente Subtype R ${token}`;
@@ -129,4 +120,3 @@ test.describe('job subtype e2e', () => {
     await expect(page.getByText(/remoldagem/i).first()).toBeVisible({ timeout: 10000 });
   });
 });
-
