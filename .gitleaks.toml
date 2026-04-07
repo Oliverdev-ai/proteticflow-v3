@@ -1,4 +1,4 @@
-﻿title = "ProteticFlow - Gitleaks Config"
+title = "ProteticFlow - Gitleaks Config"
 
 [allowlist]
   description = "Allow test placeholders in .env.example and CI workflow"
