@@ -1,6 +1,6 @@
 import { db } from '../../db/index.js';
 import { clients, priceItems, pricingTables } from '../../db/schema/clients.js';
-import { eq, ilike, and } from 'drizzle-orm';
+import { eq, ilike, and, isNull } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 export function parseNaturalDate(input?: string): Date {
@@ -22,11 +22,85 @@ export function parseNaturalDate(input?: string): Date {
   return d;
 }
 
-export async function resolveClientByName(tenantId: number, name: string) {
-  const results = await db.select().from(clients)
-    .where(and(eq(clients.tenantId, tenantId), ilike(clients.name, `%${name}%`)))
-    .limit(1);
-  return results[0];
+type ResolvedClient = {
+  id: number;
+  name: string;
+  pricingTableId: number | null;
+};
+
+type AmbiguousClientCandidate = {
+  id: number;
+  name: string;
+  clinic: string | null;
+  phone: string | null;
+};
+
+export type ResolveClientByNameResult =
+  | { status: 'resolved'; client: ResolvedClient }
+  | { status: 'ambiguous'; candidates: AmbiguousClientCandidate[] }
+  | { status: 'not_found' };
+
+export async function resolveClientByName(
+  tenantId: number,
+  name: string,
+): Promise<ResolveClientByNameResult> {
+  const normalizedName = name.trim().toLowerCase();
+
+  const matches = await db.select({
+    id: clients.id,
+    name: clients.name,
+    pricingTableId: clients.pricingTableId,
+    clinic: clients.clinic,
+    phone: clients.phone,
+  }).from(clients)
+    .where(and(
+      eq(clients.tenantId, tenantId),
+      isNull(clients.deletedAt),
+      ilike(clients.name, `%${name}%`),
+    ))
+    .limit(5);
+
+  if (matches.length === 0) {
+    return { status: 'not_found' };
+  }
+
+  const exactMatches = matches.filter(
+    (match) => match.name.trim().toLowerCase() === normalizedName,
+  );
+
+  if (exactMatches.length === 1) {
+    const exact = exactMatches[0]!;
+    return {
+      status: 'resolved',
+      client: {
+        id: exact.id,
+        name: exact.name,
+        pricingTableId: exact.pricingTableId,
+      },
+    };
+  }
+
+  if (matches.length > 1) {
+    return {
+      status: 'ambiguous',
+      candidates: matches.map((match) => ({
+        id: match.id,
+        name: match.name,
+        clinic: match.clinic,
+        phone: match.phone,
+      })),
+    };
+  }
+
+  const [single] = matches;
+  return {
+    status: 'resolved',
+    client: {
+      id: single!.id,
+      name: single!.name,
+      pricingTableId: single!.pricingTableId,
+    },
+  };
 }
 
 type ServiceItemInput = {

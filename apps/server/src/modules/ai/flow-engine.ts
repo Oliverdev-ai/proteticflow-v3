@@ -45,7 +45,7 @@ export async function* streamAiResponse(
   userRole: Role,
   userMessage: string,
   history: AiMessage[],
-  userId: number
+  userId: number,
 ): AsyncGenerator<StreamChunk> {
   const commandDetected = detectCommand(userMessage, userRole);
   const client = getAnthropicClient();
@@ -76,7 +76,7 @@ export async function* streamAiResponse(
     });
 
     let toolCallInput: string | null = null;
-    let toolCallName: string| null = null;
+    let toolCallName: string | null = null;
 
     for await (const event of stream) {
       const eventType = (event as { type?: string }).type;
@@ -110,34 +110,60 @@ export async function* streamAiResponse(
     if (toolCallName === 'create_job' && toolCallInput) {
       try {
         const input = JSON.parse(toolCallInput);
-        const clientObj = await resolveClientByName(tenantId, input.clientName);
-        if (!clientObj) {
-          yield { type: 'delta', text: `\nNão encontrei o cliente "${input.clientName}". Verifique o nome.` };
+        const clientResolution = await resolveClientByName(tenantId, input.clientName);
+
+        if (clientResolution.status === 'not_found') {
+          yield { type: 'delta', text: `\nNao encontrei o cliente "${input.clientName}". Verifique o nome.` };
+          yieldedAnyDelta = true;
+        } else if (clientResolution.status === 'ambiguous') {
+          const options = clientResolution.candidates
+            .map((candidate) => {
+              const contextText = [candidate.clinic, candidate.phone].filter(Boolean).join(' - ');
+              if (contextText.length > 0) {
+                return `- ${candidate.name} (id ${candidate.id}) | ${contextText}`;
+              }
+              return `- ${candidate.name} (id ${candidate.id})`;
+            })
+            .join('\n');
+
+          yield {
+            type: 'delta',
+            text:
+              `\nEncontrei mais de um cliente para "${input.clientName}". Me diga qual devo usar:\n${options}\n` +
+              'Voce pode responder com o nome completo ou com o ID do cliente.',
+          };
           yieldedAnyDelta = true;
         } else {
+          const clientObj = clientResolution.client;
           const items = await resolveServiceItems(tenantId, clientObj.pricingTableId, input.items || []);
           const deadline = parseNaturalDate(input.deadline);
-          const job = await jobService.createJob(tenantId, {
-            clientId: clientObj.id,
-            osNumber: input.osNumber,
-            items: items.map(i => ({
-              priceItemId: i.priceItemId,
-              serviceNameSnapshot: i.serviceName,
-              quantity: i.quantity,
-              unitPriceCents: i.unitPriceCents,
-              adjustmentPercent: i.adjustmentPercent,
-            })),
-            deadline: deadline.toISOString(),
-            notes: input.notes ?? 'Criado via Flow IA.',
-          }, userId);
-          yield { type: 'delta', text: `\nOS #${job.id} criada para ${clientObj.name}. Prazo: ${deadline.toLocaleDateString('pt-BR')}.` };
+          const job = await jobService.createJob(
+            tenantId,
+            {
+              clientId: clientObj.id,
+              osNumber: input.osNumber,
+              items: items.map((item) => ({
+                priceItemId: item.priceItemId,
+                serviceNameSnapshot: item.serviceName,
+                quantity: item.quantity,
+                unitPriceCents: item.unitPriceCents,
+                adjustmentPercent: item.adjustmentPercent,
+              })),
+              deadline: deadline.toISOString(),
+              notes: input.notes ?? 'Criado via Flow IA.',
+            },
+            userId,
+          );
+          yield {
+            type: 'delta',
+            text: `\nOS #${job.id} criada para ${clientObj.name}. Prazo: ${deadline.toLocaleDateString('pt-BR')}.`,
+          };
           yieldedAnyDelta = true;
         }
       } catch (err) {
         console.error('Error in tool call execution', err);
       }
     }
-
   } catch {
     yield { type: 'delta', text: FALLBACK_MESSAGE };
     yield { type: 'done', commandDetected, tokensUsed: totalTokens };
