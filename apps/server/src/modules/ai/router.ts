@@ -31,6 +31,11 @@ const confirmCommandSchema = z.object({
   commandRunId: z.number().int().positive(),
 });
 
+const resolveCommandStepSchema = z.object({
+  commandRunId: z.number().int().positive(),
+  values: z.record(z.string(), z.unknown()).default({}),
+});
+
 const cancelCommandSchema = z.object({
   commandRunId: z.number().int().positive(),
 });
@@ -120,6 +125,11 @@ export const aiRouter = router({
     .input(executeCommandSchema)
     .mutation(({ ctx, input }) =>
       aiService.executeCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+
+  resolveCommandStep: tenantProcedure
+    .input(resolveCommandStepSchema)
+    .mutation(({ ctx, input }) =>
+      aiService.resolveCommandStep(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
 
   confirmCommand: tenantProcedure
     .input(confirmCommandSchema)

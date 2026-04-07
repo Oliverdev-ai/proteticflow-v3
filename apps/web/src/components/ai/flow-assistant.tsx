@@ -22,6 +22,34 @@ type CommandResponse = {
     summary: string;
     details: Array<{ label: string; value: string }>;
   };
+  confirmationStep?:
+    | {
+      type: 'disambiguate';
+      field: string;
+      options: Array<{ id: number; label: string; detail?: string }>;
+    }
+    | {
+      type: 'fill_missing';
+      fields: Array<{ name: string; label: string; type: string; required: boolean }>;
+    }
+    | {
+      type: 'review';
+      preview: {
+        title: string;
+        summary: string;
+        details: Array<{ label: string; value: string }>;
+      };
+    }
+    | {
+      type: 'confirm';
+      warning: string;
+      action: string;
+      preview?: {
+        title: string;
+        summary: string;
+        details: Array<{ label: string; value: string }>;
+      };
+    };
   missingFields?: string[];
   suggestedIntents?: string[];
 };
@@ -55,6 +83,7 @@ export function FlowAssistant({
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const executeCommandMutation = trpc.ai.executeCommand.useMutation();
+  const resolveCommandStepMutation = trpc.ai.resolveCommandStep.useMutation();
   const confirmCommandMutation = trpc.ai.confirmCommand.useMutation();
   const cancelCommandMutation = trpc.ai.cancelCommand.useMutation();
   const listRunsQuery = trpc.ai.listCommandRuns.useQuery(
@@ -65,6 +94,7 @@ export function FlowAssistant({
   const isBusy = disabled
     || voiceBusy
     || executeCommandMutation.isPending
+    || resolveCommandStepMutation.isPending
     || confirmCommandMutation.isPending
     || cancelCommandMutation.isPending;
 
@@ -107,6 +137,15 @@ export function FlowAssistant({
 
   async function handleConfirm(runId: number) {
     const response = await confirmCommandMutation.mutateAsync({ commandRunId: runId });
+    setLastResponse(response as CommandResponse);
+    await refresh();
+  }
+
+  async function handleResolveStep(runId: number, values: Record<string, unknown>) {
+    const response = await resolveCommandStepMutation.mutateAsync({
+      commandRunId: runId,
+      values,
+    });
     setLastResponse(response as CommandResponse);
     await refresh();
   }
@@ -184,7 +223,7 @@ export function FlowAssistant({
 
       {lastResponse ? (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Pipeline O1</p>
+          <p className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Pipeline F38</p>
           <p className="text-sm text-zinc-100 whitespace-pre-wrap">{lastResponse.message}</p>
 
           {lastResponse.status === 'missing_fields' && lastResponse.missingFields?.length ? (
@@ -201,14 +240,16 @@ export function FlowAssistant({
         </div>
       ) : null}
 
-      {lastResponse?.status === 'awaiting_confirmation' ? (
+      {lastResponse && ['awaiting_confirmation', 'ambiguous', 'missing_fields'].includes(lastResponse.status) ? (
         <FlowActionConfirmation
           runId={lastResponse.run.id}
           command={lastResponse.run.intent ?? 'comando'}
           {...(lastResponse.preview ? { preview: lastResponse.preview } : {})}
+          {...(lastResponse.confirmationStep ? { step: lastResponse.confirmationStep } : {})}
           isSubmitting={isBusy}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
+          onResolve={handleResolveStep}
         />
       ) : null}
 
