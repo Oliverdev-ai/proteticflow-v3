@@ -17,10 +17,10 @@ function getFriendlyLoginError(err: unknown): string {
       message.includes('connection refused') ||
       message.includes('err_connection_refused')
     ) {
-      return 'Nao foi possivel conectar ao servidor. Verifique se o backend esta ativo e tente novamente.';
+      return 'Não foi possível conectar ao servidor. Verifique se o backend está ativo e tente novamente.';
     }
-    if (message.includes('credenciais')) return 'Email ou senha invalidos.';
-    return 'Nao foi possivel concluir o login. Tente novamente.';
+    if (message.includes('credenciais')) return 'E-mail ou senha inválidos.';
+    return 'Não foi possível concluir o login. Tente novamente.';
   }
 
   return 'Erro inesperado.';
@@ -113,4 +113,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

@@ -37,7 +37,9 @@ export default function ResetPasswordPage() {
   return (
     <div>
       <h1 className="text-zinc-50 text-2xl font-semibold text-center">Redefinir senha</h1>
-      <p className="text-zinc-400 text-sm text-center mt-2">Defina uma nova senha para sua conta.</p>
+      <p className="text-zinc-400 text-sm text-center mt-2">
+        Defina uma nova senha para sua conta.
+      </p>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-4">
         {error && (
@@ -77,4 +79,3 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
-

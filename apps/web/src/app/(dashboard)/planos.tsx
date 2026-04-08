@@ -38,13 +38,13 @@ export default function PlanosPage() {
         percent: status.usage.jobsPerMonth.usagePercent,
       },
       {
-        label: 'Usuarios',
+        label: 'Usuários',
         current: status.usage.users.current,
         limit: status.usage.users.limit,
         percent: status.usage.users.usagePercent,
       },
       {
-        label: 'Tabelas de precos',
+        label: 'Tabelas de preços',
         current: status.usage.priceTables.current,
         limit: status.usage.priceTables.limit,
         percent: status.usage.priceTables.usagePercent,
@@ -83,7 +83,7 @@ export default function PlanosPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Planos e Licenciamento</h1>
-        <p className="text-sm text-red-400">Nao foi possivel carregar os dados de licenca.</p>
+        <p className="text-sm text-red-400">Não foi possível carregar os dados de licença.</p>
       </div>
     );
   }
@@ -94,7 +94,8 @@ export default function PlanosPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Planos e Licenciamento</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Plano atual: <span className="text-zinc-100 font-medium">{formatPlan(status.plan)}</span>
+            Plano atual:{' '}
+            <span className="text-zinc-100 font-medium">{formatPlan(status.plan)}</span>
           </p>
           {status.plan === 'trial' ? (
             <p className="text-xs text-zinc-500 mt-1">
@@ -122,7 +123,8 @@ export default function PlanosPage() {
             <p className="mt-2 text-xl font-semibold text-white">
               {item.current}
               <span className="text-sm text-zinc-400">
-                {' '}/ {item.limit === null ? 'Ilimitado' : item.limit}
+                {' '}
+                / {item.limit === null ? 'Ilimitado' : item.limit}
               </span>
             </p>
             <p className="mt-1 text-xs text-zinc-500">

@@ -22,7 +22,9 @@ export default function AuthLayout() {
           <Outlet />
         </div>
 
-        <p className="mt-8 text-zinc-600 text-xs">© 2026 ProteticFlow. Todos os direitos reservados.</p>
+        <p className="mt-8 text-zinc-600 text-xs">
+          © 2026 ProteticFlow. Todos os direitos reservados.
+        </p>
       </div>
     </div>
   );

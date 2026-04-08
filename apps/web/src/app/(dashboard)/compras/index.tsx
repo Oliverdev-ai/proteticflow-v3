@@ -14,11 +14,24 @@ import {
 
 type Status = 'draft' | 'sent' | 'received' | 'cancelled';
 
-const STATUS_CONFIG: Record<Status, { label: string; color: string; bg: string; icon: typeof Clock }> = {
-  draft:     { label: 'Rascunho',  color: 'text-muted-foreground', bg: 'bg-muted/60',       icon: Clock },
-  sent:      { label: 'Confirmada', color: 'text-primary',          bg: 'bg-primary/10',     icon: Send },
-  received:  { label: 'Recebida',  color: 'text-accent-foreground', bg: 'bg-accent',         icon: CheckCircle },
-  cancelled: { label: 'Cancelada', color: 'text-destructive',       bg: 'bg-destructive/10', icon: XCircle },
+const STATUS_CONFIG: Record<
+  Status,
+  { label: string; color: string; bg: string; icon: typeof Clock }
+> = {
+  draft: { label: 'Rascunho', color: 'text-muted-foreground', bg: 'bg-muted/60', icon: Clock },
+  sent: { label: 'Confirmada', color: 'text-primary', bg: 'bg-primary/10', icon: Send },
+  received: {
+    label: 'Recebida',
+    color: 'text-accent-foreground',
+    bg: 'bg-accent',
+    icon: CheckCircle,
+  },
+  cancelled: {
+    label: 'Cancelada',
+    color: 'text-destructive',
+    bg: 'bg-destructive/10',
+    icon: XCircle,
+  },
 };
 
 const FILTERS: Array<{ value: Status | ''; label: string }> = [
@@ -134,20 +147,25 @@ export default function PurchasesListPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground font-semibold">{po.code}</span>
-                    <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${cfg.bg} ${cfg.color}`}>
+                    <span
+                      className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${cfg.bg} ${cfg.color}`}
+                    >
                       <StatusIcon size={10} />
                       {cfg.label}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {supplierName ?? 'Fornecedor não informado'} · 
+                    {supplierName ?? 'Fornecedor não informado'} ·
                     {new Date(po.createdAt).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-foreground font-bold">{fmtBRL(po.totalCents)}</span>
-                <ChevronRight size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                <ChevronRight
+                  size={16}
+                  className="text-muted-foreground group-hover:text-primary transition-colors"
+                />
               </div>
             </Link>
           );

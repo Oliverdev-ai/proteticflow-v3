@@ -6,8 +6,12 @@ import { TicketForm } from '../../../components/support/ticket-form';
 
 export default function TicketsPage() {
   const utils = trpc.useUtils();
-  const [statusFilter, setStatusFilter] = useState<'open' | 'in_progress' | 'resolved' | 'closed' | ''>('');
-  const [priorityFilter, setPriorityFilter] = useState<'low' | 'medium' | 'high' | 'urgent' | ''>('');
+  const [statusFilter, setStatusFilter] = useState<
+    'open' | 'in_progress' | 'resolved' | 'closed' | ''
+  >('');
+  const [priorityFilter, setPriorityFilter] = useState<'low' | 'medium' | 'high' | 'urgent' | ''>(
+    '',
+  );
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
 
   const ticketsQuery = trpc.support.listTickets.useQuery({
@@ -26,7 +30,10 @@ export default function TicketsPage() {
   const addMessageMutation = trpc.support.addTicketMessage.useMutation();
 
   const tickets = useMemo(() => ticketsQuery.data?.data ?? [], [ticketsQuery.data?.data]);
-  const busy = createTicketMutation.isPending || updateTicketMutation.isPending || addMessageMutation.isPending;
+  const busy =
+    createTicketMutation.isPending ||
+    updateTicketMutation.isPending ||
+    addMessageMutation.isPending;
 
   async function refreshTicketData(ticketId?: number) {
     await utils.support.listTickets.invalidate();
@@ -39,18 +46,28 @@ export default function TicketsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Suporte • Tickets</h1>
-        <p className="text-sm text-zinc-400">Central de atendimento interno com fluxo de tickets escalados.</p>
+        <p className="text-sm text-zinc-400">
+          Central de atendimento interno com fluxo de tickets escalados.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100">
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
+          className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+        >
           <option value="">Status (todos)</option>
           <option value="open">Abertos</option>
           <option value="in_progress">Em andamento</option>
           <option value="resolved">Resolvidos</option>
           <option value="closed">Fechados</option>
         </select>
-        <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)} className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100">
+        <select
+          value={priorityFilter}
+          onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
+          className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+        >
           <option value="">Prioridade (todas)</option>
           <option value="low">Baixa</option>
           <option value="medium">Média</option>

@@ -26,4 +26,3 @@ test.describe('flow critical actions e2e', () => {
     await expect(page.getByText(/comando cancelado/i)).toBeVisible({ timeout: 15000 });
   });
 });
-

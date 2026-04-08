@@ -36,9 +36,7 @@ export default function PublicPortalPage() {
           </section>
         ) : null}
 
-        {query.isError ? (
-          <PortalError message={query.error.message} />
-        ) : null}
+        {query.isError ? <PortalError message={query.error.message} /> : null}
 
         {snapshot ? (
           <>
@@ -140,9 +138,7 @@ export default function PublicPortalPage() {
               ) : null}
 
               {escalated ? (
-                <p className="text-sm text-amber-700">
-                  Nossa equipe entrará em contato em breve.
-                </p>
+                <p className="text-sm text-amber-700">Nossa equipe entrará em contato em breve.</p>
               ) : null}
             </section>
           </>

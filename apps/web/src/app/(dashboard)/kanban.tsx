@@ -12,7 +12,12 @@ import {
   User,
 } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
-import { canTransition, JOB_STATUS_LABELS, KANBAN_COLUMNS, type JobStatus } from '@proteticflow/shared';
+import {
+  canTransition,
+  JOB_STATUS_LABELS,
+  KANBAN_COLUMNS,
+  type JobStatus,
+} from '@proteticflow/shared';
 import { useNavigate } from 'react-router-dom';
 import { PageTransition } from '../../components/shared/page-transition';
 import { H1, Subtitle, Muted } from '../../components/shared/typography';
@@ -103,7 +108,9 @@ function JobCard({
         </span>
         <div
           className={cn('h-2 w-2 rounded-full', URGENCY_DOT[urgency] || 'bg-muted')}
-          title={urgency === 'overdue' ? 'Atrasado' : urgency === 'due24h' ? 'Vence em 24h' : 'No Prazo'}
+          title={
+            urgency === 'overdue' ? 'Atrasado' : urgency === 'due24h' ? 'Vence em 24h' : 'No Prazo'
+          }
         />
       </div>
 
@@ -126,9 +133,13 @@ function JobCard({
       </div>
 
       <div className="space-y-0.5">
-        {job.clientName ? <p className="line-clamp-1 text-xs font-bold text-foreground">{job.clientName}</p> : null}
+        {job.clientName ? (
+          <p className="line-clamp-1 text-xs font-bold text-foreground">{job.clientName}</p>
+        ) : null}
         {job.patientName ? (
-          <p className="line-clamp-1 text-[11px] font-semibold italic text-muted-foreground">{job.patientName}</p>
+          <p className="line-clamp-1 text-[11px] font-semibold italic text-muted-foreground">
+            {job.patientName}
+          </p>
         ) : null}
 
         {job.firstItemName ? (
@@ -210,7 +221,13 @@ function DroppableColumn({
   );
 }
 
-function DraggableCard({ job, onSuspend }: { job: KanbanJob; onSuspend: (job: KanbanJob) => void }) {
+function DraggableCard({
+  job,
+  onSuspend,
+}: {
+  job: KanbanJob;
+  onSuspend: (job: KanbanJob) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: job.id.toString(),
     data: { status: job.status },
@@ -411,13 +428,16 @@ export default function KanbanPage() {
           Ativas: <span className="text-foreground">{metricsQuery.data?.activeCount ?? 0}</span>
         </div>
         <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          Atrasadas: <span className="text-destructive">{metricsQuery.data?.overdueCount ?? 0}</span>
+          Atrasadas:{' '}
+          <span className="text-destructive">{metricsQuery.data?.overdueCount ?? 0}</span>
         </div>
         <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          Urgentes: <span className="text-destructive">{metricsQuery.data?.urgentActiveCount ?? 0}</span>
+          Urgentes:{' '}
+          <span className="text-destructive">{metricsQuery.data?.urgentActiveCount ?? 0}</span>
         </div>
         <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          Provas vencidas: <span className="text-amber-500">{metricsQuery.data?.proofOverdueCount ?? 0}</span>
+          Provas vencidas:{' '}
+          <span className="text-amber-500">{metricsQuery.data?.proofOverdueCount ?? 0}</span>
         </div>
       </div>
 
@@ -425,7 +445,9 @@ export default function KanbanPage() {
         <div className="flex items-center gap-6 px-1">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">No prazo</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              No prazo
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
@@ -435,7 +457,9 @@ export default function KanbanPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Atrasado</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Atrasado
+            </span>
           </div>
         </div>
       ) : null}
@@ -502,7 +526,9 @@ export default function KanbanPage() {
           {suspendedJobs.length === 0 ? (
             <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 text-center">
               <PauseCircle size={36} className="text-muted-foreground/30" />
-              <p className="text-sm font-black uppercase tracking-wider text-foreground">Nenhuma OS suspensa</p>
+              <p className="text-sm font-black uppercase tracking-wider text-foreground">
+                Nenhuma OS suspensa
+              </p>
               <p className="max-w-md text-xs font-semibold text-muted-foreground">
                 Quando uma OS for suspensa, ela aparece aqui e pode ser reativada com um clique.
               </p>
@@ -532,12 +558,15 @@ export default function KanbanPage() {
                   </div>
 
                   <p className="text-sm font-black text-foreground">
-                    {job.clientName ?? 'Cliente não informado'} - {job.patientName ?? 'Paciente não informado'}
+                    {job.clientName ?? 'Cliente não informado'} -{' '}
+                    {job.patientName ?? 'Paciente não informado'}
                   </p>
 
                   <p className="text-xs font-semibold text-muted-foreground">
                     Suspensa em{' '}
-                    {job.suspendedAt ? new Date(job.suspendedAt).toLocaleString('pt-BR') : 'data não informada'}
+                    {job.suspendedAt
+                      ? new Date(job.suspendedAt).toLocaleString('pt-BR')
+                      : 'data não informada'}
                     {job.suspendReason ? ` · ${job.suspendReason}` : ''}
                   </p>
                 </div>
@@ -586,5 +615,3 @@ export default function KanbanPage() {
     </PageTransition>
   );
 }
-
-

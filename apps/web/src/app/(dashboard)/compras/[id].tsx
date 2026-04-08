@@ -1,15 +1,38 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, CheckCircle, Clock, Package, Receipt, Send, ShoppingCart, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  Package,
+  Receipt,
+  Send,
+  ShoppingCart,
+  XCircle,
+} from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 
 type Status = 'draft' | 'sent' | 'received' | 'cancelled';
 
-const STATUS_CONFIG: Record<Status, { label: string; color: string; bg: string; icon: typeof Clock }> = {
+const STATUS_CONFIG: Record<
+  Status,
+  { label: string; color: string; bg: string; icon: typeof Clock }
+> = {
   draft: { label: 'Rascunho', color: 'text-muted-foreground', bg: 'bg-muted/60', icon: Clock },
   sent: { label: 'Confirmada', color: 'text-primary', bg: 'bg-primary/10', icon: Send },
-  received: { label: 'Recebida', color: 'text-accent-foreground', bg: 'bg-accent', icon: CheckCircle },
-  cancelled: { label: 'Cancelada', color: 'text-destructive', bg: 'bg-destructive/10', icon: XCircle },
+  received: {
+    label: 'Recebida',
+    color: 'text-accent-foreground',
+    bg: 'bg-accent',
+    icon: CheckCircle,
+  },
+  cancelled: {
+    label: 'Cancelada',
+    color: 'text-destructive',
+    bg: 'bg-destructive/10',
+    icon: XCircle,
+  },
 };
 
 function fmtBRL(cents: number) {
@@ -25,7 +48,14 @@ type ReceiveDialogProps = {
   isPending: boolean;
 };
 
-function ReceiveDialog({ purchaseCode, totalCents, itemCount, onConfirm, onClose, isPending }: ReceiveDialogProps) {
+function ReceiveDialog({
+  purchaseCode,
+  totalCents,
+  itemCount,
+  onConfirm,
+  onClose,
+  isPending,
+}: ReceiveDialogProps) {
   const defaultDue = new Date();
   defaultDue.setDate(defaultDue.getDate() + 30);
   const [dueDate, setDueDate] = useState(defaultDue.toISOString().split('T')[0] ?? '');
@@ -47,13 +77,16 @@ function ReceiveDialog({ purchaseCode, totalCents, itemCount, onConfirm, onClose
           <div className="flex items-center gap-3 text-sm">
             <Package size={16} className="text-primary" />
             <span className="text-muted-foreground">
-              {itemCount} {itemCount === 1 ? 'material será adicionado' : 'materiais serão adicionados'} ao estoque
+              {itemCount}{' '}
+              {itemCount === 1 ? 'material será adicionado' : 'materiais serão adicionados'} ao
+              estoque
             </span>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <Receipt size={16} className="text-primary" />
             <span className="text-muted-foreground">
-              <span className="font-semibold text-foreground">{fmtBRL(totalCents)}</span> será lançado em Contas a Pagar
+              <span className="font-semibold text-foreground">{fmtBRL(totalCents)}</span> será
+              lançado em Contas a Pagar
             </span>
           </div>
         </div>
@@ -69,13 +102,16 @@ function ReceiveDialog({ purchaseCode, totalCents, itemCount, onConfirm, onClose
             onChange={(e) => setDueDate(e.target.value)}
             className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
-          <p className="text-xs text-muted-foreground">Esta data será usada no lançamento de Contas a Pagar.</p>
+          <p className="text-xs text-muted-foreground">
+            Esta data será usada no lançamento de Contas a Pagar.
+          </p>
         </div>
 
         <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
           <AlertTriangle size={15} className="mt-0.5 shrink-0 text-destructive" />
           <p className="text-xs text-destructive/80">
-            Esta ação é irreversível. O estoque será atualizado e o lançamento financeiro será criado automaticamente.
+            Esta ação é irreversível. O estoque será atualizado e o lançamento financeiro será
+            criado automaticamente.
           </p>
         </div>
 
@@ -114,7 +150,10 @@ export default function PurchaseDetailPage() {
   const [actionError, setActionError] = useState('');
 
   const numericId = Number(id);
-  const { data, isLoading, error } = trpc.purchases.getById.useQuery({ id: numericId }, { enabled: Number.isFinite(numericId) });
+  const { data, isLoading, error } = trpc.purchases.getById.useQuery(
+    { id: numericId },
+    { enabled: Number.isFinite(numericId) },
+  );
 
   const confirmMutation = trpc.purchases.confirm.useMutation({
     onSuccess: () => {
@@ -156,17 +195,14 @@ export default function PurchaseDetailPage() {
   }
 
   if (error || !data) {
-    return (
-      <div className="p-6 text-destructive">
-        Compra não encontrada: {error?.message}
-      </div>
-    );
+    return <div className="p-6 text-destructive">Compra não encontrada: {error?.message}</div>;
   }
 
   const { po, supplierName, supplierCnpj, items } = data;
   const cfg = STATUS_CONFIG[po.status as Status] ?? STATUS_CONFIG.draft;
   const StatusIcon = cfg.icon;
-  const isMutating = confirmMutation.isPending || receiveMutation.isPending || cancelMutation.isPending;
+  const isMutating =
+    confirmMutation.isPending || receiveMutation.isPending || cancelMutation.isPending;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -196,24 +232,34 @@ export default function PurchaseDetailPage() {
                 <ShoppingCart size={18} className="text-primary" />
               </div>
               <h1 className="text-xl font-bold text-foreground">{po.code}</h1>
-              <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${cfg.bg} ${cfg.color}`}>
+              <span
+                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${cfg.bg} ${cfg.color}`}
+              >
                 <StatusIcon size={11} />
                 {cfg.label}
               </span>
             </div>
 
             <div className="space-y-0.5 pl-10">
-              {supplierName ? <p className="text-sm font-medium text-foreground">{supplierName}</p> : null}
-              {supplierCnpj ? <p className="text-xs text-muted-foreground">CNPJ: {supplierCnpj}</p> : null}
+              {supplierName ? (
+                <p className="text-sm font-medium text-foreground">{supplierName}</p>
+              ) : null}
+              {supplierCnpj ? (
+                <p className="text-xs text-muted-foreground">CNPJ: {supplierCnpj}</p>
+              ) : null}
               <p className="text-xs text-muted-foreground">
-                Criada em {new Date(po.createdAt).toLocaleDateString('pt-BR', { dateStyle: 'long' })}
+                Criada em{' '}
+                {new Date(po.createdAt).toLocaleDateString('pt-BR', { dateStyle: 'long' })}
               </p>
               {po.receivedAt ? (
                 <p className="text-xs text-primary">
-                  ✓ Recebida em {new Date(po.receivedAt).toLocaleDateString('pt-BR', { dateStyle: 'long' })}
+                  ✓ Recebida em{' '}
+                  {new Date(po.receivedAt).toLocaleDateString('pt-BR', { dateStyle: 'long' })}
                 </p>
               ) : null}
-              {po.notes ? <p className="mt-2 text-xs italic text-muted-foreground">"{po.notes}"</p> : null}
+              {po.notes ? (
+                <p className="mt-2 text-xs italic text-muted-foreground">"{po.notes}"</p>
+              ) : null}
             </div>
 
             <div className="pl-10">
@@ -301,12 +347,22 @@ export default function PurchaseDetailPage() {
             {items.map(({ item, materialName, materialUnit }) => (
               <tr key={item.id} className="transition-colors hover:bg-muted/20">
                 <td className="px-5 py-3">
-                  <span className="font-medium text-foreground">{materialName ?? `Material #${item.materialId}`}</span>
-                  {materialUnit ? <span className="ml-1.5 text-xs text-muted-foreground">({materialUnit})</span> : null}
+                  <span className="font-medium text-foreground">
+                    {materialName ?? `Material #${item.materialId}`}
+                  </span>
+                  {materialUnit ? (
+                    <span className="ml-1.5 text-xs text-muted-foreground">({materialUnit})</span>
+                  ) : null}
                 </td>
-                <td className="px-4 py-3 text-right text-muted-foreground">{Number(item.quantity)}</td>
-                <td className="px-4 py-3 text-right text-muted-foreground">{fmtBRL(item.unitPriceCents)}</td>
-                <td className="px-5 py-3 text-right font-semibold text-foreground">{fmtBRL(item.totalCents)}</td>
+                <td className="px-4 py-3 text-right text-muted-foreground">
+                  {Number(item.quantity)}
+                </td>
+                <td className="px-4 py-3 text-right text-muted-foreground">
+                  {fmtBRL(item.unitPriceCents)}
+                </td>
+                <td className="px-5 py-3 text-right font-semibold text-foreground">
+                  {fmtBRL(item.totalCents)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -315,7 +371,9 @@ export default function PurchaseDetailPage() {
               <td colSpan={3} className="px-5 py-3.5 text-right font-medium text-muted-foreground">
                 Total
               </td>
-              <td className="px-5 py-3.5 text-right text-base font-bold text-primary">{fmtBRL(po.totalCents)}</td>
+              <td className="px-5 py-3.5 text-right text-base font-bold text-primary">
+                {fmtBRL(po.totalCents)}
+              </td>
             </tr>
           </tfoot>
         </table>

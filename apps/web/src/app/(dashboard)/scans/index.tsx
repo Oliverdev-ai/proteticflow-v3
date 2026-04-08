@@ -84,7 +84,7 @@ export default function ScanListPage() {
             <ScanLine className="text-primary" size={24} />
             Scans 3D
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">Controle de arquivos STL/XML e impressao</p>
+          <p className="text-zinc-400 text-sm mt-1">Controle de arquivos STL/XML e impressão</p>
         </div>
         <Link
           to="/scans/upload"
@@ -134,7 +134,11 @@ export default function ScanListPage() {
 
         {activeTab === 'received' && (
           <>
-            <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="input-field">
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="input-field"
+            >
               <option value="">Todos os clientes</option>
               {clientsQuery.data?.data?.map((client) => (
                 <option key={client.id} value={client.id}>
@@ -143,7 +147,11 @@ export default function ScanListPage() {
               ))}
             </select>
 
-            <select value={scannerType} onChange={(e) => setScannerType(e.target.value)} className="input-field">
+            <select
+              value={scannerType}
+              onChange={(e) => setScannerType(e.target.value)}
+              className="input-field"
+            >
               <option value="">Todos os scanners</option>
               {Object.entries(SCANNER_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -218,7 +226,9 @@ export default function ScanListPage() {
                       {statusLabel(row.scan.printStatus)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-zinc-400">{new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}</td>
+                  <td className="px-4 py-3 text-zinc-400">
+                    {new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <Link to={`/scans/${row.scan.id}`} className="text-primary hover:text-primary">
                       Ver detalhe
@@ -248,16 +258,23 @@ export default function ScanListPage() {
                   row.scan.xmlUrl ? `XML: ${fileNameFromKey(row.scan.xmlUrl)}` : null,
                   row.scan.stlUpperUrl ? `STL sup: ${fileNameFromKey(row.scan.stlUpperUrl)}` : null,
                   row.scan.stlLowerUrl ? `STL inf: ${fileNameFromKey(row.scan.stlLowerUrl)}` : null,
-                  row.scan.galleryImageUrl ? `Galeria: ${fileNameFromKey(row.scan.galleryImageUrl)}` : null,
+                  row.scan.galleryImageUrl
+                    ? `Galeria: ${fileNameFromKey(row.scan.galleryImageUrl)}`
+                    : null,
                 ].filter(Boolean) as string[];
 
                 return (
                   <tr key={row.scan.id} className="border-b border-zinc-800 last:border-b-0">
-                    <td className="px-4 py-3 text-zinc-300">{new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}</td>
+                    <td className="px-4 py-3 text-zinc-300">
+                      {new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
                         {files.map((file) => (
-                          <span key={`${row.scan.id}-${file}`} className="inline-flex items-center gap-1 text-xs text-zinc-300">
+                          <span
+                            key={`${row.scan.id}-${file}`}
+                            className="inline-flex items-center gap-1 text-xs text-zinc-300"
+                          >
                             <FileBox size={12} className="text-primary" />
                             {file}
                           </span>
@@ -281,7 +298,10 @@ export default function ScanListPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link to={`/scans/${row.scan.id}`} className="text-primary hover:text-primary">
+                      <Link
+                        to={`/scans/${row.scan.id}`}
+                        className="text-primary hover:text-primary"
+                      >
                         Ver detalhe
                       </Link>
                     </td>
@@ -294,7 +314,9 @@ export default function ScanListPage() {
 
         {currentRows.length === 0 && (
           <div className="p-10 text-center text-zinc-500 text-sm">
-            {activeTab === 'received' ? 'Nenhum arquivo recebido encontrado.' : 'Nenhum scan encontrado.'}
+            {activeTab === 'received'
+              ? 'Nenhum arquivo recebido encontrado.'
+              : 'Nenhum scan encontrado.'}
           </div>
         )}
       </div>

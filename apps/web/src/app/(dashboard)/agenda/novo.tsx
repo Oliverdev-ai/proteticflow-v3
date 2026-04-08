@@ -7,13 +7,17 @@ export default function EventCreatePage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const [title, setTitle] = useState('');
-  const [type, setType] = useState<'prova' | 'entrega' | 'retirada' | 'reuniao' | 'manutencao' | 'outro'>('outro');
+  const [type, setType] = useState<
+    'prova' | 'entrega' | 'retirada' | 'reuniao' | 'manutencao' | 'outro'
+  >('outro');
   const [startAt, setStartAt] = useState('');
   const [endAt, setEndAt] = useState('');
   const [jobId, setJobId] = useState('');
   const [clientId, setClientId] = useState('');
   const [employeeId, setEmployeeId] = useState('');
-  const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly'>('none');
+  const [recurrence, setRecurrence] = useState<
+    'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly'
+  >('none');
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(60);
 
@@ -46,26 +50,39 @@ export default function EventCreatePage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <button onClick={() => navigate('/agenda')} className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm">
+      <button
+        onClick={() => navigate('/agenda')}
+        className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm"
+      >
         <ArrowLeft size={14} />
         Voltar
       </button>
 
       <div>
         <h1 className="text-2xl font-bold text-white">Novo Evento</h1>
-        <p className="text-zinc-400 text-sm mt-1">Crie eventos de prova, entrega, reuniao e manutencao.</p>
+        <p className="text-zinc-400 text-sm mt-1">
+          Crie eventos de prova, entrega, reuniao e manutencao.
+        </p>
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
         <div>
           <label className="block text-xs text-zinc-400 mb-1">Titulo</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} className="input-field w-full" />
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="input-field w-full"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Tipo</label>
-            <select value={type} onChange={(e) => setType(e.target.value as typeof type)} className="input-field w-full">
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as typeof type)}
+              className="input-field w-full"
+            >
               <option value="outro">Outro</option>
               <option value="prova">Prova</option>
               <option value="entrega">Entrega</option>
@@ -76,54 +93,97 @@ export default function EventCreatePage() {
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Lembrete (minutos antes)</label>
-            <input value={reminderMinutesBefore} onChange={(e) => setReminderMinutesBefore(Number(e.target.value))} type="number" className="input-field w-full" />
+            <input
+              value={reminderMinutesBefore}
+              onChange={(e) => setReminderMinutesBefore(Number(e.target.value))}
+              type="number"
+              className="input-field w-full"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Inicio</label>
-            <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="input-field w-full" />
+            <input
+              type="datetime-local"
+              value={startAt}
+              onChange={(e) => setStartAt(e.target.value)}
+              className="input-field w-full"
+            />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Fim</label>
-            <input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="input-field w-full" />
+            <input
+              type="datetime-local"
+              value={endAt}
+              onChange={(e) => setEndAt(e.target.value)}
+              className="input-field w-full"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">OS (opcional)</label>
-            <input type="number" value={jobId} onChange={(e) => setJobId(e.target.value)} className="input-field w-full" />
+            <input
+              type="number"
+              value={jobId}
+              onChange={(e) => setJobId(e.target.value)}
+              className="input-field w-full"
+            />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Cliente (opcional)</label>
-            <input type="number" value={clientId} onChange={(e) => setClientId(e.target.value)} className="input-field w-full" />
+            <input
+              type="number"
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="input-field w-full"
+            />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Funcionario (opcional)</label>
-            <input type="number" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="input-field w-full" />
+            <label className="block text-xs text-zinc-400 mb-1">Funcionário (opcional)</label>
+            <input
+              type="number"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+              className="input-field w-full"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Recorrencia</label>
-            <select value={recurrence} onChange={(e) => setRecurrence(e.target.value as typeof recurrence)} className="input-field w-full">
-              <option value="none">Sem recorrencia</option>
-              <option value="daily">Diaria</option>
+            <label className="block text-xs text-zinc-400 mb-1">Recorrência</label>
+            <select
+              value={recurrence}
+              onChange={(e) => setRecurrence(e.target.value as typeof recurrence)}
+              className="input-field w-full"
+            >
+              <option value="none">Sem recorrência</option>
+              <option value="daily">Diária</option>
               <option value="weekly">Semanal</option>
               <option value="biweekly">Quinzenal</option>
               <option value="monthly">Mensal</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Fim da recorrencia (opcional)</label>
-            <input type="datetime-local" value={recurrenceEndDate} onChange={(e) => setRecurrenceEndDate(e.target.value)} className="input-field w-full" />
+            <label className="block text-xs text-zinc-400 mb-1">
+              Fim da recorrência (opcional)
+            </label>
+            <input
+              type="datetime-local"
+              value={recurrenceEndDate}
+              onChange={(e) => setRecurrenceEndDate(e.target.value)}
+              className="input-field w-full"
+            />
           </div>
         </div>
 
-        {createMutation.error && <p className="text-red-400 text-sm">{createMutation.error.message}</p>}
+        {createMutation.error && (
+          <p className="text-red-400 text-sm">{createMutation.error.message}</p>
+        )}
 
         <button
           onClick={handleCreate}
@@ -137,4 +197,3 @@ export default function EventCreatePage() {
     </div>
   );
 }
-

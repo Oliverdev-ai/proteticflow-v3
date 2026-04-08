@@ -24,7 +24,8 @@ export default function DeliveryListPage() {
   const { data, isLoading, error } = trpc.delivery.listSchedules.useQuery({
     dateFrom: startOfWeek.toISOString(),
     dateTo: endOfWeek.toISOString(),
-    page: 1, limit: 100,
+    page: 1,
+    limit: 100,
   });
 
   const schedules = data?.data ?? [];
@@ -79,7 +80,10 @@ export default function DeliveryListPage() {
           {weekDays.map((day, i) => {
             const isToday = day.toDateString() === new Date().toDateString();
             return (
-              <div key={i} className={`p-3 text-center border-r border-zinc-800 last:border-r-0 ${isToday ? 'bg-primary/20' : ''}`}>
+              <div
+                key={i}
+                className={`p-3 text-center border-r border-zinc-800 last:border-r-0 ${isToday ? 'bg-primary/20' : ''}`}
+              >
                 <p className="text-xs text-zinc-500">{dayLabels[i]}</p>
                 <p className={`text-lg font-semibold ${isToday ? 'text-primary' : 'text-white'}`}>
                   {day.getDate()}
@@ -101,8 +105,8 @@ export default function DeliveryListPage() {
                     <p className="text-xs text-zinc-700">Sem roteiros</p>
                   </div>
                 )}
-                {daySchedules.map(s => {
-                  const itemCount = (s as Record<string, unknown>).itemCount as number ?? 0;
+                {daySchedules.map((s) => {
+                  const itemCount = ((s as Record<string, unknown>).itemCount as number) ?? 0;
                   return (
                     <Link
                       key={s.id}
@@ -110,10 +114,17 @@ export default function DeliveryListPage() {
                       className="block p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors group"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-white font-medium truncate">{s.driverName ?? 'Sem motorista'}</span>
-                        <ChevronRight size={12} className="text-zinc-500 group-hover:text-zinc-300" />
+                        <span className="text-xs text-white font-medium truncate">
+                          {s.driverName ?? 'Sem motorista'}
+                        </span>
+                        <ChevronRight
+                          size={12}
+                          className="text-zinc-500 group-hover:text-zinc-300"
+                        />
                       </div>
-                      <p className="text-xs text-zinc-500 mt-0.5">{itemCount} {itemCount === 1 ? 'OS' : 'OSs'}</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        {itemCount} {itemCount === 1 ? 'OS' : 'OSs'}
+                      </p>
                       {s.vehicle && <p className="text-xs text-zinc-600">{s.vehicle}</p>}
                     </Link>
                   );
@@ -134,19 +145,37 @@ export default function DeliveryListPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">Data do roteiro</label>
-                <input type="date" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm" />
+                <input
+                  type="date"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                />
               </div>
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">Motorista (opcional)</label>
-                <input type="text" placeholder="Nome do motorista" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600" />
+                <input
+                  type="text"
+                  placeholder="Nome do motorista"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
+                />
               </div>
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">Veiculo (opcional)</label>
-                <input type="text" placeholder="Placa ou modelo" className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600" />
+                <input
+                  type="text"
+                  placeholder="Placa ou modelo"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
+                />
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setCreateOpen(false)} className="flex-1 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-800 text-sm transition-colors">Cancelar</button>
-                <button className="flex-1 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors">Criar Roteiro</button>
+                <button
+                  onClick={() => setCreateOpen(false)}
+                  className="flex-1 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-800 text-sm transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button className="flex-1 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors">
+                  Criar Roteiro
+                </button>
               </div>
             </div>
           </div>
