@@ -57,6 +57,9 @@ docker-compose.override.yml
 uploads/
 media/
 
+# Ferramentas de CI locais (binários baixados pelo CI, não devem ser commitados)
+.tmp-tools/
+
 # Misc
 *.tgz
 *.tar.gz
