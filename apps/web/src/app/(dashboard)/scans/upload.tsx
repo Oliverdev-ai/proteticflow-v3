@@ -28,7 +28,9 @@ function toBase64(file: File): Promise<string> {
 export default function ScanUploadPage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
-  const [scannerType, setScannerType] = useState<'itero' | 'medit' | '3shape' | 'carestream' | 'outro'>('outro');
+  const [scannerType, setScannerType] = useState<
+    'itero' | 'medit' | '3shape' | 'carestream' | 'outro'
+  >('outro');
   const [jobId, setJobId] = useState('');
   const [clientId, setClientId] = useState('');
   const [notes, setNotes] = useState('');
@@ -58,7 +60,10 @@ export default function ScanUploadPage() {
         notes: notes || undefined,
       });
 
-      const toUpload: Array<{ fileType: 'stl_upper' | 'stl_lower' | 'xml' | 'gallery'; file: File | null }> = [
+      const toUpload: Array<{
+        fileType: 'stl_upper' | 'stl_lower' | 'xml' | 'gallery';
+        file: File | null;
+      }> = [
         { fileType: 'stl_upper', file: files.stlUpper },
         { fileType: 'stl_lower', file: files.stlLower },
         { fileType: 'xml', file: files.xml },
@@ -97,14 +102,20 @@ export default function ScanUploadPage() {
 
       <div>
         <h1 className="text-2xl font-bold text-white">Upload de Scan 3D</h1>
-        <p className="text-zinc-400 text-sm mt-1">Envie STL superior/inferior, XML e imagem de referencia.</p>
+        <p className="text-zinc-400 text-sm mt-1">
+          Envie STL superior/inferior, XML e imagem de referencia.
+        </p>
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Scanner</label>
-            <select value={scannerType} onChange={(e) => setScannerType(e.target.value as typeof scannerType)} className="input-field w-full">
+            <select
+              value={scannerType}
+              onChange={(e) => setScannerType(e.target.value as typeof scannerType)}
+              className="input-field w-full"
+            >
               <option value="outro">Outro</option>
               <option value="itero">iTero</option>
               <option value="medit">Medit</option>
@@ -114,34 +125,70 @@ export default function ScanUploadPage() {
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">ID da OS (opcional)</label>
-            <input value={jobId} onChange={(e) => setJobId(e.target.value)} type="number" className="input-field w-full" />
+            <input
+              value={jobId}
+              onChange={(e) => setJobId(e.target.value)}
+              type="number"
+              className="input-field w-full"
+            />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">ID do cliente (opcional)</label>
-            <input value={clientId} onChange={(e) => setClientId(e.target.value)} type="number" className="input-field w-full" />
+            <input
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              type="number"
+              className="input-field w-full"
+            />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Observacoes</label>
-            <input value={notes} onChange={(e) => setNotes(e.target.value)} className="input-field w-full" />
+            <label className="block text-xs text-zinc-400 mb-1">Observações</label>
+            <input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="input-field w-full"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">STL Arcada Superior</label>
-            <input type="file" accept=".stl" onChange={(e) => setFiles((prev) => ({ ...prev, stlUpper: e.target.files?.[0] ?? null }))} />
+            <input
+              type="file"
+              accept=".stl"
+              onChange={(e) =>
+                setFiles((prev) => ({ ...prev, stlUpper: e.target.files?.[0] ?? null }))
+              }
+            />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">STL Arcada Inferior</label>
-            <input type="file" accept=".stl" onChange={(e) => setFiles((prev) => ({ ...prev, stlLower: e.target.files?.[0] ?? null }))} />
+            <input
+              type="file"
+              accept=".stl"
+              onChange={(e) =>
+                setFiles((prev) => ({ ...prev, stlLower: e.target.files?.[0] ?? null }))
+              }
+            />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">XML do Scanner</label>
-            <input type="file" accept=".xml,text/xml" onChange={(e) => setFiles((prev) => ({ ...prev, xml: e.target.files?.[0] ?? null }))} />
+            <input
+              type="file"
+              accept=".xml,text/xml"
+              onChange={(e) => setFiles((prev) => ({ ...prev, xml: e.target.files?.[0] ?? null }))}
+            />
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Imagem de Referencia</label>
-            <input type="file" accept="image/*" onChange={(e) => setFiles((prev) => ({ ...prev, gallery: e.target.files?.[0] ?? null }))} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setFiles((prev) => ({ ...prev, gallery: e.target.files?.[0] ?? null }))
+              }
+            />
           </div>
         </div>
 

@@ -81,9 +81,12 @@ function EventCard({ row, dragging = false }: { row: EventRow; dragging?: boolea
       className={`rounded-lg px-2 py-1.5 text-xs border text-white ${dragging ? 'opacity-70' : ''}`}
       style={{ backgroundColor: `${color}30`, borderColor: `${color}80` }}
     >
-      <p className="font-medium truncate">{event.title} {row.jobCode ? `#${row.jobCode}` : ''}</p>
+      <p className="font-medium truncate">
+        {event.title} {row.jobCode ? `#${row.jobCode}` : ''}
+      </p>
       <p className="text-[11px] text-zinc-200 truncate">
-        {start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {row.clientName ?? '-'}
+        {start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} -{' '}
+        {row.clientName ?? '-'}
       </p>
       <p className="text-[11px] text-zinc-300 truncate">{row.employeeName ?? 'Sem responsavel'}</p>
     </div>
@@ -143,7 +146,9 @@ export default function AgendaPage() {
   const listQuery = trpc.agenda.list.useQuery({
     dateFrom: range.from.toISOString(),
     dateTo: range.to.toISOString(),
-    type: typeFilter ? (typeFilter as 'prova' | 'entrega' | 'retirada' | 'reuniao' | 'manutencao' | 'outro') : undefined,
+    type: typeFilter
+      ? (typeFilter as 'prova' | 'entrega' | 'retirada' | 'reuniao' | 'manutencao' | 'outro')
+      : undefined,
     employeeId: employeeFilter ? Number(employeeFilter) : undefined,
     clientId: clientFilter ? Number(clientFilter) : undefined,
   });
@@ -194,7 +199,12 @@ export default function AgendaPage() {
 
     const targetDate = new Date(`${String(overId)}T00:00:00`);
     const originalStart = new Date(row.event.startAt);
-    targetDate.setHours(originalStart.getHours(), originalStart.getMinutes(), originalStart.getSeconds(), 0);
+    targetDate.setHours(
+      originalStart.getHours(),
+      originalStart.getMinutes(),
+      originalStart.getSeconds(),
+      0,
+    );
 
     moveMutation.mutate({
       eventId: row.event.id,
@@ -203,9 +213,10 @@ export default function AgendaPage() {
     });
   }
 
-  const headerText = mode === 'week'
-    ? `${range.from.toLocaleDateString('pt-BR')} - ${range.to.toLocaleDateString('pt-BR')}`
-    : current.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const headerText =
+    mode === 'week'
+      ? `${range.from.toLocaleDateString('pt-BR')} - ${range.to.toLocaleDateString('pt-BR')}`
+      : current.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5">
@@ -217,23 +228,49 @@ export default function AgendaPage() {
           </h1>
           <p className="text-zinc-400 text-sm mt-1">Calendario semanal/mensal com drag-and-drop.</p>
         </div>
-        <Link to="/agenda/novo" className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium">
+        <Link
+          to="/agenda/novo"
+          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium"
+        >
           <Plus size={16} />
           Novo Evento
         </Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={goPrev} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">Anterior</button>
-        <button onClick={goNext} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">Proximo</button>
-        <button onClick={() => setCurrent(new Date())} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">Hoje</button>
+        <button onClick={goPrev} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">
+          Anterior
+        </button>
+        <button onClick={goNext} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">
+          Proximo
+        </button>
+        <button
+          onClick={() => setCurrent(new Date())}
+          className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg"
+        >
+          Hoje
+        </button>
         <div className="text-sm text-zinc-300 mx-2">{headerText}</div>
-        <button onClick={() => setMode('week')} className={`px-3 py-2 rounded-lg ${mode === 'week' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}>Semana</button>
-        <button onClick={() => setMode('month')} className={`px-3 py-2 rounded-lg ${mode === 'month' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}>Mes</button>
+        <button
+          onClick={() => setMode('week')}
+          className={`px-3 py-2 rounded-lg ${mode === 'week' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}
+        >
+          Semana
+        </button>
+        <button
+          onClick={() => setMode('month')}
+          className={`px-3 py-2 rounded-lg ${mode === 'month' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}
+        >
+          Mes
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="input-field w-full">
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="input-field w-full"
+        >
           <option value="">Todos os tipos</option>
           <option value="prova">Prova</option>
           <option value="entrega">Entrega</option>
@@ -242,8 +279,20 @@ export default function AgendaPage() {
           <option value="manutencao">Manutencao</option>
           <option value="outro">Outro</option>
         </select>
-        <input value={employeeFilter} onChange={(e) => setEmployeeFilter(e.target.value)} type="number" placeholder="Filtrar por funcionario ID" className="input-field w-full" />
-        <input value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} type="number" placeholder="Filtrar por cliente ID" className="input-field w-full" />
+        <input
+          value={employeeFilter}
+          onChange={(e) => setEmployeeFilter(e.target.value)}
+          type="number"
+          placeholder="Filtrar por funcionario ID"
+          className="input-field w-full"
+        />
+        <input
+          value={clientFilter}
+          onChange={(e) => setClientFilter(e.target.value)}
+          type="number"
+          placeholder="Filtrar por cliente ID"
+          className="input-field w-full"
+        />
       </div>
 
       {listQuery.error && <p className="text-sm text-red-400">{listQuery.error.message}</p>}
@@ -254,15 +303,23 @@ export default function AgendaPage() {
       )}
       {!listQuery.isLoading && !listQuery.error && (listQuery.data?.length ?? 0) === 0 && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
-          Nenhum evento encontrado para o periodo e filtros selecionados.
+          Nenhum evento encontrado para o período e filtros selecionados.
         </div>
       )}
       {moveMutation.isPending && <p className="text-xs text-zinc-500">Atualizando evento...</p>}
-      {moveMutation.error && <p className="text-xs text-red-400">Falha ao mover evento: {moveMutation.error.message}</p>}
+      {moveMutation.error && (
+        <p className="text-xs text-red-400">Falha ao mover evento: {moveMutation.error.message}</p>
+      )}
 
       {!listQuery.isLoading && (
-        <DndContext collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-          <div className={`grid gap-2 ${mode === 'week' ? 'grid-cols-1 md:grid-cols-7' : 'grid-cols-1 md:grid-cols-7'}`}>
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+        >
+          <div
+            className={`grid gap-2 ${mode === 'week' ? 'grid-cols-1 md:grid-cols-7' : 'grid-cols-1 md:grid-cols-7'}`}
+          >
             {visibleDays.map((day) => {
               const key = toDateKey(day);
               const rows = rowsByDay.get(key) ?? [];
@@ -271,12 +328,9 @@ export default function AgendaPage() {
             })}
           </div>
 
-          <DragOverlay>
-            {activeRow ? <EventCard row={activeRow} dragging /> : null}
-          </DragOverlay>
+          <DragOverlay>{activeRow ? <EventCard row={activeRow} dragging /> : null}</DragOverlay>
         </DndContext>
       )}
     </div>
   );
 }
-

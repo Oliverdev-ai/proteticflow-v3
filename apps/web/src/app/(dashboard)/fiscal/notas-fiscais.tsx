@@ -12,7 +12,9 @@ function toIso(date: string, endOfDay: boolean): string | undefined {
 
 export default function NotasFiscaisPage() {
   const utils = trpc.useUtils();
-  const [status, setStatus] = useState<'draft' | 'pending' | 'issued' | 'cancelled' | 'error' | ''>('');
+  const [status, setStatus] = useState<'draft' | 'pending' | 'issued' | 'cancelled' | 'error' | ''>(
+    '',
+  );
   const [clientId, setClientId] = useState<number | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -68,7 +70,11 @@ export default function NotasFiscaisPage() {
 
   const clients = clientsQuery.data?.data ?? [];
   const closings = closingsQuery.data?.data ?? [];
-  const busy = emitMutation.isPending || emitBatchMutation.isPending || syncMutation.isPending || cancelMutation.isPending;
+  const busy =
+    emitMutation.isPending ||
+    emitBatchMutation.isPending ||
+    syncMutation.isPending ||
+    cancelMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -82,7 +88,11 @@ export default function NotasFiscaisPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="text-sm text-zinc-300">
             Status
-            <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="input-field mt-1 w-full">
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value as typeof status)}
+              className="input-field mt-1 w-full"
+            >
               <option value="">Todos</option>
               <option value="draft">Rascunho</option>
               <option value="pending">Pendente</option>
@@ -96,24 +106,38 @@ export default function NotasFiscaisPage() {
             Cliente
             <select
               value={clientId ?? ''}
-              onChange={(event) => setClientId(event.target.value ? Number(event.target.value) : null)}
+              onChange={(event) =>
+                setClientId(event.target.value ? Number(event.target.value) : null)
+              }
               className="input-field mt-1 w-full"
             >
               <option value="">Todos</option>
               {clients.map((client) => (
-                <option key={client.id} value={client.id}>{client.name}</option>
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
               ))}
             </select>
           </label>
 
           <label className="text-sm text-zinc-300">
             De
-            <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="input-field mt-1 w-full" />
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              className="input-field mt-1 w-full"
+            />
           </label>
 
           <label className="text-sm text-zinc-300">
             Ate
-            <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="input-field mt-1 w-full" />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              className="input-field mt-1 w-full"
+            />
           </label>
         </div>
       </div>

@@ -32,15 +32,22 @@ export default function ScanDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <button onClick={() => navigate('/scans')} className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm">
+      <button
+        onClick={() => navigate('/scans')}
+        className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm"
+      >
         <ArrowLeft size={14} />
         Voltar
       </button>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
         <h1 className="text-xl font-bold text-white mb-1">Scan #{scan.id}</h1>
-        <p className="text-sm text-zinc-400">Scanner: {scan.scannerType} | Status: {scan.printStatus}</p>
-        <p className="text-sm text-zinc-500 mt-1">OS: {row.jobCode ?? '-'} | Cliente: {row.clientName ?? '-'}</p>
+        <p className="text-sm text-zinc-400">
+          Scanner: {scan.scannerType} | Status: {scan.printStatus}
+        </p>
+        <p className="text-sm text-zinc-500 mt-1">
+          OS: {row.jobCode ?? '-'} | Cliente: {row.clientName ?? '-'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -49,21 +56,65 @@ export default function ScanDetailPage() {
           {row.downloadUrls.stlUpper && (
             <div className="mb-4">
               <StlViewer url={row.downloadUrls.stlUpper} />
-              <a className="text-primary hover:text-primary flex items-center gap-2 mt-2" href={row.downloadUrls.stlUpper} target="_blank" rel="noreferrer"><Download size={14} />Download STL Superior</a>
+              <a
+                className="text-primary hover:text-primary flex items-center gap-2 mt-2"
+                href={row.downloadUrls.stlUpper}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Download size={14} />
+                Download STL Superior
+              </a>
             </div>
           )}
-          {row.downloadUrls.stlLower && <a className="text-primary hover:text-primary flex items-center gap-2" href={row.downloadUrls.stlLower} target="_blank" rel="noreferrer"><Download size={14} />Download STL Inferior</a>}
-          {row.downloadUrls.xml && <a className="text-primary hover:text-primary flex items-center gap-2" href={row.downloadUrls.xml} target="_blank" rel="noreferrer"><Download size={14} />Download XML</a>}
-          {row.downloadUrls.gallery && <a className="text-primary hover:text-primary flex items-center gap-2" href={row.downloadUrls.gallery} target="_blank" rel="noreferrer"><Download size={14} />Abrir Imagem</a>}
+          {row.downloadUrls.stlLower && (
+            <a
+              className="text-primary hover:text-primary flex items-center gap-2"
+              href={row.downloadUrls.stlLower}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Download size={14} />
+              Download STL Inferior
+            </a>
+          )}
+          {row.downloadUrls.xml && (
+            <a
+              className="text-primary hover:text-primary flex items-center gap-2"
+              href={row.downloadUrls.xml}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Download size={14} />
+              Download XML
+            </a>
+          )}
+          {row.downloadUrls.gallery && (
+            <a
+              className="text-primary hover:text-primary flex items-center gap-2"
+              href={row.downloadUrls.gallery}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Download size={14} />
+              Abrir Imagem
+            </a>
+          )}
         </div>
 
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3">
-          <h2 className="text-white font-semibold">Acoes de Impressao</h2>
+          <h2 className="text-white font-semibold">Ações de Impressão</h2>
           <div className="flex flex-wrap gap-2">
             {(NEXT_STATUS[scan.printStatus] ?? []).map((status) => (
               <button
                 key={status}
-                onClick={() => changeStatus.mutate({ scanId: scan.id, status, printError: status === 'error' ? 'Erro manual' : undefined })}
+                onClick={() =>
+                  changeStatus.mutate({
+                    scanId: scan.id,
+                    status,
+                    printError: status === 'error' ? 'Erro manual' : undefined,
+                  })
+                }
                 className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm"
               >
                 <Printer size={14} className="inline mr-1" />
@@ -84,12 +135,27 @@ export default function ScanDetailPage() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
         <h2 className="text-white font-semibold mb-3">Dados Parseados do XML</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-          <p className="text-zinc-300">Order ID: <span className="text-white">{scan.parsedOrderId ?? '-'}</span></p>
-          <p className="text-zinc-300">Dentista: <span className="text-white">{scan.parsedDentist ?? '-'}</span></p>
-          <p className="text-zinc-300">CRO: <span className="text-white">{scan.parsedCro ?? '-'}</span></p>
-          <p className="text-zinc-300">Paciente: <span className="text-white">{scan.parsedPatient ?? '-'}</span></p>
-          <p className="text-zinc-300">Procedimento: <span className="text-white">{scan.parsedProcedure ?? '-'}</span></p>
-          <p className="text-zinc-300">Prazo: <span className="text-white">{scan.parsedDeadline ? new Date(scan.parsedDeadline).toLocaleString('pt-BR') : '-'}</span></p>
+          <p className="text-zinc-300">
+            Order ID: <span className="text-white">{scan.parsedOrderId ?? '-'}</span>
+          </p>
+          <p className="text-zinc-300">
+            Dentista: <span className="text-white">{scan.parsedDentist ?? '-'}</span>
+          </p>
+          <p className="text-zinc-300">
+            CRO: <span className="text-white">{scan.parsedCro ?? '-'}</span>
+          </p>
+          <p className="text-zinc-300">
+            Paciente: <span className="text-white">{scan.parsedPatient ?? '-'}</span>
+          </p>
+          <p className="text-zinc-300">
+            Procedimento: <span className="text-white">{scan.parsedProcedure ?? '-'}</span>
+          </p>
+          <p className="text-zinc-300">
+            Prazo:{' '}
+            <span className="text-white">
+              {scan.parsedDeadline ? new Date(scan.parsedDeadline).toLocaleString('pt-BR') : '-'}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -99,4 +165,3 @@ export default function ScanDetailPage() {
     </div>
   );
 }
-

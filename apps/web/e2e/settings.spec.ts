@@ -15,7 +15,9 @@ async function ensureManagerSession(page: import('@playwright/test').Page) {
 }
 
 function profileInputs(page: import('@playwright/test').Page) {
-  return page.getByRole('button', { name: 'Salvar perfil' }).locator('xpath=preceding-sibling::div[1]//input');
+  return page
+    .getByRole('button', { name: 'Salvar perfil' })
+    .locator('xpath=preceding-sibling::div[1]//input');
 }
 
 test.describe('settings flow', () => {
@@ -88,6 +90,8 @@ test.describe('settings flow', () => {
     await loginWithCredentials(page, recepcaoEmail, recepcaoPassword);
     await page.goto('/configuracoes');
 
-    await expect(page.getByText('Voce nao possui permissao para acessar Configuracoes.')).toBeVisible();
+    await expect(
+      page.getByText('Voce nao possui permissao para acessar Configuracoes.'),
+    ).toBeVisible();
   });
 });

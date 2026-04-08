@@ -20,19 +20,28 @@ type CreatedJob = {
 async function createJob(page: Page, clientName: string, patientName: string): Promise<CreatedJob> {
   await page.goto('/trabalhos/novo', { waitUntil: 'domcontentloaded' });
 
-  await page.getByRole('button', { name: new RegExp(clientName, 'i') }).first().click();
+  await page
+    .getByRole('button', { name: new RegExp(clientName, 'i') })
+    .first()
+    .click();
   await page.getByRole('button', { name: /pr.xima etapa|pr.ximo/i }).click();
 
   await page.getByRole('button', { name: /adicionar manualmente|adicionar item avulso/i }).click();
   await page.getByPlaceholder(/descri..o do servi/i).fill(`Servico Subtype ${suffix()}`);
 
-  const row = page.locator('input[placeholder*="Descrição"], input[placeholder*="Descri"]').first().locator('xpath=ancestor::div[contains(@class,"group")]').first();
+  const row = page
+    .locator('input[placeholder*="Descrição"], input[placeholder*="Descri"]')
+    .first()
+    .locator('xpath=ancestor::div[contains(@class,"group")]')
+    .first();
   await row.locator('input[type="number"]').nth(1).fill('250');
 
   await page.getByRole('button', { name: /pr.xima etapa|pr.ximo/i }).click();
 
   const deadlineInput = page.locator('input[type="date"]').first();
-  await deadlineInput.fill(new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
+  await deadlineInput.fill(
+    new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+  );
   await page.getByPlaceholder(/nome completo para rastreio/i).fill(patientName);
 
   await page.getByRole('button', { name: /pr.xima etapa|pr.ximo/i }).click();
@@ -87,7 +96,9 @@ test.describe('job subtype e2e', () => {
     await page.getByRole('button', { name: /confirmar suspens.o/i }).click();
 
     await page.goto('/kanban', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator(`[data-testid="kanban-card-${job.id}"]`)).toHaveCount(0, { timeout: 15000 });
+    await expect(page.locator(`[data-testid="kanban-card-${job.id}"]`)).toHaveCount(0, {
+      timeout: 15000,
+    });
 
     await page.getByRole('button', { name: /suspensas/i }).click();
     await expect(page.getByText(job.code)).toBeVisible({ timeout: 15000 });
@@ -96,7 +107,9 @@ test.describe('job subtype e2e', () => {
     await suspendedRow.getByRole('button', { name: /reativar/i }).click();
 
     await page.getByRole('button', { name: /ativas/i }).click();
-    await expect(page.locator(`[data-testid="kanban-card-${job.id}"]`)).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(`[data-testid="kanban-card-${job.id}"]`)).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test('subtype remoldagem cria nova OS filha', async ({ page }) => {

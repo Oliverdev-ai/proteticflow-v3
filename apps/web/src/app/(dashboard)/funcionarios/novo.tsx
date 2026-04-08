@@ -11,15 +11,19 @@ type FormData = z.input<typeof createEmployeeSchema>;
 export default function EmployeeCreatePage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
-  
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
     resolver: zodResolver(createEmployeeSchema),
     defaultValues: {
       type: 'protesista',
       contractType: 'clt',
       baseSalaryCents: 0,
       defaultCommissionPercent: 0,
-    }
+    },
   });
 
   const createMutation = trpc.employee.create.useMutation({
@@ -34,7 +38,10 @@ export default function EmployeeCreatePage() {
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto max-w-4xl mx-auto">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/funcionarios')} className="text-zinc-500 hover:text-white transition-colors">
+        <button
+          onClick={() => navigate('/funcionarios')}
+          className="text-zinc-500 hover:text-white transition-colors"
+        >
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-2xl font-bold text-white">Novo Funcionário</h1>
@@ -50,27 +57,48 @@ export default function EmployeeCreatePage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">Nome Completo *</label>
-                <input {...register('name')} placeholder="Nome do funcionário" className="input-field w-full" />
+                <input
+                  {...register('name')}
+                  placeholder="Nome do funcionário"
+                  className="input-field w-full"
+                />
                 {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">CPF</label>
-                  <input {...register('cpf')} placeholder="000.000.000-00" className="input-field w-full" />
+                  <input
+                    {...register('cpf')}
+                    placeholder="000.000.000-00"
+                    className="input-field w-full"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">RG</label>
-                  <input {...register('rg')} placeholder="00.000.000-0" className="input-field w-full" />
+                  <input
+                    {...register('rg')}
+                    placeholder="00.000.000-0"
+                    className="input-field w-full"
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
-                <input {...register('email')} type="email" placeholder="email@exemplo.com" className="input-field w-full" />
+                <input
+                  {...register('email')}
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  className="input-field w-full"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Telefone</label>
-                  <input {...register('phone')} placeholder="(00) 00000-0000" className="input-field w-full" />
+                  <input
+                    {...register('phone')}
+                    placeholder="(00) 00000-0000"
+                    className="input-field w-full"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Nascimento</label>
@@ -89,7 +117,11 @@ export default function EmployeeCreatePage() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
                   <label className="block text-xs text-zinc-400 mb-1.5">CEP</label>
-                  <input {...register('zipCode')} placeholder="00000-000" className="input-field w-full" />
+                  <input
+                    {...register('zipCode')}
+                    placeholder="00000-000"
+                    className="input-field w-full"
+                  />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs text-zinc-400 mb-1.5">Rua</label>
@@ -113,7 +145,11 @@ export default function EmployeeCreatePage() {
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">UF</label>
-                  <input {...register('state')} maxLength={2} className="input-field w-full uppercase" />
+                  <input
+                    {...register('state')}
+                    maxLength={2}
+                    className="input-field w-full uppercase"
+                  />
                 </div>
               </div>
             </div>
@@ -128,11 +164,19 @@ export default function EmployeeCreatePage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Função / Cargo</label>
-                  <input {...register('position')} placeholder="Ex: Protesista Sênior" className="input-field w-full" />
+                  <input
+                    {...register('position')}
+                    placeholder="Ex: Protesista Sênior"
+                    className="input-field w-full"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Departamento</label>
-                  <input {...register('department')} placeholder="Ex: Produção" className="input-field w-full" />
+                  <input
+                    {...register('department')}
+                    placeholder="Ex: Produção"
+                    className="input-field w-full"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -173,7 +217,11 @@ export default function EmployeeCreatePage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">Salário Base (Cents)</label>
-                <input {...register('baseSalaryCents', { valueAsNumber: true })} type="number" className="input-field w-full" />
+                <input
+                  {...register('baseSalaryCents', { valueAsNumber: true })}
+                  type="number"
+                  className="input-field w-full"
+                />
                 <p className="text-[10px] text-zinc-500 mt-1">Ex: 300000 para R$ 3.000,00</p>
               </div>
               <div>
@@ -181,16 +229,29 @@ export default function EmployeeCreatePage() {
                   Comissão Padrão (%)
                   <Percent size={12} className="text-zinc-500" />
                 </label>
-                <input {...register('defaultCommissionPercent', { valueAsNumber: true })} type="number" step="0.1" className="input-field w-full" />
+                <input
+                  {...register('defaultCommissionPercent', { valueAsNumber: true })}
+                  type="number"
+                  step="0.1"
+                  className="input-field w-full"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                   <label className="block text-xs text-zinc-400 mb-1.5">Vale Transp. (Cents)</label>
-                   <input {...register('transportAllowanceCents', { valueAsNumber: true })} type="number" className="input-field w-full" />
+                  <label className="block text-xs text-zinc-400 mb-1.5">Vale Transp. (Cents)</label>
+                  <input
+                    {...register('transportAllowanceCents', { valueAsNumber: true })}
+                    type="number"
+                    className="input-field w-full"
+                  />
                 </div>
                 <div>
-                   <label className="block text-xs text-zinc-400 mb-1.5">Vale Ref. (Cents)</label>
-                   <input {...register('mealAllowanceCents', { valueAsNumber: true })} type="number" className="input-field w-full" />
+                  <label className="block text-xs text-zinc-400 mb-1.5">Vale Ref. (Cents)</label>
+                  <input
+                    {...register('mealAllowanceCents', { valueAsNumber: true })}
+                    type="number"
+                    className="input-field w-full"
+                  />
                 </div>
               </div>
             </div>
@@ -204,19 +265,25 @@ export default function EmployeeCreatePage() {
         )}
 
         <div className="flex gap-4 pt-4">
-          <button 
-            type="button" 
-            onClick={() => navigate('/funcionarios')} 
+          <button
+            type="button"
+            onClick={() => navigate('/funcionarios')}
             className="flex-1 py-3 rounded-xl border border-zinc-800 text-zinc-400 text-sm font-semibold hover:bg-zinc-800 hover:text-white transition-all"
           >
             Cancelar
           </button>
-          <button 
-            type="submit" 
-            disabled={isSubmitting || createMutation.isPending} 
+          <button
+            type="submit"
+            disabled={isSubmitting || createMutation.isPending}
             className="flex-[2] py-3 rounded-xl bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
           >
-            {createMutation.isPending ? <><Loader2 size={16} className="animate-spin" /> Salvando...</> : 'Cadastrar Funcionário'}
+            {createMutation.isPending ? (
+              <>
+                <Loader2 size={16} className="animate-spin" /> Salvando...
+              </>
+            ) : (
+              'Cadastrar Funcionário'
+            )}
           </button>
         </div>
       </form>

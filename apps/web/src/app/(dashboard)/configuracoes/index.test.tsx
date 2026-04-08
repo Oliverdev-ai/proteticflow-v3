@@ -9,7 +9,11 @@ vi.mock('../../../hooks/use-permissions', () => ({
 
 vi.mock('../../../hooks/use-settings', () => ({
   useSettings: () => ({
-    overview: { isLoading: false, error: null, data: { users: [], identity: {}, branding: {}, printer: {}, smtp: {}, plan: {} } },
+    overview: {
+      isLoading: false,
+      error: null,
+      data: { users: [], identity: {}, branding: {}, printer: {}, smtp: {}, plan: {} },
+    },
   }),
 }));
 

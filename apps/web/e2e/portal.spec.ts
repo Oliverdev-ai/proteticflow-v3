@@ -20,7 +20,7 @@ async function registerAndOnboard(page: import('@playwright/test').Page) {
   await page.getByPlaceholder('Nome').fill(`Gerente Portal ${suffix}`);
   await page.getByPlaceholder('E-mail').fill(email);
   await page.getByPlaceholder('Senha').fill(password);
-  await page.getByRole('button', { name: 'Registrar' }).click();
+  await page.getByRole('button', { name: 'Criar conta' }).click();
   await page.waitForURL(/\/onboarding$/, { timeout: 30000 });
 
   await page.getByPlaceholder('Ex: Lab Dental Silva').fill(labName);
@@ -46,7 +46,9 @@ test.describe('portal do cliente — erros públicos', () => {
 
     // Rota pública — sem sidebar de dashboard
     await expect(page.locator('[data-sidebar], nav.sidebar, aside.sidebar')).not.toBeVisible();
-    await expect(page.getByText(/inv[aá]lido|expirado|n[aã]o encontrado/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/inv[aá]lido|expirado|n[aã]o encontrado/i)).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('token sintaticamente válido mas inexistente exibe erro', async ({ page }) => {
@@ -54,12 +56,16 @@ test.describe('portal do cliente — erros públicos', () => {
     await page.goto(`/portal/${fakeToken}`, { waitUntil: 'domcontentloaded' });
 
     await expect(page.locator('[data-sidebar], nav.sidebar, aside.sidebar')).not.toBeVisible();
-    await expect(page.getByText(/inv[aá]lido|expirado|n[aã]o encontrado/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/inv[aá]lido|expirado|n[aã]o encontrado/i)).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
 
 test.describe('portal do cliente — fluxo completo', () => {
-  test('gerente gera token, abre portal, snapshot público não expõe dados financeiros', async ({ page }) => {
+  test('gerente gera token, abre portal, snapshot público não expõe dados financeiros', async ({
+    page,
+  }) => {
     const { clientName } = await registerAndOnboard(page);
 
     // Cria cliente via UI
@@ -101,7 +107,7 @@ test.describe('portal do cliente — fluxo completo', () => {
     await expect(page.getByText(clientName, { exact: false })).toBeVisible({ timeout: 10000 });
 
     // Não deve expor campos financeiros sensíveis
-    const bodyText = await page.locator('body').textContent() ?? '';
+    const bodyText = (await page.locator('body').textContent()) ?? '';
     expect(bodyText).not.toMatch(/totalCents|discountCents|taxCents|preco_total|valor_total/i);
   });
 });

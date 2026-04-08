@@ -32,18 +32,12 @@ export default function AuditPage() {
 
   const blockMemberMutation = trpc.audit.blockMember.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.audit.members.invalidate(),
-        utils.audit.list.invalidate(),
-      ]);
+      await Promise.all([utils.audit.members.invalidate(), utils.audit.list.invalidate()]);
     },
   });
   const unblockMemberMutation = trpc.audit.unblockMember.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.audit.members.invalidate(),
-        utils.audit.list.invalidate(),
-      ]);
+      await Promise.all([utils.audit.members.invalidate(), utils.audit.list.invalidate()]);
     },
   });
 
@@ -72,7 +66,7 @@ export default function AuditPage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Auditoria</h1>
         <p className="text-sm text-zinc-400">
-          Rastreabilidade de operacoes, uso do plano e controle de bloqueio de membros.
+          Rastreabilidade de operações, uso do plano e controle de bloqueio de membros.
         </p>
       </div>
 
@@ -112,7 +106,7 @@ export default function AuditPage() {
                 setAction(event.target.value);
               }}
               className="input-field"
-              placeholder="Filtro acao (ex: job.create)"
+              placeholder="Filtro ação (ex: job.create)"
             />
             <input
               value={userIdInput}
@@ -138,8 +132,8 @@ export default function AuditPage() {
                   <thead className="bg-zinc-900 text-zinc-400">
                     <tr>
                       <th className="text-left px-3 py-2">Data</th>
-                      <th className="text-left px-3 py-2">Usuario</th>
-                      <th className="text-left px-3 py-2">Acao</th>
+                      <th className="text-left px-3 py-2">Usuário</th>
+                      <th className="text-left px-3 py-2">Ação</th>
                       <th className="text-left px-3 py-2">Entidade</th>
                       <th className="text-left px-3 py-2">ID</th>
                     </tr>
@@ -193,18 +187,40 @@ export default function AuditPage() {
       {activeTab === 'usage' ? (
         <div className="space-y-4">
           {usageQuery.isLoading ? <p className="text-sm text-zinc-400">Carregando uso...</p> : null}
-          {usageQuery.error ? <p className="text-sm text-red-400">{usageQuery.error.message}</p> : null}
+          {usageQuery.error ? (
+            <p className="text-sm text-red-400">{usageQuery.error.message}</p>
+          ) : null}
           {!usageQuery.isLoading && !usageQuery.error && !usageQuery.data ? (
-            <p className="text-sm text-zinc-400">Nao foi possivel obter o sumario de uso.</p>
+            <p className="text-sm text-zinc-400">Não foi possível obter o sumário de uso.</p>
           ) : null}
           {usageQuery.data ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <UsageCard label="Plano" used={usageQuery.data.plan} limit={null} />
-              <UsageCard label="Clientes" used={usageQuery.data.clients.used} limit={usageQuery.data.clients.limit} />
-              <UsageCard label="Jobs no mes" used={usageQuery.data.jobsThisMonth.used} limit={usageQuery.data.jobsThisMonth.limit} />
-              <UsageCard label="Usuarios" used={usageQuery.data.users.used} limit={usageQuery.data.users.limit} />
-              <UsageCard label="Tabelas de preco" used={usageQuery.data.priceTables.used} limit={usageQuery.data.priceTables.limit} />
-              <UsageCard label="Storage (MB)" used={usageQuery.data.storageMb.used} limit={usageQuery.data.storageMb.limit} />
+              <UsageCard
+                label="Clientes"
+                used={usageQuery.data.clients.used}
+                limit={usageQuery.data.clients.limit}
+              />
+              <UsageCard
+                label="Jobs no mês"
+                used={usageQuery.data.jobsThisMonth.used}
+                limit={usageQuery.data.jobsThisMonth.limit}
+              />
+              <UsageCard
+                label="Usuários"
+                used={usageQuery.data.users.used}
+                limit={usageQuery.data.users.limit}
+              />
+              <UsageCard
+                label="Tabelas de preço"
+                used={usageQuery.data.priceTables.used}
+                limit={usageQuery.data.priceTables.limit}
+              />
+              <UsageCard
+                label="Storage (MB)"
+                used={usageQuery.data.storageMb.used}
+                limit={usageQuery.data.storageMb.limit}
+              />
             </div>
           ) : null}
         </div>

@@ -10,7 +10,9 @@ function toIso(date: string, endOfDay: boolean): string | undefined {
 
 export default function BoletosPage() {
   const utils = trpc.useUtils();
-  const [status, setStatus] = useState<'pending' | 'paid' | 'overdue' | 'cancelled' | 'refunded' | ''>('');
+  const [status, setStatus] = useState<
+    'pending' | 'paid' | 'overdue' | 'cancelled' | 'refunded' | ''
+  >('');
   const [clientId, setClientId] = useState<number | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -99,13 +101,17 @@ export default function BoletosPage() {
   }
 
   const clients = clientsQuery.data?.data ?? [];
-  const busy = generateFromArMutation.isPending || generateManualMutation.isPending || syncMutation.isPending || cancelMutation.isPending;
+  const busy =
+    generateFromArMutation.isPending ||
+    generateManualMutation.isPending ||
+    syncMutation.isPending ||
+    cancelMutation.isPending;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Fiscal - Boletos</h1>
-        <p className="text-sm text-zinc-400">Geracao, consulta e cancelamento de boletos.</p>
+        <p className="text-sm text-zinc-400">Geração, consulta e cancelamento de boletos.</p>
       </div>
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
@@ -113,7 +119,11 @@ export default function BoletosPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="text-sm text-zinc-300">
             Status
-            <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="input-field mt-1 w-full">
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value as typeof status)}
+              className="input-field mt-1 w-full"
+            >
               <option value="">Todos</option>
               <option value="pending">Pendente</option>
               <option value="paid">Pago</option>
@@ -127,24 +137,38 @@ export default function BoletosPage() {
             Cliente
             <select
               value={clientId ?? ''}
-              onChange={(event) => setClientId(event.target.value ? Number(event.target.value) : null)}
+              onChange={(event) =>
+                setClientId(event.target.value ? Number(event.target.value) : null)
+              }
               className="input-field mt-1 w-full"
             >
               <option value="">Todos</option>
               {clients.map((client) => (
-                <option key={client.id} value={client.id}>{client.name}</option>
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
               ))}
             </select>
           </label>
 
           <label className="text-sm text-zinc-300">
             De
-            <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="input-field mt-1 w-full" />
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              className="input-field mt-1 w-full"
+            />
           </label>
 
           <label className="text-sm text-zinc-300">
             Ate
-            <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="input-field mt-1 w-full" />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              className="input-field mt-1 w-full"
+            />
           </label>
         </div>
       </div>
@@ -179,12 +203,16 @@ export default function BoletosPage() {
               Cliente
               <select
                 value={manualClientId ?? ''}
-                onChange={(event) => setManualClientId(event.target.value ? Number(event.target.value) : null)}
+                onChange={(event) =>
+                  setManualClientId(event.target.value ? Number(event.target.value) : null)
+                }
                 className="input-field mt-1 w-full"
               >
                 <option value="">Selecione</option>
                 {clients.map((client) => (
-                  <option key={client.id} value={client.id}>{client.name}</option>
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
                 ))}
               </select>
             </label>

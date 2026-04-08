@@ -34,13 +34,17 @@ export default function SimulatorPage() {
   const clientsQuery = trpc.clientes.list.useQuery({ page: 1, limit: 100 });
   const tablesQuery = trpc.pricing.listTables.useQuery({ page: 1, limit: 100 });
 
-  const selectedTableId = pricingTableId ?? (tablesQuery.data?.data[0]?.id ?? null);
+  const selectedTableId = pricingTableId ?? tablesQuery.data?.data[0]?.id ?? null;
   const tableItemsQuery = trpc.pricing.listItems.useQuery(
     { pricingTableId: selectedTableId ?? 0, page: 1, limit: 100 },
     { enabled: Boolean(selectedTableId) },
   );
 
-  const historyQuery = trpc.simulator.listSimulations.useQuery({ page: 1, limit: 20, clientId: clientId ?? undefined });
+  const historyQuery = trpc.simulator.listSimulations.useQuery({
+    page: 1,
+    limit: 20,
+    clientId: clientId ?? undefined,
+  });
   const simulationQuery = trpc.simulator.getSimulation.useQuery(
     { simulationId: selectedSimulationId ?? 0 },
     { enabled: Boolean(selectedSimulationId) },
@@ -79,10 +83,16 @@ export default function SimulatorPage() {
   );
 
   const tableItems = useMemo(
-    () => (tableItemsQuery.data?.data ?? []).map((item) => ({ id: item.id, name: item.name, priceCents: item.priceCents })),
+    () =>
+      (tableItemsQuery.data?.data ?? []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        priceCents: item.priceCents,
+      })),
     [tableItemsQuery.data?.data],
   );
-  const isBootstrapping = clientsQuery.isLoading || tablesQuery.isLoading || tableItemsQuery.isLoading;
+  const isBootstrapping =
+    clientsQuery.isLoading || tablesQuery.isLoading || tableItemsQuery.isLoading;
   const bootstrapError = clientsQuery.error ?? tablesQuery.error ?? tableItemsQuery.error;
 
   async function handlePreview() {
@@ -159,7 +169,7 @@ export default function SimulatorPage() {
   if (isBootstrapping) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-300">
           Carregando dados do simulador...
         </div>
@@ -170,7 +180,7 @@ export default function SimulatorPage() {
   if (bootstrapError) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
         <div className="rounded-2xl border border-red-800 bg-red-900/20 p-6 text-sm text-red-300">
           Falha ao carregar dados iniciais: {bootstrapError.message}
         </div>
@@ -181,10 +191,15 @@ export default function SimulatorPage() {
   if (clients.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-sm text-zinc-300">Cadastre ao menos um cliente para gerar simulacoes e PDF.</p>
-          <Link to="/clientes/novo" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm">
+          <p className="text-sm text-zinc-300">
+            Cadastre ao menos um cliente para gerar simulações e PDF.
+          </p>
+          <Link
+            to="/clientes/novo"
+            className="inline-flex mt-3 px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm"
+          >
             Cadastrar primeiro cliente
           </Link>
         </div>
@@ -195,11 +210,16 @@ export default function SimulatorPage() {
   if (tables.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
+        <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-sm text-zinc-300">Nenhuma tabela de preco ativa. Crie uma tabela antes de simular.</p>
-          <Link to="/precos" className="inline-flex mt-3 px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm">
-            Ir para tabelas de preco
+          <p className="text-sm text-zinc-300">
+            Nenhuma tabela de preço ativa. Crie uma tabela antes de simular.
+          </p>
+          <Link
+            to="/precos"
+            className="inline-flex mt-3 px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm"
+          >
+            Ir para tabelas de preços
           </Link>
         </div>
       </div>
@@ -209,8 +229,10 @@ export default function SimulatorPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Simulador de Precos</h1>
-        <p className="text-sm text-zinc-400">Simule, compare tabelas, envie PDF e converta em OS.</p>
+        <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
+        <p className="text-sm text-zinc-400">
+          Simule, compare tabelas, envie PDF e converta em OS.
+        </p>
       </div>
 
       <SimulatorForm
@@ -239,7 +261,11 @@ export default function SimulatorPage() {
               <button
                 key={table.id}
                 type="button"
-                onClick={() => setTableIdsForCompare((prev) => checked ? prev.filter((id) => id !== table.id) : [...prev, table.id])}
+                onClick={() =>
+                  setTableIdsForCompare((prev) =>
+                    checked ? prev.filter((id) => id !== table.id) : [...prev, table.id],
+                  )
+                }
                 className={`px-3 py-1.5 rounded-lg text-sm border ${checked ? 'bg-sky-600 border-sky-500 text-white' : 'border-zinc-700 text-zinc-300 hover:border-zinc-500'}`}
               >
                 {table.name}
@@ -259,10 +285,10 @@ export default function SimulatorPage() {
         />
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
-          <h2 className="text-lg font-semibold text-white">Acoes</h2>
+          <h2 className="text-lg font-semibold text-white">Ações</h2>
           <div className="space-y-2">
             <label className="text-sm text-zinc-300">
-              Email de destino
+              E-mail de destino
               <input
                 type="email"
                 value={budgetEmail}
@@ -302,12 +328,28 @@ export default function SimulatorPage() {
           </div>
 
           {simulationQuery.data?.convertedJobId ? (
-            <p className="text-sm text-emerald-400">OS criada: #{simulationQuery.data.convertedJobId}</p>
+            <p className="text-sm text-emerald-400">
+              OS criada: #{simulationQuery.data.convertedJobId}
+            </p>
           ) : null}
-          {historyQuery.isLoading && <p className="text-xs text-zinc-500">Carregando historico...</p>}
-          {historyQuery.error && <p className="text-xs text-red-400">Erro ao carregar historico: {historyQuery.error.message}</p>}
-          {sendMutation.error && <p className="text-xs text-red-400">Erro ao enviar email: {sendMutation.error.message}</p>}
-          {approveMutation.error && <p className="text-xs text-red-400">Erro ao aprovar simulacao: {approveMutation.error.message}</p>}
+          {historyQuery.isLoading && (
+            <p className="text-xs text-zinc-500">Carregando historico...</p>
+          )}
+          {historyQuery.error && (
+            <p className="text-xs text-red-400">
+              Erro ao carregar historico: {historyQuery.error.message}
+            </p>
+          )}
+          {sendMutation.error && (
+            <p className="text-xs text-red-400">
+              Erro ao enviar email: {sendMutation.error.message}
+            </p>
+          )}
+          {approveMutation.error && (
+            <p className="text-xs text-red-400">
+              Erro ao aprovar simulacao: {approveMutation.error.message}
+            </p>
+          )}
         </div>
       </div>
 

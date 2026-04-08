@@ -22,15 +22,25 @@ async function createMaterial(page: Page, materialName: string, materialCode: st
   await expect(page.getByText(materialName)).toBeVisible({ timeout: 15000 });
 }
 
-async function createPurchase(page: Page, supplierName: string, materialName: string): Promise<{ id: number; code: string }> {
+async function createPurchase(
+  page: Page,
+  supplierName: string,
+  materialName: string,
+): Promise<{ id: number; code: string }> {
   await page.goto('/compras/novo', { waitUntil: 'domcontentloaded' });
 
   await page.locator('#supplier-search').fill(supplierName);
-  await page.getByRole('button', { name: new RegExp(supplierName, 'i') }).first().click();
+  await page
+    .getByRole('button', { name: new RegExp(supplierName, 'i') })
+    .first()
+    .click();
   await expect(page.getByText(/fornecedor selecionado/i)).toBeVisible({ timeout: 10000 });
 
   await page.locator('#material-search').fill(materialName);
-  await page.getByRole('button', { name: new RegExp(materialName, 'i') }).first().click();
+  await page
+    .getByRole('button', { name: new RegExp(materialName, 'i') })
+    .first()
+    .click();
 
   await page.locator('#qty-0').fill('2');
   await page.locator('#price-0').fill('12,50');
@@ -74,6 +84,8 @@ test.describe('purchase flow e2e', () => {
     await expect(page.getByText(/recebida/i).first()).toBeVisible({ timeout: 15000 });
     await page.getByRole('link', { name: /ver contas a pagar/i }).click();
     await expect(page).toHaveURL(/\/financeiro\/contas-pagar$/, { timeout: 15000 });
-    await expect(page.getByRole('heading', { name: /contas a pagar/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /contas a pagar/i })).toBeVisible({
+      timeout: 15000,
+    });
   });
 });

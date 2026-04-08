@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const envCandidates = [
+  // Node keeps the first loaded value, so prefer the package-local env in dev.
   resolve(currentDir, '../.env'),
   resolve(process.cwd(), '.env'),
   resolve(process.cwd(), 'apps/server/.env'),
@@ -15,6 +16,12 @@ for (const candidate of envCandidates) {
     process.loadEnvFile(candidate);
   }
 }
+
+const emptyToUndefined = (value: unknown) => (value === '' ? undefined : value);
+const optionalText = () => z.preprocess(emptyToUndefined, z.string().min(1).optional());
+const optionalEmail = () => z.preprocess(emptyToUndefined, z.string().email().optional());
+const optionalNumber = () => z.preprocess(emptyToUndefined, z.coerce.number().optional());
+const optionalUrl = () => z.preprocess(emptyToUndefined, z.string().url().optional());
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -32,27 +39,27 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
   REDIS_REQUIRED: z.coerce.boolean().default(false),
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().email().optional(),
-  VAPID_PUBLIC_KEY: z.string().optional(),
-  VAPID_PRIVATE_KEY: z.string().optional(),
-  VAPID_SUBJECT: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  OPENAI_API_KEY: z.string().optional(),
-  STRIPE_SECRET_KEY: z.string().min(1).optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
-  STRIPE_PRICE_STARTER: z.string().optional(),
-  STRIPE_PRICE_PRO: z.string().optional(),
-  STRIPE_PRICE_ENTERPRISE: z.string().optional(),
-  ASAAS_API_KEY: z.string().optional(),
-  ASAAS_SANDBOX: z.string().optional(),
-  FOCUS_NFE_TOKEN: z.string().optional(),
-  FOCUS_NFE_SANDBOX: z.string().optional(),
-  SENTRY_DSN: z.string().url().optional().or(z.literal('')),
-  BACKUP_S3_BUCKET: z.string().optional(),
+  SMTP_HOST: optionalText(),
+  SMTP_PORT: optionalNumber(),
+  SMTP_USER: optionalText(),
+  SMTP_PASS: optionalText(),
+  SMTP_FROM: optionalEmail(),
+  VAPID_PUBLIC_KEY: optionalText(),
+  VAPID_PRIVATE_KEY: optionalText(),
+  VAPID_SUBJECT: optionalText(),
+  ANTHROPIC_API_KEY: optionalText(),
+  OPENAI_API_KEY: optionalText(),
+  STRIPE_SECRET_KEY: optionalText(),
+  STRIPE_WEBHOOK_SECRET: optionalText(),
+  STRIPE_PRICE_STARTER: optionalText(),
+  STRIPE_PRICE_PRO: optionalText(),
+  STRIPE_PRICE_ENTERPRISE: optionalText(),
+  ASAAS_API_KEY: optionalText(),
+  ASAAS_SANDBOX: optionalText(),
+  FOCUS_NFE_TOKEN: optionalText(),
+  FOCUS_NFE_SANDBOX: optionalText(),
+  SENTRY_DSN: optionalUrl(),
+  BACKUP_S3_BUCKET: optionalText(),
 });
 
 const parsed = envSchema.safeParse(process.env);
