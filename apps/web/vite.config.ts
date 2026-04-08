@@ -1,7 +1,9 @@
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { extname } from 'node:path';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { brotliCompressSync, gzipSync } from 'node:zlib';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -22,9 +24,74 @@ for (const candidate of envCandidates) {
 const backendPort = process.env.PORT ?? '3001';
 const devApiUrl = process.env.VITE_DEV_API_URL ?? `http://localhost:${backendPort}`;
 
-function manualChunksByPackage(id: string): string | undefined {
+type BundleReportEntry = {
+  fileName: string;
+  rawSize: number;
+  gzipSize: number;
+  brotliSize: number;
+  imports: number;
+  dynamicImports: number;
+};
+
+const compressibleExtensions = new Set(['.js', '.mjs', '.css', '.html', '.svg', '.json', '.txt', '.xml']);
+
+function createBundleReportPlugin(): Plugin {
+  return {
+    name: 'bundle-report',
+    apply: 'build',
+    generateBundle(_, bundle) {
+      const report: BundleReportEntry[] = [];
+
+      for (const artifact of Object.values(bundle)) {
+        if (artifact.type === 'chunk') {
+          const source = Buffer.from(artifact.code, 'utf8');
+          report.push({
+            fileName: artifact.fileName,
+            rawSize: source.byteLength,
+            gzipSize: gzipSync(source).byteLength,
+            brotliSize: brotliCompressSync(source).byteLength,
+            imports: artifact.imports.length,
+            dynamicImports: artifact.dynamicImports.length,
+          });
+        }
+
+        const extension = extname(artifact.fileName);
+        if (!compressibleExtensions.has(extension)) {
+          continue;
+        }
+
+        const content =
+          artifact.type === 'chunk'
+            ? Buffer.from(artifact.code, 'utf8')
+            : typeof artifact.source === 'string'
+              ? Buffer.from(artifact.source, 'utf8')
+              : Buffer.from(artifact.source);
+
+        this.emitFile({
+          type: 'asset',
+          fileName: `${artifact.fileName}.gz`,
+          source: gzipSync(content),
+        });
+
+        this.emitFile({
+          type: 'asset',
+          fileName: `${artifact.fileName}.br`,
+          source: brotliCompressSync(content),
+        });
+      }
+
+      report.sort((a, b) => b.rawSize - a.rawSize);
+      const outputPath = resolve(currentDir, 'dist', 'bundle-report.json');
+      mkdirSync(dirname(outputPath), { recursive: true });
+      writeFileSync(outputPath, JSON.stringify(report, null, 2), 'utf8');
+    },
+  };
+}
+
+function manualChunksByDomain(id: string): string | undefined {
   const normalizedId = id.replaceAll('\\', '/');
-  if (!normalizedId.includes('/node_modules/')) {
+
+  if (!normalizedId.includes('node_modules')) {
     return undefined;
   }
 
@@ -33,10 +100,10 @@ function manualChunksByPackage(id: string): string | undefined {
     return undefined;
   }
 
-  const segments = modulePath.split('/');
+  const pathSegments = modulePath.split('/');
   const packageName = modulePath.startsWith('@')
-    ? `${segments[0]}/${segments[1] ?? ''}`
-    : segments[0] ?? '';
+    ? `${pathSegments[0]}/${pathSegments[1] ?? ''}`
+    : pathSegments[0] ?? '';
 
   if (
     packageName === 'react'
@@ -48,16 +115,11 @@ function manualChunksByPackage(id: string): string | undefined {
     return 'vendor-react';
   }
 
-  if (
-    packageName === '@trpc/client'
-    || packageName === '@trpc/react-query'
-    || packageName === '@tanstack/react-query'
-    || packageName === '@tanstack/query-core'
-  ) {
+  if (packageName.startsWith('@trpc') || packageName === '@tanstack/react-query') {
     return 'vendor-trpc-query';
   }
 
-  if (packageName.startsWith('@tiptap') || packageName.startsWith('prosemirror')) {
+  if (packageName.startsWith('@tiptap')) {
     return 'vendor-editor';
   }
 
@@ -69,54 +131,43 @@ function manualChunksByPackage(id: string): string | undefined {
     return 'vendor-3d-core';
   }
 
-  if (
-    packageName === 'recharts'
-    || packageName.startsWith('d3-')
-    || packageName === 'internmap'
-    || packageName === 'victory-vendor'
-  ) {
-    return 'vendor-charts';
-  }
-
-  if (packageName === 'framer-motion' || packageName.startsWith('motion')) {
-    return 'vendor-motion';
-  }
-
   if (packageName.startsWith('@dnd-kit')) {
     return 'vendor-dnd';
   }
 
-  if (packageName.startsWith('@radix-ui') || packageName === 'lucide-react') {
+  if (
+    packageName === 'recharts'
+    || packageName === 'framer-motion'
+    || packageName === 'lucide-react'
+  ) {
     return 'vendor-ui';
   }
 
-  if (
-    packageName === 'react-hook-form'
-    || packageName === '@hookform/resolvers'
-    || packageName === 'zod'
-  ) {
-    return 'vendor-forms';
+  if (packageName.startsWith('@radix-ui')) {
+    return 'vendor-radix';
   }
 
   if (
-    packageName === 'simplebar-react'
-    || packageName === 'simplebar-core'
-    || packageName === 'clsx'
+    packageName === 'clsx'
     || packageName === 'tailwind-merge'
+    || packageName === 'simplebar-react'
+    || packageName === 'zod'
   ) {
     return 'vendor-utils';
   }
 
-  return 'vendor-misc';
+  const sanitizedPackageName = packageName.replace('@', '').replace('/', '-');
+  return `vendor-${sanitizedPackageName}`;
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), createBundleReportPlugin()],
   build: {
+    reportCompressedSize: true,
     chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
-        manualChunks: manualChunksByPackage,
+        manualChunks: manualChunksByDomain,
       },
     },
   },

@@ -4,16 +4,18 @@ import { httpBatchLink } from '@trpc/client';
 import { Suspense, lazy, useState } from 'react';
 import { trpc, queryClient } from './lib/trpc';
 import { ThemeProvider } from './components/shared/theme-provider';
-import AuthLayout from './app/(auth)/layout';
-import LoginPage from './app/(auth)/login';
-import RegisterPage from './app/(auth)/register';
-import { DashboardLayout } from './app/(dashboard)/layout';
-import PublicPortalPage from './app/portal/[token]';
 import { PageSkeleton } from './components/shared/page-skeleton';
 
+const AuthLayout = lazy(() => import('./app/(auth)/layout'));
+const LoginPage = lazy(() => import('./app/(auth)/login'));
+const RegisterPage = lazy(() => import('./app/(auth)/register'));
 const ForgotPasswordPage = lazy(() => import('./app/(auth)/forgot-password'));
 const ResetPasswordPage = lazy(() => import('./app/(auth)/reset-password'));
 const LandingPage = lazy(() => import('./app/landing'));
+const DashboardLayout = lazy(() =>
+  import('./app/(dashboard)/layout').then((module) => ({ default: module.DashboardLayout })),
+);
+const PublicPortalPage = lazy(() => import('./app/portal/[token]'));
 const OnboardingWizard = lazy(() =>
   import('./app/(dashboard)/onboarding').then((module) => ({ default: module.OnboardingWizard }))
 );
