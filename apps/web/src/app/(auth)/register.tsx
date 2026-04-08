@@ -22,7 +22,7 @@ export default function RegisterPage() {
       navigate('/');
     },
     onError: (err) => {
-      setError(err.message || 'Erro ao registrar usuario.');
+      setError(err.message || 'Erro ao registrar usuário.');
       setLoading(false);
     },
   });
@@ -45,7 +45,9 @@ export default function RegisterPage() {
   return (
     <div>
       <h1 className="text-zinc-50 text-2xl font-semibold text-center">Criar conta</h1>
-      <p className="text-zinc-400 text-sm text-center mt-2">Comece seu laboratório digital em minutos.</p>
+      <p className="text-zinc-400 text-sm text-center mt-2">
+        Comece seu laboratório digital em minutos.
+      </p>
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
         {error && (
@@ -103,7 +105,7 @@ export default function RegisterPage() {
 
         <div className="text-sm pt-1">
           <Link to="/login" className="text-zinc-400 hover:text-zinc-200">
-            Ja tem conta? Fazer login
+            Já tem conta? Fazer login
           </Link>
         </div>
 
@@ -118,4 +120,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

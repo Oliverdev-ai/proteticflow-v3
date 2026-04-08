@@ -55,15 +55,17 @@ test.describe('flow voice secure e2e', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{
-          result: {
-            data: {
-              text: 'agendar prova para amanha',
-              confidence: 0.88,
-              durationMs: 1800,
+        body: JSON.stringify([
+          {
+            result: {
+              data: {
+                text: 'agendar prova para amanha',
+                confidence: 0.88,
+                durationMs: 1800,
+              },
             },
           },
-        }]),
+        ]),
       });
     });
 
@@ -71,20 +73,22 @@ test.describe('flow voice secure e2e', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{
-          result: {
-            data: {
-              status: 'executed',
-              message: 'Comando jobs.listPending executado com sucesso.',
-              run: {
-                id: 999001,
-                intent: 'jobs.listPending',
-                executionStatus: 'success',
-                createdAt: new Date().toISOString(),
+        body: JSON.stringify([
+          {
+            result: {
+              data: {
+                status: 'executed',
+                message: 'Comando jobs.listPending executado com sucesso.',
+                run: {
+                  id: 999001,
+                  intent: 'jobs.listPending',
+                  executionStatus: 'success',
+                  createdAt: new Date().toISOString(),
+                },
               },
             },
           },
-        }]),
+        ]),
       });
     });
 
@@ -102,8 +106,9 @@ test.describe('flow voice secure e2e', () => {
     await transcript.fill('agendar prova para quinta de manha');
     await page.locator('#flow-transcript-send').click();
 
-    await expect(page.getByText(/Comando jobs\.listPending executado com sucesso/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Comando jobs\.listPending executado com sucesso/i)).toBeVisible({
+      timeout: 15000,
+    });
     await expect(page.locator('#flow-transcript-text')).toHaveCount(0);
   });
 });
-

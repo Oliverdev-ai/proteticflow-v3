@@ -1,14 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
-import {
-  ArrowLeft,
-  Plus,
-  Trash2,
-  ShoppingCart,
-  Search,
-  Package,
-} from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, ShoppingCart, Search, Package } from 'lucide-react';
 
 type PurchaseItem = {
   materialId: number;
@@ -89,9 +82,7 @@ export default function PurchaseFormPage() {
 
   const updateItem = useCallback(
     (idx: number, field: 'quantity' | 'unitPriceCents', value: number) => {
-      setItems((prev) =>
-        prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)),
-      );
+      setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)));
     },
     [],
   );
@@ -102,12 +93,24 @@ export default function PurchaseFormPage() {
 
   const handleSubmit = () => {
     setError('');
-    if (!supplierId) { setError('Selecione um fornecedor'); return; }
-    if (items.length === 0) { setError('Adicione pelo menos 1 item'); return; }
+    if (!supplierId) {
+      setError('Selecione um fornecedor');
+      return;
+    }
+    if (items.length === 0) {
+      setError('Adicione pelo menos 1 item');
+      return;
+    }
     const hasZeroQty = items.some((i) => i.quantity <= 0);
-    if (hasZeroQty) { setError('Todos os itens devem ter quantidade maior que zero'); return; }
+    if (hasZeroQty) {
+      setError('Todos os itens devem ter quantidade maior que zero');
+      return;
+    }
     const hasZeroPrice = items.some((i) => i.unitPriceCents <= 0);
-    if (hasZeroPrice) { setError('Todos os itens devem ter preço unitário maior que zero'); return; }
+    if (hasZeroPrice) {
+      setError('Todos os itens devem ter preço unitário maior que zero');
+      return;
+    }
 
     createPurchase.mutate({
       supplierId,
@@ -147,13 +150,19 @@ export default function PurchaseFormPage() {
       <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="font-semibold text-foreground">Fornecedor</h2>
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
           <input
             id="supplier-search"
             type="text"
             placeholder="Buscar fornecedor..."
             value={supplierSearch}
-            onChange={(e) => { setSupplierSearch(e.target.value); setSupplierId(null); }}
+            onChange={(e) => {
+              setSupplierSearch(e.target.value);
+              setSupplierId(null);
+            }}
             className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
@@ -163,7 +172,10 @@ export default function PurchaseFormPage() {
               <button
                 key={sup.id}
                 id={`supplier-${sup.id}`}
-                onClick={() => { setSupplierId(sup.id); setSupplierSearch(sup.name); }}
+                onClick={() => {
+                  setSupplierId(sup.id);
+                  setSupplierSearch(sup.name);
+                }}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 text-left border-b border-border last:border-0 transition-colors"
               >
                 <span className="text-sm text-foreground font-medium">{sup.name}</span>
@@ -185,7 +197,10 @@ export default function PurchaseFormPage() {
 
         {/* Busca de material */}
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
           <input
             id="material-search"
             type="text"
@@ -206,7 +221,9 @@ export default function PurchaseFormPage() {
               >
                 <div>
                   <span className="text-sm text-foreground font-medium">{mat.name}</span>
-                  {mat.code && <span className="text-xs text-muted-foreground ml-2">({mat.code})</span>}
+                  {mat.code && (
+                    <span className="text-xs text-muted-foreground ml-2">({mat.code})</span>
+                  )}
                 </div>
                 <span className="text-xs text-muted-foreground">{mat.unit}</span>
               </button>
@@ -232,7 +249,9 @@ export default function PurchaseFormPage() {
                   <tr key={idx} className="hover:bg-muted/20">
                     <td className="px-4 py-2.5">
                       <span className="text-foreground font-medium">{item.materialName}</span>
-                      <span className="text-xs text-muted-foreground ml-1">({item.materialUnit})</span>
+                      <span className="text-xs text-muted-foreground ml-1">
+                        ({item.materialUnit})
+                      </span>
                     </td>
                     <td className="px-3 py-2">
                       <input
@@ -241,7 +260,9 @@ export default function PurchaseFormPage() {
                         min="0.01"
                         step="0.01"
                         value={item.quantity}
-                        onChange={(e) => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)
+                        }
                         className="w-full text-center px-2 py-1 rounded border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
                       />
                     </td>
@@ -250,7 +271,9 @@ export default function PurchaseFormPage() {
                         id={`price-${idx}`}
                         type="text"
                         value={centsToBRL(item.unitPriceCents)}
-                        onChange={(e) => updateItem(idx, 'unitPriceCents', brlToCents(e.target.value))}
+                        onChange={(e) =>
+                          updateItem(idx, 'unitPriceCents', brlToCents(e.target.value))
+                        }
                         className="w-full text-center px-2 py-1 rounded border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
                       />
                     </td>
@@ -272,7 +295,10 @@ export default function PurchaseFormPage() {
               </tbody>
               <tfoot className="bg-muted/30 border-t border-border">
                 <tr>
-                  <td colSpan={3} className="px-4 py-3 text-right text-muted-foreground font-medium text-sm">
+                  <td
+                    colSpan={3}
+                    className="px-4 py-3 text-right text-muted-foreground font-medium text-sm"
+                  >
                     Total da compra
                   </td>
                   <td className="px-4 py-3 text-right text-primary font-bold">
@@ -333,7 +359,14 @@ export default function PurchaseFormPage() {
 // Ícone inline para evitar dependência
 function CheckIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+    >
       <polyline points="20,6 9,17 4,12" />
     </svg>
   );

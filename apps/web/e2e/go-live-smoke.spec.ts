@@ -8,16 +8,20 @@ test.describe('go live smoke e2e', () => {
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(
-      page.getByRole('heading', { name: /dashboard/i }).or(
-        page.getByText(/n.o foi poss.vel carregar o dashboard/i),
-      ),
+      page
+        .getByRole('heading', { name: /dashboard/i })
+        .or(page.getByText(/n.o foi poss.vel carregar o dashboard/i)),
     ).toBeVisible({ timeout: 20000 });
 
     await page.goto('/trabalhos/novo', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /iniciando os/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /iniciando os/i })).toBeVisible({
+      timeout: 15000,
+    });
 
     await page.goto('/kanban', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /fluxo de produ/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /fluxo de produ/i })).toBeVisible({
+      timeout: 15000,
+    });
 
     await page.goto('/flow-ia', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /flow ia/i })).toBeVisible({ timeout: 15000 });

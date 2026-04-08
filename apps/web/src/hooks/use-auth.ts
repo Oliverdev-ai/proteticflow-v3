@@ -7,7 +7,13 @@ export function useAuth() {
   const utils = trpc.useUtils();
 
   const { data: profile, isLoading, isFetching, error } = trpc.auth.getProfile.useQuery(undefined, {
-    retry: 2,
+    retry(failureCount, queryError) {
+      if (queryError.data?.code === 'UNAUTHORIZED') {
+        return false;
+      }
+
+      return failureCount < 2;
+    },
     refetchOnWindowFocus: true,
   });
 

@@ -27,4 +27,3 @@ test.describe('flow command pipeline e2e', () => {
     await expect(page.getByText(/Comando cancelado/i)).toBeVisible({ timeout: 15000 });
   });
 });
-

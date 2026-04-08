@@ -95,14 +95,18 @@ export default function FlowIAPage() {
 
   const sessions: AiSession[] = sessionsQuery.data?.data ?? [];
   const messages = sessionQuery.data?.messages ?? [];
-  const busy = createSessionMutation.isPending || archiveSessionMutation.isPending || sendMessageMutation.isPending;
+  const busy =
+    createSessionMutation.isPending ||
+    archiveSessionMutation.isPending ||
+    sendMessageMutation.isPending;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Flow IA</h1>
         <p className="text-sm text-zinc-400">
-          Assistente contextual do laboratório com histórico de sessões e comandos por linguagem natural.
+          Assistente contextual do laboratório com histórico de sessões e comandos por linguagem
+          natural.
         </p>
       </div>
 
@@ -129,7 +133,11 @@ export default function FlowIAPage() {
             onCommandResolved={handleCommandResolved}
           />
           <ChatWindow messages={messages} isLoading={sendMessageMutation.isPending} />
-          <ChatInput disabled={busy} isSending={sendMessageMutation.isPending} onSend={handleSend} />
+          <ChatInput
+            disabled={busy}
+            isSending={sendMessageMutation.isPending}
+            onSend={handleSend}
+          />
         </div>
       </div>
     </div>

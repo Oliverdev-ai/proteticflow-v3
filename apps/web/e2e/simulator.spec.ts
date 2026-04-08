@@ -15,9 +15,7 @@ test.describe('simulador - acesso sem auth', () => {
   test('rota responde com login ou pagina publica do simulador', async ({ page }) => {
     await page.goto('/simulador', { waitUntil: 'domcontentloaded' });
 
-    await expect
-      .poll(async () => page.url(), { timeout: 10000 })
-      .toMatch(/\/(login|simulador)/);
+    await expect.poll(async () => page.url(), { timeout: 10000 }).toMatch(/\/(login|simulador)/);
 
     await expect(page.locator('body')).toBeVisible({ timeout: 10000 });
   });

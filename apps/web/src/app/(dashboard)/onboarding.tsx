@@ -13,7 +13,7 @@ type Step = 1 | 2 | 3 | 4;
 
 function StepBadge({ current }: { current: Step }) {
   const steps = [
-    { id: 1, label: 'Laboratorio' },
+    { id: 1, label: 'Laboratório' },
     { id: 2, label: 'Primeiro cliente' },
     { id: 3, label: 'Primeira OS' },
     { id: 4, label: 'Concluir' },
@@ -30,7 +30,9 @@ function StepBadge({ current }: { current: Step }) {
           >
             {step.id}
           </div>
-          <span className={`text-xs ${step.id === current ? 'text-white' : 'text-zinc-500'}`}>{step.label}</span>
+          <span className={`text-xs ${step.id === current ? 'text-white' : 'text-zinc-500'}`}>
+            {step.label}
+          </span>
         </div>
       ))}
     </div>
@@ -58,15 +60,16 @@ export function OnboardingWizard() {
     resolver: zodResolver(createTenantSchema),
   });
 
-  const onSubmit = (data: CreateTenantInput) => createTenant.mutate({
-    name: data.name,
-    cnpj: data.cnpj,
-    phone: data.phone,
-    email: data.email,
-    address: data.address,
-    city: data.city,
-    state: data.state,
-  });
+  const onSubmit = (data: CreateTenantInput) =>
+    createTenant.mutate({
+      name: data.name,
+      cnpj: data.cnpj,
+      phone: data.phone,
+      email: data.email,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+    });
 
   if (step === 2) {
     return (
@@ -109,14 +112,15 @@ export function OnboardingWizard() {
           </div>
           <h1 className="text-2xl font-bold text-white">Passo 3: gere sua primeira OS</h1>
           <p className="text-zinc-400">
-            Com cliente e OS cadastrados, o Kanban, financeiro e relatorios passam a refletir seu fluxo real.
+            Com cliente e OS cadastrados, o Kanban, financeiro e relatórios passam a refletir seu
+            fluxo real.
           </p>
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigate('/trabalhos/novo')}
               className="w-full bg-primary hover:bg-primary text-white text-sm font-semibold py-3 rounded-xl transition-colors"
             >
-              Ir para criacao de OS
+              Ir para criação de OS
             </button>
             <button
               onClick={() => setStep(4)}
@@ -138,8 +142,10 @@ export function OnboardingWizard() {
           <div className="flex justify-center">
             <CheckCircle2 className="text-green-400" size={56} />
           </div>
-          <h1 className="text-2xl font-bold text-white">Onboarding concluido</h1>
-          <p className="text-zinc-400">Tudo pronto para operar seu laboratorio no painel principal.</p>
+          <h1 className="text-2xl font-bold text-white">Onboarding concluído</h1>
+          <p className="text-zinc-400">
+            Tudo pronto para operar seu laboratório no painel principal.
+          </p>
           <button
             onClick={() => navigate('/')}
             className="w-full bg-primary hover:bg-primary text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
@@ -159,13 +165,15 @@ export function OnboardingWizard() {
           <div className="flex justify-center">
             <Building2 className="text-primary" size={40} />
           </div>
-          <h1 className="text-2xl font-bold text-white">Configure seu laboratorio</h1>
-          <p className="text-zinc-400 text-sm">Esses dados aparecem em relatorios, PDFs e comunicacao com clientes.</p>
+          <h1 className="text-2xl font-bold text-white">Configure seu laboratório</h1>
+          <p className="text-zinc-400 text-sm">
+            Esses dados aparecem em relatórios, PDFs e comunicação com clientes.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm text-zinc-300 mb-1.5">Nome do laboratorio *</label>
+            <label className="block text-sm text-zinc-300 mb-1.5">Nome do laboratório *</label>
             <input
               {...register('name')}
               placeholder="Ex: Lab Dental Silva"
@@ -225,7 +233,9 @@ export function OnboardingWizard() {
             </div>
           </div>
 
-          {createTenant.error && <p className="text-red-400 text-sm">{createTenant.error.message}</p>}
+          {createTenant.error && (
+            <p className="text-red-400 text-sm">{createTenant.error.message}</p>
+          )}
 
           <button
             type="submit"
@@ -236,7 +246,7 @@ export function OnboardingWizard() {
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
             ) : (
               <>
-                Criar laboratorio <ArrowRight size={16} />
+                Criar laboratório <ArrowRight size={16} />
               </>
             )}
           </button>

@@ -8,7 +8,9 @@ test.describe('fiscal reports', () => {
     await loginManager(page);
     await page.goto('/relatorios/faturamento', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.getByRole('heading', { name: /faturamento por periodo/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /faturamento por periodo/i })).toBeVisible({
+      timeout: 15000,
+    });
     await expect(page.getByText(/por dentista/i)).toBeVisible({ timeout: 15000 });
   });
 
@@ -17,7 +19,9 @@ test.describe('fiscal reports', () => {
 
     await loginManager(page);
     await page.goto('/relatorios/faturamento', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('button', { name: /exportar csv/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: /exportar csv/i })).toBeVisible({
+      timeout: 15000,
+    });
 
     const [download] = await Promise.all([
       page.waitForEvent('download'),

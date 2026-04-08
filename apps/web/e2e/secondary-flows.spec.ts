@@ -8,9 +8,7 @@ test.describe('fluxos secundarios e2e', () => {
     await page.getByPlaceholder('Senha').fill('senha-errada');
     await page.getByRole('button', { name: /entrar/i }).click();
 
-    await expect
-      .poll(async () => page.url(), { timeout: 10000 })
-      .toMatch(/\/(login|$)/);
+    await expect.poll(async () => page.url(), { timeout: 10000 }).toMatch(/\/(login|$)/);
 
     if (page.url().includes('/login')) {
       await expect(page.getByPlaceholder('E-mail')).toBeVisible({ timeout: 10000 });
@@ -20,16 +18,16 @@ test.describe('fluxos secundarios e2e', () => {
   test('rota clientes sem auth responde com login ou lista publica', async ({ page }) => {
     await page.goto('/clientes', { waitUntil: 'domcontentloaded' });
 
-    await expect
-      .poll(async () => page.url(), { timeout: 10000 })
-      .toMatch(/\/(login|clientes)/);
+    await expect.poll(async () => page.url(), { timeout: 10000 }).toMatch(/\/(login|clientes)/);
 
     await expect(page.locator('body')).toBeVisible({ timeout: 10000 });
   });
 
   test('landing publica carrega com seo e cta', async ({ page }) => {
     await page.goto('/landing', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { level: 1, name: /^proteticflow/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { level: 1, name: /^proteticflow/i })).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.getByRole('link', { name: /comece gr.tis/i })).toBeVisible();
   });
 
