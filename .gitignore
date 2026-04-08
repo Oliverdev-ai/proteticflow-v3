@@ -48,6 +48,7 @@ coverage/
 # Playwright
 test-results/
 playwright-report/
+.lighthouseci/
 
 # Docker
 docker-compose.override.yml
