@@ -85,4 +85,4 @@ tmp/mcp-*/
 # Agent artifacts
 .tmp/
 tmp/
-CLAUDE.md
+# CLAUDE.md deve ser commitado — é a lei do projeto para todos os agentes
