@@ -114,33 +114,31 @@ async function waitForPostgres(maxAttempts = 20): Promise<boolean> {
   return false;
 }
 
-const pgReady = await waitForPostgres();
+async function main() {
+  const pgReady = await waitForPostgres();
 
-if (!pgReady) {
-  warn(
-    'Postgres não respondeu. Certifique-se de rodar:\n  docker compose -f docker/docker-compose.dev.yml up -d\nDepois execute: pnpm local:setup',
-  );
-  process.exit(1);
-}
+  if (!pgReady) {
+    warn(
+      'Postgres não respondeu. Certifique-se de rodar:\n  docker compose -f docker/docker-compose.dev.yml up -d\nDepois execute: pnpm local:setup',
+    );
+    process.exit(1);
+  }
 
-ok('Postgres está pronto');
+  ok('Postgres está pronto');
 
-try {
-  execSync('pnpm --filter @proteticflow/server db:push', {
-    cwd: ROOT,
-    stdio: 'inherit',
-    env: { ...process.env },
-  });
-  ok('Schema aplicado com sucesso');
-} catch {
-  warn('db:push falhou. Verifique se o DATABASE_URL no .env está correto.');
-  process.exit(1);
-}
+  try {
+    execSync('pnpm --filter @proteticflow/server db:push', {
+      cwd: ROOT,
+      stdio: 'inherit',
+      env: { ...process.env },
+    });
+    ok('Schema aplicado com sucesso');
+  } catch {
+    warn('db:push falhou. Verifique se o DATABASE_URL no .env está correto.');
+    process.exit(1);
+  }
 
-// ──────────────────────────────────────────
-// Resultado final
-// ──────────────────────────────────────────
-console.log(`
+  console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   ✅ Setup concluído!
@@ -156,3 +154,9 @@ console.log(`
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `);
+}
+
+main().catch((err) => {
+  console.error('❌ Erro no setup:', err);
+  process.exit(1);
+});
