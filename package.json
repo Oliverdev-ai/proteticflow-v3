@@ -10,7 +10,10 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "db:generate": "turbo run db:generate",
-    "db:migrate": "turbo run db:migrate"
+    "db:migrate": "turbo run db:migrate",
+    "local:setup": "docker compose -f docker/docker-compose.dev.yml up -d && tsx scripts/setup-local.ts",
+    "local:up": "docker compose -f docker/docker-compose.dev.yml up -d && pnpm dev",
+    "local:stop": "docker compose -f docker/docker-compose.dev.yml stop"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.0.0",
