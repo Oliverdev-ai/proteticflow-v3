@@ -59,10 +59,10 @@ const COLOR_CLASS: Record<string, string> = {
 };
 
 const TABS = [
-  { id: 'dados', label: 'EspecÃ­ficos', icon: FileText, desc: 'Ficha TÃ©cnica' },
-  { id: 'itens', label: 'ValoraÃ§Ã£o', icon: Package, desc: 'ServiÃ§os' },
-  { id: 'timeline', label: 'Workflow', icon: Clock, desc: 'HistÃ³rico' },
-  { id: 'fotos', label: 'EvidÃªncias', icon: Camera, desc: 'ProduÃ§Ã£o' },
+  { id: 'dados', label: 'Específicos', icon: FileText, desc: 'Ficha Técnica' },
+  { id: 'itens', label: 'Valoração', icon: Package, desc: 'Serviços' },
+  { id: 'timeline', label: 'Workflow', icon: Clock, desc: 'Histórico' },
+  { id: 'fotos', label: 'Evidências', icon: Camera, desc: 'Produção' },
 ];
 
 const STATUS_FLOW: JobStatus[] = ['pending', 'in_progress', 'quality_check', 'ready', 'delivered'];
@@ -189,15 +189,15 @@ export default function JobDetailPage() {
         </div>
         <div className="text-center">
           <Large className="text-destructive font-black tracking-tight">
-            {error?.message ?? 'ServiÃ§o nÃ£o catalogado'}
+            {error?.message ?? 'Serviço não catalogado'}
           </Large>
-          <Muted className="mt-1">NÃ£o foi possÃ­vel localizar este registro no sistema.</Muted>
+          <Muted className="mt-1">Não foi possível localizar este registro no sistema.</Muted>
         </div>
         <button
           onClick={() => navigate('/trabalhos')}
           className="flex items-center gap-3 text-[10px] font-black text-primary hover:text-primary/80 transition-all uppercase tracking-[0.2em] bg-primary/10 px-6 py-3 rounded-2xl"
         >
-          <ArrowLeft size={16} strokeWidth={3} /> Retornar Ã  Listagem
+          <ArrowLeft size={16} strokeWidth={3} /> Retornar à Listagem
         </button>
       </div>
     );
@@ -378,7 +378,7 @@ export default function JobDetailPage() {
                   ) : (
                     <CheckCircle2 size={18} strokeWidth={3} />
                   )}
-                  AvanÃ§ar p/ {JOB_STATUS_LABELS[nextStatus]}
+                  Avançar p/ {JOB_STATUS_LABELS[nextStatus]}
                 </button>
               )}
               <button
@@ -499,7 +499,7 @@ export default function JobDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 relative">
                 {[
                   {
-                    label: 'MandatÃ¡rio (Cliente)',
+                    label: 'Mandatário (Cliente)',
                     value: job.clientName,
                     icon: Building2,
                     color: 'text-primary',
@@ -517,7 +517,7 @@ export default function JobDetailPage() {
                     color: 'text-foreground',
                   },
                   {
-                    label: 'Tipo de PrÃ³tese',
+                    label: 'Tipo de Prótese',
                     value: job.prothesisType,
                     icon: Zap,
                     color: 'text-foreground',
@@ -538,7 +538,7 @@ export default function JobDetailPage() {
                     label: 'DeadLine Fatal',
                     value: job.deadline
                       ? new Date(job.deadline).toLocaleDateString('pt-BR')
-                      : 'â€”',
+                      : '-',
                     icon: Calendar,
                     color: 'text-amber-500',
                   },
@@ -549,7 +549,7 @@ export default function JobDetailPage() {
                     color: 'text-emerald-500',
                   },
                   {
-                    label: 'NÃºmero da Remessa',
+                    label: 'Número da Remessa',
                     value: job.code,
                     icon: Hash,
                     color: 'text-primary',
@@ -588,14 +588,14 @@ export default function JobDetailPage() {
                 <div className="flex items-center gap-3">
                   <FileText size={16} className="text-primary" />
                   <Muted className="text-[10px] font-black uppercase tracking-widest">
-                    InstruÃ§Ãµes Laboratoriais e Memorandos
+                    Instruções Laboratoriais e Memorandos
                   </Muted>
                 </div>
                 <div className="bg-muted/30 p-8 rounded-[32px] border border-border/50 relative group/memo overflow-hidden">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.03] rounded-full blur-2xl -mr-8 -mt-8" />
                   <p className="text-sm font-semibold text-foreground leading-relaxed whitespace-pre-wrap relative italic opacity-80 group-hover/memo:opacity-100 transition-opacity">
                     {job.instructions ||
-                      'Nenhum memorando tÃ©cnico anexado a esta ordem de serviÃ§o.'}
+                      'Nenhum memorando técnico anexado a esta ordem de serviço.'}
                   </p>
                 </div>
               </div>
@@ -605,7 +605,7 @@ export default function JobDetailPage() {
                   <div className="flex items-center gap-3 text-destructive">
                     <Ban size={20} strokeWidth={3} />
                     <span className="text-[10px] font-black uppercase tracking-[0.3em]">
-                      Motivo da InterrupÃ§Ã£o (Cancelamento)
+                      Motivo da Interrupção (Cancelamento)
                     </span>
                   </div>
                   <p className="text-sm font-black text-destructive tracking-tight leading-tight pl-8">
@@ -624,19 +624,19 @@ export default function JobDetailPage() {
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
                       <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
-                        EspecificaÃ§Ã£o TÃ©cnica
+                        Especificação Técnica
                       </th>
                       <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
                         Volume
                       </th>
                       <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
-                        Valor UnitÃ¡rio
+                        Valor Unitário
                       </th>
                       <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
                         Var. %
                       </th>
                       <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
-                        CÃ¡lculo LÃ­quido
+                        Cálculo Líquido
                       </th>
                     </tr>
                   </thead>
@@ -700,7 +700,7 @@ export default function JobDetailPage() {
                             Valor Consolidado da Remessa
                           </Muted>
                           <span className="text-xs font-bold text-muted-foreground opacity-60 italic">
-                            Sujeito a variaÃ§Ãµes por itens adicionais
+                            Sujeito a variações por itens adicionais
                           </span>
                         </div>
                       </td>
@@ -788,7 +788,7 @@ export default function JobDetailPage() {
                               )}
                             </div>
                             <p className="text-sm font-black text-foreground tracking-tight group-hover:text-primary transition-colors mt-2 uppercase">
-                              {log.fromStatus ? `TransiÃ§Ã£o de EstÃ¡gio` : `Abertura de Protocolo`}
+                              {log.fromStatus ? `Transição de Estágio` : `Abertura de Protocolo`}
                             </p>
                           </div>
                           <div className="flex flex-col lg:items-end gap-0.5">
@@ -828,9 +828,9 @@ export default function JobDetailPage() {
                   <Camera size={24} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <Large className="tracking-tight">RepositÃ³rio Visual TÃ©cnica</Large>
+                  <Large className="tracking-tight">Repositório Visual Técnico</Large>
                   <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
-                    Capturas de produÃ§Ã£o e acabamento final
+                    Capturas de produção e acabamento final
                   </Muted>
                 </div>
               </div>
@@ -838,8 +838,8 @@ export default function JobDetailPage() {
               {job.photos.length === 0 ? (
                 <EmptyState
                   icon={Camera}
-                  title="Galeria TÃ©cnica Vazia"
-                  description="Nenhuma imagem de acompanhamento tÃ©cnico foi anexada a este fluxo de trabalho."
+                  title="Galeria Técnica Vazia"
+                  description="Nenhuma imagem de acompanhamento técnico foi anexada a este fluxo de trabalho."
                 />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -851,16 +851,16 @@ export default function JobDetailPage() {
                     >
                       <img
                         src={photo.url}
-                        alt={photo.description ?? 'Foto TÃ©cnica'}
+                        alt={photo.description ?? 'Foto Técnica'}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
                         <div className="flex flex-col gap-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                           <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
-                            EvidÃªncia Laboratorial
+                            Evidência Laboratorial
                           </span>
                           <span className="text-sm font-black text-white tracking-tight uppercase leading-none">
-                            {photo.description || 'Imagem S/ DescriÃ§Ã£o'}
+                            {photo.description || 'Imagem S/ Descrição'}
                           </span>
                           <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-2">
                             Auditado em {new Date(photo.createdAt).toLocaleDateString('pt-BR')}
@@ -895,7 +895,7 @@ export default function JobDetailPage() {
                   <div className="flex flex-col gap-0.5">
                     <H1 className="text-2xl tracking-tighter text-destructive">Interromper OS</H1>
                     <Muted className="text-[10px] font-black uppercase tracking-[0.2em] text-destructive/60">
-                      Protocolo de Cancelamento CrÃ­tico
+                      Protocolo de Cancelamento Crítico
                     </Muted>
                   </div>
                 </div>
@@ -912,21 +912,21 @@ export default function JobDetailPage() {
                   <Info size={20} className="text-destructive mt-0.5 shrink-0" />
                   <p className="text-xs font-semibold text-destructive/70 leading-relaxed">
                     Ao confirmar o cancelamento da <strong>OS {job.code}</strong>, todas as
-                    provisÃµes financeiras (contas a receber) e ordens de produÃ§Ã£o vinculadas
-                    serÃ£o suspensas permanentemente. Este processo requer justificativa formal para
+                    provisões financeiras (contas a receber) e ordens de produção vinculadas serão
+                    suspensas permanentemente. Este processo requer justificativa formal para
                     fins de auditoria laboratorial.
                   </p>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 mb-1">
-                    Justificativa da InterrupÃ§Ã£o *
+                    Justificativa da Interrupção *
                   </label>
                   <textarea
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
                     rows={5}
-                    placeholder="Descreva o motivo real da interrupÃ§Ã£o do fluxo..."
+                    placeholder="Descreva o motivo real da interrupção do fluxo..."
                     className="w-full bg-muted border border-border rounded-[24px] px-6 py-5 text-sm font-semibold text-foreground focus:outline-none focus:ring-4 focus:ring-destructive/5 focus:border-destructive/30 transition-all shadow-inner resize-none placeholder:text-muted-foreground/30"
                     autoFocus
                   />
