@@ -8,11 +8,11 @@ import { LicenseBanner } from '../../components/licensing/license-banner';
 import { useAuth } from '../../hooks/use-auth';
 
 export function DashboardLayout() {
-  const { isAuthenticated, isLoading, isFetching, isAuthResolved, user } = useAuth();
+  const { isAuthenticated, isAuthPending, isAuthResolved, user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  if (!isAuthResolved && (isLoading || isFetching)) {
+  if (!isAuthResolved && isAuthPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />

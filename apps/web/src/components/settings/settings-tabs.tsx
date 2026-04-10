@@ -24,11 +24,11 @@ type TabItem = {
 
 const SETTINGS_TABS: TabItem[] = [
   { id: 'perfil', label: 'Meu Perfil', icon: User, component: <ProfileForm /> },
-  { id: 'laboratorio', label: 'LaboratÃ³rio', icon: Building2, component: <LabTab />, roles: ['superadmin', 'gerente'] },
+  { id: 'laboratorio', label: 'Laboratório', icon: Building2, component: <LabTab />, roles: ['superadmin', 'gerente'] },
   { id: 'equipe', label: 'Time & Elenco', icon: Users, component: <EmployeesTab />, roles: ['superadmin', 'gerente'] },
-  { id: 'autorizacoes', label: 'PrivilÃ©gios', icon: ShieldCheck, component: <AuthorizationsTab />, roles: ['superadmin'] },
+  { id: 'autorizacoes', label: 'Privilégios', icon: ShieldCheck, component: <AuthorizationsTab />, roles: ['superadmin'] },
   { id: 'plano', label: 'Assinatura', icon: CreditCard, component: <PlansTab />, roles: ['superadmin'] },
-  { id: 'notificacoes', label: 'NotificaÃ§Ãµes', icon: Bell, component: <NotificationsTab /> },
+  { id: 'notificacoes', label: 'Notificações', icon: Bell, component: <NotificationsTab /> },
   { id: 'fiscal', label: 'Fiscal & Gateway', icon: Receipt, component: <FiscalSettingsForm />, roles: ['superadmin'] },
 ];
 
@@ -107,7 +107,7 @@ export function SettingsTabs() {
                   <Settings2 size={14} strokeWidth={3} />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">VersÃ£o</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Versão</span>
                   <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">3.0.0-rc</span>
                 </div>
               </div>
@@ -125,7 +125,7 @@ export function SettingsTabs() {
             <div className="flex items-center gap-4">
               <div className="h-1 w-12 bg-primary rounded-full shadow-glow-primary" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 italic">
-                MÃ³dulo de ConfiguraÃ§Ã£o de Malha
+                Módulo de Configuração de Malha
               </span>
             </div>
           </div>

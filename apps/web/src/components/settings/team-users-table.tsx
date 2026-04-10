@@ -46,7 +46,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
             </div>
             <div className="flex flex-col gap-0.5">
               <Large className="tracking-tight text-lg font-black uppercase">Terminais Operacionais</Large>
-              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">GestÃ£o de identidades e vinculaÃ§Ã£o de dispositivos</Muted>
+              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Gestão de identidades e vinculação de dispositivos</Muted>
             </div>
           </div>
 
@@ -64,9 +64,9 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
               <tr className="border-b border-border bg-muted/20">
                 <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Membro / Terminal</th>
                 <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">Credencial</th>
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">PrivilÃ©gio</th>
+                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">Privilégio</th>
                 {showRoleActions && (
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">AÃ§Ãµes</th>
+                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Ações</th>
                 )}
               </tr>
             </thead>
@@ -125,7 +125,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
                             disabled={updateRole.isPending}
                             className="px-6 py-2.5 rounded-xl bg-muted border border-border text-[9px] font-black uppercase tracking-widest hover:bg-muted-foreground hover:text-white transition-all active:scale-95 disabled:opacity-30"
                           >
-                            Alterar NÃ­vel
+                            Alterar Nível
                           </button>
                         )}
                       </td>
@@ -139,7 +139,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
 
         <div className="p-8 bg-muted/10 border-t border-border/50">
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest leading-relaxed opacity-40 max-w-2xl">
-            * Superadmins possuem acesso total Ã  malha fiscal e financeira. O rodÃ­zio de privilÃ©gios nÃ£o altera o Ãºltimo superadmin ativo.
+            * Superadmins possuem acesso total à malha fiscal e financeira. O rodízio de privilégios não altera o último superadmin ativo.
           </p>
         </div>
 
