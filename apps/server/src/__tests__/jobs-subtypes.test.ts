@@ -93,9 +93,11 @@ describe('Jobs subtypes (F34)', () => {
     );
 
     const [stored] = await db.select().from(jobs).where(eq(jobs.id, job.id));
+    expect(stored?.status).toBe('suspended');
     expect(stored?.suspendedAt).not.toBeNull();
     expect(stored?.suspendedBy).toBe(seed.userId);
     expect(stored?.suspendReason).toBe('Aguardando material');
+    expect(stored?.resumeStatus).toBe('pending');
   });
 
   it('2. Suspender OS já suspensa retorna erro', async () => {
@@ -117,32 +119,37 @@ describe('Jobs subtypes (F34)', () => {
     await jobService.unsuspendJob(seed.tenantId, { jobId: job.id }, seed.userId);
 
     const [stored] = await db.select().from(jobs).where(eq(jobs.id, job.id));
+    expect(stored?.status).toBe('pending');
     expect(stored?.suspendedAt).toBeNull();
     expect(stored?.suspendedBy).toBeNull();
     expect(stored?.suspendReason).toBeNull();
+    expect(stored?.resumeStatus).toBeNull();
   });
 
-  it('4. Criar remoldagem gera OS filha e marca original como completed_with_rework', async () => {
+  it('4. Remoldagem pausa a mesma OS sem criar filha nem nova cobranca', async () => {
     const seed = await createSeed('f34-rework');
     const original = await createJobForSeed(seed);
 
     const rework = await jobService.createReworkJob(
       seed.tenantId,
       {
-        originalJobId: original.id,
+        jobId: original.id,
         reason: 'Ajuste oclusal necessário',
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       },
       seed.userId,
     );
 
-    const [originalAfter] = await db.select().from(jobs).where(eq(jobs.id, original.id));
-    const [reworkStored] = await db.select().from(jobs).where(eq(jobs.id, rework.id));
+    const storedJobs = await db.select().from(jobs);
+    const originalAfter = storedJobs.find((job) => job.id === original.id);
 
-    expect(originalAfter?.status).toBe('completed_with_rework');
-    expect(reworkStored?.jobSubType).toBe('rework');
-    expect(reworkStored?.reworkParentId).toBe(original.id);
-    expect(reworkStored?.reworkReason).toBe('Ajuste oclusal necessário');
+    expect(rework.id).toBe(original.id);
+    expect(storedJobs).toHaveLength(1);
+    expect(originalAfter?.status).toBe('rework_in_progress');
+    expect(originalAfter?.jobSubType).toBe('rework');
+    expect(originalAfter?.reworkParentId).toBeNull();
+    expect(originalAfter?.reworkReason).toBe('Ajuste oclusal necessário');
+    expect(originalAfter?.suspendedAt).not.toBeNull();
+    expect(originalAfter?.resumeStatus).toBe('pending');
   });
 
   it('5. Marcar prova define subtype proof e proofDueDate', async () => {

@@ -20,7 +20,8 @@ export const jobStatusEnum = pgEnum('job_status', [
   'in_progress',
   'quality_check',
   'ready',
-  'completed_with_rework',
+  'rework_in_progress',
+  'suspended',
   'delivered',
   'cancelled',
 ]);
@@ -51,6 +52,7 @@ export const jobs = pgTable('jobs', {
   suspendedAt: timestamp('suspended_at', { withTimezone: true }),
   suspendedBy: integer('suspended_by'),
   suspendReason: text('suspend_reason'),
+  resumeStatus: varchar('resume_status', { length: 64 }),
   reworkReason: text('rework_reason'),
   reworkParentId: integer('rework_parent_id'),
   proofDueDate: timestamp('proof_due_date', { withTimezone: true }),

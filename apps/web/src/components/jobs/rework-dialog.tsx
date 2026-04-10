@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Loader2, Wrench, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -11,43 +11,35 @@ type ReworkJobOption = {
 };
 
 export type ReworkDialogInput = {
-  originalJobId: number;
+  jobId: number;
   reason: string;
-  deadline: string;
 };
 
 type ReworkDialogProps = {
   open: boolean;
   jobs: ReworkJobOption[];
-  defaultOriginalJobId?: number;
+  defaultJobId?: number;
   isSubmitting?: boolean;
   onClose: () => void;
   onConfirm: (input: ReworkDialogInput) => Promise<void> | void;
 };
 
-function defaultDeadlineIso(daysAhead: number): string {
-  const next = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);
-  return next.toISOString().slice(0, 10);
-}
-
 export function ReworkDialog({
   open,
   jobs,
-  defaultOriginalJobId,
+  defaultJobId,
   isSubmitting = false,
   onClose,
   onConfirm,
 }: ReworkDialogProps) {
-  const [selectedId, setSelectedId] = useState<number | null>(defaultOriginalJobId ?? null);
+  const [selectedId, setSelectedId] = useState<number | null>(defaultJobId ?? null);
   const [reason, setReason] = useState('');
-  const [deadline, setDeadline] = useState(defaultDeadlineIso(3));
 
   useEffect(() => {
     if (!open) return;
-    setSelectedId(defaultOriginalJobId ?? jobs[0]?.id ?? null);
+    setSelectedId(defaultJobId ?? jobs[0]?.id ?? null);
     setReason('');
-    setDeadline(defaultDeadlineIso(3));
-  }, [defaultOriginalJobId, jobs, open]);
+  }, [defaultJobId, jobs, open]);
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === selectedId) ?? null,
@@ -56,7 +48,7 @@ export function ReworkDialog({
 
   if (!open) return null;
 
-  const canSubmit = Boolean(selectedId && reason.trim().length >= 3 && deadline);
+  const canSubmit = Boolean(selectedId && reason.trim().length >= 3);
 
   return (
     <div className="fixed inset-0 z-[220] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
@@ -69,7 +61,7 @@ export function ReworkDialog({
             <div>
               <h2 className="text-lg font-black tracking-tight text-foreground">Criar Remoldagem</h2>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Nova OS filha vinculada à OS original
+                Pausa operacional da mesma OS ate o retorno da moldagem
               </p>
             </div>
           </div>
@@ -82,10 +74,10 @@ export function ReworkDialog({
           </button>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <div className="space-y-2 md:col-span-2">
+        <div className="grid gap-5">
+          <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              OS original
+              OS pausada
             </label>
             <select
               value={selectedId ?? ''}
@@ -94,7 +86,7 @@ export function ReworkDialog({
             >
               {jobs.map((job) => (
                 <option key={job.id} value={job.id}>
-                  {job.code} - {job.patientName ?? 'Paciente não informado'}
+                  {job.code} - {job.patientName ?? 'Paciente nao informado'}
                 </option>
               ))}
             </select>
@@ -102,24 +94,13 @@ export function ReworkDialog({
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Novo prazo
-            </label>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(event) => setDeadline(event.target.value)}
-              className="w-full rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm font-semibold text-foreground outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
               Motivo
             </label>
-            <input
+            <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              placeholder="Ex.: ajuste de mordida"
+              rows={4}
+              placeholder="Ex.: ajuste de mordida, retorno do dentista, nova moldagem..."
               className="w-full rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm font-semibold text-foreground outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5"
             />
           </div>
@@ -133,17 +114,19 @@ export function ReworkDialog({
               </p>
               <p className="text-sm font-black text-foreground">{selectedJob.code}</p>
               <p className="text-xs font-semibold text-muted-foreground">
-                {selectedJob.clientName ?? 'Cliente não informado'} -{' '}
-                {selectedJob.patientName ?? 'Paciente não informado'}
+                {selectedJob.clientName ?? 'Cliente nao informado'} - {selectedJob.patientName ?? 'Paciente nao informado'}
               </p>
               {selectedJob.firstItemName ? (
                 <p className="text-[11px] font-semibold text-muted-foreground">{selectedJob.firstItemName}</p>
               ) : null}
+              <p className="pt-2 text-[11px] font-semibold text-amber-600">
+                A OS atual sera pausada, sem gerar nova cobranca e sem abrir OS filha.
+              </p>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-destructive">
               <AlertTriangle size={14} />
-              <p className="text-xs font-semibold">Selecione uma OS original para continuar.</p>
+              <p className="text-xs font-semibold">Selecione uma OS para continuar.</p>
             </div>
           )}
         </div>
@@ -162,9 +145,8 @@ export function ReworkDialog({
             onClick={() => {
               if (!selectedId) return;
               void onConfirm({
-                originalJobId: selectedId,
+                jobId: selectedId,
                 reason: reason.trim(),
-                deadline: new Date(`${deadline}T12:00:00`).toISOString(),
               });
             }}
             className={cn(
@@ -180,4 +162,3 @@ export function ReworkDialog({
     </div>
   );
 }
-

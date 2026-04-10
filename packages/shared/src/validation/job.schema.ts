@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
-const JOB_STATUS_VALUES = ['pending', 'in_progress', 'quality_check', 'ready', 'completed_with_rework', 'delivered', 'cancelled'] as const;
+const JOB_STATUS_VALUES = [
+  'pending',
+  'in_progress',
+  'quality_check',
+  'ready',
+  'rework_in_progress',
+  'suspended',
+  'delivered',
+  'cancelled',
+] as const;
 const JOB_SUBTYPE_VALUES = ['standard', 'proof', 'rework'] as const;
 
 export const createJobSchema = z.object({
@@ -118,16 +127,8 @@ export const toggleUrgentSchema = z.object({
 });
 
 export const createReworkSchema = z.object({
-  originalJobId: z.number().int().positive(),
+  jobId: z.number().int().positive(),
   reason: z.string().min(3),
-  deadline: z.string().datetime(),
-  patientName: z.string().max(255).optional(),
-  prothesisType: z.string().max(128).optional(),
-  material: z.string().max(128).optional(),
-  color: z.string().max(64).optional(),
-  instructions: z.string().optional(),
-  notes: z.string().optional(),
-  assignedTo: z.number().int().positive().nullable().optional(),
 });
 
 export const createJobStageSchema = z.object({

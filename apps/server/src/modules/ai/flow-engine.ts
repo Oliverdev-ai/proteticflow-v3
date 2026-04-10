@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { AiMessage, Role } from '@proteticflow/shared';
 import { env } from '../../env.js';
+import { logger } from '../../logger.js';
 import { buildLabContext, buildSystemPrompt } from './context-builder.js';
 import { detectCommand } from './commands.js';
 import { AI_TOOLS } from './tools.js';
@@ -38,7 +39,22 @@ function toAnthropicHistory(history: AiMessage[]) {
     .map((message) => ({ role: message.role, content: message.content }));
 }
 
-const FALLBACK_MESSAGE = 'Desculpe, estou com dificuldades tecnicas no momento. Tente novamente em instantes.';
+const AI_UNAVAILABLE_MESSAGE = 'Flow IA indisponivel: chave da Anthropic nao configurada neste ambiente.';
+const AI_TEMPORARY_MESSAGE = 'Flow IA indisponivel temporariamente. Tente novamente em instantes.';
+const AI_RATE_LIMIT_MESSAGE = 'Flow IA indisponivel: limite do provedor esgotado no momento.';
+const AI_AUTH_MESSAGE = 'Flow IA indisponivel: credencial do provedor invalida ou expirada.';
+
+function classifyAiError(error: unknown): string {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+
+  if (message.includes('rate limit') || message.includes('429')) {
+    return AI_RATE_LIMIT_MESSAGE;
+  }
+  if (message.includes('401') || message.includes('403') || message.includes('invalid api key')) {
+    return AI_AUTH_MESSAGE;
+  }
+  return AI_TEMPORARY_MESSAGE;
+}
 
 export async function* streamAiResponse(
   tenantId: number,
@@ -51,7 +67,7 @@ export async function* streamAiResponse(
   const client = getAnthropicClient();
 
   if (!client) {
-    yield { type: 'delta', text: FALLBACK_MESSAGE };
+    yield { type: 'delta', text: AI_UNAVAILABLE_MESSAGE };
     yield { type: 'done', commandDetected, tokensUsed: 0 };
     return;
   }
@@ -164,14 +180,15 @@ export async function* streamAiResponse(
         console.error('Error in tool call execution', err);
       }
     }
-  } catch {
-    yield { type: 'delta', text: FALLBACK_MESSAGE };
+  } catch (error) {
+    logger.error({ err: error, tenantId, userId }, 'ai.flow.stream_failed');
+    yield { type: 'delta', text: classifyAiError(error) };
     yield { type: 'done', commandDetected, tokensUsed: totalTokens };
     return;
   }
 
   if (!yieldedAnyDelta) {
-    yield { type: 'delta', text: FALLBACK_MESSAGE };
+    yield { type: 'delta', text: AI_TEMPORARY_MESSAGE };
   }
 
   yield { type: 'done', commandDetected, tokensUsed: totalTokens };

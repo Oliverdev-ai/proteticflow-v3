@@ -45,6 +45,11 @@ type MarkProofInput    = z.infer<typeof markProofSchema>;
 type ReturnProofInput  = z.infer<typeof returnProofSchema>;
 type CreateReworkInput = z.infer<typeof createReworkSchema>;
 type ToggleUrgentInput = z.infer<typeof toggleUrgentSchema>;
+type JobStatus = typeof jobs.$inferSelect.status;
+
+const FINAL_JOB_STATUSES = ['delivered', 'cancelled'] as const;
+const PAUSED_JOB_STATUSES = ['rework_in_progress', 'suspended'] as const;
+const NON_ACTIVE_JOB_STATUSES = [...FINAL_JOB_STATUSES, ...PAUSED_JOB_STATUSES] as const;
 
 // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PAD-04: Order Number com SELECT FOR UPDATE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -272,7 +277,7 @@ export async function listJobs(tenantId: number, filters: ListJobsInput) {
   if (filters.overdue) {
     conditions.push(lt(jobs.deadline, new Date()));
     conditions.push(isNull(jobs.suspendedAt));
-    conditions.push(not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])));
+    conditions.push(not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])));
   }
 
   const data = await db
@@ -311,6 +316,7 @@ export async function getJob(tenantId: number, jobId: number) {
       createdAt: jobs.createdAt, updatedAt: jobs.updatedAt,
       jobSubType: jobs.jobSubType, isUrgent: jobs.isUrgent,
       suspendedAt: jobs.suspendedAt, suspendedBy: jobs.suspendedBy, suspendReason: jobs.suspendReason,
+      resumeStatus: jobs.resumeStatus,
       proofDueDate: jobs.proofDueDate, proofReturnedAt: jobs.proofReturnedAt,
       reworkReason: jobs.reworkReason, reworkParentId: jobs.reworkParentId,
       completedAt: jobs.completedAt, cancelledAt: jobs.cancelledAt, cancelReason: jobs.cancelReason,
@@ -399,7 +405,7 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
     status: input.newStatus,
     updatedAt: now,
   };
-  if (input.newStatus === 'ready' || input.newStatus === 'completed_with_rework') finalUpdates.completedAt = now;
+  if (input.newStatus === 'ready') finalUpdates.completedAt = now;
   if (input.newStatus === 'delivered') finalUpdates.deliveredAt = now;
   if (input.newStatus === 'cancelled') {
     finalUpdates.cancelledAt = now;
@@ -486,16 +492,21 @@ async function getScopedJobOrThrow(tenantId: number, jobId: number) {
 export async function suspendJob(tenantId: number, input: SuspendJobInput, userId: number) {
   const job = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (job.suspendedAt) {
+  if (FINAL_JOB_STATUSES.includes(job.status as (typeof FINAL_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS finalizada nao pode ser suspensa' });
+  }
+  if (job.suspendedAt || PAUSED_JOB_STATUSES.includes(job.status as (typeof PAUSED_JOB_STATUSES)[number])) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS jÃ¡ estÃ¡ suspensa' });
   }
 
   const now = new Date();
   const [updated] = await db.update(jobs)
     .set({
+      status: 'suspended',
       suspendedAt: now,
       suspendedBy: userId,
       suspendReason: input.reason,
+      resumeStatus: job.status,
       updatedAt: now,
     })
     .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, input.jobId)))
@@ -506,7 +517,7 @@ export async function suspendJob(tenantId: number, input: SuspendJobInput, userI
     jobId: input.jobId,
     userId,
     fromStatus: job.status,
-    toStatus: job.status,
+    toStatus: 'suspended',
     notes: `OS suspensa: ${input.reason}`,
   });
 
@@ -526,15 +537,22 @@ export async function suspendJob(tenantId: number, input: SuspendJobInput, userI
 export async function unsuspendJob(tenantId: number, input: UnsuspendJobInput, userId: number) {
   const job = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (!job.suspendedAt) {
+  if (!job.suspendedAt && !PAUSED_JOB_STATUSES.includes(job.status as (typeof PAUSED_JOB_STATUSES)[number])) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS nÃ£o estÃ¡ suspensa' });
   }
 
+  const resumeStatus: JobStatus =
+    job.resumeStatus && !PAUSED_JOB_STATUSES.includes(job.resumeStatus as (typeof PAUSED_JOB_STATUSES)[number])
+      ? (job.resumeStatus as JobStatus)
+      : 'pending';
+
   const [updated] = await db.update(jobs)
     .set({
+      status: resumeStatus,
       suspendedAt: null,
       suspendedBy: null,
       suspendReason: null,
+      resumeStatus: null,
       updatedAt: new Date(),
     })
     .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, input.jobId)))
@@ -545,8 +563,8 @@ export async function unsuspendJob(tenantId: number, input: UnsuspendJobInput, u
     jobId: input.jobId,
     userId,
     fromStatus: job.status,
-    toStatus: job.status,
-    notes: 'OS reativada',
+    toStatus: resumeStatus,
+    notes: job.status === 'rework_in_progress' ? 'Remoldagem retomada' : 'OS reativada',
   });
 
   void logAudit({
@@ -565,7 +583,7 @@ export async function unsuspendJob(tenantId: number, input: UnsuspendJobInput, u
 export async function markJobAsProof(tenantId: number, input: MarkProofInput, userId: number) {
   const job = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (['delivered', 'cancelled', 'completed_with_rework'].includes(job.status)) {
+  if (NON_ACTIVE_JOB_STATUSES.includes(job.status as (typeof NON_ACTIVE_JOB_STATUSES)[number])) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS finalizada nÃ£o pode ser marcada como prova' });
   }
 
@@ -673,97 +691,52 @@ export async function toggleJobUrgent(tenantId: number, input: ToggleUrgentInput
 }
 
 export async function createReworkJob(tenantId: number, input: CreateReworkInput, userId: number) {
-  const original = await getScopedJobOrThrow(tenantId, input.originalJobId);
+  const original = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (original.status === 'cancelled') {
+  if (FINAL_JOB_STATUSES.includes(original.status as (typeof FINAL_JOB_STATUSES)[number])) {
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS cancelada nÃ£o pode gerar remoldagem' });
   }
+  if (original.suspendedAt || PAUSED_JOB_STATUSES.includes(original.status as (typeof PAUSED_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS ja esta pausada' });
+  }
 
-  const createdRework = await db.transaction(async (tx) => {
-    const [originalItems, orderNumberInternal] = await Promise.all([
-      tx.select().from(jobItems).where(and(eq(jobItems.tenantId, tenantId), eq(jobItems.jobId, original.id))),
-      getNextOrderNumber(tx, tenantId),
-    ]);
+  const updatedJob = await db.transaction(async (tx) => {
+    const now = new Date();
 
-    if (originalItems.length === 0) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS original sem itens para copiar' });
-    }
-
-    const totalCents = originalItems.reduce((sum, item) => sum + item.totalCents, 0);
-    const code = `OS-${orderNumberInternal.toString().padStart(5, '0')}`;
-
-    const [newJob] = await tx.insert(jobs).values({
-      tenantId,
-      code,
-      orderNumber: orderNumberInternal,
-      clientId: original.clientId,
-      patientName: input.patientName ?? original.patientName,
-      prothesisType: input.prothesisType ?? original.prothesisType,
-      material: input.material ?? original.material,
-      color: input.color ?? original.color,
-      instructions: input.instructions ?? original.instructions,
-      notes: input.notes ?? original.notes,
-      deadline: new Date(input.deadline),
-      assignedTo: input.assignedTo ?? original.assignedTo,
-      createdBy: userId,
-      totalCents,
-      jobSubType: 'rework',
-      reworkReason: input.reason,
-      reworkParentId: original.id,
-      isUrgent: original.isUrgent,
-    }).returning();
-
-    for (const item of originalItems) {
-      await tx.insert(jobItems).values({
-        tenantId,
-        jobId: newJob!.id,
-        priceItemId: item.priceItemId ?? null,
-        serviceNameSnapshot: item.serviceNameSnapshot,
-        quantity: item.quantity,
-        unitPriceCents: item.unitPriceCents,
-        adjustmentPercent: item.adjustmentPercent,
-        totalCents: item.totalCents,
-      });
-    }
-
-    await tx.update(jobs)
+    const [updated] = await tx
+      .update(jobs)
       .set({
-        status: 'completed_with_rework',
-        completedAt: new Date(),
-        updatedAt: new Date(),
+        status: 'rework_in_progress',
+        jobSubType: 'rework',
+        reworkReason: input.reason,
+        suspendedAt: now,
+        suspendedBy: userId,
+        suspendReason: `Remoldagem: ${input.reason}`,
+        resumeStatus: original.status,
+        completedAt: null,
+        updatedAt: now,
       })
-      .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, original.id)));
+      .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, original.id)))
+      .returning();
+
+    await tx.delete(deliveryItems).where(
+      and(
+        eq(deliveryItems.tenantId, tenantId),
+        eq(deliveryItems.jobId, original.id),
+        eq(deliveryItems.status, 'scheduled'),
+      ),
+    );
 
     await tx.insert(jobLogs).values({
       tenantId,
       jobId: original.id,
       userId,
       fromStatus: original.status,
-      toStatus: 'completed_with_rework',
-      notes: `Remoldagem criada para OS #${newJob!.id}: ${input.reason}`,
+      toStatus: 'rework_in_progress',
+      notes: `OS pausada para remoldagem: ${input.reason}`,
     });
 
-    await tx.insert(jobLogs).values({
-      tenantId,
-      jobId: newJob!.id,
-      userId,
-      fromStatus: null,
-      toStatus: 'pending',
-      notes: `OS de remoldagem criada a partir da OS #${original.id}`,
-    });
-
-    if (totalCents > 0) {
-      await autoCreateArFromJob(
-        tenantId,
-        newJob!.id,
-        original.clientId,
-        totalCents,
-        new Date(input.deadline),
-        tx,
-      );
-    }
-
-    return newJob!;
+    return updated!;
   });
 
   void logAudit({
@@ -771,12 +744,12 @@ export async function createReworkJob(tenantId: number, input: CreateReworkInput
     userId,
     action: 'job.createRework',
     entityType: 'jobs',
-    entityId: createdRework.id,
-    oldValue: { originalJobId: original.id, originalStatus: original.status },
-    newValue: createdRework,
+    entityId: original.id,
+    oldValue: { jobId: original.id, originalStatus: original.status },
+    newValue: updatedJob,
   });
 
-  return createdRework;
+  return updatedJob;
 }
 
 export async function deleteJob(tenantId: number, jobId: number, deletedBy: number) {
@@ -935,7 +908,7 @@ export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
     eq(jobs.tenantId, tenantId),
     isNull(jobs.deletedAt),
     isNull(jobs.suspendedAt),
-    not(inArray(jobs.status, ['cancelled', 'completed_with_rework'])),
+    not(inArray(jobs.status, ['cancelled', 'suspended', 'rework_in_progress'])),
   ];
 
   if (filters.clientId) conditions.push(eq(jobs.clientId, filters.clientId));
@@ -1023,7 +996,14 @@ export async function listSuspendedJobs(tenantId: number) {
     })
     .from(jobs)
     .leftJoin(clients, eq(jobs.clientId, clients.id))
-    .where(and(eq(jobs.tenantId, tenantId), isNull(jobs.deletedAt), not(isNull(jobs.suspendedAt))))
+    .where(and(
+      eq(jobs.tenantId, tenantId),
+      isNull(jobs.deletedAt),
+      or(
+        not(isNull(jobs.suspendedAt)),
+        inArray(jobs.status, ['suspended', 'rework_in_progress']),
+      )!,
+    ))
     .orderBy(sql`${jobs.suspendedAt} DESC`);
 }
 
@@ -1032,7 +1012,9 @@ export async function moveKanban(tenantId: number, jobId: number, newStatus: str
     and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId), isNull(jobs.deletedAt))
   );
   if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
-  if (job.suspendedAt) throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS suspensa nÃƒÂ£o pode ser movida no Kanban' });
+  if (job.suspendedAt || PAUSED_JOB_STATUSES.includes(job.status as (typeof PAUSED_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS suspensa nÃƒÂ£o pode ser movida no Kanban' });
+  }
 
   if (!canTransition(job.status, newStatus as Parameters<typeof canTransition>[0])) {
     throw new TRPCError({
@@ -1082,7 +1064,7 @@ export async function getKanbanMetrics(tenantId: number) {
       eq(jobs.tenantId, tenantId),
       isNull(jobs.deletedAt),
       isNull(jobs.suspendedAt),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const [overdue] = await db
@@ -1093,7 +1075,7 @@ export async function getKanbanMetrics(tenantId: number) {
       isNull(jobs.deletedAt),
       lt(jobs.deadline, now),
       isNull(jobs.suspendedAt),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const [urgentActive] = await db
@@ -1104,7 +1086,7 @@ export async function getKanbanMetrics(tenantId: number) {
       isNull(jobs.deletedAt),
       isNull(jobs.suspendedAt),
       eq(jobs.isUrgent, true),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const [proofOverdue] = await db
@@ -1117,7 +1099,7 @@ export async function getKanbanMetrics(tenantId: number) {
       eq(jobs.jobSubType, 'proof'),
       isNull(jobs.proofReturnedAt),
       lt(jobs.proofDueDate, now),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const statusBreakdown = await db

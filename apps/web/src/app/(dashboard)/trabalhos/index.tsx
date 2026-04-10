@@ -17,21 +17,12 @@ import {
   X,
 } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
-import { JOB_STATUS_LABELS, JOB_STATUS_COLORS } from '@proteticflow/shared';
+import { JOB_STATUS_LABELS, JOB_STATUS_COLORS, type JobStatus } from '@proteticflow/shared';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 import { formatBRL } from '../../../lib/format';
-
-type JobStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'quality_check'
-  | 'ready'
-  | 'completed_with_rework'
-  | 'delivered'
-  | 'cancelled';
 
 const COLOR_MAP: Record<string, string> = {
   slate: 'bg-muted text-muted-foreground border-border',
@@ -61,7 +52,7 @@ function DeadlineCell({ deadline, status }: { deadline: string; status: JobStatu
   const now = new Date();
   const diff = d.getTime() - now.getTime();
   const isOverdue =
-    diff < 0 && !['delivered', 'cancelled', 'completed_with_rework'].includes(status);
+    diff < 0 && !['delivered', 'cancelled', 'rework_in_progress', 'suspended'].includes(status);
   const isSoon = diff > 0 && diff < 24 * 60 * 60 * 1000;
 
   return (

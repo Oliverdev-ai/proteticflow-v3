@@ -72,7 +72,8 @@ const STATUS_ICONS: Record<JobStatus, LucideIcon> = {
   in_progress: Activity,
   quality_check: ShieldCheck,
   ready: FileCheck,
-  completed_with_rework: Wrench,
+  rework_in_progress: Wrench,
+  suspended: PauseCircle,
   delivered: Truck,
   cancelled: Ban,
 };
@@ -90,7 +91,10 @@ export default function JobDetailPage() {
   const utils = trpc.useUtils();
 
   const { data: job, isLoading, error } = trpc.job.get.useQuery({ id: jobId });
-  const jobsForReworkQuery = trpc.job.list.useQuery({ limit: 100 });
+  const pdfQuery = trpc.job.generatePdf.useQuery(
+    { id: jobId },
+    { enabled: false, retry: false },
+  );
 
   const invalidateJobViews = async () => {
     await Promise.all([
@@ -127,10 +131,9 @@ export default function JobDetailPage() {
     onSuccess: () => void invalidateJobViews(),
   });
   const createReworkMutation = trpc.job.createRework.useMutation({
-    onSuccess: (created) => {
+    onSuccess: () => {
       setShowRework(false);
       void invalidateJobViews();
-      navigate(`/trabalhos/${created.id}`);
     },
   });
 
@@ -162,7 +165,15 @@ export default function JobDetailPage() {
   };
 
   const handlePdf = async () => {
-    window.open(`/api/jobs/${jobId}/pdf`, '_blank');
+    const result = await pdfQuery.refetch();
+    const pdfBase64 = result.data?.pdfBase64;
+    if (!pdfBase64) return;
+
+    const bytes = Uint8Array.from(atob(pdfBase64), (char) => char.charCodeAt(0));
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
   };
 
   if (isLoading)
@@ -203,17 +214,17 @@ export default function JobDetailPage() {
     );
 
   const statusColor = JOB_STATUS_COLORS[job.status as JobStatus] ?? 'slate';
-  const currentIdx =
-    job.status === 'completed_with_rework'
-      ? STATUS_FLOW.indexOf('ready')
-      : STATUS_FLOW.indexOf(job.status as JobStatus);
+  const workflowStatus =
+    job.status === 'rework_in_progress' || job.status === 'suspended'
+      ? ((job.resumeStatus as JobStatus | null | undefined) ?? 'pending')
+      : (job.status as JobStatus);
+  const currentIdx = STATUS_FLOW.indexOf(workflowStatus);
   const nextStatus = STATUS_FLOW[currentIdx + 1];
-  const isFinal = ['delivered', 'cancelled', 'completed_with_rework'].includes(job.status);
+  const isFinal = ['delivered', 'cancelled'].includes(job.status);
   const isProof = job.jobSubType === 'proof';
-  const isSuspended = Boolean(job.suspendedAt);
+  const isPaused = job.status === 'suspended' || job.status === 'rework_in_progress' || Boolean(job.suspendedAt);
   const StatusIcon = STATUS_ICONS[job.status] || HelpCircle;
-  const reworkCandidates = jobsForReworkQuery.data?.data ?? [];
-  const canManageProof = !isFinal && !isSuspended;
+  const canManageProof = !isFinal && !isPaused;
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-16">
@@ -246,12 +257,12 @@ export default function JobDetailPage() {
               {job.jobSubType === 'proof' ? (
                 <ProofBadge proofDueDate={job.proofDueDate} proofReturnedAt={job.proofReturnedAt} />
               ) : null}
-              {job.jobSubType === 'rework' ? (
+              {job.jobSubType === 'rework' || job.status === 'rework_in_progress' ? (
                 <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-500">
                   REMOLDAGEM
                 </span>
               ) : null}
-              {isSuspended ? (
+              {job.status === 'suspended' ? (
                 <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-500">
                   SUSPENSA
                 </span>
@@ -326,7 +337,7 @@ export default function JobDetailPage() {
             </div>
           )}
 
-          {isSuspended ? (
+          {isPaused ? (
             <button
               type="button"
               onClick={() => unsuspendMutation.mutate({ jobId })}
@@ -338,7 +349,7 @@ export default function JobDetailPage() {
               ) : (
                 <PlayCircle size={14} />
               )}
-              Reativar
+              {job.status === 'rework_in_progress' ? 'Retomar Produção' : 'Reativar'}
             </button>
           ) : (
             <button
@@ -354,7 +365,7 @@ export default function JobDetailPage() {
           <button
             type="button"
             onClick={() => setShowRework(true)}
-            disabled={createReworkMutation.isPending || job.status === 'cancelled' || isSuspended}
+            disabled={createReworkMutation.isPending || isFinal || isPaused}
             className="flex h-12 items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 text-[10px] font-black uppercase tracking-widest text-amber-500 transition-all hover:brightness-110 disabled:opacity-40"
           >
             {createReworkMutation.isPending ? (
@@ -398,8 +409,7 @@ export default function JobDetailPage() {
           <div className="relative flex items-center justify-between gap-2 max-w-4xl mx-auto">
             {STATUS_FLOW.map((s, i) => {
               const Icon = STATUS_ICONS[s];
-              const isCurrent =
-                job.status === 'completed_with_rework' ? s === 'ready' : s === job.status;
+              const isCurrent = s === workflowStatus;
               const isPast = i < currentIdx;
               return (
                 <div key={s} className="flex flex-col items-center gap-3 flex-1 relative z-10">
@@ -970,20 +980,24 @@ export default function JobDetailPage() {
 
       <ReworkDialog
         open={showRework}
-        jobs={reworkCandidates.map((candidate) => ({
-          id: candidate.id,
-          code: candidate.code,
-          patientName: candidate.patientName,
-          clientName: candidate.clientName,
-        }))}
-        defaultOriginalJobId={job.id}
+        jobs={[
+          {
+            id: job.id,
+            code: job.code,
+            patientName: job.patientName,
+            clientName: job.clientName,
+            ...(job.items[0]?.serviceNameSnapshot
+              ? { firstItemName: job.items[0].serviceNameSnapshot }
+              : {}),
+          }
+        ]}
+        defaultJobId={job.id}
         isSubmitting={createReworkMutation.isPending}
         onClose={() => setShowRework(false)}
         onConfirm={async (input) => {
           await createReworkMutation.mutateAsync({
-            originalJobId: input.originalJobId,
+            jobId: input.jobId,
             reason: input.reason,
-            deadline: input.deadline,
           });
         }}
       />

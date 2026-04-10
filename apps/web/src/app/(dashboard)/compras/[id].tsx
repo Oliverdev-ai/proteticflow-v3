@@ -39,6 +39,17 @@ function fmtBRL(cents: number) {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function formatDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function dateInputToIso(value: string) {
+  return new Date(`${value}T12:00:00`).toISOString();
+}
+
 type ReceiveDialogProps = {
   purchaseCode: string;
   totalCents: number;
@@ -58,7 +69,7 @@ function ReceiveDialog({
 }: ReceiveDialogProps) {
   const defaultDue = new Date();
   defaultDue.setDate(defaultDue.getDate() + 30);
-  const [dueDate, setDueDate] = useState(defaultDue.toISOString().split('T')[0] ?? '');
+  const [dueDate, setDueDate] = useState(formatDateInput(defaultDue));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
@@ -389,7 +400,7 @@ export default function PurchaseDetailPage() {
           onConfirm={(dueDate) => {
             receiveMutation.mutate({
               id: po.id,
-              dueDate: new Date(dueDate).toISOString(),
+              dueDate: dateInputToIso(dueDate),
             });
           }}
         />

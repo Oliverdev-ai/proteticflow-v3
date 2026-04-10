@@ -57,7 +57,7 @@ describe('ai prompts e fallback', () => {
     const last = chunks[chunks.length - 1];
 
     expect(first?.type).toBe('delta');
-    expect(first && 'text' in first ? first.text : '').toContain('dificuldades tecnicas');
+    expect(first && 'text' in first ? first.text : '').toContain('chave da Anthropic');
     expect(last?.type).toBe('done');
   });
 });

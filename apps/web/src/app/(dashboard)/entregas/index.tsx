@@ -1,7 +1,7 @@
-import { useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
-import { Truck, Plus, Calendar, ChevronRight } from 'lucide-react';
+import { Truck, Plus, Calendar, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
 
 function getWeekDays() {
   const today = new Date();
@@ -14,8 +14,21 @@ function getWeekDays() {
   });
 }
 
+function createEmptyForm() {
+  return {
+    date: new Date().toISOString().slice(0, 10),
+    driverName: '',
+    vehicle: '',
+    notes: '',
+    selectedJobIds: [] as number[],
+  };
+}
+
 export default function DeliveryListPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [form, setForm] = useState(createEmptyForm());
+  const utils = trpc.useUtils();
   const weekDays = getWeekDays();
   const startOfWeek = weekDays[0]!;
   const endOfWeek = weekDays[6]!;
@@ -28,9 +41,31 @@ export default function DeliveryListPage() {
     limit: 100,
   });
 
-  const schedules = data?.data ?? [];
+  const readyJobsQuery = trpc.job.list.useQuery(
+    { status: 'ready', limit: 100 },
+    { enabled: createOpen },
+  );
 
-  // Map schedules by date (YYYY-MM-DD)
+  const createSchedule = trpc.delivery.createSchedule.useMutation({
+    onSuccess: async () => {
+      await utils.delivery.listSchedules.invalidate();
+      setCreateOpen(false);
+      setCreateError('');
+      setForm(createEmptyForm());
+    },
+    onError: (mutationError) => {
+      setCreateError(mutationError.message);
+    },
+  });
+
+  const schedules = data?.data ?? [];
+  const readyJobs = readyJobsQuery.data?.data ?? [];
+
+  const selectedJobs = useMemo(
+    () => readyJobs.filter((job) => form.selectedJobIds.includes(job.id)),
+    [form.selectedJobIds, readyJobs],
+  );
+
   const byDay: Record<string, typeof schedules> = {};
   for (const s of schedules) {
     const key = new Date(s.date).toISOString().split('T')[0]!;
@@ -39,6 +74,44 @@ export default function DeliveryListPage() {
   }
 
   const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+
+  function toggleJob(jobId: number) {
+    setForm((prev) => ({
+      ...prev,
+      selectedJobIds: prev.selectedJobIds.includes(jobId)
+        ? prev.selectedJobIds.filter((id) => id !== jobId)
+        : [...prev.selectedJobIds, jobId],
+    }));
+  }
+
+  function openCreateModal() {
+    setCreateError('');
+    setForm(createEmptyForm());
+    setCreateOpen(true);
+  }
+
+  function submitCreateSchedule() {
+    if (!form.date) {
+      setCreateError('Informe a data do roteiro');
+      return;
+    }
+    if (selectedJobs.length === 0) {
+      setCreateError('Selecione pelo menos 1 OS pronta para entrega');
+      return;
+    }
+
+    createSchedule.mutate({
+      date: new Date(`${form.date}T12:00:00`).toISOString(),
+      driverName: form.driverName.trim() || undefined,
+      vehicle: form.vehicle.trim() || undefined,
+      notes: form.notes.trim() || undefined,
+      items: selectedJobs.map((job, index) => ({
+        jobId: job.id,
+        clientId: job.clientId,
+        sortOrder: index,
+      })),
+    });
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -51,7 +124,7 @@ export default function DeliveryListPage() {
           <p className="text-zinc-400 text-sm mt-1">Calendario semanal dos roteiros</p>
         </div>
         <button
-          onClick={() => setCreateOpen(true)}
+          onClick={openCreateModal}
           className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus size={16} /> Novo Roteiro
@@ -74,7 +147,6 @@ export default function DeliveryListPage() {
         </div>
       )}
 
-      {/* Week header */}
       <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
         <div className="grid grid-cols-7 border-b border-zinc-800">
           {weekDays.map((day, i) => {
@@ -93,7 +165,6 @@ export default function DeliveryListPage() {
           })}
         </div>
 
-        {/* Schedule cards per day */}
         <div className="grid grid-cols-7 min-h-48">
           {weekDays.map((day, i) => {
             const key = day.toISOString().split('T')[0]!;
@@ -135,37 +206,114 @@ export default function DeliveryListPage() {
         </div>
       </div>
 
-      {/* New Schedule modal placeholder */}
       {createOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-auto">
             <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <Calendar size={18} className="text-primary" /> Novo Roteiro de Entrega
             </h2>
+
+            {createError ? (
+              <div className="mb-4 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
+                {createError}
+              </div>
+            ) : null}
+
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">Data do roteiro</label>
-                <input
-                  type="date"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1">Data do roteiro</label>
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1">Motorista (opcional)</label>
+                  <input
+                    type="text"
+                    value={form.driverName}
+                    onChange={(event) => setForm((prev) => ({ ...prev, driverName: event.target.value }))}
+                    placeholder="Nome do motorista"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">Motorista (opcional)</label>
-                <input
-                  type="text"
-                  placeholder="Nome do motorista"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
-                />
-              </div>
+
               <div>
                 <label className="block text-sm text-zinc-400 mb-1">Veiculo (opcional)</label>
                 <input
                   type="text"
+                  value={form.vehicle}
+                  onChange={(event) => setForm((prev) => ({ ...prev, vehicle: event.target.value }))}
                   placeholder="Placa ou modelo"
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm text-zinc-400 mb-1">Observacoes (opcional)</label>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
+                  rows={3}
+                  placeholder="Informacoes para o motorista"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
+                />
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="block text-sm text-zinc-400">OS prontas para entrega</label>
+                  <span className="text-xs text-zinc-500">{selectedJobs.length} selecionada(s)</span>
+                </div>
+
+                <div className="rounded-xl border border-zinc-800 bg-zinc-950/60">
+                  {readyJobsQuery.isLoading ? (
+                    <div className="flex items-center justify-center gap-2 p-6 text-sm text-zinc-400">
+                      <Loader2 size={16} className="animate-spin" /> Carregando OS prontas...
+                    </div>
+                  ) : readyJobs.length === 0 ? (
+                    <div className="p-6 text-sm text-zinc-500">
+                      Nenhuma OS em status concluido disponivel para roteirizacao.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-zinc-800">
+                      {readyJobs.map((job) => {
+                        const checked = form.selectedJobIds.includes(job.id);
+                        return (
+                          <button
+                            key={job.id}
+                            type="button"
+                            onClick={() => toggleJob(job.id)}
+                            className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors ${checked ? 'bg-primary/10' : 'hover:bg-zinc-900'}`}
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-white">{job.code}</p>
+                              <p className="text-xs text-zinc-400">
+                                {job.clientName ?? 'Cliente sem nome'}
+                                {job.patientName ? ` - ${job.patientName}` : ''}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-zinc-500">
+                                {new Date(job.deadline).toLocaleDateString('pt-BR')}
+                              </span>
+                              <CheckCircle2
+                                size={16}
+                                className={checked ? 'text-primary' : 'text-zinc-700'}
+                              />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setCreateOpen(false)}
@@ -173,7 +321,12 @@ export default function DeliveryListPage() {
                 >
                   Cancelar
                 </button>
-                <button className="flex-1 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors">
+                <button
+                  onClick={submitCreateSchedule}
+                  disabled={createSchedule.isPending}
+                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {createSchedule.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
                   Criar Roteiro
                 </button>
               </div>

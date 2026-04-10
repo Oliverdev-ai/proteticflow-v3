@@ -230,7 +230,7 @@ async function queryTechnicians(tenantId: number, startDate: Date, endDate: Date
         isNull(jobs.deletedAt),
         isNotNull(jobs.assignedTo),
         isNotNull(jobs.completedAt),
-        inArray(jobs.status, ['ready', 'delivered', 'completed_with_rework']),
+        inArray(jobs.status, ['ready', 'delivered']),
         gte(jobs.completedAt, startDate),
         lte(jobs.completedAt, endDate),
       ),

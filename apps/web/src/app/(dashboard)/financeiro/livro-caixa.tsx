@@ -26,18 +26,22 @@ import { H1, Subtitle, Muted, Large } from '../../../components/shared/typograph
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
-const EMPTY_FORM = {
-  type: 'credit' as 'credit' | 'debit',
-  amountCents: '',
-  description: '',
-  referenceDate: '',
-};
+function createEmptyForm() {
+  return {
+    type: 'credit' as 'credit' | 'debit',
+    amountCents: '',
+    description: '',
+    referenceDate: new Date().toISOString().slice(0, 10),
+  };
+}
+
+const EMPTY_FORM = createEmptyForm();
 
 export default function LivroCaixaPage() {
   const utils = trpc.useUtils();
   const [typeFilter, setTypeFilter] = useState<'credit' | 'debit' | undefined>(undefined);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(createEmptyForm());
 
   const { data, isLoading } = trpc.financial.listCashbook.useQuery({
     type: typeFilter,
@@ -49,7 +53,7 @@ export default function LivroCaixaPage() {
     onSuccess: () => {
       utils.financial.listCashbook.invalidate();
       setShowCreate(false);
-      setForm(EMPTY_FORM);
+      setForm(createEmptyForm());
     },
   });
 
@@ -79,7 +83,10 @@ export default function LivroCaixaPage() {
         </div>
 
         <button
-          onClick={() => setShowCreate(true)}
+          onClick={() => {
+            setForm(createEmptyForm());
+            setShowCreate(true);
+          }}
           className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
         >
           <Plus size={16} strokeWidth={3} /> Lançamento Avulso
@@ -490,7 +497,7 @@ export default function LivroCaixaPage() {
                       type: form.type,
                       amountCents: Math.round(parseFloat(form.amountCents) * 100),
                       description: form.description,
-                      referenceDate: new Date(form.referenceDate).toISOString(),
+                      referenceDate: new Date(`${form.referenceDate}T12:00:00`).toISOString(),
                     })
                   }
                   className="flex-[1.5] py-5 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3"

@@ -93,10 +93,9 @@ type CsvSection = {
 
 type PdfSection = CsvSection;
 
-const REVENUE_STATUSES: Array<'ready' | 'delivered' | 'completed_with_rework'> = [
+const REVENUE_STATUSES: Array<'ready' | 'delivered'> = [
   'ready',
   'delivered',
-  'completed_with_rework',
 ];
 
 function normalizeNumeric(value: unknown): number {

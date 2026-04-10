@@ -34,11 +34,17 @@ const STATUS_THEMES: Record<
     text: 'text-primary',
     iconBg: 'bg-primary/20',
   },
-  completed_with_rework: {
+  rework_in_progress: {
     border: 'border-amber-500/30',
     bg: 'bg-amber-500/5',
     text: 'text-amber-400',
     iconBg: 'bg-amber-500/20',
+  },
+  suspended: {
+    border: 'border-muted',
+    bg: 'bg-muted/10',
+    text: 'text-muted-foreground',
+    iconBg: 'bg-muted/20',
   },
   delivered: {
     border: 'border-emerald-500/30',
@@ -110,7 +116,7 @@ export default function KanbanTvPage() {
 
   const columns = KANBAN_COLUMNS.filter(
     (status) =>
-      status !== 'delivered' && status !== 'cancelled' && status !== 'completed_with_rework',
+      status !== 'delivered' && status !== 'cancelled' && status !== 'rework_in_progress' && status !== 'suspended',
   );
   const boardColumns = boardQuery.data?.columns ?? [];
 
