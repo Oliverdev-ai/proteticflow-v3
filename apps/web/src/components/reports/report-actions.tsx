@@ -75,7 +75,7 @@ export function ReportActions(props: ReportActionsProps) {
                     value={props.email}
                     onChange={(event) => props.onEmailChange(event.target.value)}
                     placeholder="destinatario@workflow.com"
-                    className="w-full bg-muted/50 border border-border rounded-2xl pl-16 pr-6 py-5 text-sm font-black text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all shadow-inner uppercase tracking-tighter"
+                    className="w-full bg-muted/50 border border-border rounded-2xl pl-16 pr-6 py-5 text-sm font-black text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all shadow-inner tracking-tighter"
                   />
                   {props.email && (
                      <button onClick={() => props.onEmailChange('')} className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground/20 hover:text-destructive transition-colors">

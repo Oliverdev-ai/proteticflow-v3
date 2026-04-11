@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, BarChart3, Layers3, TrendingUp } from 'lucide-react';
+import { AlertCircle, BarChart3, Download, FileSpreadsheet, Layers3, TrendingUp } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
 import { PageTransition } from '../../components/shared/page-transition';
 import { H1, Subtitle } from '../../components/shared/typography';
 import { AbcChart } from '../../components/reports/abc-chart';
 import { AbcFilters, type AbcCurveType, type AbcFiltersState } from '../../components/reports/abc-filters';
 import { AbcTable } from '../../components/reports/abc-table';
+import { downloadBase64Artifact } from '../../lib/pdf-export';
 
 type AbcDisplayMode = 'currency' | 'count';
 
@@ -32,6 +33,7 @@ function formatTotal(totalValue: number, mode: AbcDisplayMode): string {
 }
 
 export default function AbcCurvePage() {
+  const utils = trpc.useUtils();
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
@@ -42,6 +44,7 @@ export default function AbcCurvePage() {
   });
   const [submittedFilters, setSubmittedFilters] = useState<AbcFiltersState>(filters);
   const [validationError, setValidationError] = useState('');
+  const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null);
 
   const requestInput = useMemo(
     () => ({
@@ -71,6 +74,22 @@ export default function AbcCurvePage() {
     setSubmittedFilters(filters);
   }
 
+  async function handleExport(format: 'csv' | 'pdf') {
+    if (!abcQuery.data || exporting) return;
+
+    setExporting(format);
+    try {
+      const artifact =
+        format === 'csv'
+          ? await utils.reports.abcCurveExportCsv.fetch(requestInput)
+          : await utils.reports.abcCurveExportPdf.fetch(requestInput);
+
+      downloadBase64Artifact(artifact);
+    } finally {
+      setExporting(null);
+    }
+  }
+
   return (
     <PageTransition className="mx-auto flex h-full max-w-7xl flex-col gap-8 overflow-auto p-4 pb-16 md:p-1">
       <div className="flex flex-wrap items-center justify-between gap-6">
@@ -88,6 +107,27 @@ export default function AbcCurvePage() {
       </div>
 
       <AbcFilters value={filters} onChange={setFilters} onGenerate={handleGenerate} isLoading={abcQuery.isFetching} />
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={() => handleExport('csv')}
+          disabled={!abcQuery.data || exporting !== null}
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
+        >
+          <FileSpreadsheet size={14} />
+          {exporting === 'csv' ? 'Exportando CSV...' : 'Exportar CSV'}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleExport('pdf')}
+          disabled={!abcQuery.data || exporting !== null}
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
+        >
+          <Download size={14} />
+          {exporting === 'pdf' ? 'Exportando PDF...' : 'Exportar PDF'}
+        </button>
+      </div>
 
       {validationError && (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">

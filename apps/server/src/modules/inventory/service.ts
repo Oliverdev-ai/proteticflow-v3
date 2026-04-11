@@ -2,7 +2,7 @@ import { eq, and, ilike, or, lt, gte, lte, sql, isNull, desc } from 'drizzle-orm
 import { db } from '../../db/index.js';
 import {
   materialCategories, suppliers, materials, stockMovements,
-  purchaseOrders, purchaseOrderItems,
+  purchaseOrders, purchaseOrderItems, accountsPayable,
 } from '../../db/schema/index.js';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
@@ -412,37 +412,141 @@ const VALID_PO_TRANSITIONS: Record<string, string[]> = {
   cancelled: [],
 };
 
-export async function changePurchaseOrderStatus(tenantId: number, input: ChangePurchaseOrderStatusInput, userId: number) {
+export async function changePurchaseOrderStatus(
+  tenantId: number,
+  input: ChangePurchaseOrderStatusInput,
+  userId: number,
+) {
   const { po, items } = await getPurchaseOrder(tenantId, input.id);
   const allowed = VALID_PO_TRANSITIONS[po.status] ?? [];
   if (!allowed.includes(input.status)) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: `Transição inválida: ${po.status} → ${input.status}` });
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `Transicao invalida: ${po.status} -> ${input.status}` });
   }
 
   if (input.status === 'received') {
-    // 09.08: recebimento automático — transação cria N movimentações de entrada
     return db.transaction(async (tx) => {
-      // Atualizar OC
-      const [updated] = await tx.update(purchaseOrders)
-        .set({ status: 'received', receivedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(purchaseOrders.id, input.id), eq(purchaseOrders.tenantId, tenantId)))
+      const [updated] = await tx
+        .update(purchaseOrders)
+        .set({ status: 'received', receivedAt: new Date(), receivedBy: userId, updatedAt: new Date() })
+        .where(
+          and(
+            eq(purchaseOrders.id, input.id),
+            eq(purchaseOrders.tenantId, tenantId),
+            eq(purchaseOrders.status, 'sent'),
+            isNull(purchaseOrders.deletedAt),
+          ),
+        )
         .returning();
 
-      // Criar movimentação de entrada para cada item (usando createMovement sem tx — reuse da lógica atômica)
-      let movementsCreated = 0;
-      for (const { item } of items) {
-        await createMovement(tenantId, {
-          materialId: item.materialId,
-          type: 'in',
-          quantity: Number(item.quantity),
-          unitCostCents: item.unitPriceCents,
-          purchaseOrderId: input.id,
-          reason: `Recebimento OC ${po.code}`,
-        }, userId);
-        movementsCreated++;
+      if (!updated) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'Ordem de compra ja foi processada por outra operacao',
+        });
       }
 
-      logger.info({ tenantId, poId: input.id, movementsCreated }, 'inventory.po.received');
+      if (items.length === 0) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'OC sem itens nao pode ser recebida' });
+      }
+
+      let movementsCreated = 0;
+      for (const { item, materialName } of items) {
+        const qty = Number(item.quantity);
+        const unitCost = item.unitPriceCents;
+
+        const updatedMaterialResult = await tx.execute<{ current_stock: string }>(sql`
+          UPDATE materials SET
+            current_stock = current_stock + ${qty}::numeric,
+            average_cost_cents = CASE
+              WHEN (current_stock + ${qty}::numeric) = 0 THEN ${unitCost}::integer
+              ELSE ROUND(
+                (current_stock * average_cost_cents + ${qty}::numeric * ${unitCost}::numeric)
+                / NULLIF(current_stock + ${qty}::numeric, 0)
+              )::integer
+            END,
+            last_purchase_price_cents = ${unitCost}::integer,
+            updated_at = NOW()
+          WHERE tenant_id = ${tenantId} AND id = ${item.materialId} AND deleted_at IS NULL
+          RETURNING current_stock
+        `);
+
+        const materialStock = updatedMaterialResult.rows[0];
+        if (!materialStock) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Material ${item.materialId} invalido para o tenant`,
+          });
+        }
+
+        await tx.insert(stockMovements).values({
+          tenantId,
+          materialId: item.materialId,
+          type: 'in',
+          quantity: String(qty),
+          stockAfter: materialStock.current_stock,
+          reason: `Recebimento OC ${po.code} - ${materialName ?? 'Material'}`,
+          supplierId: po.supplierId ?? null,
+          purchaseOrderId: po.id,
+          unitCostCents: unitCost,
+          createdBy: userId,
+        });
+
+        movementsCreated += 1;
+      }
+
+      const [existingAp] = await tx
+        .select({ id: accountsPayable.id })
+        .from(accountsPayable)
+        .where(
+          and(
+            eq(accountsPayable.tenantId, tenantId),
+            eq(accountsPayable.referenceType, 'purchase_order'),
+            eq(accountsPayable.referenceId, po.id),
+          ),
+        )
+        .limit(1);
+
+      let apId: number | null = existingAp?.id ?? null;
+
+      if (!existingAp) {
+        const [supplier] = po.supplierId
+          ? await tx
+              .select({ name: suppliers.name })
+              .from(suppliers)
+              .where(
+                and(
+                  eq(suppliers.id, po.supplierId),
+                  eq(suppliers.tenantId, tenantId),
+                  isNull(suppliers.deletedAt),
+                ),
+              )
+              .limit(1)
+          : [];
+
+        const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const [ap] = await tx
+          .insert(accountsPayable)
+          .values({
+            tenantId,
+            description: `Compra ${po.code} - ${supplier?.name ?? 'Fornecedor'}`,
+            supplierId: po.supplierId ?? null,
+            supplier: supplier?.name ?? null,
+            category: 'fornecedor',
+            amountCents: po.totalCents,
+            issuedAt: new Date(),
+            dueDate,
+            status: 'pending',
+            reference: po.code,
+            referenceId: po.id,
+            referenceType: 'purchase_order',
+            createdBy: userId,
+          })
+          .returning({ id: accountsPayable.id });
+
+        apId = ap?.id ?? null;
+      }
+
+      logger.info({ tenantId, poId: input.id, movementsCreated, apId }, 'inventory.po.received');
       void logAudit({
         tenantId,
         userId,
@@ -450,17 +554,19 @@ export async function changePurchaseOrderStatus(tenantId: number, input: ChangeP
         entityType: 'purchase_orders',
         entityId: input.id,
         oldValue: { status: po.status },
-        newValue: updated,
+        newValue: { ...updated, apId },
       });
-      return updated!;
+      return updated;
     });
   }
 
   const extraFields = input.status === 'cancelled' ? { cancelledAt: new Date() } : {};
-  const [updated] = await db.update(purchaseOrders)
+  const [updated] = await db
+    .update(purchaseOrders)
     .set({ status: input.status, updatedAt: new Date(), ...extraFields })
     .where(and(eq(purchaseOrders.id, input.id), eq(purchaseOrders.tenantId, tenantId)))
     .returning();
+
   return updated!;
 }
 
@@ -543,4 +649,5 @@ export async function updatePurchaseOrder(tenantId: number, poId: number, input:
   if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'OC não encontrada' });
   return updated;
 }
+
 

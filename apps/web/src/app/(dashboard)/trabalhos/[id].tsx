@@ -45,6 +45,7 @@ import { PageTransition, ScaleIn } from '../../../components/shared/page-transit
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
+import { openPdfFromBase64 } from '../../../lib/pdf-export';
 import { ProofBadge } from '../../../components/jobs/proof-badge';
 import { SuspendDialog } from '../../../components/jobs/suspend-dialog';
 import { ReworkDialog } from '../../../components/jobs/rework-dialog';
@@ -168,12 +169,7 @@ export default function JobDetailPage() {
     const result = await pdfQuery.refetch();
     const pdfBase64 = result.data?.pdfBase64;
     if (!pdfBase64) return;
-
-    const bytes = Uint8Array.from(atob(pdfBase64), (char) => char.charCodeAt(0));
-    const blob = new Blob([bytes], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+    openPdfFromBase64(pdfBase64);
   };
 
   if (isLoading)

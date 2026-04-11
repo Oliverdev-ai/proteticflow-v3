@@ -42,6 +42,7 @@ const DeliveryListPage = lazy(() => import('./app/(dashboard)/entregas/index'));
 const DeliveryDetailPage = lazy(() => import('./app/(dashboard)/entregas/[id]'));
 const InventoryDashboard = lazy(() => import('./app/(dashboard)/estoque/index'));
 const MaterialsPage = lazy(() => import('./app/(dashboard)/estoque/materiais'));
+const MaterialDetailPage = lazy(() => import('./app/(dashboard)/estoque/material/[id]'));
 const SuppliersPage = lazy(() => import('./app/(dashboard)/estoque/fornecedores'));
 const PurchaseOrdersPage = lazy(() => import('./app/(dashboard)/estoque/ordens-compra'));
 const PODetailPage = lazy(() => import('./app/(dashboard)/estoque/oc/[id]'));
@@ -124,6 +125,7 @@ function AppContent() {
 
             <Route path="/estoque" element={<InventoryDashboard />} />
             <Route path="/estoque/materiais" element={<MaterialsPage />} />
+            <Route path="/estoque/material/:id" element={<MaterialDetailPage />} />
             <Route path="/estoque/fornecedores" element={<SuppliersPage />} />
             <Route path="/estoque/ordens-compra" element={<PurchaseOrdersPage />} />
             <Route path="/estoque/oc/:id" element={<PODetailPage />} />

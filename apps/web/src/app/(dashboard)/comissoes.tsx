@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { trpc } from '../../lib/trpc';
 import { Download, FileText } from 'lucide-react';
+import { downloadUtf8TextFile } from '../../lib/pdf-export';
 
 type CommissionDetail = {
   employeeId: number;
@@ -12,6 +13,44 @@ type CommissionDetail = {
   commissionPercent: string;
   commissionAmountCents: number | null;
 };
+
+function escapeCsvCell(value: string | number): string {
+  const raw = String(value);
+  if (raw.includes(';') || raw.includes('"') || raw.includes('\n')) {
+    return `"${raw.replace(/"/g, '""')}"`;
+  }
+  return raw;
+}
+
+function buildCsv(details: CommissionDetail[]): string {
+  const lines: string[] = [];
+
+  lines.push('Tecnico;OS;Tarefa;Valor total (R$);Comissao (%);A receber (R$)');
+
+  for (const item of details) {
+    const total = ((item.jobTotalCents || 0) / 100).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const commission = ((item.commissionAmountCents || 0) / 100).toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    lines.push(
+      [
+        escapeCsvCell(item.employeeName),
+        escapeCsvCell(item.jobCode),
+        escapeCsvCell(item.task || 'Geral'),
+        escapeCsvCell(total),
+        escapeCsvCell(item.commissionPercent),
+        escapeCsvCell(commission),
+      ].join(';'),
+    );
+  }
+
+  return lines.join('\n');
+}
 
 export default function CommissionsPage() {
   const [dateFrom, setDateFrom] = useState(
@@ -34,6 +73,18 @@ export default function CommissionsPage() {
       0,
     ) || 0;
 
+  function handleExportCsv() {
+    const details = (report as CommissionDetail[] | undefined) ?? [];
+    if (details.length === 0) return;
+
+    const csv = buildCsv(details);
+    downloadUtf8TextFile(
+      `comissoes-${dateFrom}_${dateTo}.csv`,
+      csv,
+      'text/csv; charset=utf-8',
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -42,7 +93,12 @@ export default function CommissionsPage() {
           <p className="text-zinc-400 text-sm">Acompanhe a produção técnica e valores a pagar.</p>
         </div>
         <div className="flex gap-2">
-          <button className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-zinc-700">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={isLoading || !report || report.length === 0}
+            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-zinc-700 disabled:opacity-50"
+          >
             <Download size={16} /> Exportar CSV
           </button>
         </div>

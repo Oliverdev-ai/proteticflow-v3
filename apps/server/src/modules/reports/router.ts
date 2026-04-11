@@ -6,7 +6,11 @@ import {
   reportSendByEmailSchema,
 } from '@proteticflow/shared';
 import * as reportsService from './service.js';
-import { abcCurveProcedure } from './abc-curve.router.js';
+import {
+  abcCurveExportCsvProcedure,
+  abcCurveExportPdfProcedure,
+  abcCurveProcedure,
+} from './abc-curve.router.js';
 import {
   fiscalDreProcedure,
   fiscalExpensesProcedure,
@@ -55,6 +59,8 @@ function sanitizeFilters(filters: {
 
 export const reportsRouter = router({
   abcCurve: abcCurveProcedure,
+  abcCurveExportCsv: abcCurveExportCsvProcedure,
+  abcCurveExportPdf: abcCurveExportPdfProcedure,
   fiscalRevenue: fiscalRevenueProcedure,
   fiscalExpenses: fiscalExpensesProcedure,
   fiscalDRE: fiscalDreProcedure,

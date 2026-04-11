@@ -1,4 +1,6 @@
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, ne, sql } from 'drizzle-orm';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { db } from '../../db/index.js';
 import { clients } from '../../db/schema/clients.js';
 import { jobItems, jobs } from '../../db/schema/jobs.js';
@@ -38,6 +40,19 @@ export type AbcCurveResult = {
     b: AbcSummaryBucket;
     c: AbcSummaryBucket;
   };
+};
+
+type ReportArtifact = {
+  filename: string;
+  mimeType: string;
+  base64: string;
+};
+
+const ABC_TYPE_LABELS: Record<AbcCurveType, string> = {
+  services: 'Servicos por faturamento',
+  clients: 'Dentistas por faturamento',
+  materials: 'Materiais por custo',
+  technicians: 'Proteticos por volume',
 };
 
 function roundTo2(value: number): number {
@@ -284,6 +299,152 @@ export async function generateAbcCurveReport(
     totalValue,
     items,
     summary,
+  };
+}
+
+function formatValueByType(type: AbcCurveType, value: number): string {
+  if (type === 'technicians') {
+    return value.toLocaleString('pt-BR');
+  }
+
+  return (value / 100).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
+function escapeCsv(value: string | number): string {
+  const raw = String(value);
+  if (raw.includes(';') || raw.includes('"') || raw.includes('\n')) {
+    return `"${raw.replace(/"/g, '""')}"`;
+  }
+  return raw;
+}
+
+function buildFileName(type: AbcCurveType, startIso: string, endIso: string, extension: 'csv' | 'pdf'): string {
+  const start = startIso.slice(0, 10);
+  const end = endIso.slice(0, 10);
+  return `curva-abc-${type}-${start}_${end}.${extension}`;
+}
+
+export async function exportAbcCurveCsv(tenantId: number, input: AbcCurveInput): Promise<ReportArtifact> {
+  const report = await generateAbcCurveReport(tenantId, input);
+  const lines: string[] = [];
+
+  lines.push(`Relatorio;Curva ABC`);
+  lines.push(`Tipo;${escapeCsv(ABC_TYPE_LABELS[report.type])}`);
+  lines.push(`Periodo inicio;${report.period.start.slice(0, 10)}`);
+  lines.push(`Periodo fim;${report.period.end.slice(0, 10)}`);
+  lines.push(`Total analisado;${escapeCsv(formatValueByType(report.type, report.totalValue))}`);
+  lines.push('');
+  lines.push('Item;Valor;Percentual (%);Acumulado (%);Classe');
+
+  for (const item of report.items) {
+    lines.push(
+      [
+        escapeCsv(item.label),
+        escapeCsv(formatValueByType(report.type, item.value)),
+        escapeCsv(item.percentage.toFixed(2)),
+        escapeCsv(item.accumulatedPercentage.toFixed(2)),
+        item.classification,
+      ].join(';'),
+    );
+  }
+
+  lines.push('');
+  lines.push('Resumo;Quantidade;Valor;Percentual (%)');
+  lines.push(
+    [
+      'Classe A',
+      report.summary.a.count,
+      escapeCsv(formatValueByType(report.type, report.summary.a.totalValue)),
+      report.summary.a.percentage.toFixed(2),
+    ].join(';'),
+  );
+  lines.push(
+    [
+      'Classe B',
+      report.summary.b.count,
+      escapeCsv(formatValueByType(report.type, report.summary.b.totalValue)),
+      report.summary.b.percentage.toFixed(2),
+    ].join(';'),
+  );
+  lines.push(
+    [
+      'Classe C',
+      report.summary.c.count,
+      escapeCsv(formatValueByType(report.type, report.summary.c.totalValue)),
+      report.summary.c.percentage.toFixed(2),
+    ].join(';'),
+  );
+
+  const csv = lines.join('\n');
+
+  return {
+    filename: buildFileName(report.type, report.period.start, report.period.end, 'csv'),
+    mimeType: 'text/csv; charset=utf-8',
+    base64: Buffer.from(csv, 'utf-8').toString('base64'),
+  };
+}
+
+export async function exportAbcCurvePdf(tenantId: number, input: AbcCurveInput): Promise<ReportArtifact> {
+  const report = await generateAbcCurveReport(tenantId, input);
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Curva ABC', 40, 40);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Tipo: ${ABC_TYPE_LABELS[report.type]}`, 40, 58);
+  doc.text(`Periodo: ${report.period.start.slice(0, 10)} ate ${report.period.end.slice(0, 10)}`, 40, 72);
+  doc.text(`Total analisado: ${formatValueByType(report.type, report.totalValue)}`, 40, 86);
+
+  autoTable(doc, {
+    startY: 104,
+    head: [['Item', 'Valor', '%', '% Acumulado', 'Classe']],
+    body: report.items.map((item) => [
+      item.label,
+      formatValueByType(report.type, item.value),
+      `${item.percentage.toFixed(2)}%`,
+      `${item.accumulatedPercentage.toFixed(2)}%`,
+      item.classification,
+    ]),
+    styles: { fontSize: 9 },
+    headStyles: { fillColor: [31, 41, 55] },
+    margin: { left: 40, right: 40 },
+  });
+
+  const lastY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 140;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('Resumo por classe', 40, lastY + 24);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(
+    `Classe A: ${report.summary.a.count} itens | ${formatValueByType(report.type, report.summary.a.totalValue)} | ${report.summary.a.percentage.toFixed(2)}%`,
+    40,
+    lastY + 42,
+  );
+  doc.text(
+    `Classe B: ${report.summary.b.count} itens | ${formatValueByType(report.type, report.summary.b.totalValue)} | ${report.summary.b.percentage.toFixed(2)}%`,
+    40,
+    lastY + 58,
+  );
+  doc.text(
+    `Classe C: ${report.summary.c.count} itens | ${formatValueByType(report.type, report.summary.c.totalValue)} | ${report.summary.c.percentage.toFixed(2)}%`,
+    40,
+    lastY + 74,
+  );
+
+  const buffer = Buffer.from(doc.output('arraybuffer') as ArrayBuffer);
+
+  return {
+    filename: buildFileName(report.type, report.period.start, report.period.end, 'pdf'),
+    mimeType: 'application/pdf',
+    base64: buffer.toString('base64'),
   };
 }
 

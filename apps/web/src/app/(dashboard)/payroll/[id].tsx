@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
+import { downloadPdfFromBinary } from '../../../lib/pdf-export';
 
 export default function PayrollDetailPage() {
   const { id } = useParams();
@@ -53,15 +54,7 @@ export default function PayrollDetailPage() {
     setDownloadingEmployeeId(employeeId);
     try {
       const payload = await utils.payroll.generatePayslip.fetch({ periodId, employeeId });
-      const maybeBuffer = payload as { data?: number[] };
-      const bytes = maybeBuffer.data ? new Uint8Array(maybeBuffer.data) : new Uint8Array();
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `holerite-${period?.month}-${period?.year}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      downloadPdfFromBinary(`holerite-${period?.month}-${period?.year}.pdf`, payload);
     } finally {
       setDownloadingEmployeeId(null);
     }
