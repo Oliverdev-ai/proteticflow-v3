@@ -22,6 +22,7 @@ export default function BoletosPage() {
   const [manualDueDate, setManualDueDate] = useState(new Date().toISOString().slice(0, 10));
   const [manualDescription, setManualDescription] = useState('');
   const [arIdToGenerate, setArIdToGenerate] = useState('');
+  const [boletoError, setBoletoError] = useState<string | null>(null);
 
   const clientsQuery = trpc.clientes.list.useQuery({ page: 1, limit: 100 });
 
@@ -49,13 +50,21 @@ export default function BoletosPage() {
 
   const generateFromArMutation = trpc.fiscal.generateBoletoFromAr.useMutation({
     onSuccess: async () => {
+      setBoletoError(null);
       await utils.fiscal.listBoletos.invalidate();
+    },
+    onError: (err) => {
+      setBoletoError(err.message);
     },
   });
 
   const generateManualMutation = trpc.fiscal.generateBoletoManual.useMutation({
     onSuccess: async () => {
+      setBoletoError(null);
       await utils.fiscal.listBoletos.invalidate();
+    },
+    onError: (err) => {
+      setBoletoError(err.message);
     },
   });
 
@@ -73,12 +82,14 @@ export default function BoletosPage() {
 
   async function handleGenerateFromAr(): Promise<void> {
     if (!arIdToGenerate) return;
+    setBoletoError(null);
     await generateFromArMutation.mutateAsync({ arId: Number(arIdToGenerate) });
     setArIdToGenerate('');
   }
 
   async function handleGenerateManual(): Promise<void> {
     if (!manualClientId) return;
+    setBoletoError(null);
     const amountValue = Number(manualAmount);
     if (!Number.isFinite(amountValue) || amountValue <= 0) return;
 
@@ -194,6 +205,7 @@ export default function BoletosPage() {
           >
             Gerar boleto da AR
           </button>
+          {boletoError && <p className="text-sm text-red-400 mt-2">Erro: {boletoError}</p>}
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
@@ -258,6 +270,7 @@ export default function BoletosPage() {
           >
             Gerar boleto manual
           </button>
+          {boletoError && <p className="text-sm text-red-400 mt-2">Erro: {boletoError}</p>}
         </div>
       </div>
 

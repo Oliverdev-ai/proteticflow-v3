@@ -135,7 +135,107 @@ export async function createMaterial(tenantId: number, input: CreateMaterialInpu
     notes: input.notes ?? null,
     createdBy: userId,
   }).returning();
-  return mat!;
+
+  const material = mat!;
+  const initialQuantity = input.initialQuantity ?? 0;
+  const unitCostCents = input.unitCostCents ?? 0;
+
+  if (initialQuantity > 0) {
+    await db.transaction(async (tx) => {
+      const updatedResult = await tx.execute<{ current_stock: string }>(sql`
+        UPDATE materials SET
+          current_stock = current_stock + ${initialQuantity}::numeric,
+          average_cost_cents = CASE
+            WHEN (current_stock + ${initialQuantity}::numeric) = 0 THEN ${unitCostCents}::integer
+            ELSE ROUND(
+              (current_stock * average_cost_cents + ${initialQuantity}::numeric * ${unitCostCents}::numeric)
+              / NULLIF(current_stock + ${initialQuantity}::numeric, 0)
+            )::integer
+          END,
+          last_purchase_price_cents = ${unitCostCents}::integer,
+          updated_at = NOW()
+        WHERE tenant_id = ${tenantId} AND id = ${material.id} AND deleted_at IS NULL
+        RETURNING current_stock
+      `);
+
+      const materialStock = updatedResult.rows[0];
+      if (!materialStock) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Material ${material.id} invalido para o tenant`,
+        });
+      }
+
+      const [movement] = await tx.insert(stockMovements).values({
+        tenantId,
+        materialId: material.id,
+        type: 'in',
+        quantity: String(initialQuantity),
+        stockAfter: materialStock.current_stock,
+        reason: `Entrada inicial - ${material.name}`,
+        supplierId: material.supplierId ?? null,
+        unitCostCents,
+        createdBy: userId,
+      }).returning({ id: stockMovements.id });
+
+      if (!movement) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Falha ao criar movimentacao inicial de estoque',
+        });
+      }
+
+      const [existingAp] = await tx
+        .select({ id: accountsPayable.id })
+        .from(accountsPayable)
+        .where(
+          and(
+            eq(accountsPayable.tenantId, tenantId),
+            eq(accountsPayable.referenceType, 'stock_entry'),
+            eq(accountsPayable.referenceId, movement.id),
+          ),
+        )
+        .limit(1);
+
+      if (!existingAp) {
+        const [supplier] = material.supplierId
+          ? await tx
+              .select({ name: suppliers.name })
+              .from(suppliers)
+              .where(
+                and(
+                  eq(suppliers.id, material.supplierId),
+                  eq(suppliers.tenantId, tenantId),
+                  isNull(suppliers.deletedAt),
+                ),
+              )
+              .limit(1)
+          : [];
+
+        const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await tx.insert(accountsPayable).values({
+          tenantId,
+          description: `Entrada inicial de estoque - ${material.name}`,
+          supplierId: material.supplierId ?? null,
+          supplier: supplier?.name ?? null,
+          category: 'estoque',
+          amountCents: Math.round(initialQuantity * unitCostCents),
+          issuedAt: new Date(),
+          dueDate,
+          status: 'pending',
+          reference: `STOCK-ENTRY-${movement.id}`,
+          referenceId: movement.id,
+          referenceType: 'stock_entry',
+          createdBy: userId,
+        });
+      }
+    });
+  }
+
+  const [updatedMaterial] = await db.select().from(materials).where(
+    and(eq(materials.id, material.id), eq(materials.tenantId, tenantId), isNull(materials.deletedAt))
+  );
+  return updatedMaterial ?? material;
 }
 
 export async function listMaterials(tenantId: number, filters: ListMaterialsInput) {
