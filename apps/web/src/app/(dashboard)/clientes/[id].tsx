@@ -231,6 +231,7 @@ export default function ClientEditPage() {
     { id: clientId },
     { enabled: tab === 'extrato' },
   );
+  const priceTablesQuery = trpc.pricing.listTables.useQuery({ limit: 100 });
 
   const {
     register,
@@ -437,6 +438,25 @@ export default function ClientEditPage() {
                 </div>
 
                 <div className="space-y-6">
+                  <div>
+                    <label className={labelClass}>Tabela de Preço</label>
+                    <select
+                      {...register('pricingTableId', {
+                        setValueAs: (value) =>
+                          value === '' || value === null || value === undefined
+                            ? undefined
+                            : Number(value),
+                      })}
+                      className={inputClass}
+                    >
+                      <option value="">Tabela padrão do laboratório</option>
+                      {(priceTablesQuery.data?.data ?? []).map((table) => (
+                        <option key={table.id} value={table.id}>
+                          {table.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className={labelClass}>Ajuste Tarifário Global (%)</label>
                     <div className="relative w-48">

@@ -50,6 +50,13 @@ export default function PayrollDetailPage() {
     },
   });
 
+  const reopenMutation = trpc.payroll.reopenPeriod.useMutation({
+    onSuccess: () => {
+      utils.payroll.getPeriodReport.invalidate({ periodId });
+      utils.payroll.listPeriods.invalidate();
+    },
+  });
+
   async function handleDownloadPayslip(employeeId: number) {
     setDownloadingEmployeeId(employeeId);
     try {
@@ -80,6 +87,9 @@ export default function PayrollDetailPage() {
       </div>
     );
   if (!period) return <div className="p-6">Período não encontrado.</div>;
+
+  const canReopen = Boolean(periodReport?.canReopen);
+  const hasProcessedPayments = Boolean(periodReport?.hasProcessedPayments);
 
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto max-w-6xl mx-auto pb-20">
@@ -145,8 +155,32 @@ export default function PayrollDetailPage() {
               </button>
             </>
           )}
+          {period.status === 'closed' && canReopen && (
+            <button
+              onClick={() => {
+                if (confirm('Deseja reabrir esta folha para edição?')) {
+                  reopenMutation.mutate({ periodId });
+                }
+              }}
+              disabled={reopenMutation.isPending}
+              className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-zinc-700"
+            >
+              {reopenMutation.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <RefreshCw size={16} />
+              )}
+              Desfazer fechamento
+            </button>
+          )}
         </div>
       </div>
+
+      {period.status === 'closed' && hasProcessedPayments ? (
+        <div className="rounded-xl border border-amber-700 bg-amber-900/20 px-4 py-3 text-xs text-amber-300">
+          Esta folha possui pagamentos processados e não pode ser reaberta.
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">

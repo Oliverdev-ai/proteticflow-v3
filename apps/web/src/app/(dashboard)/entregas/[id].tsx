@@ -111,6 +111,9 @@ export default function DeliveryDetailPage() {
                   </div>
                   <div>
                     <p className="text-white font-medium">{clientName ?? '-'}</p>
+                    <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-500">
+                      {item.stopType === 'pickup' ? 'Coleta' : 'Entrega'}
+                    </p>
                     {clientAddress && (
                       <p className="text-zinc-400 text-xs flex items-center gap-1 mt-0.5">
                         <MapPin size={11} /> {clientAddress}
@@ -122,7 +125,9 @@ export default function DeliveryDetailPage() {
                         <Phone size={11} /> {clientPhone}
                       </p>
                     )}
-                    <p className="text-zinc-500 text-xs mt-1">OS: {jobCode ?? item.jobId}</p>
+                    <p className="text-zinc-500 text-xs mt-1">
+                      {item.stopType === 'pickup' ? 'Parada sem OS vinculada' : `OS: ${jobCode ?? item.jobId}`}
+                    </p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">

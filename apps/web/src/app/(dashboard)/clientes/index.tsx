@@ -19,6 +19,11 @@ import { H1, Subtitle, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
+const PERSON_TYPE_LABEL: Record<'cpf' | 'cnpj', string> = {
+  cpf: 'Pessoa Física',
+  cnpj: 'Pessoa Jurídica',
+};
+
 export default function ClientListPage() {
   const navigate = useNavigate();
   const { hasAccess } = usePermissions();
@@ -186,9 +191,16 @@ export default function ClientListPage() {
                           <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                             {client.name}
                           </span>
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
-                            {client.document || 'Sem registro'}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                              {client.document || 'Sem registro'}
+                            </span>
+                            {client.documentType ? (
+                              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
+                                {PERSON_TYPE_LABEL[client.documentType]}
+                              </span>
+                            ) : null}
+                          </div>
                         </Link>
                       </td>
                       <td className="px-6 py-5 hidden md:table-cell">

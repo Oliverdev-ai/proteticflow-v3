@@ -58,6 +58,8 @@ export const KANBAN_COLUMNS: JobStatus[] = [
   'in_progress',
   'quality_check',
   'ready',
+  'rework_in_progress',
+  'suspended',
   'delivered',
 ];
 

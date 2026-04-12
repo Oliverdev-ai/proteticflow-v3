@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ROLES } from '../constants/roles';
+import { notificationEventSchema } from './notification.schema';
 
 const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
 const normalizeDigits = (value: string) => value.replace(/\D/g, '');
@@ -65,6 +66,13 @@ export const removeLogoSchema = z.object({});
 export const updateUserRoleFromSettingsSchema = z.object({
   memberId: z.number().int().positive(),
   role: z.enum([ROLES.SUPERADMIN, ROLES.GERENTE, ROLES.PRODUCAO, ROLES.RECEPCAO, ROLES.CONTABIL]),
+});
+
+export const updateNotificationPrefsSchema = z.object({
+  eventKey: notificationEventSchema,
+  inAppEnabled: z.boolean(),
+  pushEnabled: z.boolean(),
+  emailEnabled: z.boolean(),
 });
 
 export const settingsUserItemSchema = z.object({
@@ -133,4 +141,5 @@ export type UpdateSmtpSettingsInput = z.infer<typeof updateSmtpSettingsSchema>;
 export type TestSmtpConnectionInput = z.infer<typeof testSmtpConnectionSchema>;
 export type UploadLogoInput = z.infer<typeof uploadLogoSchema>;
 export type UpdateUserRoleFromSettingsInput = z.infer<typeof updateUserRoleFromSettingsSchema>;
+export type UpdateNotificationPrefsInput = z.infer<typeof updateNotificationPrefsSchema>;
 export type SettingsOverviewOutput = z.infer<typeof settingsOverviewSchema>;

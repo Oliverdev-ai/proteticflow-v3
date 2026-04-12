@@ -1,6 +1,6 @@
 import { db } from '../../db/index.js';
-import { payrollPeriods, payrollEntries, employees, jobAssignments } from '../../db/schema/index.js';
-import { eq, and, isNull, sql, desc, sum } from 'drizzle-orm';
+import { payrollPeriods, payrollEntries, employees, jobAssignments, commissionPayments } from '../../db/schema/index.js';
+import { eq, and, isNull, sql, desc, sum, lte, gte } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { logger } from '../../logger.js';
@@ -159,6 +159,30 @@ async function calculatePeriodTotals(tx: DbTransaction, _tenantId: number, perio
     .where(eq(payrollPeriods.id, periodId));
 }
 
+function getPeriodRange(period: { year: number; month: number }) {
+  const dateStart = new Date(period.year, period.month - 1, 1, 0, 0, 0, 0);
+  const dateEnd = new Date(period.year, period.month, 0, 23, 59, 59, 999);
+  return { dateStart, dateEnd };
+}
+
+async function countProcessedPayments(
+  tx: DbTransaction,
+  tenantId: number,
+  period: { year: number; month: number },
+) {
+  const { dateStart, dateEnd } = getPeriodRange(period);
+  const [row] = await tx
+    .select({ total: sql<number>`count(*)` })
+    .from(commissionPayments)
+    .where(and(
+      eq(commissionPayments.tenantId, tenantId),
+      eq(commissionPayments.status, 'paid'),
+      lte(commissionPayments.periodStart, dateEnd),
+      gte(commissionPayments.periodEnd, dateStart),
+    ));
+  return Number(row?.total ?? 0);
+}
+
 export async function closePeriod(tenantId: number, periodId: number, userId: number) {
   const [period] = await db.select().from(payrollPeriods)
     .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
@@ -178,6 +202,39 @@ export async function closePeriod(tenantId: number, periodId: number, userId: nu
 
   logger.info({ action: 'payroll.close', tenantId, periodId }, 'Payroll period closed');
   return updated;
+}
+
+export async function reopenPeriod(tenantId: number, periodId: number, userId: number) {
+  return db.transaction(async (tx) => {
+    const [period] = await tx.select().from(payrollPeriods)
+      .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
+
+    if (!period) throw new TRPCError({ code: 'NOT_FOUND', message: 'PerÃ­odo nÃ£o encontrado' });
+    if (period.status !== 'closed') {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Apenas folhas fechadas podem ser reabertas' });
+    }
+
+    const processedPayments = await countProcessedPayments(tx, tenantId, period);
+    if (processedPayments > 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Folha com pagamentos processados nao pode ser reaberta',
+      });
+    }
+
+    const [updated] = await tx.update(payrollPeriods)
+      .set({
+        status: 'open',
+        closedAt: null,
+        closedBy: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)))
+      .returning();
+
+    logger.info({ action: 'payroll.reopen', tenantId, periodId, userId }, 'Payroll period reopened');
+    return updated;
+  });
 }
 
 import jsPDF from 'jspdf';
@@ -282,8 +339,22 @@ export async function getPeriodReport(tenantId: number, periodId: number) {
     ),
   );
 
+  const [processedPaymentsRow] = await db
+    .select({ total: sql<number>`count(*)` })
+    .from(commissionPayments)
+    .where(and(
+      eq(commissionPayments.tenantId, tenantId),
+      eq(commissionPayments.status, 'paid'),
+      lte(commissionPayments.periodStart, getPeriodRange(period).dateEnd),
+      gte(commissionPayments.periodEnd, getPeriodRange(period).dateStart),
+    ));
+
+  const hasProcessedPayments = Number(processedPaymentsRow?.total ?? 0) > 0;
+
   return {
     period,
     entries,
+    hasProcessedPayments,
+    canReopen: period.status === 'closed' && !hasProcessedPayments,
   };
 }

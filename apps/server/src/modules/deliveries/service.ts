@@ -1,7 +1,7 @@
 import { eq, and, gte, lte, sql, desc, inArray } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { deliverySchedules, deliveryItems } from '../../db/schema/deliveries.js';
-import { jobs } from '../../db/schema/jobs.js';
+import { jobs, jobLogs } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
@@ -17,15 +17,54 @@ type JsPdfDoc = jsPDF & {
   output(type: 'arraybuffer'): ArrayBuffer;
 };
 
+function buildClientAddress(client: {
+  street: string | null;
+  addressNumber: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+}): string | null {
+  const address = [client.street, client.addressNumber, client.neighborhood, client.city, client.state]
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part));
+  return address.length > 0 ? address.join(', ') : null;
+}
+
 // ─── Criar Roteiro de Entrega ─────────────────────────────────────────────────
 
 export async function createSchedule(tenantId: number, input: CreateDeliveryScheduleInput, userId: number) {
   return db.transaction(async (tx) => {
-    // Validar que todos os jobIds pertencem ao tenant
+    // Validar dados de cada parada
     for (const item of input.items) {
-      const [job] = await tx.select({ id: jobs.id }).from(jobs)
-        .where(and(eq(jobs.id, item.jobId), eq(jobs.tenantId, tenantId)));
-      if (!job) throw new TRPCError({ code: 'BAD_REQUEST', message: `OS #${item.jobId} não pertence a este tenant` });
+      const [client] = await tx
+        .select({
+          id: clients.id,
+        })
+        .from(clients)
+        .where(and(eq(clients.id, item.clientId), eq(clients.tenantId, tenantId)));
+
+      if (!client) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Cliente #${item.clientId} nao pertence a este tenant`,
+        });
+      }
+
+      if (item.stopType === 'delivery') {
+        if (!item.jobId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Parada de entrega exige OS vinculada' });
+        }
+
+        const [job] = await tx.select({ id: jobs.id }).from(jobs)
+          .where(and(eq(jobs.id, item.jobId), eq(jobs.tenantId, tenantId)));
+
+        if (!job) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `OS #${item.jobId} nao pertence a este tenant`,
+          });
+        }
+      }
     }
 
     const scheduleData: typeof deliverySchedules.$inferInsert = {
@@ -44,8 +83,10 @@ export async function createSchedule(tenantId: number, input: CreateDeliverySche
       const itemData: typeof deliveryItems.$inferInsert = {
         tenantId,
         scheduleId: schedule.id,
-        jobId: i.jobId,
+        stopType: i.stopType,
+        jobId: i.jobId ?? null,
         clientId: i.clientId,
+        deliveryAddress: i.deliveryAddress,
         sortOrder: i.sortOrder ?? 0,
       };
       if (i.notes !== undefined) itemData.notes = i.notes;
@@ -58,9 +99,6 @@ export async function createSchedule(tenantId: number, input: CreateDeliverySche
     return { schedule, items: itemsInserted };
   });
 }
-
-// ─── Listar Roteiros ──────────────────────────────────────────────────────────
-
 export async function listSchedules(tenantId: number, filters: ListDeliverySchedulesInput) {
   const conditions = [eq(deliverySchedules.tenantId, tenantId)];
   if (filters.dateFrom) conditions.push(gte(deliverySchedules.date, new Date(filters.dateFrom)));
@@ -99,9 +137,9 @@ export async function getSchedule(tenantId: number, scheduleId: number) {
 
   const items = await db.select({
     item: deliveryItems,
-    jobCode: jobs.orderNumber,
+    jobCode: jobs.code,
     clientName: clients.name,
-    clientAddress: clients.street,
+    clientAddress: sql<string>`coalesce(${deliveryItems.deliveryAddress}, ${clients.street})`,
     clientPhone: clients.phone,
     clientNeighborhood: clients.neighborhood,
   }).from(deliveryItems)
@@ -115,28 +153,88 @@ export async function getSchedule(tenantId: number, scheduleId: number) {
 
 // ─── Atualizar Status de Item ─────────────────────────────────────────────────
 
-export async function updateItemStatus(tenantId: number, input: UpdateDeliveryItemStatusInput, _userId: number) {
+export async function updateItemStatus(tenantId: number, input: UpdateDeliveryItemStatusInput, userId: number) {
   if (input.status === 'failed' && !input.failedReason) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'failedReason é obrigatório para status "failed"' });
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'failedReason e obrigatorio para status "failed"' });
   }
 
-  const updateData: Record<string, unknown> = { status: input.status };
-  if (input.status === 'delivered') updateData.deliveredAt = new Date();
-  if (input.status === 'failed') updateData.failedReason = input.failedReason;
-  if (input.notes) updateData.notes = input.notes;
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({
+        id: deliveryItems.id,
+        jobId: deliveryItems.jobId,
+        clientId: deliveryItems.clientId,
+        deliveryAddress: deliveryItems.deliveryAddress,
+      })
+      .from(deliveryItems)
+      .where(and(eq(deliveryItems.id, input.itemId), eq(deliveryItems.tenantId, tenantId)));
 
-  const [item] = await db.update(deliveryItems)
-    .set(updateData)
-    .where(and(eq(deliveryItems.id, input.itemId), eq(deliveryItems.tenantId, tenantId)))
-    .returning();
-  if (!item) throw new TRPCError({ code: 'NOT_FOUND', message: 'Item de entrega não encontrado' });
+    if (!existing) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Item de entrega nao encontrado' });
+    }
 
-  logger.info({ tenantId, itemId: input.itemId, status: input.status }, 'delivery.item.status');
-  return item;
+    const updateData: Record<string, unknown> = { status: input.status };
+    if (input.status === 'delivered') updateData.deliveredAt = new Date();
+    if (input.status === 'failed') updateData.failedReason = input.failedReason;
+    if (input.notes) updateData.notes = input.notes;
+
+    if (!existing.deliveryAddress) {
+      const [client] = await tx
+        .select({
+          street: clients.street,
+          addressNumber: clients.addressNumber,
+          neighborhood: clients.neighborhood,
+          city: clients.city,
+          state: clients.state,
+        })
+        .from(clients)
+        .where(and(eq(clients.id, existing.clientId), eq(clients.tenantId, tenantId)));
+      if (client) {
+        const fallbackAddress = buildClientAddress(client);
+        if (fallbackAddress) {
+          updateData.deliveryAddress = fallbackAddress;
+        }
+      }
+    }
+
+    const [item] = await tx.update(deliveryItems)
+      .set(updateData)
+      .where(and(eq(deliveryItems.id, input.itemId), eq(deliveryItems.tenantId, tenantId)))
+      .returning();
+
+    if (!item) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Item de entrega nao encontrado' });
+    }
+
+    // Fluxo inverso: item do roteiro entregue -> OS pronta recebe baixa automaticamente.
+    if (input.status === 'delivered' && existing.jobId) {
+      const [job] = await tx
+        .select({ id: jobs.id, status: jobs.status })
+        .from(jobs)
+        .where(and(eq(jobs.id, existing.jobId), eq(jobs.tenantId, tenantId)));
+
+      if (job && job.status === 'ready') {
+        const now = new Date();
+        await tx
+          .update(jobs)
+          .set({ status: 'delivered', deliveredAt: now, updatedAt: now })
+          .where(and(eq(jobs.id, job.id), eq(jobs.tenantId, tenantId)));
+
+        await tx.insert(jobLogs).values({
+          tenantId,
+          jobId: job.id,
+          userId,
+          fromStatus: 'ready',
+          toStatus: 'delivered',
+          notes: 'Baixa automatica via roteiro de entrega',
+        });
+      }
+    }
+
+    logger.info({ tenantId, itemId: input.itemId, status: input.status }, 'delivery.item.status');
+    return item;
+  });
 }
-
-// ─── Marcar Todos como Em Trânsito ────────────────────────────────────────────
-
 export async function markAllInTransit(tenantId: number, scheduleId: number, _userId: number) {
   await db.update(deliveryItems)
     .set({ status: 'in_transit' })
@@ -223,3 +321,5 @@ export async function generateRoutePdf(tenantId: number, scheduleId: number): Pr
 
   return Buffer.from(doc.output('arraybuffer'));
 }
+
+

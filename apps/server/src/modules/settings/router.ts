@@ -5,6 +5,7 @@ import {
   testSmtpConnectionSchema,
   updateLabBrandingSchema,
   updateLabIdentitySchema,
+  updateNotificationPrefsSchema,
   updatePrinterSettingsSchema,
   updateSmtpSettingsSchema,
   updateUserRoleFromSettingsSchema,
@@ -69,5 +70,11 @@ export const settingsRouter = router({
     .input(updateUserRoleFromSettingsSchema)
     .mutation(({ ctx, input }) => {
       return settingsService.updateUserRole(ctx.tenantId!, ctx.user!.id, input);
+    }),
+
+  updateNotificationPrefs: tenantProcedure
+    .input(updateNotificationPrefsSchema)
+    .mutation(({ ctx, input }) => {
+      return settingsService.updateNotificationPrefs(ctx.tenantId!, ctx.user!.id, input);
     }),
 });

@@ -1,9 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { db } from '../../db/index.js';
 import { invites, osBlocks, users, tenants, tenantMembers, fiscalSettings } from '../../db/schema/index.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as tenantService from './service.js';
+
+const emailMocks = vi.hoisted(() => ({
+  sendInviteEmail: vi.fn(async () => ({ sent: true })),
+}));
+
+vi.mock('../notifications/email.js', () => ({
+  sendInviteEmail: emailMocks.sendInviteEmail,
+}));
 
 function assertExists<T>(value: T | undefined, label: string): T {
   if (!value) throw new Error(`${label} not found`);
@@ -123,7 +131,10 @@ describe('Tenant Service - Switch', () => {
 });
 
 describe('Tenant Service - Convites', () => {
-  beforeEach(cleanup);
+  beforeEach(async () => {
+    emailMocks.sendInviteEmail.mockResolvedValue({ sent: true });
+    await cleanup();
+  });
   afterEach(cleanup);
 
   it('10. Enviar convite cria invite com token e expiracao 7d', async () => {
@@ -180,6 +191,22 @@ describe('Tenant Service - Convites', () => {
     await tenantService.acceptInvite(invite.token, existingUser.id);
     const members = await tenantService.listMembers(tenant.id);
     expect(members.some((m) => m.userId === existingUser.id)).toBe(true);
+  });
+
+  it('14b. Enviar convite falha com erro claro quando SMTP nao esta configurado', async () => {
+    const admin = await createTestUser('inv14c@test.com');
+    const tenant = await tenantService.createTenant(admin.id, { name: 'Lab Smtp' });
+    emailMocks.sendInviteEmail.mockResolvedValueOnce({ sent: false });
+
+    await expect(
+      tenantService.inviteMember(tenant.id, admin.id, { email: 'sem-smtp@test.com', role: 'producao' }),
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'SMTP nao configurado. Configure o SMTP nas Configuracoes para enviar convites.',
+    });
+
+    const pendingInvites = await db.select().from(invites).where(eq(invites.tenantId, tenant.id));
+    expect(pendingInvites).toHaveLength(0);
   });
 });
 

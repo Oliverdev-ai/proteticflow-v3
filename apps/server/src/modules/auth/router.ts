@@ -70,6 +70,9 @@ export const authRouter = router({
     await authService.forgotPassword(input.email);
     return { success: true };
   }),
+  resetPasswordFromProfile: protectedProcedure.mutation(async ({ ctx }) => {
+    return authService.requestPasswordResetForProfile(ctx.user!.id);
+  }),
   resetPassword: publicProcedure.input(resetPasswordSchema).mutation(async ({ input }) => {
     await authService.resetPassword(input.token, input.password);
     return { success: true };

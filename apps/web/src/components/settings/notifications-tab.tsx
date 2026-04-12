@@ -22,7 +22,7 @@ export function NotificationsTab() {
   const vapidQuery = trpc.notification.vapidPublicKey.useQuery();
   const testDispatchMutation = trpc.notification.testDispatch.useMutation();
 
-  const updatePreferenceMutation = trpc.notification.upsertPreference.useMutation({
+  const updatePreferenceMutation = trpc.settings.updateNotificationPrefs.useMutation({
     onSuccess: async () => {
       await utils.notification.listPreferences.invalidate();
     },

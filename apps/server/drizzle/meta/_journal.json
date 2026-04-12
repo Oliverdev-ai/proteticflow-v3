@@ -1,181 +1,188 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1774074196360,
-      "tag": "0000_young_kree",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1774074200000,
-      "tag": "0001_auth_tables",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1742591400000,
-      "tag": "0002_tenancy_adjustments",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1742591800000,
-      "tag": "0003_clientes_precos_adjustments",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1742592200000,
-      "tag": "0004_os_kanban",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1742592600000,
-      "tag": "0005_financeiro",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1742593000000,
-      "tag": "0006_entregas_estoque",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1742593400000,
-      "tag": "0007_funcionarios_folha",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1742593800000,
-      "tag": "0008_scans_agenda",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1774369800000,
-      "tag": "0009_phase15_settings",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1774380000000,
-      "tag": "0010_phase16_notifications_idempotency",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1774390000000,
-      "tag": "0011_portal_tokens",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1711929600000,
-      "tag": "0012_simulations",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1774728000000,
-      "tag": "0013_ai_sessions",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1774737000000,
-      "tag": "0014_support",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1775088000000,
-      "tag": "0015_ai_advanced",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1775091600000,
-      "tag": "0016_licensing",
-      "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "7",
-      "when": 1775192400000,
-      "tag": "0017_fiscal",
-      "breakpoints": true
-    },
-    {
-      "idx": 18,
-      "version": "7",
-      "when": 1775196000000,
-      "tag": "0018_audit_logs",
-      "breakpoints": true
-    },
-    {
-      "idx": 19,
-      "version": "7",
-      "when": 1775256425717,
-      "tag": "0019_os_blocks",
-      "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "7",
-      "when": 1775262106070,
-      "tag": "0020_timesheets",
-      "breakpoints": true
-    },
-    {
-      "idx": 21,
-      "version": "7",
-      "when": 1775276400000,
-      "tag": "0021_job_subtypes",
-      "breakpoints": true
-    },
-    {
-      "idx": 22,
-      "version": "7",
-      "when": 1775499600000,
-      "tag": "0022_purchases_ap_link",
-      "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "7",
-      "when": 1775503200000,
-      "tag": "0023_purchases_received_by",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "7",
-      "when": 1775520000000,
-      "tag": "0024_ai_command_runs",
-      "breakpoints": true
-    }
-  ]
+    "version":  "7",
+    "dialect":  "postgresql",
+    "entries":  [
+                    {
+                        "idx":  0,
+                        "version":  "7",
+                        "when":  1774074196360,
+                        "tag":  "0000_young_kree",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  1,
+                        "version":  "7",
+                        "when":  1774074200000,
+                        "tag":  "0001_auth_tables",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  2,
+                        "version":  "7",
+                        "when":  1742591400000,
+                        "tag":  "0002_tenancy_adjustments",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  3,
+                        "version":  "7",
+                        "when":  1742591800000,
+                        "tag":  "0003_clientes_precos_adjustments",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  4,
+                        "version":  "7",
+                        "when":  1742592200000,
+                        "tag":  "0004_os_kanban",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  5,
+                        "version":  "7",
+                        "when":  1742592600000,
+                        "tag":  "0005_financeiro",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  6,
+                        "version":  "7",
+                        "when":  1742593000000,
+                        "tag":  "0006_entregas_estoque",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  7,
+                        "version":  "7",
+                        "when":  1742593400000,
+                        "tag":  "0007_funcionarios_folha",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  8,
+                        "version":  "7",
+                        "when":  1742593800000,
+                        "tag":  "0008_scans_agenda",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  9,
+                        "version":  "7",
+                        "when":  1774369800000,
+                        "tag":  "0009_phase15_settings",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  10,
+                        "version":  "7",
+                        "when":  1774380000000,
+                        "tag":  "0010_phase16_notifications_idempotency",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  11,
+                        "version":  "7",
+                        "when":  1774390000000,
+                        "tag":  "0011_portal_tokens",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  12,
+                        "version":  "7",
+                        "when":  1711929600000,
+                        "tag":  "0012_simulations",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  13,
+                        "version":  "7",
+                        "when":  1774728000000,
+                        "tag":  "0013_ai_sessions",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  14,
+                        "version":  "7",
+                        "when":  1774737000000,
+                        "tag":  "0014_support",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  15,
+                        "version":  "7",
+                        "when":  1775088000000,
+                        "tag":  "0015_ai_advanced",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  16,
+                        "version":  "7",
+                        "when":  1775091600000,
+                        "tag":  "0016_licensing",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  17,
+                        "version":  "7",
+                        "when":  1775192400000,
+                        "tag":  "0017_fiscal",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  18,
+                        "version":  "7",
+                        "when":  1775196000000,
+                        "tag":  "0018_audit_logs",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  19,
+                        "version":  "7",
+                        "when":  1775256425717,
+                        "tag":  "0019_os_blocks",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  20,
+                        "version":  "7",
+                        "when":  1775262106070,
+                        "tag":  "0020_timesheets",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  21,
+                        "version":  "7",
+                        "when":  1775276400000,
+                        "tag":  "0021_job_subtypes",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  22,
+                        "version":  "7",
+                        "when":  1775499600000,
+                        "tag":  "0022_purchases_ap_link",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  23,
+                        "version":  "7",
+                        "when":  1775503200000,
+                        "tag":  "0023_purchases_received_by",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  24,
+                        "version":  "7",
+                        "when":  1775520000000,
+                        "tag":  "0024_ai_command_runs",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  25,
+                        "version":  "7",
+                        "when":  1775865600000,
+                        "tag":  "0026_delivery_stop_type_address",
+                        "breakpoints":  true
+                    }
+                ]
 }

@@ -19,6 +19,9 @@ export const payrollRouter = router({
   closePeriod: adminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
     payrollService.closePeriod(ctx.user!.tenantId, input.periodId, ctx.user!.id)),
 
+  reopenPeriod: adminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
+    payrollService.reopenPeriod(ctx.user!.tenantId, input.periodId, ctx.user!.id)),
+
   getPeriodReport: tenantProcedure.input(z.object({ periodId: z.number() })).query(({ ctx, input }) =>
     payrollService.getPeriodReport(ctx.user!.tenantId, input.periodId)),
 

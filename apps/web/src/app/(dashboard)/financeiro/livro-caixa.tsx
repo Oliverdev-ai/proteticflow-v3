@@ -355,7 +355,14 @@ export default function LivroCaixaPage() {
       {showCreate && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-primary/20 overflow-hidden">
+            <div
+              className={cn(
+                'premium-card p-10 flex flex-col gap-10 relative shadow-2xl overflow-hidden',
+                form.type === 'debit'
+                  ? 'bg-destructive/10 border-destructive text-destructive'
+                  : 'border-primary/20',
+              )}
+            >
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 

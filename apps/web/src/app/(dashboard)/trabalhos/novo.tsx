@@ -78,19 +78,20 @@ export default function JobCreatePage() {
 
   const { data: clientsData } = trpc.clientes.list.useQuery({ limit: 100 });
   const { data: priceTablesData } = trpc.pricing.listTables.useQuery({ limit: 100 });
-  const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
+  const selectedClient = clientsData?.data.find((c) => c.id === clientId);
+  const selectedClientPricingTableId = selectedClient?.pricingTableId ?? null;
+  const selectedClientPricingTable = priceTablesData?.data.find(
+    (table) => table.id === selectedClientPricingTableId,
+  );
   const { data: priceItemsData } = trpc.pricing.listItems.useQuery(
-    { pricingTableId: selectedTableId!, limit: 100 },
-    { enabled: selectedTableId != null },
+    { pricingTableId: selectedClientPricingTableId!, limit: 100 },
+    { enabled: selectedClientPricingTableId != null },
   );
 
   const createMutation = trpc.job.create.useMutation({
     onSuccess: (job) => navigate(`/trabalhos/${job.id}`),
     onError: (e) => setError(e.message),
   });
-
-  // Client data for display
-  const selectedClient = clientsData?.data.find((c) => c.id === clientId);
 
   function addItem(priceItemId?: number, name?: string, price?: number) {
     setItems((prev) => {
@@ -393,31 +394,20 @@ export default function JobCreatePage() {
               {/* Selector Sidebar */}
               <div className="md:col-span-4 space-y-6">
                 <div className="flex flex-col gap-2">
-                  <label className={labelClass}>Tabela de Auditoria</label>
-                  <div className="relative">
-                    <select
-                      value={selectedTableId ?? ''}
-                      onChange={(e) =>
-                        setSelectedTableId(e.target.value ? Number(e.target.value) : null)
-                      }
-                      className={cn(inputClass, 'px-5 pr-10 appearance-none cursor-pointer')}
-                    >
-                      <option value="">- SELECIONAR TABELA -</option>
-                      {priceTablesData?.data.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronRight
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/30 rotate-90"
-                      size={18}
-                      strokeWidth={3}
-                    />
+                  <label className={labelClass}>Tabela de Preço do Cliente</label>
+                  <div className={cn(inputClass, 'px-5 py-4')}>
+                    <p className="text-xs font-black uppercase tracking-widest text-foreground">
+                      {selectedClientPricingTable?.name ?? 'Sem tabela vinculada'}
+                    </p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {selectedClientPricingTable
+                        ? 'Valor herdado automaticamente do cadastro do cliente'
+                        : 'Edite o cliente para vincular uma tabela de preço'}
+                    </p>
                   </div>
                 </div>
 
-                {selectedTableId && (
+                {selectedClientPricingTableId && (
                   <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                     <Muted className="text-[9px] font-bold uppercase tracking-widest ml-1 mb-1">
                       Itens Disponíveis

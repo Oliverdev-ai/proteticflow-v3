@@ -7,11 +7,15 @@ import {
 import { useAuth } from '../../hooks/use-auth';
 import { Large, Muted } from '../shared/typography';
 import { useState } from 'react';
+import { trpc } from '../../lib/trpc';
 
 export function ProfileForm() {
   const { user, updateProfile } = useAuth();
+  const accessLogsQuery = trpc.audit.myLogs.useQuery({ page: 1, limit: 10 });
+  const resetCredentialMutation = trpc.auth.resetPasswordFromProfile.useMutation();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showAccessLogs, setShowAccessLogs] = useState(false);
 
   // Form states
   const [name, setName] = useState(user?.name ?? '');
@@ -122,20 +126,67 @@ export function ProfileForm() {
               </div>
               
               <div className="flex flex-col gap-3">
-                 <button className="flex items-center justify-between w-full p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn">
+                 <button
+                    type="button"
+                    onClick={() => resetCredentialMutation.mutate()}
+                    disabled={resetCredentialMutation.isPending}
+                    className="flex items-center justify-between w-full p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
+                 >
                     <div className="flex items-center gap-3">
                        <Key size={14} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
                        <span className="text-[10px] font-black uppercase tracking-widest">Redefinir Credencial</span>
                     </div>
                     <div className="w-2 h-2 rounded-full bg-primary/20 group-hover/btn:bg-primary transition-all shadow-glow" />
                  </button>
-                 <button className="flex items-center justify-between w-full p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn">
+                 <button
+                    type="button"
+                    onClick={() => setShowAccessLogs((value) => !value)}
+                    className="flex items-center justify-between w-full p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
+                 >
                     <div className="flex items-center gap-3">
                        <Briefcase size={14} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
                        <span className="text-[10px] font-black uppercase tracking-widest">Logs de Acesso</span>
                     </div>
                     <div className="w-2 h-2 rounded-full bg-primary/20 group-hover/btn:bg-primary transition-all shadow-glow" />
                  </button>
+
+                 {resetCredentialMutation.isSuccess ? (
+                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                     Email de redefinicao enviado.
+                   </p>
+                 ) : null}
+                 {resetCredentialMutation.error ? (
+                   <p className="text-[10px] font-black uppercase tracking-widest text-red-400">
+                     {resetCredentialMutation.error.message}
+                   </p>
+                 ) : null}
+
+                 {showAccessLogs ? (
+                   <div className="mt-2 max-h-48 overflow-auto rounded-xl border border-border/60 bg-background/50 p-3">
+                     {accessLogsQuery.isLoading ? (
+                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                         Carregando logs...
+                       </p>
+                     ) : accessLogsQuery.data?.items?.length ? (
+                       <div className="space-y-2">
+                         {accessLogsQuery.data.items.map((log) => (
+                           <div key={log.id} className="rounded-lg border border-border/40 bg-muted/20 p-2">
+                             <p className="text-[10px] font-black uppercase tracking-widest text-foreground">
+                               {log.action}
+                             </p>
+                             <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                               {new Date(log.createdAt).toLocaleString('pt-BR')}
+                             </p>
+                           </div>
+                         ))}
+                       </div>
+                     ) : (
+                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                         Nenhum log encontrado.
+                       </p>
+                     )}
+                   </div>
+                 ) : null}
               </div>
 
               <div className="mt-4 pt-4 border-t border-border/50">

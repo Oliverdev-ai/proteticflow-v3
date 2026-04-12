@@ -3,9 +3,11 @@ import {
   Activity, UserPlus,
 } from 'lucide-react';
 import { ROLE_LABELS, ROLES, type Role } from '@proteticflow/shared';
+import { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { Large, Muted } from '../shared/typography';
 import { useSettings } from '../../hooks/use-settings';
+import { trpc } from '../../lib/trpc';
 
 interface TeamUsersTableProps {
   showRoleActions?: boolean;
@@ -29,11 +31,40 @@ function getInitials(name: string) {
 export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps) {
   const { overview, updateRole } = useSettings();
   const users = overview.data?.users ?? [];
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<Role>(ROLES.RECEPCAO);
+  const [inviteFeedback, setInviteFeedback] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const inviteMutation = trpc.tenant.invite.useMutation({
+    onSuccess: () => {
+      setInviteError(null);
+      setInviteFeedback('Convite enviado com sucesso.');
+      setInviteEmail('');
+      setInviteRole(ROLES.RECEPCAO);
+      setShowInviteForm(false);
+      void overview.refetch();
+    },
+    onError: (error) => {
+      setInviteFeedback(null);
+      setInviteError(error.message);
+    },
+  });
 
   const handleUpdateRole = async (memberId: number, currentRole: Role) => {
     const nextRole = getNextRole(currentRole);
     if (nextRole === currentRole) return;
     await updateRole.mutateAsync({ memberId, role: nextRole });
+  };
+
+  const handleInvite = () => {
+    setInviteFeedback(null);
+    setInviteError(null);
+    if (!inviteEmail.trim()) {
+      setInviteError('Informe um email valido para convite.');
+      return;
+    }
+    inviteMutation.mutate({ email: inviteEmail.trim(), role: inviteRole });
   };
 
   return (
@@ -52,11 +83,55 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
 
           <button
             type="button"
+            onClick={() => {
+              setInviteFeedback(null);
+              setInviteError(null);
+              setShowInviteForm((value) => !value);
+            }}
             className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-30"
           >
             <UserPlus size={14} strokeWidth={3} /> Convidar Membro
           </button>
         </div>
+
+        {showInviteForm && (
+          <div className="px-8 pb-8">
+            <div className="grid gap-3 rounded-2xl border border-border bg-muted/20 p-4 md:grid-cols-[1fr_auto_auto]">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                placeholder="email@empresa.com"
+                className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground outline-none focus:border-primary/50"
+              />
+              <select
+                value={inviteRole}
+                onChange={(event) => setInviteRole(event.target.value as Role)}
+                className="rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground outline-none focus:border-primary/50"
+              >
+                <option value={ROLES.RECEPCAO}>{ROLE_LABELS[ROLES.RECEPCAO]}</option>
+                <option value={ROLES.PRODUCAO}>{ROLE_LABELS[ROLES.PRODUCAO]}</option>
+                <option value={ROLES.CONTABIL}>{ROLE_LABELS[ROLES.CONTABIL]}</option>
+                <option value={ROLES.GERENTE}>{ROLE_LABELS[ROLES.GERENTE]}</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleInvite}
+                disabled={inviteMutation.isPending}
+                className="rounded-xl bg-primary px-4 py-2 text-[10px] font-black uppercase tracking-widest text-primary-foreground disabled:opacity-40"
+              >
+                {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {inviteFeedback ? (
+          <p className="px-8 pb-3 text-xs font-semibold text-emerald-500">{inviteFeedback}</p>
+        ) : null}
+        {inviteError ? (
+          <p className="px-8 pb-3 text-xs font-semibold text-red-400">Erro: {inviteError}</p>
+        ) : null}
 
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">

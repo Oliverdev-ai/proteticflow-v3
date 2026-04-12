@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 import { eq, and, gt } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
 import { db } from '../../db/index.js';
 import { tenants, tenantMembers, invites } from '../../db/schema/index.js';
 import { users } from '../../db/schema/index.js';
@@ -201,8 +202,18 @@ export async function inviteMember(tenantId: number, invitedBy: number, input: {
     invitedBy,
     expiresAt,
   }).returning();
+  if (!invite) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao gerar convite' });
+  }
 
-  await sendInviteEmail(input.email, token);
+  const emailResult = await sendInviteEmail(input.email, token);
+  if (!emailResult.sent) {
+    await db.delete(invites).where(and(eq(invites.id, invite.id), eq(invites.tenantId, tenantId)));
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'SMTP nao configurado. Configure o SMTP nas Configuracoes para enviar convites.',
+    });
+  }
 
   logger.info({ action: 'tenant.invite', tenantId, email: input.email }, `Link de convite gerado (Fase 16: envio por email). Token: ${token.slice(0, 8)}...`);
   return invite;

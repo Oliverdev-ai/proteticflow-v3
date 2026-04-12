@@ -64,12 +64,14 @@ export default function KanbanTvPage() {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  const settingsQuery = trpc.settings.getSettingsOverview.useQuery();
   const boardQuery = trpc.job.getBoard.useQuery(
     {},
     {
       refetchInterval: 30000,
     },
   );
+  const tenantLogoUrl = settingsQuery.data?.identity.logoUrl ?? null;
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -115,8 +117,7 @@ export default function KanbanTvPage() {
   }
 
   const columns = KANBAN_COLUMNS.filter(
-    (status) =>
-      status !== 'delivered' && status !== 'cancelled' && status !== 'rework_in_progress' && status !== 'suspended',
+    (status) => status !== 'delivered' && status !== 'cancelled',
   );
   const boardColumns = boardQuery.data?.columns ?? [];
 
@@ -125,15 +126,26 @@ export default function KanbanTvPage() {
       {/* Header Premium */}
       <header className="flex items-center justify-between pb-8 border-b border-border/50">
         <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-primary/20 border border-primary/30 rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/20">
-            <Layers3 size={42} className="text-primary" />
+          <div className="w-20 h-20 bg-primary/20 border border-primary/30 rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden">
+            {tenantLogoUrl ? (
+              <img src={tenantLogoUrl} alt="Logo do laboratório" className="h-full w-full object-contain p-2" />
+            ) : (
+              <Layers3 size={42} className="text-primary" />
+            )}
           </div>
           <div>
-            <h1 className="text-5xl font-black tracking-tighter text-white">
-              Protetic<span className="text-primary">Flow</span>
-            </h1>
+            {tenantLogoUrl ? (
+              <h1 className="text-5xl font-black tracking-tighter text-white">Monitor do Laborat�rio</h1>
+            ) : (
+              <h1 className="text-5xl font-black tracking-tighter text-white">
+                Protetic<span className="text-primary">Flow</span>
+              </h1>
+            )}
             <p className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground opacity-60">
               Monitor de Chão de Fábrica
+            </p>
+            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">
+              Powered by ProteticFlow
             </p>
           </div>
         </div>

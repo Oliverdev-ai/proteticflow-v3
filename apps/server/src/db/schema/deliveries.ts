@@ -15,6 +15,8 @@ export const deliveryStatusEnum = pgEnum('delivery_status', [
   'scheduled', 'in_transit', 'delivered', 'failed',
 ]);
 
+export const deliveryStopTypeEnum = pgEnum('delivery_stop_type', ['delivery', 'pickup']);
+
 export const deliverySchedules = pgTable('delivery_schedules', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id').notNull(),
@@ -34,8 +36,10 @@ export const deliveryItems = pgTable('delivery_items', {
   id: serial('id').primaryKey(),
   tenantId: integer('tenant_id').notNull(),
   scheduleId: integer('schedule_id').notNull(),
-  jobId: integer('job_id').notNull(),
+  stopType: deliveryStopTypeEnum('stop_type').default('delivery').notNull(),
+  jobId: integer('job_id'),
   clientId: integer('client_id').notNull(),
+  deliveryAddress: text('delivery_address'),
   status: deliveryStatusEnum('status').default('scheduled').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
   deliveredAt: timestamp('delivered_at', { withTimezone: true }),
