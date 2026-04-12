@@ -57,11 +57,15 @@ function buildClientAddress(client: {
   neighborhood: string | null;
   city: string | null;
   state: string | null;
+  clinic?: string | null;
 }): string | null {
   const parts = [client.street, client.addressNumber, client.neighborhood, client.city, client.state]
     .map((part) => part?.trim())
     .filter((part): part is string => Boolean(part));
-  return parts.length > 0 ? parts.join(', ') : null;
+  if (parts.length > 0) return parts.join(', ');
+
+  const clinicAddress = client.clinic?.trim();
+  return clinicAddress && clinicAddress.length > 0 ? clinicAddress : null;
 }
 
 // â”€â”€â”€ PAD-04: Order Number com SELECT FOR UPDATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -415,6 +419,7 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
 
   const [jobClient] = await db
     .select({
+      clinic: clients.clinic,
       street: clients.street,
       addressNumber: clients.addressNumber,
       neighborhood: clients.neighborhood,

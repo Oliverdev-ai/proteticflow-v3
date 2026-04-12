@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients, pricingTables, priceItems } from '../../db/schema/clients.js';
@@ -273,6 +273,31 @@ describe('Delivery Service', () => {
 
     const { data } = await deliveryService.listSchedules(t2.id, { page: 1, limit: 20 });
     expect(data.length).toBe(0);
+  });
+
+  it('11. Fluxo reverso: item entregue da baixa na OS pronta e gera job log', async () => {
+    const user = await createTestUser('del11@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Del11');
+    const client = await createTestClient(tenant.id, user.id);
+    const job = await createTestJob(tenant.id, client.id, user.id);
+
+    await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id);
+    await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'quality_check' }, user.id);
+    await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'ready' }, user.id);
+
+    const [routeItem] = await db.select().from(deliveryItems).where(eq(deliveryItems.jobId, job.id));
+    expect(routeItem).toBeDefined();
+
+    await deliveryService.updateItemStatus(tenant.id, { itemId: routeItem!.id, status: 'delivered' }, user.id);
+
+    const [updatedJob] = await db.select().from(jobs).where(eq(jobs.id, job.id));
+    expect(updatedJob?.status).toBe('delivered');
+    expect(updatedJob?.deliveredAt).not.toBeNull();
+
+    const logs = await db.select().from(jobLogs).where(eq(jobLogs.jobId, job.id));
+    const autoBaixaLog = logs.find((log) => log.fromStatus === 'ready' && log.toStatus === 'delivered');
+    expect(autoBaixaLog).toBeDefined();
+    expect(autoBaixaLog?.notes).toContain('Baixa automatica');
   });
 });
 

@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, sql, desc, inArray } from 'drizzle-orm';
+import { eq, and, gte, lte, sql, desc, inArray, isNull } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { deliverySchedules, deliveryItems } from '../../db/schema/deliveries.js';
 import { jobs, jobLogs } from '../../db/schema/jobs.js';
@@ -18,6 +18,7 @@ type JsPdfDoc = jsPDF & {
 };
 
 function buildClientAddress(client: {
+  clinic?: string | null;
   street: string | null;
   addressNumber: string | null;
   neighborhood: string | null;
@@ -27,7 +28,10 @@ function buildClientAddress(client: {
   const address = [client.street, client.addressNumber, client.neighborhood, client.city, client.state]
     .map((part) => part?.trim())
     .filter((part): part is string => Boolean(part));
-  return address.length > 0 ? address.join(', ') : null;
+  if (address.length > 0) return address.join(', ');
+
+  const clinicAddress = client.clinic?.trim();
+  return clinicAddress && clinicAddress.length > 0 ? clinicAddress : null;
 }
 
 // ─── Criar Roteiro de Entrega ─────────────────────────────────────────────────
@@ -181,6 +185,7 @@ export async function updateItemStatus(tenantId: number, input: UpdateDeliveryIt
     if (!existing.deliveryAddress) {
       const [client] = await tx
         .select({
+          clinic: clients.clinic,
           street: clients.street,
           addressNumber: clients.addressNumber,
           neighborhood: clients.neighborhood,
@@ -211,14 +216,14 @@ export async function updateItemStatus(tenantId: number, input: UpdateDeliveryIt
       const [job] = await tx
         .select({ id: jobs.id, status: jobs.status })
         .from(jobs)
-        .where(and(eq(jobs.id, existing.jobId), eq(jobs.tenantId, tenantId)));
+        .where(and(eq(jobs.id, existing.jobId), eq(jobs.tenantId, tenantId), isNull(jobs.deletedAt)));
 
       if (job && job.status === 'ready') {
         const now = new Date();
         await tx
           .update(jobs)
           .set({ status: 'delivered', deliveredAt: now, updatedAt: now })
-          .where(and(eq(jobs.id, job.id), eq(jobs.tenantId, tenantId)));
+          .where(and(eq(jobs.id, job.id), eq(jobs.tenantId, tenantId), isNull(jobs.deletedAt)));
 
         await tx.insert(jobLogs).values({
           tenantId,

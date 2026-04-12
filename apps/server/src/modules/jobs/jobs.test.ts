@@ -3,6 +3,7 @@ import { db } from '../../db/index.js';
 import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
+import { deliveryItems } from '../../db/schema/deliveries.js';
 import { eq, sql } from 'drizzle-orm';
 import { hashPassword } from '../../core/auth.js';
 import * as jobService from './service.js';
@@ -445,5 +446,31 @@ describe('OS Blocks — Logs, Sync & Resolution', () => {
     await jobService.changeStatus(t.id, { jobId: job.id, newStatus: 'quality_check' }, u.id);
     const updated = await jobService.changeStatus(t.id, { jobId: job.id, newStatus: 'ready' }, u.id);
     expect(updated?.status).toBe('ready');
+  });
+
+  it('T07: auto-insert em ready preenche deliveryAddress com endereco da clinica quando disponivel', async () => {
+    const u = await createTestUser('t07@test.com');
+    const t = await createTestTenant(u.id, 'T07');
+    const { createClient } = await import('../clients/service.js');
+    const c = await createClient(t.id, {
+      name: 'Clinica T07',
+      clinic: 'Av. Brasil, 1000',
+      priceAdjustmentPercent: 0,
+    }, u.id);
+    if (!c) throw new Error('Falha ao criar cliente para T07');
+
+    const job = await jobService.createJob(t.id, {
+      clientId: c.id,
+      deadline: new Date(Date.now() + 86400000).toISOString(),
+      items: [baseItem],
+    }, u.id);
+
+    await jobService.changeStatus(t.id, { jobId: job.id, newStatus: 'in_progress' }, u.id);
+    await jobService.changeStatus(t.id, { jobId: job.id, newStatus: 'quality_check' }, u.id);
+    await jobService.changeStatus(t.id, { jobId: job.id, newStatus: 'ready' }, u.id);
+
+    const [deliveryItem] = await db.select().from(deliveryItems).where(eq(deliveryItems.jobId, job.id));
+    expect(deliveryItem).toBeDefined();
+    expect(deliveryItem?.deliveryAddress).toBe('Av. Brasil, 1000');
   });
 });
