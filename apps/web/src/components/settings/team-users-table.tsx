@@ -39,7 +39,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
   const inviteMutation = trpc.tenant.invite.useMutation({
     onSuccess: () => {
       setInviteError(null);
-      setInviteFeedback('Convite enviado com sucesso.');
+      setInviteFeedback('Convite enviado com sucesso por e-mail.');
       setInviteEmail('');
       setInviteRole(ROLES.RECEPCAO);
       setShowInviteForm(false);
@@ -47,7 +47,11 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
     },
     onError: (error) => {
       setInviteFeedback(null);
-      setInviteError(error.message);
+      setInviteError(
+        error.message.includes('SMTP')
+          ? `${error.message} Verifique Configurações > Laboratório > SMTP.`
+          : error.message,
+      );
     },
   });
 
