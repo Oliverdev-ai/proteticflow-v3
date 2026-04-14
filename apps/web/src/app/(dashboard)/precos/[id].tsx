@@ -12,6 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
+import { formatBRLInput, parseBRL } from '@proteticflow/shared';
 
 function formatCents(c: number) {
   return (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -350,7 +351,7 @@ export default function PricingTableDetailPage() {
               <div key={f}>
                 <label className="block text-xs text-zinc-400 mb-1.5 capitalize">
                   {f === 'priceCents'
-                    ? 'Preço (centavos)'
+                    ? 'Preço (R$)'
                     : f === 'estimatedDays'
                       ? 'Prazo (dias)'
                       : f}
@@ -358,7 +359,9 @@ export default function PricingTableDetailPage() {
                 <input
                   value={newItem[f as keyof typeof newItem]}
                   onChange={(e) => setNewItem((prev) => ({ ...prev, [f]: e.target.value }))}
-                  type={['priceCents', 'estimatedDays'].includes(f) ? 'number' : 'text'}
+                  type={f === 'estimatedDays' ? 'number' : 'text'}
+                  inputMode={f === 'priceCents' ? 'decimal' : undefined}
+                  placeholder={f === 'priceCents' ? formatBRLInput(0) : undefined}
                   className="input-field w-full"
                 />
               </div>
@@ -386,7 +389,7 @@ export default function PricingTableDetailPage() {
                     name: newItem.name,
                     code: newItem.code || undefined,
                     category: newItem.category,
-                    priceCents: parseInt(newItem.priceCents, 10),
+                    priceCents: parseBRL(newItem.priceCents),
                     estimatedDays: parseInt(newItem.estimatedDays, 10) || 5,
                   })
                 }

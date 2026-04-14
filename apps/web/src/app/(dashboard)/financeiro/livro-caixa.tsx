@@ -20,6 +20,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
@@ -502,7 +503,7 @@ export default function LivroCaixaPage() {
                   onClick={() =>
                     createEntry.mutate({
                       type: form.type,
-                      amountCents: Math.round(parseFloat(form.amountCents) * 100),
+                      amountCents: parseBRL(form.amountCents),
                       description: form.description,
                       referenceDate: new Date(`${form.referenceDate}T12:00:00`).toISOString(),
                     })
