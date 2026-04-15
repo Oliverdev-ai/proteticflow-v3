@@ -69,7 +69,9 @@ export async function createTenant(
   },
 ) {
   const slug = await generateUniqueSlug(input.name);
-  const planExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+  const now = new Date();
+  const fullAccessUntil = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const planExpiresAt = fullAccessUntil;
 
   const tenant = await db.transaction(async (tx) => {
     const tenantData: typeof tenants.$inferInsert = {
@@ -77,7 +79,10 @@ export async function createTenant(
       slug,
       plan: 'trial',
       planExpiresAt,
+      fullAccessUntil,
       userCount: 1,
+      managerActionsThisMonth: 0,
+      managerActionsMonthRef: now,
     };
     if (input.cnpj !== undefined) tenantData.cnpj = input.cnpj;
     if (input.phone !== undefined) tenantData.phone = input.phone;
@@ -372,3 +377,5 @@ export async function removeMember(tenantId: number, memberId: number): Promise<
 
   logger.info({ action: 'tenant.member.removed', tenantId, memberId }, 'Membro removido do tenant');
 }
+
+

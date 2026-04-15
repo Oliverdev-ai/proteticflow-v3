@@ -58,3 +58,34 @@ export const upsertTemplateSchema = z.object({
   body: z.string().min(1),
   isActive: z.boolean().default(true),
 });
+
+export const supportSuggestionCategorySchema = z.enum([
+  'product',
+  'ux',
+  'performance',
+  'financial',
+  'support',
+  'other',
+]);
+
+export const supportSuggestionImpactSchema = z.enum(['low', 'medium', 'high']);
+
+export const supportSuggestionStatusSchema = z.enum([
+  'received',
+  'reviewing',
+  'implemented',
+  'rejected',
+]);
+
+export const createSupportSuggestionSchema = z.object({
+  title: z.string().min(3).max(140),
+  description: z.string().min(10).max(4000),
+  category: supportSuggestionCategorySchema,
+  perceivedImpact: supportSuggestionImpactSchema,
+});
+
+export const listSupportSuggestionsSchema = z.object({
+  status: supportSuggestionStatusSchema.optional(),
+  limit: z.number().int().min(1).max(100).default(20),
+  cursor: z.number().int().positive().optional(),
+});

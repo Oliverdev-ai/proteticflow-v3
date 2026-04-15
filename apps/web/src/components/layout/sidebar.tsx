@@ -64,6 +64,7 @@ const ICONS = {
   '/flow-ia': Sparkles,
   '/ia-avancada': Brain,
   '/suporte/tickets': Headphones,
+  '/suporte/sugestoes': Headphones,
   '/configuracoes': Settings,
   '/auditoria': Shield,
 } as const;
@@ -188,4 +189,5 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile, onToggleCollapse
     </>
   );
 }
+
 

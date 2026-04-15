@@ -50,3 +50,28 @@ export type AutoResponseTemplate = {
   body: string;
   isActive: boolean;
 };
+
+export type SupportSuggestionCategory =
+  | 'product'
+  | 'ux'
+  | 'performance'
+  | 'financial'
+  | 'support'
+  | 'other';
+
+export type SupportSuggestionImpact = 'low' | 'medium' | 'high';
+
+export type SupportSuggestionStatus = 'received' | 'reviewing' | 'implemented' | 'rejected';
+
+export type SupportSuggestion = {
+  id: number;
+  tenantId: number;
+  authorUserId: number;
+  title: string;
+  description: string;
+  category: SupportSuggestionCategory;
+  perceivedImpact: SupportSuggestionImpact;
+  status: SupportSuggestionStatus;
+  createdAt: string;
+  updatedAt: string;
+};

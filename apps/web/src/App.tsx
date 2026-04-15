@@ -72,6 +72,7 @@ const FlowIAPage = lazy(() => import('./app/(dashboard)/flow-ia'));
 const IAAvancadaPage = lazy(() => import('./app/(dashboard)/ia-avancada'));
 const TicketsPage = lazy(() => import('./app/(dashboard)/suporte/tickets'));
 const ChatbotConfigPage = lazy(() => import('./app/(dashboard)/suporte/chatbot-config'));
+const SupportSuggestionsPage = lazy(() => import('./app/(dashboard)/suporte/sugestoes'));
 const AuditPage = lazy(() => import('./app/(dashboard)/auditoria/index'));
 const DashboardPage = lazy(() => import('./app/(dashboard)/dashboard'));
 
@@ -160,6 +161,7 @@ function AppContent() {
             <Route path="/ia-avancada" element={<IAAvancadaPage />} />
             <Route path="/suporte/tickets" element={<TicketsPage />} />
             <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
+            <Route path="/suporte/sugestoes" element={<SupportSuggestionsPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
             <Route path="/auditoria" element={<AuditPage />} />
           </Route>
@@ -188,3 +190,5 @@ export default function App() {
     </trpc.Provider>
   );
 }
+
+
