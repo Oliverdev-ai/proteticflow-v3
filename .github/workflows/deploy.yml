@@ -40,8 +40,7 @@ jobs:
           file: ./docker/Dockerfile.server
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:staging
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          provenance: false
 
   deploy-production:
     name: Deploy to Production
@@ -71,22 +70,22 @@ jobs:
           context: .
           file: ./docker/Dockerfile.server
           push: true
+          provenance: false
           tags: |
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+
       - name: Build and push web image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/Dockerfile.web
           push: true
+          provenance: false
           tags: |
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/web:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/web:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
