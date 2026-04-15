@@ -2,7 +2,13 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { ZodError } from 'zod';
 import { db } from '../db/index.js';
-import { tenantMembers, tenants } from '../db/schema/tenants.js';
+import { tenantMembers } from '../db/schema/tenants.js';
+import {
+  checkAiAccess,
+  checkFeatureAccess,
+  checkManagerActionLimit,
+  consumeManagerAction,
+} from '../modules/licensing/service.js';
 import type { TrpcContext } from './context.js';
 
 const t = initTRPC.context<TrpcContext>().create({
@@ -30,9 +36,6 @@ const enforceAuth = t.middleware(({ ctx, next }) => {
 
 export const protectedProcedure = t.procedure.use(enforceAuth);
 
-// Garante que o usuário está autenticado E tem um tenant ativo.
-// REGRA FASE 3+: toda procedure de negócio usa tenantProcedure (ou adminProcedure/licensedProcedure).
-// NUNCA usar protectedProcedure diretamente em modules de negócio.
 const enforceTenant = t.middleware(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -40,14 +43,14 @@ const enforceTenant = t.middleware(({ ctx, next }) => {
   if (!ctx.tenantId || ctx.tenantId === 0) {
     throw new TRPCError({
       code: 'PRECONDITION_FAILED',
-      message: 'Selecione um laboratório antes de continuar',
+      message: 'Selecione um laboratorio antes de continuar',
     });
   }
   return next({
     ctx: {
       ...ctx,
       user: ctx.user,
-      tenantId: ctx.tenantId, // non-nullable a partir daqui
+      tenantId: ctx.tenantId,
     },
   });
 });
@@ -80,18 +83,39 @@ const enforceNotBlocked = t.middleware(async ({ ctx, next }) => {
   return next({ ctx });
 });
 
-export const tenantProcedure = t.procedure.use(enforceAuth).use(enforceTenant).use(enforceNotBlocked);
+const ACTION_LIMIT_EXEMPT_PATHS = new Set([
+  'licensing.createCheckoutSession',
+  'licensing.createBillingPortalSession',
+  'licensing.adminUpdatePlan',
+]);
+
+const enforceManagerActions = t.middleware(async ({ ctx, path, type, next }) => {
+  if (!ctx.tenantId || type !== 'mutation' || ACTION_LIMIT_EXEMPT_PATHS.has(path)) {
+    return next({ ctx });
+  }
+
+  await checkManagerActionLimit(ctx.tenantId);
+  const result = await next({ ctx });
+  await consumeManagerAction(ctx.tenantId);
+  return result;
+});
+
+export const tenantProcedure = t.procedure
+  .use(enforceAuth)
+  .use(enforceTenant)
+  .use(enforceNotBlocked)
+  .use(enforceManagerActions);
 
 const enforceAdmin = t.middleware(async ({ ctx, next }) => {
   if (!ctx.user || !ctx.tenantId) throw new TRPCError({ code: 'UNAUTHORIZED' });
-  
+
   const [member] = await db
     .select({ role: tenantMembers.role })
     .from(tenantMembers)
     .where(and(
       eq(tenantMembers.tenantId, ctx.tenantId),
       eq(tenantMembers.userId, ctx.user.id),
-      eq(tenantMembers.isActive, true)
+      eq(tenantMembers.isActive, true),
     ))
     .limit(1);
 
@@ -112,7 +136,7 @@ const enforceSuperadmin = t.middleware(async ({ ctx, next }) => {
     .where(and(
       eq(tenantMembers.tenantId, ctx.tenantId),
       eq(tenantMembers.userId, ctx.user.id),
-      eq(tenantMembers.isActive, true)
+      eq(tenantMembers.isActive, true),
     ))
     .limit(1);
 
@@ -127,28 +151,50 @@ const enforceSuperadmin = t.middleware(async ({ ctx, next }) => {
 
 export const superadminProcedure = protectedProcedure.use(enforceSuperadmin);
 
-const enforceLicense = t.middleware(async ({ ctx, next }) => {
-  if (!ctx.tenantId) {
-    throw new TRPCError({ code: 'PRECONDITION_FAILED' });
-  }
+const enforceLicense = t.middleware(async ({ ctx, next }) => next({ ctx }));
 
-  const [tenant] = await db
-    .select({ plan: tenants.plan, planExpiresAt: tenants.planExpiresAt })
-    .from(tenants)
-    .where(eq(tenants.id, ctx.tenantId))
-    .limit(1);
+const enforceFinancial = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.tenantId) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+  await checkFeatureAccess(ctx.tenantId, 'financial');
+  return next({ ctx });
+});
 
-  if (tenant?.plan === 'trial' && tenant.planExpiresAt && tenant.planExpiresAt < new Date()) {
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: 'Periodo de trial encerrado. Faca upgrade para continuar.',
-    });
-  }
+const enforceReports = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.tenantId) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+  await checkFeatureAccess(ctx.tenantId, 'reports');
+  return next({ ctx });
+});
 
+const enforceAiBasic = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.tenantId) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+  await checkAiAccess(ctx.tenantId, 'basic');
+  return next({ ctx });
+});
+
+const enforceAiFull = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.tenantId) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+  await checkAiAccess(ctx.tenantId, 'full');
+  return next({ ctx });
+});
+
+const enforceVoiceCommands = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.tenantId) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+  await checkFeatureAccess(ctx.tenantId, 'voiceCommands');
   return next({ ctx });
 });
 
 export const licensedProcedure = tenantProcedure.use(enforceLicense);
+export const financialProcedure = tenantProcedure.use(enforceFinancial);
+export const financialAdminProcedure = adminProcedure.use(enforceFinancial);
+export const reportsProcedure = tenantProcedure.use(enforceReports);
+export const reportsAdminProcedure = adminProcedure.use(enforceReports);
+export const aiProcedure = tenantProcedure.use(enforceAiBasic);
+export const aiAdminProcedure = adminProcedure.use(enforceAiBasic);
+export const aiFullProcedure = tenantProcedure.use(enforceAiFull);
+export const aiFullAdminProcedure = adminProcedure.use(enforceAiFull);
+export const voiceProcedure = tenantProcedure.use(enforceVoiceCommands);
+export const voiceAdminProcedure = adminProcedure.use(enforceVoiceCommands);
 
 export { t };
+
 

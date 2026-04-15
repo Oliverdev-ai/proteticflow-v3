@@ -8,6 +8,10 @@ import type { z } from 'zod';
 
 type FormData = z.input<typeof createEmployeeSchema>;
 
+function dateInputToIso(value: string) {
+  return value ? new Date(`${value}T12:00:00`).toISOString() : null;
+}
+
 export default function EmployeeCreatePage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
@@ -102,7 +106,13 @@ export default function EmployeeCreatePage() {
                 </div>
                 <div>
                   <label className="block text-xs text-zinc-400 mb-1.5">Nascimento</label>
-                  <input {...register('birthDate')} type="date" className="input-field w-full" />
+                  <input
+                    {...register('birthDate', {
+                      setValueAs: dateInputToIso,
+                    })}
+                    type="date"
+                    className="input-field w-full"
+                  />
                 </div>
               </div>
             </div>
@@ -204,7 +214,13 @@ export default function EmployeeCreatePage() {
               </div>
               <div>
                 <label className="block text-xs text-zinc-400 mb-1.5">Data de Admissão</label>
-                <input {...register('admissionDate')} type="date" className="input-field w-full" />
+                <input
+                  {...register('admissionDate', {
+                    setValueAs: dateInputToIso,
+                  })}
+                  type="date"
+                  className="input-field w-full"
+                />
               </div>
             </div>
           </section>

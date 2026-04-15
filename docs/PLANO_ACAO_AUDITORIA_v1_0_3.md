@@ -2,7 +2,7 @@
 **Data:** 2026-04-10
 **Base:** Testes de usuario final em ambiente local (Auditoria Humana.md)
 **Fonte de verdade desta rodada:** a auditoria humana prevalece sobre PRDs e documentos historicos sempre que houver conflito entre documentacao anterior e comportamento validado em uso real. Depois dos fixes, os documentos estruturais devem ser atualizados para refletir a operacao correta.
-**Total de issues:** 39 itens organizados em 4 sprints
+**Total de issues:** 40 itens organizados em 4 sprints
 
 ---
 
@@ -76,30 +76,31 @@ A maioria dos backends existe, mas a entrega real ainda quebra em 4 frentes:
 
 ---
 
-## SPRINT 4 — PLANOS E LIMITES (Feature nova estrategica)
+## SPRINT 4 - PLANOS E LIMITES (Feature nova estrategica)
 **Estimativa:** 2-3 dias | **Impacto:** necessario para monetizacao
 
 | # | Modulo | Issue | Acao |
 |---|--------|-------|------|
-| 36 | PLANOS | TRIAL - 7 dias de acesso total; depois vira freemium ultra-restrito (nao e lugar para ficar, so para conhecer) | Modelar o `trial` em 2 janelas: `fullAccessDays: 7`; depois aplicar `{ labs: 1, clients: 2, jobsPerMonth: 10, priceTables: 1, priceTableItems: 10, aiEnabled: false, managerActionsPerMonth: 10, hasFinancial: false, hasReports: false }`. **Sem IA de nenhuma forma** (Flow IA bloqueado, comandos de voz bloqueados, sugestoes IA bloqueadas). **Limite total de 10 acoes de escrita no gerenciador por mes** (criar cliente, criar OS, editar, etc. contam para o mesmo balde), contador mensal com reset no dia 1. Posicionamento: demo restrita, nao operacional |
-| 37 | PLANOS | STARTER - 30 dias de acesso total; depois voltar ao plano contratado | Modelar `starter` com `fullAccessDays: 30`; depois aplicar `{ labs: 1, clients: 10, jobsPerMonth: 50, users: 3, priceTables: 2, aiBasic: true, voiceCommands: false }` |
-| 38 | PLANOS | PRO - 30 dias de acesso total; depois voltar ao plano contratado | Modelar `pro` com `fullAccessDays: 30`; depois aplicar `{ labs: 2, clients: 50, jobsPerMonth: 200, voiceCommands: true }` |
-| 39 | PLANOS | ENTERPRISE - manter como esta | Garantir que `enterprise` continue sem a reducao pos-degustacao e sem limites adicionais alem dos ja definidos pelo produto |
+| 36 | PLANOS | TRIAL - 14 dias de acesso total; depois vira freemium ultra-restrito (demo, nao operacional) | Modelar o `trial` em 2 janelas: `fullAccessDays: 14`; depois aplicar `{ labs: 1, clients: 10, jobsPerMonth: 10, users: 1, priceTables: 1, aiEnabled: false, managerActionsPerMonth: 10, hasFinancial: false, hasReports: false }`. Sem IA de nenhuma forma (Flow IA bloqueado, comandos de voz bloqueados, sugestoes IA bloqueadas). Limite total de 10 acoes de escrita no gerenciador por mes (criar cliente, criar OS, editar etc. contam no mesmo balde), reset mensal no dia 1 |
+| 37 | PLANOS | STARTER - 30 dias de acesso total; depois volta ao plano contratado | Modelar `starter` com `fullAccessDays: 30`; depois aplicar `{ labs: 1, clients: 20, jobsPerMonth: 100, users: 3, priceTables: 2, ai: basic, voiceCommands: false, managerActionsPerMonth: null, hasFinancial: true, hasReports: true }` |
+| 38 | PLANOS | PRO - 30 dias de acesso total; depois volta ao plano contratado | Modelar `pro` com `fullAccessDays: 30`; depois aplicar `{ labs: 3, clients: 50, jobsPerMonth: 300, users: 10, priceTables: 5, ai: full, voiceCommands: true, managerActionsPerMonth: null, hasFinancial: true, hasReports: true }` |
+| 39 | PLANOS | ENTERPRISE - ilimitado | Garantir `enterprise` sem limites de uso (labs/clientes/jobs/usuarios/tabelas), IA completa + voz, financeiro completo, relatorios completos e sem janela de reducao pos-degustacao |
+| 40 | SUPORTE | Adicionar canal de sugestoes de usuarios | Criar secao dedicada em `Suporte` para receber sugestoes: formulario com titulo, descricao, categoria e impacto percebido; listagem das sugestoes enviadas pelo tenant; status inicial `recebida`; auditoria de autor/data; endpoint e UI conectados no fluxo de suporte |
 
-**Implementacao:** atualizar seed de planos e licensing, armazenar a janela promocional de acesso total (`fullAccessUntil` ou equivalente), ajustar `licensedProcedure` para aplicar a regra correta antes e depois da degustacao, criar contador `managerActionsThisMonth` no trial pos-7d (reset dia 1), bloquear rotas de IA via flag `aiEnabled:false`, banners de expiracao/promocao e feature gating no frontend.
+**Implementacao:** atualizar seed de planos e licensing, armazenar a janela promocional de acesso total (`fullAccessUntil` ou equivalente) por tenant/plano, ajustar `licensedProcedure` (ou middleware de licenca) para aplicar a regra correta antes e depois da degustacao, criar/usar contador `managerActionsThisMonth` para trial pos-14d (reset no dia 1), bloquear rotas de IA quando `aiEnabled:false`, e aplicar feature gating de financeiro/relatorios no backend e frontend.
 
-**Posicionamento do TRIAL:** nao e plano operacional. E uma janela de 7 dias com tudo aberto para conhecer o produto, seguida de um freemium draconiano (10 acoes/mes + zero IA) que existe apenas para manter o usuario no sistema ate decidir contratar. Quem quiser operar o laboratorio precisa assinar. Mensagem do banner pos-7d deve ser clara: "o modo demo so permite 10 acoes por mes e nao inclui IA — assine Starter/Pro para usar de verdade".
+**Posicionamento do TRIAL:** e uma janela de 14 dias com tudo liberado para experimentacao. Apos esse periodo, o modo demo permanece altamente restrito (10 acoes/mes e sem IA/financeiro/relatorios), servindo apenas para continuidade minima ate conversao em plano pago.
 
-**Estrategia comercial — "deixar provar o doce":** a janela de acesso total (7 dias no trial, 30 dias nos pagantes) existe para penetracao de mercado. No trial, o objetivo e converter para pago antes do corte. Nos pagantes, o usuario conhece o sistema completo antes de cair nos limites do plano contratado — isso aumenta retencao e reduz churn dos primeiros meses (ancoragem de valor). `licensedProcedure` deve respeitar a janela sem excecao e os banners devem ser transparentes sobre quando os limites entram em vigor — nao esconder a data de corte.
+**Estrategia comercial - "deixar provar o doce":** acesso total temporario em todos os planos de entrada (14 dias no trial, 30 dias no starter e pro) para demonstrar valor completo antes da volta aos limites contratados. Transparencia obrigatoria em banner sobre data de corte e limites aplicados apos a janela.
 
 **Resumo dos limites pos-degustacao:**
 
 | Plano | Labs | Clientes | Jobs/mes | Usuarios | Tabelas | IA | Acoes/mes | Financeiro | Relatorios |
 |-------|------|----------|----------|----------|---------|-----|-----------|------------|------------|
-| TRIAL (pos 7d — freemium demo) | 1 | 2 | 10 | — | 1 (10 itens) | ❌ nenhuma | 10 totais | ❌ | ❌ |
-| STARTER (pos 30d) | 1 | 10 | 50 | 3 | 2 | basica, sem voz | ilimitado | ✅ | ✅ |
-| PRO (pos 30d) | 2 | 50 | 200 | — | — | completa + voz | ilimitado | ✅ | ✅ |
-| ENTERPRISE | sem alteracao | — | — | — | — | — | — | — | — |
+| TRIAL (pos 14d - demo) | 1 | 10 | 10 | 1 | 1 | nao | 10 totais | nao | nao |
+| STARTER (pos 30d) | 1 | 20 | 100 | 3 | 2 | basica, sem voz | ilimitado | sim | sim |
+| PRO (pos 30d) | 3 | 50 | 300 | 10 | 5 | completa + voz | ilimitado | sim | sim |
+| ENTERPRISE | ilimitado | ilimitado | ilimitado | ilimitado | ilimitado | completa + voz | ilimitado | sim | sim |
 
 ---
 
@@ -129,7 +130,7 @@ A maioria dos backends existe, mas a entrega real ainda quebra em 4 frentes:
 Semana 1: Sprint 1 (items 1-8)  — desbloqueia uso real
 Semana 2: Sprint 2 (items 9-22) - comecar pelo Padrao A (PDF)
 Semana 3: Sprint 3 (items 23-35) - polimento UX e coerencia operacional
-Semana 4: Sprint 4 (items 36-39) - licenciamento e estrategia comercial
+Semana 4: Sprint 4 (items 36-40) - licenciamento, estrategia comercial e canal de sugestoes
 ```
 
 Ao final de cada sprint: tag + deploy (`v1.0.3`, `v1.0.4`, etc.) somente depois da auditoria da sprint.

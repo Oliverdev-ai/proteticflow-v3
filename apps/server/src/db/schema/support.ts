@@ -128,3 +128,32 @@ export const ticketMessages = pgTable('ticket_messages', {
   index('ticket_msg_ticket_idx').on(table.ticketId),
   index('ticket_msg_tenant_idx').on(table.tenantId),
 ]);
+
+export const supportSuggestionStatusEnum = pgEnum('support_suggestion_status', [
+  'received',
+  'reviewing',
+  'implemented',
+  'rejected',
+]);
+
+export const supportSuggestionImpactEnum = pgEnum('support_suggestion_impact', [
+  'low',
+  'medium',
+  'high',
+]);
+
+export const supportSuggestions = pgTable('support_suggestions', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id),
+  authorUserId: integer('author_user_id').notNull().references(() => users.id),
+  title: varchar('title', { length: 140 }).notNull(),
+  description: text('description').notNull(),
+  category: varchar('category', { length: 64 }).notNull(),
+  perceivedImpact: supportSuggestionImpactEnum('perceived_impact').notNull(),
+  status: supportSuggestionStatusEnum('status').default('received').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('support_suggestions_tenant_idx').on(table.tenantId),
+  index('support_suggestions_status_idx').on(table.tenantId, table.status),
+]);

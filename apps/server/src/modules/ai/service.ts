@@ -713,7 +713,6 @@ function normalizeFieldType(field: string): 'number' | 'boolean' | 'text' {
 function humanizeFieldLabel(field: string): string {
   const labels: Record<string, string> = {
     jobId: 'ID da OS',
-    originalJobId: 'ID da OS original',
     clientId: 'ID do cliente',
     serviceId: 'ID do servico',
     materialId: 'ID do material',

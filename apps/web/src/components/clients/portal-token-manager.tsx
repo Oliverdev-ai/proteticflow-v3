@@ -11,6 +11,8 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
   const [email, setEmail] = useState('');
   const [latestPortalUrl, setLatestPortalUrl] = useState<string | null>(null);
   // Armazena token bruto por tokenId — disponível apenas na sessão de criação
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [rawTokenById, setRawTokenById] = useState<Map<number, string>>(new Map());
 
   const listQuery = trpc.portal.listTokensByClient.useQuery({ clientId });
@@ -34,7 +36,16 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
     },
   });
 
-  const sendMutation = trpc.portal.sendPortalLink.useMutation();
+  const sendMutation = trpc.portal.sendPortalLink.useMutation({
+    onSuccess: () => {
+      setInviteError(null);
+      setInviteSuccess('Convite digital enviado com sucesso.');
+    },
+    onError: (error) => {
+      setInviteSuccess(null);
+      setInviteError(error.message);
+    },
+  });
 
   const tokens = useMemo(() => listQuery.data ?? [], [listQuery.data]);
 
@@ -93,6 +104,8 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
                       disabled={!email || sendMutation.isPending}
                       onClick={() => {
                         if (email) {
+                          setInviteSuccess(null);
+                          setInviteError(null);
                           sendMutation.mutate({ tokenId: token.id, email, token: rawToken });
                         }
                       }}
@@ -131,7 +144,14 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
           className="input-field w-full md:w-80"
         />
         <p className="text-xs text-zinc-500 mt-2">Usado na acao de enviar link por email.</p>
+        {inviteSuccess ? (
+          <p className="text-xs text-emerald-400 mt-2">{inviteSuccess}</p>
+        ) : null}
+        {inviteError ? (
+          <p className="text-xs text-red-400 mt-2">Erro ao enviar convite: {inviteError}</p>
+        ) : null}
       </section>
     </div>
   );
 }
+

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Download, FileSpreadsheet } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
+import { downloadBase64Artifact } from '../../lib/pdf-export';
 
 export type FiscalReportId = 'fiscal-revenue' | 'fiscal-expenses' | 'fiscal-dre';
 
@@ -15,15 +16,6 @@ type ExportFormat = 'csv' | 'pdf';
 
 function toIsoRange(date: string, mode: 'start' | 'end'): string {
   return new Date(`${date}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();
-}
-
-function downloadBase64(filename: string, mimeType: string, base64: string) {
-  const link = document.createElement('a');
-  link.href = `data:${mimeType};base64,${base64}`;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 export function ExportButtons({ reportId, startDate, endDate, disabled = false }: ExportButtonsProps) {
@@ -48,7 +40,7 @@ export function ExportButtons({ reportId, startDate, endDate, disabled = false }
           ? await utils.reports.exportCSV.fetch(input)
           : await utils.reports.exportPDF.fetch(input);
 
-      downloadBase64(artifact.filename, artifact.mimeType, artifact.base64);
+      downloadBase64Artifact(artifact);
     } finally {
       setLoading(null);
     }

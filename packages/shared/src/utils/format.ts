@@ -10,6 +10,25 @@ export function formatCurrency(cents: number): string {
 }
 
 /**
+ * "R$ 150,00" -> 15000 (centavos)
+ */
+export function parseBRL(value: string): number {
+  const normalized = value
+    .replace(/[R$\s]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  const parsed = Number.parseFloat(normalized || '0');
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
+}
+
+/**
+ * 15000 -> "150,00" (para exibir em input)
+ */
+export function formatBRLInput(cents: number): string {
+  return (cents / 100).toFixed(2).replace('.', ',');
+}
+
+/**
  * Formata data ISO para pt-BR
  * Ex: "2024-01-15" → "15/01/2024"
  */

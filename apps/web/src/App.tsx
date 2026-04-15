@@ -42,6 +42,7 @@ const DeliveryListPage = lazy(() => import('./app/(dashboard)/entregas/index'));
 const DeliveryDetailPage = lazy(() => import('./app/(dashboard)/entregas/[id]'));
 const InventoryDashboard = lazy(() => import('./app/(dashboard)/estoque/index'));
 const MaterialsPage = lazy(() => import('./app/(dashboard)/estoque/materiais'));
+const MaterialDetailPage = lazy(() => import('./app/(dashboard)/estoque/material/[id]'));
 const SuppliersPage = lazy(() => import('./app/(dashboard)/estoque/fornecedores'));
 const PurchaseOrdersPage = lazy(() => import('./app/(dashboard)/estoque/ordens-compra'));
 const PODetailPage = lazy(() => import('./app/(dashboard)/estoque/oc/[id]'));
@@ -71,6 +72,7 @@ const FlowIAPage = lazy(() => import('./app/(dashboard)/flow-ia'));
 const IAAvancadaPage = lazy(() => import('./app/(dashboard)/ia-avancada'));
 const TicketsPage = lazy(() => import('./app/(dashboard)/suporte/tickets'));
 const ChatbotConfigPage = lazy(() => import('./app/(dashboard)/suporte/chatbot-config'));
+const SupportSuggestionsPage = lazy(() => import('./app/(dashboard)/suporte/sugestoes'));
 const AuditPage = lazy(() => import('./app/(dashboard)/auditoria/index'));
 const DashboardPage = lazy(() => import('./app/(dashboard)/dashboard'));
 
@@ -124,6 +126,7 @@ function AppContent() {
 
             <Route path="/estoque" element={<InventoryDashboard />} />
             <Route path="/estoque/materiais" element={<MaterialsPage />} />
+            <Route path="/estoque/material/:id" element={<MaterialDetailPage />} />
             <Route path="/estoque/fornecedores" element={<SuppliersPage />} />
             <Route path="/estoque/ordens-compra" element={<PurchaseOrdersPage />} />
             <Route path="/estoque/oc/:id" element={<PODetailPage />} />
@@ -158,6 +161,7 @@ function AppContent() {
             <Route path="/ia-avancada" element={<IAAvancadaPage />} />
             <Route path="/suporte/tickets" element={<TicketsPage />} />
             <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
+            <Route path="/suporte/sugestoes" element={<SupportSuggestionsPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
             <Route path="/auditoria" element={<AuditPage />} />
           </Route>
@@ -186,3 +190,5 @@ export default function App() {
     </trpc.Provider>
   );
 }
+
+

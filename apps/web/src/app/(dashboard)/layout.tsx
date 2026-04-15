@@ -4,15 +4,15 @@ import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
 import { Sidebar } from '../../components/layout/sidebar';
 import { Header } from '../../components/layout/header';
-import { LicenseBanner } from '../../components/licensing/license-banner';
+import { UsageBanner } from '../../components/shared/usage-banner';
 import { useAuth } from '../../hooks/use-auth';
 
 export function DashboardLayout() {
-  const { isAuthenticated, isLoading, isFetching, isAuthResolved, user } = useAuth();
+  const { isAuthenticated, isAuthPending, isAuthResolved, user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  if (!isAuthResolved && (isLoading || isFetching)) {
+  if (!isAuthResolved && isAuthPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
@@ -40,7 +40,7 @@ export function DashboardLayout() {
         <main className="flex-1 overflow-hidden">
           <SimpleBar className="h-full">
             <div className="p-4 md:p-6">
-              <LicenseBanner />
+              <UsageBanner />
               <Outlet />
             </div>
           </SimpleBar>
@@ -49,3 +49,4 @@ export function DashboardLayout() {
     </div>
   );
 }
+

@@ -20,24 +20,29 @@ import {
   FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
-const EMPTY_FORM = {
-  type: 'credit' as 'credit' | 'debit',
-  amountCents: '',
-  description: '',
-  referenceDate: '',
-};
+function createEmptyForm() {
+  return {
+    type: 'credit' as 'credit' | 'debit',
+    amountCents: '',
+    description: '',
+    referenceDate: new Date().toISOString().slice(0, 10),
+  };
+}
+
+const EMPTY_FORM = createEmptyForm();
 
 export default function LivroCaixaPage() {
   const utils = trpc.useUtils();
   const [typeFilter, setTypeFilter] = useState<'credit' | 'debit' | undefined>(undefined);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(createEmptyForm());
 
   const { data, isLoading } = trpc.financial.listCashbook.useQuery({
     type: typeFilter,
@@ -49,7 +54,7 @@ export default function LivroCaixaPage() {
     onSuccess: () => {
       utils.financial.listCashbook.invalidate();
       setShowCreate(false);
-      setForm(EMPTY_FORM);
+      setForm(createEmptyForm());
     },
   });
 
@@ -79,7 +84,10 @@ export default function LivroCaixaPage() {
         </div>
 
         <button
-          onClick={() => setShowCreate(true)}
+          onClick={() => {
+            setForm(createEmptyForm());
+            setShowCreate(true);
+          }}
           className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
         >
           <Plus size={16} strokeWidth={3} /> Lançamento Avulso
@@ -348,7 +356,14 @@ export default function LivroCaixaPage() {
       {showCreate && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-primary/20 overflow-hidden">
+            <div
+              className={cn(
+                'premium-card p-10 flex flex-col gap-10 relative shadow-2xl overflow-hidden',
+                form.type === 'debit'
+                  ? 'bg-destructive/10 border-destructive text-destructive'
+                  : 'border-primary/20',
+              )}
+            >
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
@@ -488,9 +503,9 @@ export default function LivroCaixaPage() {
                   onClick={() =>
                     createEntry.mutate({
                       type: form.type,
-                      amountCents: Math.round(parseFloat(form.amountCents) * 100),
+                      amountCents: parseBRL(form.amountCents),
                       description: form.description,
-                      referenceDate: new Date(form.referenceDate).toISOString(),
+                      referenceDate: new Date(`${form.referenceDate}T12:00:00`).toISOString(),
                     })
                   }
                   className="flex-[1.5] py-5 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3"

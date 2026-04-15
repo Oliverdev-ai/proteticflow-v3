@@ -98,7 +98,7 @@ export const FLOW_COMMANDS = {
     risk: 'transactional',
     roles: ['superadmin', 'gerente'],
     patterns: [/remoldagem/i, /rework/i],
-    requiredFields: ['originalJobId', 'reason', 'deadline'],
+    requiredFields: ['jobId', 'reason'],
   },
   'agenda.createEvent': {
     risk: 'transactional',
@@ -196,7 +196,6 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
   const jobId = parseEntityInt(osMatch, 1);
   if (jobId !== undefined) {
     entities.jobId = jobId;
-    entities.originalJobId = jobId;
   }
 
   const purchaseMatch = normalizedInput.match(/\b(?:cmp[-\s]?|compra\s*#?)\s*(\d{1,8})\b/);

@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
+import { downloadPdfFromBinary } from '../../../lib/pdf-export';
 
 export default function PayrollDetailPage() {
   const { id } = useParams();
@@ -49,19 +50,18 @@ export default function PayrollDetailPage() {
     },
   });
 
+  const reopenMutation = trpc.payroll.reopenPeriod.useMutation({
+    onSuccess: () => {
+      utils.payroll.getPeriodReport.invalidate({ periodId });
+      utils.payroll.listPeriods.invalidate();
+    },
+  });
+
   async function handleDownloadPayslip(employeeId: number) {
     setDownloadingEmployeeId(employeeId);
     try {
       const payload = await utils.payroll.generatePayslip.fetch({ periodId, employeeId });
-      const maybeBuffer = payload as { data?: number[] };
-      const bytes = maybeBuffer.data ? new Uint8Array(maybeBuffer.data) : new Uint8Array();
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `holerite-${period?.month}-${period?.year}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+      downloadPdfFromBinary(`holerite-${period?.month}-${period?.year}.pdf`, payload);
     } finally {
       setDownloadingEmployeeId(null);
     }
@@ -87,6 +87,9 @@ export default function PayrollDetailPage() {
       </div>
     );
   if (!period) return <div className="p-6">Período não encontrado.</div>;
+
+  const canReopen = Boolean(periodReport?.canReopen);
+  const hasProcessedPayments = Boolean(periodReport?.hasProcessedPayments);
 
   return (
     <div className="flex flex-col gap-6 p-6 h-full overflow-auto max-w-6xl mx-auto pb-20">
@@ -152,8 +155,32 @@ export default function PayrollDetailPage() {
               </button>
             </>
           )}
+          {period.status === 'closed' && canReopen && (
+            <button
+              onClick={() => {
+                if (confirm('Deseja reabrir esta folha para edição?')) {
+                  reopenMutation.mutate({ periodId });
+                }
+              }}
+              disabled={reopenMutation.isPending}
+              className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-zinc-700"
+            >
+              {reopenMutation.isPending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <RefreshCw size={16} />
+              )}
+              Desfazer fechamento
+            </button>
+          )}
         </div>
       </div>
+
+      {period.status === 'closed' && hasProcessedPayments ? (
+        <div className="rounded-xl border border-amber-700 bg-amber-900/20 px-4 py-3 text-xs text-amber-300">
+          Esta folha possui pagamentos processados e não pode ser reaberta.
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">

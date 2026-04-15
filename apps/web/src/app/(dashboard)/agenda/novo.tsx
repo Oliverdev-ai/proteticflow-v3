@@ -1,25 +1,47 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+
+type EventType = 'prova' | 'entrega' | 'retirada' | 'reuniao' | 'manutencao' | 'outro';
+
+type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+const ACTIVE_JOB_STATUSES = new Set(['pending', 'in_progress', 'quality_check', 'ready', 'rework_in_progress']);
 
 export default function EventCreatePage() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const [title, setTitle] = useState('');
-  const [type, setType] = useState<
-    'prova' | 'entrega' | 'retirada' | 'reuniao' | 'manutencao' | 'outro'
-  >('outro');
+  const [type, setType] = useState<EventType>('outro');
   const [startAt, setStartAt] = useState('');
   const [endAt, setEndAt] = useState('');
   const [jobId, setJobId] = useState('');
-  const [clientId, setClientId] = useState('');
+  const [dentistId, setDentistId] = useState('');
   const [employeeId, setEmployeeId] = useState('');
-  const [recurrence, setRecurrence] = useState<
-    'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly'
-  >('none');
+  const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(60);
+
+  const clientsQuery = trpc.clientes.list.useQuery({ status: 'active', limit: 100 });
+  const jobsQuery = trpc.job.list.useQuery({ limit: 100 });
+
+  const jobs = useMemo(
+    () => (jobsQuery.data?.data ?? []).filter((job) => ACTIVE_JOB_STATUSES.has(job.status)),
+    [jobsQuery.data],
+  );
+
+  const selectedJob = useMemo(
+    () => jobs.find((job) => job.id === Number(jobId)),
+    [jobId, jobs],
+  );
+
+  useEffect(() => {
+    if (!selectedJob) return;
+    if (selectedJob.clientId) {
+      setDentistId(String(selectedJob.clientId));
+    }
+  }, [selectedJob]);
 
   const createMutation = trpc.agenda.create.useMutation({
     onSuccess: async () => {
@@ -40,7 +62,7 @@ export default function EventCreatePage() {
       endAt: toIsoLocal(endAt),
       allDay: false,
       jobId: jobId ? Number(jobId) : undefined,
-      clientId: clientId ? Number(clientId) : undefined,
+      clientId: dentistId ? Number(dentistId) : undefined,
       employeeId: employeeId ? Number(employeeId) : undefined,
       recurrence,
       recurrenceEndDate: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
@@ -80,7 +102,7 @@ export default function EventCreatePage() {
             <label className="block text-xs text-zinc-400 mb-1">Tipo</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as typeof type)}
+              onChange={(e) => setType(e.target.value as EventType)}
               className="input-field w-full"
             >
               <option value="outro">Outro</option>
@@ -126,24 +148,36 @@ export default function EventCreatePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">OS (opcional)</label>
-            <input
-              type="number"
+            <select
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
               className="input-field w-full"
-            />
+            >
+              <option value="">Selecione...</option>
+              {jobs.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.code} - {job.clientName ?? 'Cliente sem nome'}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Cliente (opcional)</label>
-            <input
-              type="number"
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
+            <label className="block text-xs text-zinc-400 mb-1">Cliente / Dentista (opcional)</label>
+            <select
+              value={dentistId}
+              onChange={(e) => setDentistId(e.target.value)}
               className="input-field w-full"
-            />
+            >
+              <option value="">Selecione...</option>
+              {(clientsQuery.data?.data ?? []).map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Funcionário (opcional)</label>
+            <label className="block text-xs text-zinc-400 mb-1">Funcionario (opcional)</label>
             <input
               type="number"
               value={employeeId}
@@ -155,14 +189,14 @@ export default function EventCreatePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Recorrência</label>
+            <label className="block text-xs text-zinc-400 mb-1">Recorrencia</label>
             <select
               value={recurrence}
-              onChange={(e) => setRecurrence(e.target.value as typeof recurrence)}
+              onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
               className="input-field w-full"
             >
-              <option value="none">Sem recorrência</option>
-              <option value="daily">Diária</option>
+              <option value="none">Sem recorrencia</option>
+              <option value="daily">Diaria</option>
               <option value="weekly">Semanal</option>
               <option value="biweekly">Quinzenal</option>
               <option value="monthly">Mensal</option>
@@ -170,7 +204,7 @@ export default function EventCreatePage() {
           </div>
           <div>
             <label className="block text-xs text-zinc-400 mb-1">
-              Fim da recorrência (opcional)
+              Fim da recorrencia (opcional)
             </label>
             <input
               type="datetime-local"

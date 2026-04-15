@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { db } from '../../db/index.js';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { osBlocks, users, tenants, tenantMembers } from '../../db/schema/index.js';
 import { jobs, jobItems, jobLogs, orderCounters } from '../../db/schema/jobs.js';
 import { clients, pricingTables, priceItems } from '../../db/schema/clients.js';
@@ -70,7 +70,7 @@ describe('Delivery Service', () => {
       date: new Date().toISOString(),
       driverName: 'João',
       vehicle: 'HB20-1234',
-      items: [{ jobId: job.id, clientId: client.id, sortOrder: 1 }],
+      items: [{ jobId: job.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 1 }],
     }, user.id);
 
     expect(result.schedule.tenantId).toBe(tenant.id);
@@ -89,7 +89,7 @@ describe('Delivery Service', () => {
 
     await deliveryService.createSchedule(t1.id, {
       date: new Date().toISOString(),
-      items: [{ jobId: j1.id, clientId: c1.id, sortOrder: 0 }],
+      items: [{ jobId: j1.id, clientId: c1.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 0 }],
     }, u1.id);
 
     const { data } = await deliveryService.listSchedules(t2.id, { page: 1, limit: 20 });
@@ -108,12 +108,12 @@ describe('Delivery Service', () => {
 
     await deliveryService.createSchedule(tenant.id, {
       date: yesterday.toISOString(),
-      items: [{ jobId: job1.id, clientId: client.id, sortOrder: 0 }],
+      items: [{ jobId: job1.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 0 }],
     }, user.id);
 
     await deliveryService.createSchedule(tenant.id, {
       date: tomorrow.toISOString(),
-      items: [{ jobId: job2.id, clientId: client.id, sortOrder: 0 }],
+      items: [{ jobId: job2.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 0 }],
     }, user.id);
 
     const now = new Date();
@@ -132,7 +132,7 @@ describe('Delivery Service', () => {
 
     const { items } = await deliveryService.createSchedule(tenant.id, {
       date: new Date().toISOString(),
-      items: [{ jobId: job.id, clientId: client.id, sortOrder: 0 }],
+      items: [{ jobId: job.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 0 }],
     }, user.id);
 
     const updated = await deliveryService.updateItemStatus(tenant.id, {
@@ -152,7 +152,7 @@ describe('Delivery Service', () => {
 
     const { items } = await deliveryService.createSchedule(tenant.id, {
       date: new Date().toISOString(),
-      items: [{ jobId: job.id, clientId: client.id, sortOrder: 0 }],
+      items: [{ jobId: job.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 0 }],
     }, user.id);
 
     // Sem failedReason deve rejeitar
@@ -180,8 +180,8 @@ describe('Delivery Service', () => {
     const { schedule } = await deliveryService.createSchedule(tenant.id, {
       date: new Date().toISOString(),
       items: [
-        { jobId: j1.id, clientId: client.id, sortOrder: 1 },
-        { jobId: j2.id, clientId: client.id, sortOrder: 2 },
+        { jobId: j1.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 1 },
+        { jobId: j2.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 2 },
       ],
     }, user.id);
 
@@ -202,8 +202,8 @@ describe('Delivery Service', () => {
     const { items } = await deliveryService.createSchedule(tenant.id, {
       date: now.toISOString(),
       items: [
-        { jobId: j1.id, clientId: client.id, sortOrder: 1 },
-        { jobId: j2.id, clientId: client.id, sortOrder: 2 },
+        { jobId: j1.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 1 },
+        { jobId: j2.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 2 },
       ],
     }, user.id);
 
@@ -250,7 +250,7 @@ describe('Delivery Service', () => {
     const { schedule } = await deliveryService.createSchedule(tenant.id, {
       date: new Date().toISOString(),
       driverName: 'Carlos',
-      items: [{ jobId: job.id, clientId: client.id, sortOrder: 0 }],
+      items: [{ jobId: job.id, clientId: client.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 0 }],
     }, user.id);
 
     const pdf = await deliveryService.generateRoutePdf(tenant.id, schedule.id);
@@ -268,11 +268,37 @@ describe('Delivery Service', () => {
 
     await deliveryService.createSchedule(t1.id, {
       date: new Date().toISOString(),
-      items: [{ jobId: j1.id, clientId: c1.id, sortOrder: 0 }],
+      items: [{ jobId: j1.id, clientId: c1.id, stopType: 'delivery', deliveryAddress: 'Rua Teste, 123', sortOrder: 0 }],
     }, u1.id);
 
     const { data } = await deliveryService.listSchedules(t2.id, { page: 1, limit: 20 });
     expect(data.length).toBe(0);
   });
+
+  it('11. Fluxo reverso: item entregue da baixa na OS pronta e gera job log', async () => {
+    const user = await createTestUser('del11@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Del11');
+    const client = await createTestClient(tenant.id, user.id);
+    const job = await createTestJob(tenant.id, client.id, user.id);
+
+    await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id);
+    await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'quality_check' }, user.id);
+    await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'ready' }, user.id);
+
+    const [routeItem] = await db.select().from(deliveryItems).where(eq(deliveryItems.jobId, job.id));
+    expect(routeItem).toBeDefined();
+
+    await deliveryService.updateItemStatus(tenant.id, { itemId: routeItem!.id, status: 'delivered' }, user.id);
+
+    const [updatedJob] = await db.select().from(jobs).where(eq(jobs.id, job.id));
+    expect(updatedJob?.status).toBe('delivered');
+    expect(updatedJob?.deliveredAt).not.toBeNull();
+
+    const logs = await db.select().from(jobLogs).where(eq(jobLogs.jobId, job.id));
+    const autoBaixaLog = logs.find((log) => log.fromStatus === 'ready' && log.toStatus === 'delivered');
+    expect(autoBaixaLog).toBeDefined();
+    expect(autoBaixaLog?.notes).toContain('Baixa automatica');
+  });
 });
+
 

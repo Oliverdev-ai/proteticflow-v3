@@ -26,7 +26,14 @@ export default function MaterialsPage() {
   const [belowMin, setBelowMin] = useState(false);
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', code: '', unit: 'un', minStock: 0 });
+  const [form, setForm] = useState({
+    name: '',
+    code: '',
+    unit: 'un',
+    minStock: 0,
+    initialQuantity: 0,
+    unitCostCents: 0,
+  });
 
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.inventory.listMaterials.useQuery({
@@ -40,7 +47,14 @@ export default function MaterialsPage() {
     onSuccess: () => {
       utils.inventory.listMaterials.invalidate();
       setCreateOpen(false);
-      setForm({ name: '', code: '', unit: 'un', minStock: 0 });
+      setForm({
+        name: '',
+        code: '',
+        unit: 'un',
+        minStock: 0,
+        initialQuantity: 0,
+        unitCostCents: 0,
+      });
     },
   });
 
@@ -368,6 +382,37 @@ export default function MaterialsPage() {
                     O sistema emitirá alertas automáticos quando o saldo real atingir este valor.
                   </Muted>
                 </div>
+                <div>
+                  <label className={labelClass}>Qtd. inicial</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    value={form.initialQuantity}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, initialQuantity: Number(e.target.value) || 0 }))
+                    }
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Custo unit. (R$)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.unitCostCents === 0 ? '' : (form.unitCostCents / 100).toString()}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      const nextCents =
+                        Number.isFinite(value) && value > 0 ? Math.round(value * 100) : 0;
+                      setForm((f) => ({ ...f, unitCostCents: nextCents }));
+                    }}
+                    placeholder="0,00"
+                    className={inputClass}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-4 pt-6 mt-4 border-t border-border/50 relative">
@@ -384,6 +429,8 @@ export default function MaterialsPage() {
                       code: form.code || undefined,
                       unit: form.unit,
                       minStock: form.minStock,
+                      initialQuantity: form.initialQuantity,
+                      unitCostCents: form.unitCostCents,
                     })
                   }
                   disabled={!form.name.trim() || createMaterial.isPending}

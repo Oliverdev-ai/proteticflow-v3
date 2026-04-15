@@ -244,11 +244,15 @@ export default function KanbanPage() {
   const navigate = useNavigate();
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [activeView, setActiveView] = useState<'active' | 'suspended'>('active');
+  const [pausedFilter, setPausedFilter] = useState<'all' | 'rework_in_progress' | 'suspended'>('all');
   const [activeJob, setActiveJob] = useState<KanbanJob | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState('');
   const [suspendTarget, setSuspendTarget] = useState<KanbanJob | null>(null);
   const utils = trpc.useUtils();
+  const activeColumns = KANBAN_COLUMNS.filter(
+    (status) => status !== 'rework_in_progress' && status !== 'suspended',
+  );
 
   const boardQuery = trpc.job.getBoard.useQuery(
     {
@@ -302,7 +306,7 @@ export default function KanbanPage() {
   const columnsMap = useMemo(() => {
     const map: Record<string, KanbanJob[]> = {};
 
-    for (const status of KANBAN_COLUMNS) {
+    for (const status of activeColumns) {
       const col = boardQuery.data?.columns.find((column) => column.status === status);
       const jobs = (col?.jobs ?? []) as KanbanJob[];
 
@@ -315,9 +319,15 @@ export default function KanbanPage() {
     }
 
     return map;
-  }, [boardQuery.data]);
+  }, [activeColumns, boardQuery.data]);
 
   const suspendedJobs = (suspendedQuery.data ?? []) as SuspendedJob[];
+  const reworkJobsCount = suspendedJobs.filter((job) => job.status === 'rework_in_progress').length;
+  const suspendedOnlyCount = suspendedJobs.filter((job) => job.status === 'suspended').length;
+  const filteredPausedJobs = suspendedJobs.filter((job) => {
+    if (pausedFilter === 'all') return true;
+    return job.status === pausedFilter;
+  });
 
   function handleDragStart(event: DragStartEvent) {
     const jobId = Number(event.active.id);
@@ -403,7 +413,7 @@ export default function KanbanPage() {
                 : 'border-border bg-card text-muted-foreground hover:border-amber-500/40 hover:text-foreground',
             )}
           >
-            Suspensas ({suspendedQuery.data?.length ?? 0})
+            Pausadas ({suspendedQuery.data?.length ?? 0})
           </button>
 
           {activeView === 'active' ? (
@@ -464,6 +474,47 @@ export default function KanbanPage() {
         </div>
       ) : null}
 
+      {activeView === 'suspended' ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPausedFilter('all')}
+            className={cn(
+              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
+              pausedFilter === 'all'
+                ? 'border-primary/40 bg-primary/10 text-primary'
+                : 'border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground',
+            )}
+          >
+            Todas ({suspendedJobs.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setPausedFilter('rework_in_progress')}
+            className={cn(
+              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
+              pausedFilter === 'rework_in_progress'
+                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500'
+                : 'border-border bg-card text-muted-foreground hover:border-amber-500/40 hover:text-foreground',
+            )}
+          >
+            Remoldagem ({reworkJobsCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setPausedFilter('suspended')}
+            className={cn(
+              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
+              pausedFilter === 'suspended'
+                ? 'border-slate-400/40 bg-slate-500/10 text-slate-300'
+                : 'border-border bg-card text-muted-foreground hover:border-slate-400/40 hover:text-foreground',
+            )}
+          >
+            Suspenso ({suspendedOnlyCount})
+          </button>
+        </div>
+      ) : null}
+
       {isLoading ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
           <Loader2 className="animate-spin text-primary" size={32} />
@@ -482,7 +533,7 @@ export default function KanbanPage() {
           onDragEnd={handleDragEnd}
         >
           <div className="custom-scrollbar flex flex-1 gap-4 overflow-x-auto pb-4">
-            {KANBAN_COLUMNS.map((status) => {
+            {activeColumns.map((status) => {
               const colJobs = columnsMap[status] ?? [];
 
               return (
@@ -523,18 +574,18 @@ export default function KanbanPage() {
         </DndContext>
       ) : (
         <div className="custom-scrollbar flex-1 space-y-3 overflow-auto rounded-3xl border border-border bg-card/40 p-4">
-          {suspendedJobs.length === 0 ? (
+          {filteredPausedJobs.length === 0 ? (
             <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 text-center">
               <PauseCircle size={36} className="text-muted-foreground/30" />
               <p className="text-sm font-black uppercase tracking-wider text-foreground">
-                Nenhuma OS suspensa
+                Nenhuma OS nesta aba
               </p>
               <p className="max-w-md text-xs font-semibold text-muted-foreground">
                 Quando uma OS for suspensa, ela aparece aqui e pode ser reativada com um clique.
               </p>
             </div>
           ) : (
-            suspendedJobs.map((job) => (
+            filteredPausedJobs.map((job) => (
               <div
                 key={job.id}
                 className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 md:flex-row md:items-center md:justify-between"

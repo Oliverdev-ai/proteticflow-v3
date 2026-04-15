@@ -212,6 +212,49 @@ export async function forgotPassword(email: string) {
   }
 }
 
+export async function requestPasswordResetForProfile(userId: number) {
+  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user || !user.email) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Usuario nao encontrado' });
+  }
+
+  const token = randomBytes(32).toString('hex');
+  const tokenHash = hashToken(token);
+
+  const [resetRow] = await db.insert(passwordResetTokens).values({
+    userId: user.id,
+    tokenHash,
+    expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000),
+  }).returning({ id: passwordResetTokens.id });
+
+  const emailResult = await sendPasswordResetEmail(user.email, token);
+  if (!emailResult.sent) {
+    if (resetRow) {
+      await db.delete(passwordResetTokens).where(eq(passwordResetTokens.id, resetRow.id));
+    }
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: 'SMTP nao configurado. Configure o SMTP nas Configuracoes para redefinir a credencial.',
+    });
+  }
+
+  if (user.activeTenantId) {
+    await dispatchByPreference({
+      tenantId: user.activeTenantId,
+      userId: user.id,
+      eventKey: 'password_reset',
+      type: 'info',
+      title: 'Reset de senha solicitado',
+      message: 'Um link de redefinicao de senha foi enviado para seu email.',
+      emailSubject: 'Reset de senha solicitado',
+      emailText: 'Um link de redefinicao foi enviado para seu email cadastrado.',
+    });
+  }
+
+  logger.info({ action: 'auth.password_reset_request.profile', userId }, 'Password reset requested from profile');
+  return { success: true };
+}
+
 export async function resetPassword(token: string, newPassword: z.infer<typeof registerSchema>['password']) {
   const tokenHash = hashToken(token);
   const [resetReq] = await db.select().from(passwordResetTokens).where(eq(passwordResetTokens.tokenHash, tokenHash));

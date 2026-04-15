@@ -6,6 +6,7 @@ import { logger } from '../../logger.js';
 import { encryptSecret } from '../../core/crypto.js';
 import * as authService from '../auth/service.js';
 import * as tenantService from '../tenants/service.js';
+import * as notificationService from '../notifications/service.js';
 import { removeTenantLogoByUrl, uploadTenantLogo } from './logo.js';
 import type {
   LabBrandingInput,
@@ -13,6 +14,7 @@ import type {
   PrinterSettingsInput,
   SettingsOverview,
   SmtpSettingsInput,
+  UpdateNotificationPrefsInput,
   UpdateUserRoleFromSettingsInput,
   UploadLogoInput,
 } from '@proteticflow/shared';
@@ -286,4 +288,18 @@ export async function updateUserRole(tenantId: number, userId: number, input: Up
   logger.info({ action: 'settings.user.role.update', tenantId, userId, targetUserId: input.memberId }, 'Role de usuario atualizada em Settings');
   logSettingsMetric(tenantId, userId, 'settings_role_updates_total', 'roles');
   return { success: true };
+}
+
+export async function updateNotificationPrefs(
+  tenantId: number,
+  userId: number,
+  input: UpdateNotificationPrefsInput,
+) {
+  const updated = await notificationService.upsertPreference(tenantId, userId, input);
+  logger.info(
+    { action: 'settings.notifications.update', tenantId, userId, eventKey: input.eventKey },
+    'Preferencia de notificacao atualizada via Settings',
+  );
+  logSettingsMetric(tenantId, userId, 'settings_updates_total', 'notifications');
+  return updated;
 }

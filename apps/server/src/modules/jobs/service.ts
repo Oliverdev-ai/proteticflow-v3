@@ -1,4 +1,4 @@
-﻿import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not, desc } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { jobs, jobItems, jobLogs, jobStages, jobPhotos } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
@@ -45,11 +45,33 @@ type MarkProofInput    = z.infer<typeof markProofSchema>;
 type ReturnProofInput  = z.infer<typeof returnProofSchema>;
 type CreateReworkInput = z.infer<typeof createReworkSchema>;
 type ToggleUrgentInput = z.infer<typeof toggleUrgentSchema>;
+type JobStatus = typeof jobs.$inferSelect.status;
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PAD-04: Order Number com SELECT FOR UPDATE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+const FINAL_JOB_STATUSES = ['delivered', 'cancelled'] as const;
+const PAUSED_JOB_STATUSES = ['rework_in_progress', 'suspended'] as const;
+const NON_ACTIVE_JOB_STATUSES = [...FINAL_JOB_STATUSES, ...PAUSED_JOB_STATUSES] as const;
+
+function buildClientAddress(client: {
+  street: string | null;
+  addressNumber: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  clinic?: string | null;
+}): string | null {
+  const parts = [client.street, client.addressNumber, client.neighborhood, client.city, client.state]
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part));
+  if (parts.length > 0) return parts.join(', ');
+
+  const clinicAddress = client.clinic?.trim();
+  return clinicAddress && clinicAddress.length > 0 ? clinicAddress : null;
+}
+
+// â”€â”€â”€ PAD-04: Order Number com SELECT FOR UPDATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-// DEVE estar dentro de uma transaÃƒÂ§ÃƒÂ£o jÃƒÂ¡ aberta (tx). NÃƒÆ’O usar COUNT(*)+1.
+// DEVE estar dentro de uma transaÃ§Ã£o jÃ¡ aberta (tx). NÃƒO usar COUNT(*)+1.
 export async function getNextOrderNumber(tx: DbTransaction, tenantId: number): Promise<number> {
   // Upsert do counter
   await tx.execute(sql`
@@ -58,7 +80,7 @@ export async function getNextOrderNumber(tx: DbTransaction, tenantId: number): P
     ON CONFLICT (tenant_id) DO NOTHING
   `);
 
-  // SELECT FOR UPDATE Ã¢â‚¬â€ bloqueia a linha atÃƒÂ© o fim da transaÃƒÂ§ÃƒÂ£o
+  // SELECT FOR UPDATE â€” bloqueia a linha atÃ© o fim da transaÃ§Ã£o
   const result = await tx.execute(sql`
     SELECT last_order_number FROM order_counters
     WHERE tenant_id = ${tenantId}
@@ -76,7 +98,7 @@ export async function getNextOrderNumber(tx: DbTransaction, tenantId: number): P
   return next;
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ CRUD Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”€â”€â”€ CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createJob(tenantId: number, input: CreateJobInput, createdBy: number) {
   await checkLimit(tenantId, 'jobsPerMonth', createdBy);
@@ -86,32 +108,32 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
   if (input.osNumber && !resolvedClientId) {
     const resolved = await resolveClientByOsNumber(tenantId, input.osNumber);
     if (!resolved) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente nÃ£o encontrado para este bloco de OS fÃ­sico' });
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente não encontrado para este bloco de OS físico' });
     }
     resolvedClientId = resolved.clientId;
   }
   if (!resolvedClientId) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cliente Ã© obrigatÃ³rio caso o nÃºmero da OS nÃ£o seja resolvÃ­vel' });
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cliente é obrigatório caso o número da OS não seja resolvível' });
   }
 
   // 1.1 Verificar que o cliente pertence ao tenant
   const [client] = await db.select().from(clients).where(
     and(eq(clients.tenantId, tenantId), eq(clients.id, resolvedClientId), isNull(clients.deletedAt))
   );
-  if (!client) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente nÃ£o encontrado' });
+  if (!client) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cliente não encontrado' });
 
   const clientAdjustment = Number(client.priceAdjustmentPercent ?? 0);
 
   const job = await db.transaction(async (tx) => {
-    // 2. PAD-04: Gerar nÃºmero sequencial interno
+    // 2. PAD-04: Gerar número sequencial interno
     const orderNumberInternal = await getNextOrderNumber(tx, tenantId);
-    // Usa o nÃºmero da OS fÃ­sico se existir, senÃ£o gera automÃ¡tico
+    // Usa o número da OS físico se existir, senão gera automático
     const code = input.osNumber 
       ? `OS-${String(input.osNumber).padStart(5, '0')}`
       : `OS-${orderNumberInternal.toString().padStart(5, '0')}`;
     const finalOrderNumber = input.osNumber ?? orderNumberInternal;
 
-    // 3. AP-02: Processar itens congelando preÃƒÂ§os
+    // 3. AP-02: Processar itens congelando preÃ§os
     let jobTotalCents = 0;
     const processedItems: Array<{
       serviceNameSnapshot: string;
@@ -126,13 +148,13 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
       let unitPriceCents = item.unitPriceCents;
       let serviceNameSnapshot = item.serviceNameSnapshot;
 
-      // AP-02: Se hÃƒÂ¡ priceItemId, buscar o preÃƒÂ§o atual e CONGELAR (copiar)
+      // AP-02: Se hÃ¡ priceItemId, buscar o preÃ§o atual e CONGELAR (copiar)
       if (item.priceItemId) {
         const [priceItem] = await tx.select().from(priceItems).where(
           and(eq(priceItems.tenantId, tenantId), eq(priceItems.id, item.priceItemId))
         );
         if (priceItem) {
-          unitPriceCents = priceItem.priceCents; // Ã¢â€ Â SNAPSHOT, nÃƒÂ£o referÃƒÂªncia
+          unitPriceCents = priceItem.priceCents; // â† SNAPSHOT, nÃ£o referÃªncia
           serviceNameSnapshot = priceItem.name;
         }
       }
@@ -219,7 +241,7 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
     const deadlineDate = new Date(input.deadline);
     const eventData = {
       tenantId,
-      title: `Entrega estimada â€” ${code}`,
+      title: `Entrega estimada — ${code}`,
       type: 'entrega' as const,
       startAt: deadlineDate,
       endAt: new Date(deadlineDate.getTime() + 30 * 60 * 1000), // +30min
@@ -272,7 +294,7 @@ export async function listJobs(tenantId: number, filters: ListJobsInput) {
   if (filters.overdue) {
     conditions.push(lt(jobs.deadline, new Date()));
     conditions.push(isNull(jobs.suspendedAt));
-    conditions.push(not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])));
+    conditions.push(not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])));
   }
 
   const data = await db
@@ -311,6 +333,7 @@ export async function getJob(tenantId: number, jobId: number) {
       createdAt: jobs.createdAt, updatedAt: jobs.updatedAt,
       jobSubType: jobs.jobSubType, isUrgent: jobs.isUrgent,
       suspendedAt: jobs.suspendedAt, suspendedBy: jobs.suspendedBy, suspendReason: jobs.suspendReason,
+      resumeStatus: jobs.resumeStatus,
       proofDueDate: jobs.proofDueDate, proofReturnedAt: jobs.proofReturnedAt,
       reworkReason: jobs.reworkReason, reworkParentId: jobs.reworkParentId,
       completedAt: jobs.completedAt, cancelledAt: jobs.cancelledAt, cancelReason: jobs.cancelReason,
@@ -321,7 +344,7 @@ export async function getJob(tenantId: number, jobId: number) {
     .leftJoin(clients, eq(jobs.clientId, clients.id))
     .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId), isNull(jobs.deletedAt)));
 
-  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
+  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
 
   const [items, logs, photos] = await Promise.all([
     db.select().from(jobItems).where(and(eq(jobItems.tenantId, tenantId), eq(jobItems.jobId, jobId))),
@@ -336,7 +359,7 @@ export async function updateJob(tenantId: number, jobId: number, input: UpdateJo
   const [existing] = await db.select().from(jobs).where(
     and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId), isNull(jobs.deletedAt))
   );
-  if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
+  if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (input.jobSubType !== undefined) updateData.jobSubType = input.jobSubType;
@@ -384,22 +407,36 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
   const [job] = await db.select().from(jobs).where(
     and(eq(jobs.tenantId, tenantId), eq(jobs.id, input.jobId), isNull(jobs.deletedAt))
   );
-  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
+  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
 
-  // Validar transiÃƒÂ§ÃƒÂ£o (PAD-10: status machine)
+  // Validar transiÃ§Ã£o (PAD-10: status machine)
   if (!canTransition(job.status, input.newStatus)) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: `TransiÃƒÂ§ÃƒÂ£o de "${job.status}" para "${input.newStatus}" nÃƒÂ£o permitida`,
+      message: `TransiÃ§Ã£o de "${job.status}" para "${input.newStatus}" nÃ£o permitida`,
     });
   }
+
+  const [jobClient] = await db
+    .select({
+      clinic: clients.clinic,
+      street: clients.street,
+      addressNumber: clients.addressNumber,
+      neighborhood: clients.neighborhood,
+      city: clients.city,
+      state: clients.state,
+    })
+    .from(clients)
+    .where(and(eq(clients.id, job.clientId), eq(clients.tenantId, tenantId)));
+
+  const defaultDeliveryAddress = jobClient ? buildClientAddress(jobClient) : null;
 
   const now = new Date();
   const finalUpdates: Record<string, unknown> = {
     status: input.newStatus,
     updatedAt: now,
   };
-  if (input.newStatus === 'ready' || input.newStatus === 'completed_with_rework') finalUpdates.completedAt = now;
+  if (input.newStatus === 'ready') finalUpdates.completedAt = now;
   if (input.newStatus === 'delivered') finalUpdates.deliveredAt = now;
   if (input.newStatus === 'cancelled') {
     finalUpdates.cancelledAt = now;
@@ -420,7 +457,7 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
         notes: input.notes ?? input.cancelReason ?? null,
       });
 
-      // Se pronto ou entregue, sincronizar rota de entregas (LogÃ­stica AutomÃ¡tica F30)
+      // Se pronto ou entregue, sincronizar rota de entregas (Logística Automática F30)
       if (input.newStatus === 'ready') {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -441,18 +478,54 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
 
         // 2. Upsert no delivery_items para evitar duplicados
         const [existingItem] = await tx.select().from(deliveryItems).where(
-          and(eq(deliveryItems.jobId, input.jobId), eq(deliveryItems.scheduleId, schedule.id))
+          and(
+            eq(deliveryItems.tenantId, tenantId),
+            eq(deliveryItems.jobId, input.jobId),
+            eq(deliveryItems.scheduleId, schedule.id),
+          )
         );
 
         if (!existingItem) {
           await tx.insert(deliveryItems).values({
             tenantId,
             scheduleId: schedule.id,
+            stopType: 'delivery',
             jobId: input.jobId,
             clientId: job.clientId,
+            deliveryAddress: defaultDeliveryAddress,
             status: 'scheduled'
           });
-          logger.info({ action: 'job.logistic_sync', job: job.id, scheduleId: schedule.id }, 'LogÃ­stica sincronizada');
+          logger.info({ action: 'job.logistic_sync', job: job.id, scheduleId: schedule.id }, 'Logística sincronizada');
+        }
+      }
+
+      if (input.newStatus === 'delivered') {
+        const [linkedRouteItem] = await tx
+          .select({
+            id: deliveryItems.id,
+            deliveryAddress: deliveryItems.deliveryAddress,
+          })
+          .from(deliveryItems)
+          .leftJoin(deliverySchedules, eq(deliveryItems.scheduleId, deliverySchedules.id))
+          .where(
+            and(
+              eq(deliveryItems.tenantId, tenantId),
+              eq(deliveryItems.jobId, input.jobId),
+              inArray(deliveryItems.status, ['scheduled', 'in_transit']),
+            ),
+          )
+          .orderBy(desc(deliverySchedules.date), desc(deliveryItems.id))
+          .limit(1);
+
+        if (linkedRouteItem) {
+          const itemUpdates: Record<string, unknown> = {
+            status: 'delivered',
+            deliveredAt: now,
+          };
+          if (!linkedRouteItem.deliveryAddress && defaultDeliveryAddress) {
+            itemUpdates.deliveryAddress = defaultDeliveryAddress;
+          }
+          await tx.update(deliveryItems).set(itemUpdates).where(eq(deliveryItems.id, linkedRouteItem.id));
         }
       }
   });
@@ -477,7 +550,7 @@ async function getScopedJobOrThrow(tenantId: number, jobId: number) {
   );
 
   if (!job) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'OS não encontrada' });
   }
 
   return job;
@@ -486,16 +559,21 @@ async function getScopedJobOrThrow(tenantId: number, jobId: number) {
 export async function suspendJob(tenantId: number, input: SuspendJobInput, userId: number) {
   const job = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (job.suspendedAt) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS jÃ¡ estÃ¡ suspensa' });
+  if (FINAL_JOB_STATUSES.includes(job.status as (typeof FINAL_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS finalizada nao pode ser suspensa' });
+  }
+  if (job.suspendedAt || PAUSED_JOB_STATUSES.includes(job.status as (typeof PAUSED_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS já está suspensa' });
   }
 
   const now = new Date();
   const [updated] = await db.update(jobs)
     .set({
+      status: 'suspended',
       suspendedAt: now,
       suspendedBy: userId,
       suspendReason: input.reason,
+      resumeStatus: job.status,
       updatedAt: now,
     })
     .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, input.jobId)))
@@ -506,7 +584,7 @@ export async function suspendJob(tenantId: number, input: SuspendJobInput, userI
     jobId: input.jobId,
     userId,
     fromStatus: job.status,
-    toStatus: job.status,
+    toStatus: 'suspended',
     notes: `OS suspensa: ${input.reason}`,
   });
 
@@ -526,15 +604,22 @@ export async function suspendJob(tenantId: number, input: SuspendJobInput, userI
 export async function unsuspendJob(tenantId: number, input: UnsuspendJobInput, userId: number) {
   const job = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (!job.suspendedAt) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS nÃ£o estÃ¡ suspensa' });
+  if (!job.suspendedAt && !PAUSED_JOB_STATUSES.includes(job.status as (typeof PAUSED_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS não está suspensa' });
   }
+
+  const resumeStatus: JobStatus =
+    job.resumeStatus && !PAUSED_JOB_STATUSES.includes(job.resumeStatus as (typeof PAUSED_JOB_STATUSES)[number])
+      ? (job.resumeStatus as JobStatus)
+      : 'pending';
 
   const [updated] = await db.update(jobs)
     .set({
+      status: resumeStatus,
       suspendedAt: null,
       suspendedBy: null,
       suspendReason: null,
+      resumeStatus: null,
       updatedAt: new Date(),
     })
     .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, input.jobId)))
@@ -545,8 +630,8 @@ export async function unsuspendJob(tenantId: number, input: UnsuspendJobInput, u
     jobId: input.jobId,
     userId,
     fromStatus: job.status,
-    toStatus: job.status,
-    notes: 'OS reativada',
+    toStatus: resumeStatus,
+    notes: job.status === 'rework_in_progress' ? 'Remoldagem retomada' : 'OS reativada',
   });
 
   void logAudit({
@@ -565,8 +650,8 @@ export async function unsuspendJob(tenantId: number, input: UnsuspendJobInput, u
 export async function markJobAsProof(tenantId: number, input: MarkProofInput, userId: number) {
   const job = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (['delivered', 'cancelled', 'completed_with_rework'].includes(job.status)) {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS finalizada nÃ£o pode ser marcada como prova' });
+  if (NON_ACTIVE_JOB_STATUSES.includes(job.status as (typeof NON_ACTIVE_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS finalizada não pode ser marcada como prova' });
   }
 
   const [updated] = await db.update(jobs)
@@ -605,7 +690,7 @@ export async function returnJobProof(tenantId: number, input: ReturnProofInput, 
   const job = await getScopedJobOrThrow(tenantId, input.jobId);
 
   if (job.jobSubType !== 'proof') {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS nÃ£o estÃ¡ no fluxo de prova' });
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS não está no fluxo de prova' });
   }
 
   const [updated] = await db.update(jobs)
@@ -656,7 +741,7 @@ export async function toggleJobUrgent(tenantId: number, input: ToggleUrgentInput
     userId,
     fromStatus: job.status,
     toStatus: job.status,
-    notes: input.isUrgent ? 'OS marcada como urgente' : 'MarcaÃ§Ã£o de urgÃªncia removida',
+    notes: input.isUrgent ? 'OS marcada como urgente' : 'Marcação de urgência removida',
   });
 
   void logAudit({
@@ -673,97 +758,52 @@ export async function toggleJobUrgent(tenantId: number, input: ToggleUrgentInput
 }
 
 export async function createReworkJob(tenantId: number, input: CreateReworkInput, userId: number) {
-  const original = await getScopedJobOrThrow(tenantId, input.originalJobId);
+  const original = await getScopedJobOrThrow(tenantId, input.jobId);
 
-  if (original.status === 'cancelled') {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS cancelada nÃ£o pode gerar remoldagem' });
+  if (FINAL_JOB_STATUSES.includes(original.status as (typeof FINAL_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS cancelada não pode gerar remoldagem' });
+  }
+  if (original.suspendedAt || PAUSED_JOB_STATUSES.includes(original.status as (typeof PAUSED_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS ja esta pausada' });
   }
 
-  const createdRework = await db.transaction(async (tx) => {
-    const [originalItems, orderNumberInternal] = await Promise.all([
-      tx.select().from(jobItems).where(and(eq(jobItems.tenantId, tenantId), eq(jobItems.jobId, original.id))),
-      getNextOrderNumber(tx, tenantId),
-    ]);
+  const updatedJob = await db.transaction(async (tx) => {
+    const now = new Date();
 
-    if (originalItems.length === 0) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS original sem itens para copiar' });
-    }
-
-    const totalCents = originalItems.reduce((sum, item) => sum + item.totalCents, 0);
-    const code = `OS-${orderNumberInternal.toString().padStart(5, '0')}`;
-
-    const [newJob] = await tx.insert(jobs).values({
-      tenantId,
-      code,
-      orderNumber: orderNumberInternal,
-      clientId: original.clientId,
-      patientName: input.patientName ?? original.patientName,
-      prothesisType: input.prothesisType ?? original.prothesisType,
-      material: input.material ?? original.material,
-      color: input.color ?? original.color,
-      instructions: input.instructions ?? original.instructions,
-      notes: input.notes ?? original.notes,
-      deadline: new Date(input.deadline),
-      assignedTo: input.assignedTo ?? original.assignedTo,
-      createdBy: userId,
-      totalCents,
-      jobSubType: 'rework',
-      reworkReason: input.reason,
-      reworkParentId: original.id,
-      isUrgent: original.isUrgent,
-    }).returning();
-
-    for (const item of originalItems) {
-      await tx.insert(jobItems).values({
-        tenantId,
-        jobId: newJob!.id,
-        priceItemId: item.priceItemId ?? null,
-        serviceNameSnapshot: item.serviceNameSnapshot,
-        quantity: item.quantity,
-        unitPriceCents: item.unitPriceCents,
-        adjustmentPercent: item.adjustmentPercent,
-        totalCents: item.totalCents,
-      });
-    }
-
-    await tx.update(jobs)
+    const [updated] = await tx
+      .update(jobs)
       .set({
-        status: 'completed_with_rework',
-        completedAt: new Date(),
-        updatedAt: new Date(),
+        status: 'rework_in_progress',
+        jobSubType: 'rework',
+        reworkReason: input.reason,
+        suspendedAt: now,
+        suspendedBy: userId,
+        suspendReason: `Remoldagem: ${input.reason}`,
+        resumeStatus: original.status,
+        completedAt: null,
+        updatedAt: now,
       })
-      .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, original.id)));
+      .where(and(eq(jobs.tenantId, tenantId), eq(jobs.id, original.id)))
+      .returning();
+
+    await tx.delete(deliveryItems).where(
+      and(
+        eq(deliveryItems.tenantId, tenantId),
+        eq(deliveryItems.jobId, original.id),
+        eq(deliveryItems.status, 'scheduled'),
+      ),
+    );
 
     await tx.insert(jobLogs).values({
       tenantId,
       jobId: original.id,
       userId,
       fromStatus: original.status,
-      toStatus: 'completed_with_rework',
-      notes: `Remoldagem criada para OS #${newJob!.id}: ${input.reason}`,
+      toStatus: 'rework_in_progress',
+      notes: `OS pausada para remoldagem: ${input.reason}`,
     });
 
-    await tx.insert(jobLogs).values({
-      tenantId,
-      jobId: newJob!.id,
-      userId,
-      fromStatus: null,
-      toStatus: 'pending',
-      notes: `OS de remoldagem criada a partir da OS #${original.id}`,
-    });
-
-    if (totalCents > 0) {
-      await autoCreateArFromJob(
-        tenantId,
-        newJob!.id,
-        original.clientId,
-        totalCents,
-        new Date(input.deadline),
-        tx,
-      );
-    }
-
-    return newJob!;
+    return updated!;
   });
 
   void logAudit({
@@ -771,19 +811,19 @@ export async function createReworkJob(tenantId: number, input: CreateReworkInput
     userId,
     action: 'job.createRework',
     entityType: 'jobs',
-    entityId: createdRework.id,
-    oldValue: { originalJobId: original.id, originalStatus: original.status },
-    newValue: createdRework,
+    entityId: original.id,
+    oldValue: { jobId: original.id, originalStatus: original.status },
+    newValue: updatedJob,
   });
 
-  return createdRework;
+  return updatedJob;
 }
 
 export async function deleteJob(tenantId: number, jobId: number, deletedBy: number) {
   const [existing] = await db.select().from(jobs).where(
     and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId), isNull(jobs.deletedAt))
   );
-  if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
+  if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
 
   await db.transaction(async (tx) => {
     await tx.update(jobs)
@@ -810,14 +850,14 @@ export async function getLogs(tenantId: number, jobId: number) {
     .orderBy(sql`${jobLogs.createdAt} DESC`);
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Fotos Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”€â”€â”€ Fotos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function uploadPhoto(tenantId: number, input: UploadPhotoInput, uploadedBy: number) {
   // Verificar que job pertence ao tenant
   const [job] = await db.select().from(jobs).where(
     and(eq(jobs.tenantId, tenantId), eq(jobs.id, input.jobId), isNull(jobs.deletedAt))
   );
-  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
+  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
 
   // Decodificar base64 e fazer upload (MVP: base64 no body)
   const ext = input.filename.split('.').pop() ?? 'jpg';
@@ -850,17 +890,17 @@ export async function deletePhoto(tenantId: number, photoId: number) {
   const [photo] = await db.select().from(jobPhotos).where(
     and(eq(jobPhotos.tenantId, tenantId), eq(jobPhotos.id, photoId))
   );
-  if (!photo) throw new TRPCError({ code: 'NOT_FOUND', message: 'Foto nÃƒÂ£o encontrada' });
+  if (!photo) throw new TRPCError({ code: 'NOT_FOUND', message: 'Foto nÃ£o encontrada' });
 
   try {
     await deleteObject(photo.url);
   } catch {
-    // Ignorar erro de S3 se arquivo nÃƒÂ£o existir
+    // Ignorar erro de S3 se arquivo nÃ£o existir
   }
   await db.delete(jobPhotos).where(and(eq(jobPhotos.id, photoId), eq(jobPhotos.tenantId, tenantId)));
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Etapas Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”€â”€â”€ Etapas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function listStages(tenantId: number) {
   return db.select().from(jobStages)
@@ -899,14 +939,14 @@ export async function deleteStage(tenantId: number, stageId: number) {
 
 export async function seedDefaultStages(tenantId: number) {
   const existing = await listStages(tenantId);
-  if (existing.length > 0) return; // jÃƒÂ¡ seeded
+  if (existing.length > 0) return; // jÃ¡ seeded
 
   for (const stage of DEFAULT_STAGES) {
     await db.insert(jobStages).values({ tenantId, name: stage.name, sortOrder: stage.sortOrder });
   }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Kanban Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”€â”€â”€ Kanban â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
   type KanbanCard = {
@@ -935,7 +975,7 @@ export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
     eq(jobs.tenantId, tenantId),
     isNull(jobs.deletedAt),
     isNull(jobs.suspendedAt),
-    not(inArray(jobs.status, ['cancelled', 'completed_with_rework'])),
+    not(inArray(jobs.status, ['cancelled', 'suspended', 'rework_in_progress'])),
   ];
 
   if (filters.clientId) conditions.push(eq(jobs.clientId, filters.clientId));
@@ -994,7 +1034,7 @@ export async function getKanbanBoard(tenantId: number, filters: KanbanFilters) {
     if (col) col.push(card);
   }
 
-  // Se filtro overdue Ã¢â‚¬â€ retornar apenas jobs atrasados
+  // Se filtro overdue â€” retornar apenas jobs atrasados
   if (filters.overdue) {
     for (const key of Object.keys(columns) as Array<keyof typeof columns>) {
       columns[key] = columns[key].filter((job) => job.urgency === 'overdue');
@@ -1023,7 +1063,14 @@ export async function listSuspendedJobs(tenantId: number) {
     })
     .from(jobs)
     .leftJoin(clients, eq(jobs.clientId, clients.id))
-    .where(and(eq(jobs.tenantId, tenantId), isNull(jobs.deletedAt), not(isNull(jobs.suspendedAt))))
+    .where(and(
+      eq(jobs.tenantId, tenantId),
+      isNull(jobs.deletedAt),
+      or(
+        not(isNull(jobs.suspendedAt)),
+        inArray(jobs.status, ['suspended', 'rework_in_progress']),
+      )!,
+    ))
     .orderBy(sql`${jobs.suspendedAt} DESC`);
 }
 
@@ -1031,13 +1078,15 @@ export async function moveKanban(tenantId: number, jobId: number, newStatus: str
   const [job] = await db.select().from(jobs).where(
     and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId), isNull(jobs.deletedAt))
   );
-  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
-  if (job.suspendedAt) throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS suspensa nÃƒÂ£o pode ser movida no Kanban' });
+  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
+  if (job.suspendedAt || PAUSED_JOB_STATUSES.includes(job.status as (typeof PAUSED_JOB_STATUSES)[number])) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'OS suspensa nÃ£o pode ser movida no Kanban' });
+  }
 
   if (!canTransition(job.status, newStatus as Parameters<typeof canTransition>[0])) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
-      message: `TransiÃƒÂ§ÃƒÂ£o de "${job.status}" para "${newStatus}" nÃƒÂ£o permitida`,
+      message: `TransiÃ§Ã£o de "${job.status}" para "${newStatus}" nÃ£o permitida`,
     });
   }
 
@@ -1061,13 +1110,13 @@ export async function assignTechnician(tenantId: number, jobId: number, employee
   const [job] = await db.select().from(jobs).where(
     and(eq(jobs.tenantId, tenantId), eq(jobs.id, jobId))
   );
-  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃƒÂ£o encontrada' });
+  if (!job) throw new TRPCError({ code: 'NOT_FOUND', message: 'OS nÃ£o encontrada' });
 
   await db.transaction(async (tx) => {
     await tx.update(jobs).set({ assignedTo: employeeId ?? null, updatedAt: new Date() }).where(eq(jobs.id, jobId));
     await tx.insert(jobLogs).values({
       tenantId, jobId, userId, toStatus: job.status,
-      notes: employeeId ? `AtribuÃƒÂ­do ao tÃƒÂ©cnico #${employeeId}` : 'TÃƒÂ©cnico removido',
+      notes: employeeId ? `AtribuÃ­do ao tÃ©cnico #${employeeId}` : 'TÃ©cnico removido',
     });
   });
 }
@@ -1082,7 +1131,7 @@ export async function getKanbanMetrics(tenantId: number) {
       eq(jobs.tenantId, tenantId),
       isNull(jobs.deletedAt),
       isNull(jobs.suspendedAt),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const [overdue] = await db
@@ -1093,7 +1142,7 @@ export async function getKanbanMetrics(tenantId: number) {
       isNull(jobs.deletedAt),
       lt(jobs.deadline, now),
       isNull(jobs.suspendedAt),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const [urgentActive] = await db
@@ -1104,7 +1153,7 @@ export async function getKanbanMetrics(tenantId: number) {
       isNull(jobs.deletedAt),
       isNull(jobs.suspendedAt),
       eq(jobs.isUrgent, true),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const [proofOverdue] = await db
@@ -1117,7 +1166,7 @@ export async function getKanbanMetrics(tenantId: number) {
       eq(jobs.jobSubType, 'proof'),
       isNull(jobs.proofReturnedAt),
       lt(jobs.proofDueDate, now),
-      not(inArray(jobs.status, ['delivered', 'cancelled', 'completed_with_rework'])),
+      not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])),
     ));
 
   const statusBreakdown = await db
@@ -1135,7 +1184,7 @@ export async function getKanbanMetrics(tenantId: number) {
   };
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ PDF Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”€â”€â”€ PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function generatePdf(tenantId: number, jobId: number): Promise<Buffer> {
   const jobData = await getJob(tenantId, jobId);
@@ -1149,12 +1198,12 @@ export async function generatePdf(tenantId: number, jobId: number): Promise<Buff
   // Header
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('ProteticFlow Ã¢â‚¬â€ Ordem de ServiÃƒÂ§o', 14, 20);
+  doc.text('ProteticFlow â€” Ordem de ServiÃ§o', 14, 20);
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.text(`OS: ${jobData.code}`, 14, 30);
-  doc.text(`Cliente: ${jobData.clientName ?? 'Ã¢â‚¬â€'}`, 14, 37);
+  doc.text(`Cliente: ${jobData.clientName ?? 'â€”'}`, 14, 37);
   if (jobData.patientName) doc.text(`Paciente: ${jobData.patientName}`, 14, 44);
   doc.text(`Prazo: ${new Date(jobData.deadline).toLocaleDateString('pt-BR')}`, 14, 51);
   doc.text(`Status: ${jobData.status}`, 14, 58);
@@ -1170,7 +1219,7 @@ export async function generatePdf(tenantId: number, jobId: number): Promise<Buff
 
   doc.autoTable({
     startY: 68,
-    head: [['ServiÃƒÂ§o', 'Qtd', 'PreÃƒÂ§o Unit.', 'Ajuste', 'Total']],
+    head: [['ServiÃ§o', 'Qtd', 'PreÃ§o Unit.', 'Ajuste', 'Total']],
     body: tableRows,
     styles: { fontSize: 9 },
     headStyles: { fillColor: [124, 58, 237] },
@@ -1183,5 +1232,6 @@ export async function generatePdf(tenantId: number, jobId: number): Promise<Buff
 
   return Buffer.from(doc.output('arraybuffer') as ArrayBuffer);
 }
+
 
 

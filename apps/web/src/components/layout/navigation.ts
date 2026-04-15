@@ -32,7 +32,9 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Flow IA', href: '/flow-ia', module: 'ai', keywords: ['assistente'] },
   { label: 'IA Avancada', href: '/ia-avancada', module: 'ai', keywords: ['predicao'] },
   { label: 'Suporte', href: '/suporte/tickets', module: 'support', keywords: ['tickets'] },
+  { label: 'Sugestoes', href: '/suporte/sugestoes', module: 'support', keywords: ['feedback'] },
   { label: 'Configuracoes', href: '/configuracoes', module: 'settings' },
   { label: 'Auditoria', href: '/auditoria', module: 'settings' },
 ];
+
 

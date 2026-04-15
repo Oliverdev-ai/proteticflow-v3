@@ -6,11 +6,21 @@ export const createDeliveryScheduleSchema = z.object({
   vehicle: z.string().max(128).optional(),
   notes: z.string().optional(),
   items: z.array(z.object({
-    jobId: z.number().int().positive(),
+    stopType: z.enum(['delivery', 'pickup']).default('delivery'),
+    jobId: z.number().int().positive().optional(),
     clientId: z.number().int().positive(),
+    deliveryAddress: z.string().min(3).max(2000),
     sortOrder: z.number().int().min(0).default(0),
     notes: z.string().optional(),
-  })).min(1, 'Roteiro deve ter pelo menos 1 OS'),
+  }).superRefine((item, ctx) => {
+    if (item.stopType === 'delivery' && !item.jobId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Paradas de entrega exigem OS vinculada',
+        path: ['jobId'],
+      });
+    }
+  })).min(1, 'Roteiro deve ter pelo menos 1 parada'),
 });
 
 export const updateDeliveryItemStatusSchema = z.object({

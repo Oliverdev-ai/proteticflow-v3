@@ -40,6 +40,8 @@ export const createMaterialSchema = z.object({
   supplierId: z.number().int().positive().optional(),
   unit: z.string().max(32).default('un'),
   minStock: z.number().min(0).default(0),
+  initialQuantity: z.number().min(0).default(0),
+  unitCostCents: z.number().int().min(0).default(0),
   maxStock: z.number().min(0).optional(),
   notes: z.string().optional(),
 });
@@ -113,7 +115,7 @@ export const listPurchaseOrdersSchema = z.object({
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
 export type ListSuppliersInput = z.infer<typeof listSuppliersSchema>;
-export type CreateMaterialInput = z.infer<typeof createMaterialSchema>;
+export type CreateMaterialInput = z.input<typeof createMaterialSchema>;
 export type ListMaterialsInput = z.infer<typeof listMaterialsSchema>;
 export type CreateMovementInput = z.infer<typeof createMovementSchema>;
 export type ListMovementsInput = z.infer<typeof listMovementsSchema>;

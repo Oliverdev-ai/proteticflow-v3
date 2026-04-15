@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
@@ -110,7 +111,7 @@ export default function ContasPagarPage() {
     if (!form.description || !form.amountCents || !form.dueDate) return;
     createAp.mutate({
       description: form.description,
-      amountCents: Math.round(parseFloat(form.amountCents) * 100),
+      amountCents: parseBRL(form.amountCents),
       dueDate: new Date(form.dueDate).toISOString(),
       supplier: form.supplier || undefined,
       notes: form.notes || undefined,

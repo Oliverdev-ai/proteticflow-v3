@@ -17,18 +17,10 @@ import { ReportPreviewTable } from '../../../components/reports/report-preview-t
 import { ReportChart } from '../../../components/reports/report-chart';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { downloadBase64Artifact } from '../../../lib/pdf-export';
 
 function toIsoRange(date: string, mode: 'start' | 'end') {
   return new Date(`${date}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();
-}
-
-function downloadBase64(filename: string, mimeType: string, base64: string) {
-  const link = document.createElement('a');
-  link.href = `data:${mimeType};base64,${base64}`;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 export default function ReportsHubPage() {
@@ -81,7 +73,7 @@ export default function ReportsHubPage() {
       type: selectedType,
       filters: requestFilters,
     });
-    downloadBase64(artifact.filename, artifact.mimeType, artifact.base64);
+    downloadBase64Artifact(artifact);
   }
 
   async function handleCsv() {
@@ -90,15 +82,19 @@ export default function ReportsHubPage() {
       type: selectedType,
       filters: requestFilters,
     });
-    downloadBase64(artifact.filename, artifact.mimeType, artifact.base64);
+    downloadBase64Artifact(artifact);
   }
 
   async function handleSendEmail() {
     if (!selectedType || !email) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return;
+
+    setEmail(normalizedEmail);
     await sendByEmailMutation.mutateAsync({
       type: selectedType,
       filters: requestFilters,
-      to: email,
+      to: normalizedEmail,
       sendCsv: true,
       sendPdf: true,
     });
@@ -197,9 +193,11 @@ export default function ReportsHubPage() {
             <div className="flex flex-col gap-8">
               {preview ? (
                 <>
-                  <ScaleIn delay={0.4} key={`chart-${selectedType}`}>
-                    <ReportChart preview={preview} />
-                  </ScaleIn>
+                  {filters.includeCharts && (
+                    <ScaleIn delay={0.4} key={`chart-${selectedType}`}>
+                      <ReportChart preview={preview} />
+                    </ScaleIn>
+                  )}
                   <ScaleIn delay={0.5} key={`table-${selectedType}`}>
                     <ReportPreviewTable preview={preview} />
                   </ScaleIn>

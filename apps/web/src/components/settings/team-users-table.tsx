@@ -3,9 +3,11 @@ import {
   Activity, UserPlus,
 } from 'lucide-react';
 import { ROLE_LABELS, ROLES, type Role } from '@proteticflow/shared';
+import { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { Large, Muted } from '../shared/typography';
 import { useSettings } from '../../hooks/use-settings';
+import { trpc } from '../../lib/trpc';
 
 interface TeamUsersTableProps {
   showRoleActions?: boolean;
@@ -29,11 +31,46 @@ function getInitials(name: string) {
 export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps) {
   const { overview, updateRole } = useSettings();
   const users = overview.data?.users ?? [];
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<Role>(ROLES.RECEPCAO);
+  const [inviteFeedback, setInviteFeedback] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  const inviteMutation = trpc.tenant.invite.useMutation({
+    onSuccess: () => {
+      setInviteError(null);
+      setInviteFeedback('Convite enviado com sucesso por e-mail.');
+      setInviteEmail('');
+      setInviteRole(ROLES.RECEPCAO);
+      setShowInvite(false);
+      void overview.refetch();
+      alert('Convite enviado com sucesso.');
+    },
+    onError: (error) => {
+      setInviteFeedback(null);
+      const message = error.message.includes('SMTP')
+        ? `${error.message} Verifique Configuracoes > Laboratorio > SMTP.`
+        : error.message;
+      setInviteError(message);
+      alert(`Erro ao enviar convite: ${message}`);
+    },
+  });
 
   const handleUpdateRole = async (memberId: number, currentRole: Role) => {
     const nextRole = getNextRole(currentRole);
     if (nextRole === currentRole) return;
     await updateRole.mutateAsync({ memberId, role: nextRole });
+  };
+
+  const handleInvite = () => {
+    setInviteFeedback(null);
+    setInviteError(null);
+    if (!inviteEmail.trim()) {
+      setInviteError('Informe um email valido para convite.');
+      return;
+    }
+    inviteMutation.mutate({ email: inviteEmail.trim(), role: inviteRole });
   };
 
   return (
@@ -46,17 +83,29 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
             </div>
             <div className="flex flex-col gap-0.5">
               <Large className="tracking-tight text-lg font-black uppercase">Terminais Operacionais</Large>
-              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">GestÃ£o de identidades e vinculaÃ§Ã£o de dispositivos</Muted>
+              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Gestao de identidades e vinculacao de dispositivos</Muted>
             </div>
           </div>
 
           <button
             type="button"
+            onClick={() => {
+              setInviteFeedback(null);
+              setInviteError(null);
+              setShowInvite(true);
+            }}
             className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-30"
           >
             <UserPlus size={14} strokeWidth={3} /> Convidar Membro
           </button>
         </div>
+
+        {inviteFeedback ? (
+          <p className="px-8 pb-3 pt-3 text-xs font-semibold text-emerald-500">{inviteFeedback}</p>
+        ) : null}
+        {inviteError ? (
+          <p className="px-8 pb-3 pt-3 text-xs font-semibold text-red-400">Erro: {inviteError}</p>
+        ) : null}
 
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -64,9 +113,9 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
               <tr className="border-b border-border bg-muted/20">
                 <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Membro / Terminal</th>
                 <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">Credencial</th>
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">PrivilÃ©gio</th>
+                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">Privilegio</th>
                 {showRoleActions && (
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">AÃ§Ãµes</th>
+                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Acoes</th>
                 )}
               </tr>
             </thead>
@@ -125,7 +174,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
                             disabled={updateRole.isPending}
                             className="px-6 py-2.5 rounded-xl bg-muted border border-border text-[9px] font-black uppercase tracking-widest hover:bg-muted-foreground hover:text-white transition-all active:scale-95 disabled:opacity-30"
                           >
-                            Alterar NÃ­vel
+                            Alterar Nivel
                           </button>
                         )}
                       </td>
@@ -139,12 +188,55 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
 
         <div className="p-8 bg-muted/10 border-t border-border/50">
           <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest leading-relaxed opacity-40 max-w-2xl">
-            * Superadmins possuem acesso total Ã  malha fiscal e financeira. O rodÃ­zio de privilÃ©gios nÃ£o altera o Ãºltimo superadmin ativo.
+            * Superadmins possuem acesso total a malha fiscal e financeira. O rodizio de privilegios nao altera o ultimo superadmin ativo.
           </p>
         </div>
 
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.01] rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none group-hover/team:bg-primary/[0.02] transition-colors duration-1000" />
       </div>
+
+      {showInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-2xl">
+            <div className="flex flex-col gap-6">
+              <h2 className="text-sm font-black uppercase tracking-widest">Convidar Membro</h2>
+              <input
+                type="email"
+                placeholder="email@laboratorio.com"
+                value={inviteEmail}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary/50"
+              />
+              <select
+                value={inviteRole}
+                onChange={(event) => setInviteRole(event.target.value as Role)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary/50"
+              >
+                {ROLE_ROTATION.map((role) => (
+                  <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+                ))}
+              </select>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowInvite(false)}
+                  className="flex-1 rounded-xl border border-border py-3 text-sm font-black uppercase tracking-widest"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={!inviteEmail.trim() || inviteMutation.isPending}
+                  onClick={handleInvite}
+                  className="flex-1 rounded-xl bg-primary py-3 text-sm font-black uppercase tracking-widest text-primary-foreground disabled:opacity-50"
+                >
+                  {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
