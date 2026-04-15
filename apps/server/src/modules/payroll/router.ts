@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, tenantProcedure, financialAdminProcedure } from '../../trpc/trpc.js';
+import { router, tenantProcedure, financialProcedure, financialAdminProcedure } from '../../trpc/trpc.js';
 import * as payrollService from './service.js';
 import { updatePayrollEntrySchema } from '@proteticflow/shared';
 
@@ -7,7 +7,7 @@ export const payrollRouter = router({
   createPeriod: financialAdminProcedure.input(z.object({ year: z.number(), month: z.number() })).mutation(({ ctx, input }) =>
     payrollService.createPeriod(ctx.user!.tenantId, input.year, input.month)),
 
-  listPeriods: tenantProcedure.query(({ ctx }) =>
+  listPeriods: financialProcedure.query(({ ctx }) =>
     payrollService.listPeriods(ctx.user!.tenantId)),
 
   generateEntries: financialAdminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
@@ -22,9 +22,9 @@ export const payrollRouter = router({
   reopenPeriod: financialAdminProcedure.input(z.object({ periodId: z.number() })).mutation(({ ctx, input }) =>
     payrollService.reopenPeriod(ctx.user!.tenantId, input.periodId, ctx.user!.id)),
 
-  getPeriodReport: tenantProcedure.input(z.object({ periodId: z.number() })).query(({ ctx, input }) =>
+  getPeriodReport: financialProcedure.input(z.object({ periodId: z.number() })).query(({ ctx, input }) =>
     payrollService.getPeriodReport(ctx.user!.tenantId, input.periodId)),
 
-  generatePayslip: tenantProcedure.input(z.object({ periodId: z.number(), employeeId: z.number() })).query(({ ctx, input }) =>
+  generatePayslip: financialProcedure.input(z.object({ periodId: z.number(), employeeId: z.number() })).query(({ ctx, input }) =>
     payrollService.generatePayslipPdf(ctx.user!.tenantId, input.periodId, input.employeeId)),
 });
