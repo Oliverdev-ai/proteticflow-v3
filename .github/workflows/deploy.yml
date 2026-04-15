@@ -43,8 +43,8 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:staging
           provenance: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:cache-staging
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:cache-staging,mode=max,image-manifest=true,oci-mediatypes=true
 
   deploy-production:
     name: Deploy to Production
@@ -80,8 +80,8 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:cache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/server:cache,mode=max,image-manifest=true,oci-mediatypes=true
 
       - name: Build and push web image
         uses: docker/build-push-action@v6
@@ -93,8 +93,8 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/web:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/web:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/web:cache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/web:cache,mode=max,image-manifest=true,oci-mediatypes=true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
