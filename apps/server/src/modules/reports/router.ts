@@ -1,4 +1,4 @@
-import { router, tenantProcedure, adminProcedure } from '../../trpc/trpc.js';
+import { router, reportsAdminProcedure, reportsProcedure } from '../../trpc/trpc.js';
 import {
   reportPreviewSchema,
   reportGeneratePdfSchema,
@@ -67,15 +67,15 @@ export const reportsRouter = router({
   exportCSV: fiscalExportCsvProcedure,
   exportPDF: fiscalExportPdfProcedure,
 
-  listDefinitions: tenantProcedure.query(({ ctx }) => reportsService.listDefinitions(ctx.tenantId!)),
+  listDefinitions: reportsProcedure.query(({ ctx }) => reportsService.listDefinitions(ctx.tenantId!)),
 
-  preview: tenantProcedure
+  preview: reportsProcedure
     .input(reportPreviewSchema)
     .query(({ ctx, input }) =>
       reportsService.preview(ctx.tenantId!, input.type, sanitizeFilters(input.filters), ctx.user!.role),
     ),
 
-  generatePdf: tenantProcedure
+  generatePdf: reportsProcedure
     .input(reportGeneratePdfSchema)
     .query(({ ctx, input }) =>
       reportsService.generatePdf(
@@ -87,13 +87,13 @@ export const reportsRouter = router({
       ),
     ),
 
-  exportCsv: tenantProcedure
+  exportCsv: reportsProcedure
     .input(reportExportCsvSchema)
     .query(({ ctx, input }) =>
       reportsService.exportCsv(ctx.tenantId!, input.type, sanitizeFilters(input.filters), ctx.user!.role),
     ),
 
-  sendByEmail: adminProcedure
+  sendByEmail: reportsAdminProcedure
     .input(reportSendByEmailSchema)
     .mutation(({ ctx, input }) =>
       reportsService.sendByEmail(

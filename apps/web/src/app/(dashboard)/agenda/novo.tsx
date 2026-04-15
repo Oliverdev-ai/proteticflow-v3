@@ -17,7 +17,7 @@ export default function EventCreatePage() {
   const [startAt, setStartAt] = useState('');
   const [endAt, setEndAt] = useState('');
   const [jobId, setJobId] = useState('');
-  const [clientId, setClientId] = useState('');
+  const [dentistId, setDentistId] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [recurrence, setRecurrence] = useState<RecurrenceType>('none');
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
@@ -39,7 +39,7 @@ export default function EventCreatePage() {
   useEffect(() => {
     if (!selectedJob) return;
     if (selectedJob.clientId) {
-      setClientId(String(selectedJob.clientId));
+      setDentistId(String(selectedJob.clientId));
     }
   }, [selectedJob]);
 
@@ -62,7 +62,7 @@ export default function EventCreatePage() {
       endAt: toIsoLocal(endAt),
       allDay: false,
       jobId: jobId ? Number(jobId) : undefined,
-      clientId: clientId ? Number(clientId) : undefined,
+      clientId: dentistId ? Number(dentistId) : undefined,
       employeeId: employeeId ? Number(employeeId) : undefined,
       recurrence,
       recurrenceEndDate: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
@@ -164,8 +164,8 @@ export default function EventCreatePage() {
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Cliente / Dentista (opcional)</label>
             <select
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
+              value={dentistId}
+              onChange={(e) => setDentistId(e.target.value)}
               className="input-field w-full"
             >
               <option value="">Selecione...</option>

@@ -7,13 +7,16 @@ import type {
   AutoResponseTemplate,
   ChatbotConversation,
   ChatbotMessage,
+  SupportSuggestion,
   SupportTicket,
   TicketMessage,
 } from '@proteticflow/shared';
 import {
   addTicketMessageSchema,
+  createSupportSuggestionSchema,
   createTicketSchema,
   escalateConversationSchema,
+  listSupportSuggestionsSchema,
   listTicketsSchema,
   rateConversationSchema,
   sendChatMessageSchema,
@@ -29,6 +32,7 @@ import {
   chatbotMessages,
   supportTickets,
   ticketMessages,
+  supportSuggestions,
 } from '../../db/schema/support.js';
 import { detectIntent, generateChatbotResponse } from './chatbot.js';
 
@@ -37,9 +41,11 @@ type SendChatMessageInput = z.infer<typeof sendChatMessageSchema>;
 type RateConversationInput = z.infer<typeof rateConversationSchema>;
 type EscalateConversationInput = z.infer<typeof escalateConversationSchema>;
 type CreateTicketInput = z.infer<typeof createTicketSchema>;
+type CreateSupportSuggestionInput = z.infer<typeof createSupportSuggestionSchema>;
 type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
 type AddTicketMessageInput = z.infer<typeof addTicketMessageSchema>;
 type ListTicketsInput = z.infer<typeof listTicketsSchema>;
+type ListSupportSuggestionsInput = z.infer<typeof listSupportSuggestionsSchema>;
 type UpsertTemplateInput = z.infer<typeof upsertTemplateSchema>;
 
 function hashPortalToken(rawToken: string) {
@@ -537,4 +543,69 @@ export async function deleteTemplate(tenantId: number, templateId: number) {
   }
 
   return { success: true };
+}
+
+export async function createSupportSuggestion(
+  tenantId: number,
+  userId: number,
+  input: CreateSupportSuggestionInput,
+): Promise<SupportSuggestion> {
+  const [created] = await db
+    .insert(supportSuggestions)
+    .values({
+      tenantId,
+      authorUserId: userId,
+      title: input.title,
+      description: input.description,
+      category: input.category,
+      perceivedImpact: input.perceivedImpact,
+      status: 'received',
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  if (!created) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao registrar sugestao' });
+  }
+
+  return toSupportSuggestionModel(created);
+}
+
+export async function listSupportSuggestions(
+  tenantId: number,
+  input: ListSupportSuggestionsInput,
+): Promise<{ data: SupportSuggestion[]; nextCursor: number | null }> {
+  const conditions = [eq(supportSuggestions.tenantId, tenantId)];
+  if (input.status) conditions.push(eq(supportSuggestions.status, input.status));
+  if (input.cursor) conditions.push(lt(supportSuggestions.id, input.cursor));
+
+  const rows = await db
+    .select()
+    .from(supportSuggestions)
+    .where(and(...conditions))
+    .orderBy(desc(supportSuggestions.id))
+    .limit(input.limit + 1);
+
+  const pageRows = rows.slice(0, input.limit);
+  const nextCursor = rows.length > input.limit ? pageRows[pageRows.length - 1]?.id ?? null : null;
+
+  return {
+    data: pageRows.map(toSupportSuggestionModel),
+    nextCursor,
+  };
+}
+
+function toSupportSuggestionModel(row: typeof supportSuggestions.$inferSelect): SupportSuggestion {
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    authorUserId: row.authorUserId,
+    title: row.title,
+    description: row.description,
+    category: row.category as SupportSuggestion['category'],
+    perceivedImpact: row.perceivedImpact as SupportSuggestion['perceivedImpact'],
+    status: row.status as SupportSuggestion['status'],
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
 }

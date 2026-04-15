@@ -6,6 +6,7 @@ import {
   PLAN_LIMITS,
   createCheckoutSessionSchema,
   superadminUpdateTenantPlanSchema,
+  type GatedFeature,
   type LimitableFeature,
   type PlanTier,
 } from '@proteticflow/shared';
@@ -27,10 +28,13 @@ type TenantWithCounters = {
   id: number;
   plan: string;
   planExpiresAt: Date | null;
+  fullAccessUntil: Date | null;
   clientCount: number;
   jobCountThisMonth: number;
   userCount: number;
   priceTableCount: number;
+  managerActionsThisMonth: number;
+  managerActionsMonthRef: Date;
 };
 
 type StripeEventHandlerResult = 'processed' | 'ignored';
@@ -41,7 +45,7 @@ export type LicenseStatus = {
   plan: PlanTier;
   planExpiresAt: string | null;
   trialExpired: boolean;
-  usage: Record<LimitableFeature, {
+  usage: Record<'clients' | 'jobsPerMonth' | 'users' | 'priceTables', {
     current: number;
     limit: number | null;
     usagePercent: number | null;
@@ -80,6 +84,7 @@ function resolvePlanTier(plan: string | null | undefined): PlanTier {
 
 function getCurrentUsage(tenant: TenantWithCounters, feature: LimitableFeature): number {
   const counterMap: Record<LimitableFeature, number> = {
+    labs: 1,
     clients: tenant.clientCount,
     jobsPerMonth: tenant.jobCountThisMonth,
     users: tenant.userCount,
@@ -88,9 +93,43 @@ function getCurrentUsage(tenant: TenantWithCounters, feature: LimitableFeature):
   return counterMap[feature];
 }
 
-function getFeatureLimit(plan: PlanTier, feature: LimitableFeature): number | null {
-  const limits = PLAN_LIMITS[plan];
-  return limits[feature];
+function getPromotionalWindowEnd(plan: PlanTier, fromDate: Date = new Date()): Date | null {
+  const fullAccessDays = PLAN_LIMITS[plan].fullAccessDays;
+  if (!fullAccessDays) return null;
+  return new Date(fromDate.getTime() + fullAccessDays * 24 * 60 * 60 * 1000);
+}
+
+function hasFullAccess(plan: PlanTier, fullAccessUntil: Date | null): boolean {
+  if (plan === 'enterprise') return true;
+  return Boolean(fullAccessUntil && fullAccessUntil > new Date());
+}
+
+function getEffectiveFeatureLimit(
+  tenant: Pick<TenantWithCounters, 'plan' | 'fullAccessUntil'>,
+  feature: LimitableFeature,
+): number | null {
+  const plan = resolvePlanTier(tenant.plan);
+  if (hasFullAccess(plan, tenant.fullAccessUntil)) {
+    return null;
+  }
+  return PLAN_LIMITS[plan][feature];
+}
+
+function getEffectiveFeatureAccess(
+  tenant: Pick<TenantWithCounters, 'plan' | 'fullAccessUntil'>,
+): (typeof PLAN_LIMITS)[PlanTier]['features'] {
+  const plan = resolvePlanTier(tenant.plan);
+  if (hasFullAccess(plan, tenant.fullAccessUntil)) {
+    return {
+      reports: true,
+      portal: true,
+      ai: 'full',
+      api: true,
+      financial: true,
+      voiceCommands: true,
+    };
+  }
+  return PLAN_LIMITS[plan].features;
 }
 
 function getStripeClient(): Stripe {
@@ -129,10 +168,13 @@ async function getTenantOrThrow(tenantId: number): Promise<TenantWithCounters> {
       id: tenants.id,
       plan: tenants.plan,
       planExpiresAt: tenants.planExpiresAt,
+      fullAccessUntil: tenants.fullAccessUntil,
       clientCount: tenants.clientCount,
       jobCountThisMonth: tenants.jobCountThisMonth,
       userCount: tenants.userCount,
       priceTableCount: tenants.priceTableCount,
+      managerActionsThisMonth: tenants.managerActionsThisMonth,
+      managerActionsMonthRef: tenants.managerActionsMonthRef,
     })
     .from(tenants)
     .where(eq(tenants.id, tenantId));
@@ -182,8 +224,14 @@ async function getOrCreateStripeCustomer(tenantId: number): Promise<string> {
   return customer.id;
 }
 
-function isTrialExpired(plan: PlanTier, planExpiresAt: Date | null): boolean {
-  return plan === 'trial' && Boolean(planExpiresAt && planExpiresAt < new Date());
+function isTrialRestricted(tenant: Pick<TenantWithCounters, 'plan' | 'fullAccessUntil'>): boolean {
+  const plan = resolvePlanTier(tenant.plan);
+  return plan === 'trial' && !hasFullAccess(plan, tenant.fullAccessUntil);
+}
+
+function isSameMonthWindow(reference: Date, now: Date): boolean {
+  return reference.getUTCFullYear() === now.getUTCFullYear()
+    && reference.getUTCMonth() === now.getUTCMonth();
 }
 
 async function logLicenseCheck(
@@ -221,16 +269,7 @@ export async function checkLimit(
 ): Promise<void> {
   const tenant = await getTenantOrThrow(tenantId);
   const plan = resolvePlanTier(tenant.plan);
-
-  if (isTrialExpired(plan, tenant.planExpiresAt)) {
-    await logLicenseCheck(tenantId, userId, feature, false, plan, 0, getCurrentUsage(tenant, feature));
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: 'Periodo de trial encerrado. Faca upgrade para continuar.',
-    });
-  }
-
-  const limit = getFeatureLimit(plan, feature);
+  const limit = getEffectiveFeatureLimit(tenant, feature);
   const current = getCurrentUsage(tenant, feature);
   const allowed = limit === null || current < limit;
 
@@ -251,11 +290,11 @@ export async function checkLimit(
 export async function getLicenseStatus(tenantId: number): Promise<LicenseStatus> {
   const tenant = await getTenantOrThrow(tenantId);
   const plan = resolvePlanTier(tenant.plan);
-  const trialExpired = isTrialExpired(plan, tenant.planExpiresAt);
+  const trialExpired = isTrialRestricted(tenant);
 
   const usage = (['clients', 'jobsPerMonth', 'users', 'priceTables'] as const).reduce((acc, feature) => {
     const current = getCurrentUsage(tenant, feature);
-    const limit = getFeatureLimit(plan, feature);
+    const limit = getEffectiveFeatureLimit(tenant, feature);
     const usagePercent = limit === null || limit === 0 ? null : Math.round((current / limit) * 100);
 
     acc[feature] = { current, limit, usagePercent };
@@ -268,7 +307,130 @@ export async function getLicenseStatus(tenantId: number): Promise<LicenseStatus>
     planExpiresAt: tenant.planExpiresAt ? tenant.planExpiresAt.toISOString() : null,
     trialExpired,
     usage,
-    featureAccess: PLAN_LIMITS[plan].features,
+    featureAccess: getEffectiveFeatureAccess(tenant),
+  };
+}
+
+export async function checkFeatureAccess(
+  tenantId: number,
+  feature: GatedFeature,
+): Promise<void> {
+  const tenant = await getTenantOrThrow(tenantId);
+  const plan = resolvePlanTier(tenant.plan);
+  const access = getEffectiveFeatureAccess(tenant)[feature];
+
+  if (!access) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `Recurso "${feature}" nao disponivel no plano ${plan}. Faca upgrade para continuar.`,
+    });
+  }
+}
+
+export async function checkAiAccess(
+  tenantId: number,
+  requiredTier: 'basic' | 'full' = 'basic',
+): Promise<void> {
+  const tenant = await getTenantOrThrow(tenantId);
+  const plan = resolvePlanTier(tenant.plan);
+  const aiAccess = getEffectiveFeatureAccess(tenant).ai;
+
+  if (!aiAccess) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `IA nao disponivel no plano ${plan}. Faca upgrade para continuar.`,
+    });
+  }
+
+  if (requiredTier === 'full' && aiAccess !== 'full') {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `Este recurso exige IA completa. Plano atual: ${plan}.`,
+    });
+  }
+}
+
+export async function checkManagerActionLimit(tenantId: number): Promise<void> {
+  const tenant = await getTenantOrThrow(tenantId);
+  const plan = resolvePlanTier(tenant.plan);
+
+  if (hasFullAccess(plan, tenant.fullAccessUntil)) {
+    return;
+  }
+
+  const limit = PLAN_LIMITS[plan].managerActionsPerMonth;
+  if (limit === null) {
+    return;
+  }
+
+  const now = new Date();
+  const monthRef = tenant.managerActionsMonthRef ?? now;
+  const current = isSameMonthWindow(monthRef, now) ? tenant.managerActionsThisMonth : 0;
+
+  if (current >= limit) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: `Limite mensal de acoes atingido (${limit}/${limit}). Faca upgrade para continuar.`,
+    });
+  }
+}
+
+export async function consumeManagerAction(tenantId: number): Promise<void> {
+  const tenant = await getTenantOrThrow(tenantId);
+  const plan = resolvePlanTier(tenant.plan);
+
+  if (hasFullAccess(plan, tenant.fullAccessUntil)) {
+    return;
+  }
+
+  const limit = PLAN_LIMITS[plan].managerActionsPerMonth;
+  if (limit === null) {
+    return;
+  }
+
+  const now = new Date();
+  const monthRef = tenant.managerActionsMonthRef ?? now;
+  const isSameMonth = isSameMonthWindow(monthRef, now);
+
+  await db
+    .update(tenants)
+    .set(
+      isSameMonth
+        ? {
+          managerActionsThisMonth: sql`${tenants.managerActionsThisMonth} + 1`,
+          updatedAt: now,
+        }
+        : {
+          managerActionsThisMonth: 1,
+          managerActionsMonthRef: now,
+          updatedAt: now,
+        },
+    )
+    .where(eq(tenants.id, tenantId));
+}
+
+export async function getUsageForTenant(tenantId: number) {
+  const tenant = await getTenantOrThrow(tenantId);
+  const plan = resolvePlanTier(tenant.plan);
+  const now = new Date();
+  const fullAccessActive = hasFullAccess(plan, tenant.fullAccessUntil);
+  const trialDaysLeft = fullAccessActive && tenant.fullAccessUntil
+    ? Math.ceil((tenant.fullAccessUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const monthRef = tenant.managerActionsMonthRef ?? now;
+  const managerActionsUsed = isSameMonthWindow(monthRef, now) ? tenant.managerActionsThisMonth : 0;
+  const managerActionsLimit = fullAccessActive ? null : PLAN_LIMITS[plan].managerActionsPerMonth;
+
+  return {
+    plan,
+    planStatus: plan === 'trial' && !fullAccessActive ? 'expired' : plan === 'trial' ? 'trial' : 'active',
+    trialDaysLeft,
+    fullAccessActive,
+    fullAccessUntil: tenant.fullAccessUntil,
+    managerActionsUsed,
+    managerActionsLimit,
+    planExpiresAt: tenant.planExpiresAt,
   };
 }
 
@@ -277,17 +439,19 @@ export async function incrementCounter(
   feature: LimitableFeature,
   executor: CounterExecutor = db,
 ): Promise<void> {
-  const setByFeature = {
-    clients: { clientCount: sql`${tenants.clientCount} + 1` },
-    jobsPerMonth: { jobCountThisMonth: sql`${tenants.jobCountThisMonth} + 1` },
-    users: { userCount: sql`${tenants.userCount} + 1` },
-    priceTables: { priceTableCount: sql`${tenants.priceTableCount} + 1` },
-  } as const;
+  if (feature !== 'labs') {
+    const setByFeature = {
+      clients: { clientCount: sql`${tenants.clientCount} + 1` },
+      jobsPerMonth: { jobCountThisMonth: sql`${tenants.jobCountThisMonth} + 1` },
+      users: { userCount: sql`${tenants.userCount} + 1` },
+      priceTables: { priceTableCount: sql`${tenants.priceTableCount} + 1` },
+    } as const;
 
-  await executor
-    .update(tenants)
-    .set(setByFeature[feature])
-    .where(eq(tenants.id, tenantId));
+    await executor
+      .update(tenants)
+      .set(setByFeature[feature])
+      .where(eq(tenants.id, tenantId));
+  }
 
   await executor.insert(featureUsageLogs).values({
     tenantId,
@@ -301,17 +465,19 @@ export async function decrementCounter(
   feature: LimitableFeature,
   executor: CounterExecutor = db,
 ): Promise<void> {
-  const setByFeature = {
-    clients: { clientCount: sql`GREATEST(${tenants.clientCount} - 1, 0)` },
-    jobsPerMonth: { jobCountThisMonth: sql`GREATEST(${tenants.jobCountThisMonth} - 1, 0)` },
-    users: { userCount: sql`GREATEST(${tenants.userCount} - 1, 0)` },
-    priceTables: { priceTableCount: sql`GREATEST(${tenants.priceTableCount} - 1, 0)` },
-  } as const;
+  if (feature !== 'labs') {
+    const setByFeature = {
+      clients: { clientCount: sql`GREATEST(${tenants.clientCount} - 1, 0)` },
+      jobsPerMonth: { jobCountThisMonth: sql`GREATEST(${tenants.jobCountThisMonth} - 1, 0)` },
+      users: { userCount: sql`GREATEST(${tenants.userCount} - 1, 0)` },
+      priceTables: { priceTableCount: sql`GREATEST(${tenants.priceTableCount} - 1, 0)` },
+    } as const;
 
-  await executor
-    .update(tenants)
-    .set(setByFeature[feature])
-    .where(eq(tenants.id, tenantId));
+    await executor
+      .update(tenants)
+      .set(setByFeature[feature])
+      .where(eq(tenants.id, tenantId));
+  }
 
   await executor.insert(featureUsageLogs).values({
     tenantId,
@@ -419,13 +585,44 @@ async function syncSubscriptionToTenant(
   }
 
   await db.transaction(async (tx) => {
+    const [currentTenant] = await tx
+      .select({
+        plan: tenants.plan,
+        fullAccessUntil: tenants.fullAccessUntil,
+      })
+      .from(tenants)
+      .where(eq(tenants.id, customer.tenantId))
+      .limit(1);
+
+    const now = new Date();
+    const currentPlan = resolvePlanTier(currentTenant?.plan);
+    const isPlanChange = currentPlan !== mappedPlan;
+    const fullAccessUntil = isPlanChange
+      ? getPromotionalWindowEnd(mappedPlan, now)
+      : currentTenant?.fullAccessUntil ?? getPromotionalWindowEnd(mappedPlan, now);
+
+    const tenantUpdate: {
+      plan: PlanTier;
+      planExpiresAt: Date | null;
+      fullAccessUntil: Date | null;
+      updatedAt: Date;
+      managerActionsThisMonth?: number;
+      managerActionsMonthRef?: Date;
+    } = {
+      plan: mappedPlan,
+      planExpiresAt: periodEnd,
+      fullAccessUntil,
+      updatedAt: now,
+    };
+
+    if (isPlanChange) {
+      tenantUpdate.managerActionsThisMonth = 0;
+      tenantUpdate.managerActionsMonthRef = now;
+    }
+
     await tx
       .update(tenants)
-      .set({
-        plan: mappedPlan,
-        planExpiresAt: periodEnd,
-        updatedAt: new Date(),
-      })
+      .set(tenantUpdate)
       .where(eq(tenants.id, customer.tenantId));
 
     await tx
@@ -433,7 +630,7 @@ async function syncSubscriptionToTenant(
       .set({
         stripeSubscriptionId: subscriptionId,
         stripePriceId: priceId,
-        updatedAt: new Date(),
+        updatedAt: now,
       })
       .where(eq(stripeCustomers.id, customer.id));
   });
@@ -477,13 +674,18 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<StripeEve
 
   if (!customer) return 'ignored';
 
+  const now = new Date();
+
   await db.transaction(async (tx) => {
     await tx
       .update(tenants)
       .set({
         plan: 'trial',
-        planExpiresAt: new Date(),
-        updatedAt: new Date(),
+        planExpiresAt: now,
+        fullAccessUntil: now,
+        managerActionsThisMonth: 0,
+        managerActionsMonthRef: now,
+        updatedAt: now,
       })
       .where(eq(tenants.id, customer.tenantId));
 
@@ -492,7 +694,7 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<StripeEve
       .set({
         stripeSubscriptionId: null,
         stripePriceId: null,
-        updatedAt: new Date(),
+        updatedAt: now,
       })
       .where(eq(stripeCustomers.id, customer.id));
   });
@@ -566,13 +768,18 @@ export async function handleStripeWebhook(
 }
 
 export async function activateTrial(tenantId: number): Promise<void> {
-  const planExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const fullAccessUntil = getPromotionalWindowEnd('trial', now);
+
   await db
     .update(tenants)
     .set({
       plan: 'trial',
-      planExpiresAt,
-      updatedAt: new Date(),
+      planExpiresAt: fullAccessUntil,
+      fullAccessUntil,
+      managerActionsThisMonth: 0,
+      managerActionsMonthRef: now,
+      updatedAt: now,
     })
     .where(eq(tenants.id, tenantId));
 }
@@ -583,10 +790,10 @@ export async function processExpiredTrials(): Promise<void> {
     .select({
       id: tenants.id,
       slug: tenants.slug,
-      planExpiresAt: tenants.planExpiresAt,
+      fullAccessUntil: tenants.fullAccessUntil,
     })
     .from(tenants)
-    .where(and(eq(tenants.plan, 'trial'), lt(tenants.planExpiresAt, now)));
+    .where(and(eq(tenants.plan, 'trial'), lt(tenants.fullAccessUntil, now)));
 
   if (expiredTenants.length === 0) {
     return;
@@ -598,17 +805,23 @@ export async function processExpiredTrials(): Promise<void> {
       tenantCount: expiredTenants.length,
       tenantIds: expiredTenants.map((tenant) => tenant.id),
     },
-    'Trials expirados identificados',
+    'Trials com degustacao encerrada identificados',
   );
 }
 
 export async function adminUpdatePlan(input: SuperadminUpdatePlanInput) {
+  const now = new Date();
+  const fullAccessUntil = getPromotionalWindowEnd(input.plan, now);
+
   const [updated] = await db
     .update(tenants)
     .set({
       plan: input.plan,
-      planExpiresAt: input.planExpiresAt ? new Date(input.planExpiresAt) : null,
-      updatedAt: new Date(),
+      planExpiresAt: input.planExpiresAt ? new Date(input.planExpiresAt) : fullAccessUntil,
+      fullAccessUntil,
+      managerActionsThisMonth: 0,
+      managerActionsMonthRef: now,
+      updatedAt: now,
     })
     .where(eq(tenants.id, input.tenantId))
     .returning();
@@ -628,10 +841,13 @@ export async function listAllTenantsAdmin(): Promise<TenantAdminRow[]> {
       slug: tenants.slug,
       plan: tenants.plan,
       planExpiresAt: tenants.planExpiresAt,
+      fullAccessUntil: tenants.fullAccessUntil,
       clientCount: tenants.clientCount,
       jobCountThisMonth: tenants.jobCountThisMonth,
       userCount: tenants.userCount,
       priceTableCount: tenants.priceTableCount,
+      managerActionsThisMonth: tenants.managerActionsThisMonth,
+      managerActionsMonthRef: tenants.managerActionsMonthRef,
       stripeCustomerId: stripeCustomers.stripeCustomerId,
       stripeSubscriptionId: stripeCustomers.stripeSubscriptionId,
     })
@@ -655,3 +871,25 @@ export async function listAllTenantsAdmin(): Promise<TenantAdminRow[]> {
     stripeSubscriptionId: row.stripeSubscriptionId ?? null,
   }));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -13,6 +13,9 @@ export const licensingRouter = router({
   getStatus: tenantProcedure
     .query(({ ctx }) => licensingService.getLicenseStatus(ctx.tenantId!)),
 
+  getUsage: tenantProcedure
+    .query(({ ctx }) => licensingService.getUsageForTenant(ctx.tenantId!)),
+
   createCheckoutSession: tenantProcedure
     .input(createCheckoutSessionSchema)
     .mutation(({ ctx, input }) => licensingService.createCheckoutSession(ctx.tenantId!, input)),

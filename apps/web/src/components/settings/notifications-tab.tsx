@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { 
-  BellRing, Mail, Smartphone, 
+import { useEffect, useMemo, useState } from 'react';
+import {
+  BellRing, Mail, Smartphone,
   Send, Loader2, CheckCircle2,
   Activity, Info
 } from 'lucide-react';
@@ -21,16 +21,49 @@ export function NotificationsTab() {
   const preferencesQuery = trpc.notification.listPreferences.useQuery();
   const vapidQuery = trpc.notification.vapidPublicKey.useQuery();
   const testDispatchMutation = trpc.notification.testDispatch.useMutation();
+  const [prefsFeedback, setPrefsFeedback] = useState<{
+    kind: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   const updatePreferenceMutation = trpc.settings.updateNotificationPrefs.useMutation({
     onSuccess: async () => {
       await utils.notification.listPreferences.invalidate();
+      setPrefsFeedback({
+        kind: 'success',
+        message: 'Preferência de notificação atualizada.',
+      });
+    },
+    onError: (error) => {
+      setPrefsFeedback({
+        kind: 'error',
+        message: error.message,
+      });
     },
   });
 
   const saveSubscriptionMutation = trpc.notification.savePushSubscription.useMutation();
 
   const preferences = useMemo(() => preferencesQuery.data ?? [], [preferencesQuery.data]);
+
+  useEffect(() => {
+    if (!prefsFeedback) return;
+    const timer = setTimeout(() => setPrefsFeedback(null), 4000);
+    return () => clearTimeout(timer);
+  }, [prefsFeedback]);
+
+  function handlePreferenceChange(
+    pref: (typeof preferences)[number],
+    patch: Partial<Pick<(typeof preferences)[number], 'inAppEnabled' | 'pushEnabled' | 'emailEnabled'>>,
+  ) {
+    setPrefsFeedback(null);
+    updatePreferenceMutation.mutate({
+      eventKey: pref.eventKey,
+      inAppEnabled: patch.inAppEnabled ?? pref.inAppEnabled,
+      pushEnabled: patch.pushEnabled ?? pref.pushEnabled,
+      emailEnabled: patch.emailEnabled ?? pref.emailEnabled,
+    });
+  }
 
   async function handlePushSubscribe() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -79,12 +112,12 @@ export function NotificationsTab() {
   }
 
   const Switch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) => (
-    <label className={cn("relative inline-flex items-center cursor-pointer group", disabled && "opacity-30 cursor-not-allowed grayscale")}>
-      <input 
-        type="checkbox" 
-        className="sr-only peer" 
-        checked={checked} 
-        onChange={e => !disabled && onChange(e.target.checked)} 
+    <label className={cn('relative inline-flex items-center cursor-pointer group', disabled && 'opacity-30 cursor-not-allowed grayscale')}>
+      <input
+        type="checkbox"
+        className="sr-only peer"
+        checked={checked}
+        onChange={e => !disabled && onChange(e.target.checked)}
         disabled={disabled}
       />
       <div className="w-11 h-6 bg-muted rounded-full border border-border peer-checked:bg-primary/20 peer-checked:border-primary/40 transition-all duration-300 shadow-inner group-hover:border-primary/20" />
@@ -106,15 +139,15 @@ export function NotificationsTab() {
                  <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Configure os canais de recebimento por gatilho operacional</Muted>
               </div>
            </div>
-           
+
            <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={handlePushSubscribe}
                 className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
               >
                  <Smartphone size={14} strokeWidth={3} /> Ativar Push (PWA)
               </button>
-              <button 
+              <button
                 onClick={() => testDispatchMutation.mutate({ message: 'Auditória de conectividade V3' })}
                 disabled={testDispatchMutation.isPending}
                 className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-muted border border-border text-foreground hover:bg-muted/80 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
@@ -157,23 +190,23 @@ export function NotificationsTab() {
                      </div>
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <Switch 
-                      checked={pref.inAppEnabled} 
-                      onChange={(checked) => updatePreferenceMutation.mutate({ ...pref, inAppEnabled: checked })}
+                    <Switch
+                      checked={pref.inAppEnabled}
+                      onChange={(checked) => handlePreferenceChange(pref, { inAppEnabled: checked })}
                       disabled={updatePreferenceMutation.isPending}
                     />
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <Switch 
-                      checked={pref.pushEnabled} 
-                      onChange={(checked) => updatePreferenceMutation.mutate({ ...pref, pushEnabled: checked })}
+                    <Switch
+                      checked={pref.pushEnabled}
+                      onChange={(checked) => handlePreferenceChange(pref, { pushEnabled: checked })}
                       disabled={updatePreferenceMutation.isPending}
                     />
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <Switch 
-                      checked={pref.emailEnabled} 
-                      onChange={(checked) => updatePreferenceMutation.mutate({ ...pref, emailEnabled: checked })}
+                    <Switch
+                      checked={pref.emailEnabled}
+                      onChange={(checked) => handlePreferenceChange(pref, { emailEnabled: checked })}
                       disabled={updatePreferenceMutation.isPending}
                     />
                   </td>
@@ -203,6 +236,18 @@ export function NotificationsTab() {
             <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
                <Loader2 size={16} className="animate-spin text-primary" />
                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronizando Preferências...</span>
+            </div>
+         )}
+         {prefsFeedback?.kind === 'success' && (
+            <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-2xl">
+               <CheckCircle2 size={16} className="text-emerald-500" />
+               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{prefsFeedback.message}</span>
+            </div>
+         )}
+         {prefsFeedback?.kind === 'error' && (
+            <div className="bg-destructive/10 backdrop-blur-md border border-destructive/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-2xl">
+               <Info size={16} className="text-destructive" />
+               <span className="text-[10px] font-black text-destructive uppercase tracking-widest">{prefsFeedback.message}</span>
             </div>
          )}
          {testDispatchMutation.isSuccess && (

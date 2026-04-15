@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import {
   addTicketMessageSchema,
+  createSupportSuggestionSchema,
   createTicketSchema,
+  listSupportSuggestionsSchema,
   listTicketsSchema,
   rateConversationSchema,
   sendChatMessageSchema,
@@ -55,4 +57,12 @@ export const supportRouter = router({
   deleteTemplate: adminProcedure
     .input(z.object({ templateId: z.number().int().positive() }))
     .mutation(({ ctx, input }) => supportService.deleteTemplate(ctx.tenantId!, input.templateId)),
+
+  createSuggestion: tenantProcedure
+    .input(createSupportSuggestionSchema)
+    .mutation(({ ctx, input }) => supportService.createSupportSuggestion(ctx.tenantId!, ctx.user!.id, input)),
+
+  listSuggestions: tenantProcedure
+    .input(listSupportSuggestionsSchema)
+    .query(({ ctx, input }) => supportService.listSupportSuggestions(ctx.tenantId!, input)),
 });

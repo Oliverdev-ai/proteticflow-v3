@@ -4,7 +4,7 @@ import SimpleBar from 'simplebar-react';
 import 'simplebar-react/dist/simplebar.min.css';
 import { Sidebar } from '../../components/layout/sidebar';
 import { Header } from '../../components/layout/header';
-import { LicenseBanner } from '../../components/licensing/license-banner';
+import { UsageBanner } from '../../components/shared/usage-banner';
 import { useAuth } from '../../hooks/use-auth';
 
 export function DashboardLayout() {
@@ -40,7 +40,7 @@ export function DashboardLayout() {
         <main className="flex-1 overflow-hidden">
           <SimpleBar className="h-full">
             <div className="p-4 md:p-6">
-              <LicenseBanner />
+              <UsageBanner />
               <Outlet />
             </div>
           </SimpleBar>
@@ -49,3 +49,4 @@ export function DashboardLayout() {
     </div>
   );
 }
+

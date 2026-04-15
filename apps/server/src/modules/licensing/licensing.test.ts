@@ -29,15 +29,19 @@ describe('licensing contracts', () => {
   });
 
   it('mantem limites oficiais por plano', () => {
+    expect(PLAN_LIMITS.trial.fullAccessDays).toBe(14);
     expect(PLAN_LIMITS.trial.clients).toBe(10);
-    expect(PLAN_LIMITS.trial.jobsPerMonth).toBe(30);
-    expect(PLAN_LIMITS.pro.jobsPerMonth).toBeNull();
+    expect(PLAN_LIMITS.trial.jobsPerMonth).toBe(10);
+    expect(PLAN_LIMITS.starter.jobsPerMonth).toBe(100);
+    expect(PLAN_LIMITS.pro.jobsPerMonth).toBe(300);
     expect(PLAN_LIMITS.enterprise.users).toBeNull();
   });
 
   it('expoe funcoes principais do service', () => {
     expect(typeof licensingService.checkLimit).toBe('function');
+    expect(typeof licensingService.checkFeatureAccess).toBe('function');
     expect(typeof licensingService.getLicenseStatus).toBe('function');
+    expect(typeof licensingService.getUsageForTenant).toBe('function');
     expect(typeof licensingService.handleStripeWebhook).toBe('function');
     expect(typeof licensingService.processExpiredTrials).toBe('function');
   });

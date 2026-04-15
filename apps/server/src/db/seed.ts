@@ -111,7 +111,10 @@ async function getOrCreateTenant() {
       name: DEMO_TENANT_NAME,
       slug: DEMO_TENANT_SLUG,
       plan: 'trial',
-      planExpiresAt: plusDays(30),
+      planExpiresAt: plusDays(14),
+      fullAccessUntil: plusDays(14),
+      managerActionsThisMonth: 0,
+      managerActionsMonthRef: new Date(),
       isActive: true,
       city: 'Sao Paulo',
       state: 'SP',
@@ -506,3 +509,4 @@ seed()
     console.error('[seed] Erro:', error);
     process.exit(1);
   });
+
