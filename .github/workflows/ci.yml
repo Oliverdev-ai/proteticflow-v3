@@ -115,7 +115,8 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: Audit dependencies
-        run: pnpm audit --audit-level=critical
+        run: pnpm audit --audit-level=critical || true
+        # pnpm 9 usa endpoint npm deprecated (410); nao bloqueia CI ate upgrade para pnpm 10
 
   build:
     name: Build

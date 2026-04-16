@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, tenantProcedure, financialProcedure, financialAdminProcedure } from '../../trpc/trpc.js';
+import { router, financialProcedure, financialAdminProcedure } from '../../trpc/trpc.js';
 import * as payrollService from './service.js';
 import { updatePayrollEntrySchema } from '@proteticflow/shared';
 
