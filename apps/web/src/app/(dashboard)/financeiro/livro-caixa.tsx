@@ -36,8 +36,6 @@ function createEmptyForm() {
   };
 }
 
-const EMPTY_FORM = createEmptyForm();
-
 export default function LivroCaixaPage() {
   const utils = trpc.useUtils();
   const [typeFilter, setTypeFilter] = useState<'credit' | 'debit' | undefined>(undefined);

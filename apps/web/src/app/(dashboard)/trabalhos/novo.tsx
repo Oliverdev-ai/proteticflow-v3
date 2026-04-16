@@ -13,7 +13,6 @@ import {
   Info,
   Hash,
   Zap,
-  ChevronRight,
   CheckCircle2,
   ShieldCheck,
   Activity,
