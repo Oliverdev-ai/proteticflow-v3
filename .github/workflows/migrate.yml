@@ -1,0 +1,41 @@
+name: Run Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente alvo'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  migrate:
+    name: db:migrate (${{ github.event.inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '9.0.0'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        run: pnpm --filter @proteticflow/server db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
