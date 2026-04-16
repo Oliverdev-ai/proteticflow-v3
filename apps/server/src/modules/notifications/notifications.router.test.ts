@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('../../modules/licensing/service.js', () => ({
+  checkManagerActionLimit: vi.fn(async () => undefined),
+  consumeManagerAction: vi.fn(async () => undefined),
+  checkFeatureAccess: vi.fn(async () => undefined),
+  checkAiAccess: vi.fn(async () => undefined),
+}));
+
 vi.mock('./service.js', () => ({
   listUserNotifications: vi.fn(async () => []),
   countUnread: vi.fn(async () => 0),
