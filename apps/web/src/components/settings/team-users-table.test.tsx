@@ -4,8 +4,20 @@ import React from 'react';
 
 vi.mock('../../hooks/use-settings', () => ({
   useSettings: () => ({
-    overview: { data: { users: [] } },
+    overview: { data: { users: [] }, refetch: vi.fn() },
+    updateRole: vi.fn(),
   }),
+}));
+
+vi.mock('../../lib/trpc', () => ({
+  trpc: {
+    useUtils: () => ({}),
+    tenant: {
+      invite: {
+        useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+      },
+    },
+  },
 }));
 
 import { TeamUsersTable } from './team-users-table';

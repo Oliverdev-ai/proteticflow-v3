@@ -28,6 +28,11 @@ vi.mock('../../lib/trpc', () => ({
         useMutation: () => ({ mutateAsync: vi.fn(async () => undefined) }),
       },
     },
+    settings: {
+      updateNotificationPrefs: {
+        useMutation: () => ({ mutate: vi.fn() }),
+      },
+    },
   },
 }));
 
