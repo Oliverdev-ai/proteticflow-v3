@@ -21,6 +21,9 @@ export const notifEventEnum = pgEnum('notif_event', [
   'report_ready',
   'deadline_24h',
   'ar_overdue',
+  'trial_expiring',
+  'payment_overdue',
+  'plan_upgraded',
 ]);
 
 // Tables

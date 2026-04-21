@@ -190,6 +190,20 @@
                         "when":  1776273709357,
                         "tag":  "0027_sprint4_plans_and_support",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  27,
+                        "version":  "7",
+                        "when":  1745190000000,
+                        "tag":  "0028_onboarding_flag",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  28,
+                        "version":  "7",
+                        "when":  1745190060000,
+                        "tag":  "0029_notifications_enum",
+                        "breakpoints":  true
                     }
                 ]
 }

@@ -12,6 +12,7 @@ import {
 import { deadlineAlerts } from './deadline-alerts.js';
 import { portalTokenCleanup } from '../modules/portal/tasks.js';
 import { processExpiredTrials, resetMonthlyJobCounter } from '../modules/licensing/service.js';
+import { trialExpiringNotifications } from './trial-expiring.js';
 import { logger } from '../logger.js';
 
 export function startCronJobs() {
@@ -79,6 +80,12 @@ export function startCronJobs() {
   cron.schedule('0 0 * * *', async () => {
     logger.info({ action: 'cron.licensing.trial_expiration.start' }, 'Verificando trials expirados');
     await processExpiredTrials();
+  });
+
+  // S5-07: Aviso de plano expirando em 3 dias - diario as 09h
+  cron.schedule('0 9 * * *', async () => {
+    logger.info({ action: 'cron.trial_expiring.start' }, 'Verificando planos expirando em 3 dias');
+    await trialExpiringNotifications();
   });
 
   // 23.xx Licenciamento: reset mensal de jobs - dia 1 as 00:05

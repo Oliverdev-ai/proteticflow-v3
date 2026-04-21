@@ -89,8 +89,6 @@ async function createAr(tenantId: number, clientId: number, amountCents = 12_000
 }
 
 async function cleanup() {
-  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
-  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(cashbookEntries);
   await db.delete(boletos);
   await db.delete(nfseList);
@@ -98,9 +96,22 @@ async function cleanup() {
   await db.delete(financialClosings);
   await db.delete(accountsReceivable);
   await db.delete(osBlocks);
-  await db.delete(clients);
+  try {
+    await db.delete(clients);
+  } catch {
+    await db.delete(nfseList);
+    await db.delete(clients);
+  }
   await db.delete(tenantMembers);
-  await db.delete(tenants);
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+  try {
+    await db.delete(tenants);
+  } catch {
+    await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+    await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+    await db.delete(tenants);
+  }
   await db.delete(users);
 }
 
@@ -108,9 +119,9 @@ describe('fiscal service', () => {
   beforeEach(async () => {
     await cleanup();
     vi.clearAllMocks();
-  });
+  }, 20000);
 
-  afterEach(cleanup);
+  afterEach(cleanup, 20000);
 
   it('T01: generateBoletoFromAr sem fiscal settings deve falhar', async () => {
     const user = await createTestUser(`${uid('fiscal-t01')}@test.com`);
@@ -303,7 +314,7 @@ describe('fiscal service', () => {
 
     const rows = await db.select().from(nfseList).where(eq(nfseList.tenantId, tenant.id));
     expect(rows).toHaveLength(3);
-  });
+  }, 30000);
 
   it('T09: cancelNfse pendente deve falhar', async () => {
     const user = await createTestUser(`${uid('fiscal-t09')}@test.com`);

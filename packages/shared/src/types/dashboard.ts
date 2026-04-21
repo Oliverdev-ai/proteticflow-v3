@@ -79,7 +79,7 @@ export type DashboardSparklines = {
 };
 
 export type DashboardSummary = {
-  financial: FinancialKpis;
+  financial: FinancialKpis | null;
   jobs: JobKpis;
   clients: ClientKpis;
   inventory: InventoryKpis;

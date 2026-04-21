@@ -1,5 +1,6 @@
 import { eq, and, isNull, lt, gte, lte, inArray, not, sql, count, sum } from 'drizzle-orm';
 import { db } from '../../db/index.js';
+import { getLicenseStatus } from '../licensing/service.js';
 import { accountsReceivable, accountsPayable, financialClosings } from '../../db/schema/financials.js';
 import { jobs, jobItems } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
@@ -545,6 +546,9 @@ export async function getDashboardSummary(tenantId: number): Promise<DashboardSu
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
   const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
+  const license = await getLicenseStatus(tenantId);
+  const hasFinancialAccess = license.featureAccess.financial || license.featureAccess.reports;
+
   const [
     financial,
     jobKpis,
@@ -558,15 +562,15 @@ export async function getDashboardSummary(tenantId: number): Promise<DashboardSu
     jobsTrend,
     sparklines,
   ] = await Promise.all([
-    getFinancialKpis(tenantId, startOfMonth),
+    hasFinancialAccess ? getFinancialKpis(tenantId, startOfMonth) : Promise.resolve(null),
     getJobKpis(tenantId, now),
     getClientKpis(tenantId, startOfMonth),
     getInventoryKpis(tenantId),
     getEmployeeKpis(tenantId, startOfMonth),
     getRecentJobs(tenantId),
     getTodayDeliveries(tenantId, startOfToday, endOfToday),
-    getMonthlyRevenue(tenantId, 6),
-    getServiceDistribution(tenantId, startOfMonth),
+    hasFinancialAccess ? getMonthlyRevenue(tenantId, 6) : Promise.resolve([]),
+    hasFinancialAccess ? getServiceDistribution(tenantId, startOfMonth) : Promise.resolve([]),
     getJobsTrend(tenantId, 6),
     getSparklines(tenantId),
   ]);

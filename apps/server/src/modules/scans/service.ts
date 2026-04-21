@@ -5,7 +5,7 @@ import { db } from '../../db/index.js';
 import { scans } from '../../db/schema/scans.js';
 import { jobs } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
-import { buildPublicUrl, generateDownloadUrl, uploadBuffer } from '../../core/storage.js';
+import { generateDownloadUrl, uploadBuffer } from '../../core/storage.js';
 import { logger } from '../../logger.js';
 import type {
   createScanSchema,
@@ -42,6 +42,13 @@ const VALID_TRANSITIONS: Record<ScanPrintStatus, ScanPrintStatus[]> = {
   printing: ['completed', 'error'],
   completed: [],
   error: [],
+};
+
+const FILE_RULES: Record<FileType, { maxBytes: number; extensions: string[] }> = {
+  stl_upper: { maxBytes: 20 * 1024 * 1024, extensions: ['stl'] },
+  stl_lower: { maxBytes: 20 * 1024 * 1024, extensions: ['stl'] },
+  xml: { maxBytes: 5 * 1024 * 1024, extensions: ['xml'] },
+  gallery: { maxBytes: 10 * 1024 * 1024, extensions: ['png', 'jpg', 'jpeg', 'webp'] },
 };
 
 function toDateOrUndefined(value: unknown): Date | undefined {
@@ -220,6 +227,38 @@ function mimeTypeFromFilename(filename: string): string {
   return 'application/octet-stream';
 }
 
+function sanitizeFilename(filename: string): string {
+  const cleaned = filename.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
+  const normalized = cleaned.replace(/^_+/, '');
+  return normalized.length > 0 ? normalized : 'file.bin';
+}
+
+function extensionFromFilename(filename: string): string {
+  const ext = filename.toLowerCase().split('.').pop();
+  return ext ?? '';
+}
+
+function validateUpload(fileType: FileType, filename: string, buffer: Buffer): void {
+  const rules = FILE_RULES[fileType];
+  if (buffer.length === 0) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Arquivo vazio' });
+  }
+  if (buffer.length > rules.maxBytes) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: `Arquivo acima do limite para ${fileType} (${Math.floor(rules.maxBytes / (1024 * 1024))}MB)`,
+    });
+  }
+
+  const extension = extensionFromFilename(filename);
+  if (!rules.extensions.includes(extension)) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: `Extensao invalida para ${fileType}. Permitido: ${rules.extensions.join(', ')}`,
+    });
+  }
+}
+
 async function getScanOwnedByTenant(tenantId: number, scanId: number) {
   const [scan] = await db.select().from(scans).where(
     and(eq(scans.tenantId, tenantId), eq(scans.id, scanId), isNull(scans.deletedAt)),
@@ -232,8 +271,12 @@ async function withDownloadUrl(keyOrUrl: string | null): Promise<string | null> 
   if (!keyOrUrl) return null;
   try {
     return await generateDownloadUrl(keyOrUrl);
-  } catch {
-    return buildPublicUrl(keyOrUrl);
+  } catch (error) {
+    logger.warn(
+      { action: 'scan.download_url.failed', keyOrUrl, error },
+      'Falha ao gerar URL assinada de scan',
+    );
+    return null;
   }
 }
 
@@ -263,7 +306,10 @@ export async function uploadScanFile(
   userId: number,
 ) {
   const scan = await getScanOwnedByTenant(tenantId, scanId);
-  const key = `tenants/${tenantId}/scans/${scanId}/${fileType}_${filename}`;
+  validateUpload(fileType, filename, buffer);
+
+  const safeFilename = sanitizeFilename(filename);
+  const key = `tenants/${tenantId}/scans/${scanId}/${fileType}_${safeFilename}`;
   const contentType = mimeTypeFromFilename(filename);
 
   await uploadBuffer(key, buffer, contentType);
@@ -275,7 +321,12 @@ export async function uploadScanFile(
 
   if (fileType === 'xml') {
     const xmlContent = buffer.toString('utf-8');
-    const parsedData = parseScannerXml(xmlContent, scan.scannerType);
+    let parsedData: ParsedScanData;
+    try {
+      parsedData = parseScannerXml(xmlContent, scan.scannerType);
+    } catch {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'XML invalido para processamento' });
+    }
     updateData.parsedOrderId = parsedData.orderId ?? null;
     updateData.parsedDentist = parsedData.dentist ?? null;
     updateData.parsedCro = parsedData.cro ?? null;

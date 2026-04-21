@@ -2,6 +2,7 @@ import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not, desc } fr
 import { db } from '../../db/index.js';
 import { jobs, jobItems, jobLogs, jobStages, jobPhotos } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
+import { tenants } from '../../db/schema/tenants.js';
 import { priceItems } from '../../db/schema/clients.js';
 import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
@@ -13,6 +14,7 @@ import { logAudit } from '../audit/service.js';
 import { resolveClientByOsNumber } from './os-blocks.service.js';
 import { events } from '../../db/schema/agenda.js';
 import { deliverySchedules, deliveryItems } from '../../db/schema/deliveries.js';
+import { sendEmail } from '../notifications/email.js';
 import type {
   createJobSchema,
   updateJobSchema,
@@ -50,6 +52,17 @@ type JobStatus = typeof jobs.$inferSelect.status;
 const FINAL_JOB_STATUSES = ['delivered', 'cancelled'] as const;
 const PAUSED_JOB_STATUSES = ['rework_in_progress', 'suspended'] as const;
 const NON_ACTIVE_JOB_STATUSES = [...FINAL_JOB_STATUSES, ...PAUSED_JOB_STATUSES] as const;
+const CLIENT_STATUS_EMAIL_PLANS = new Set(['starter', 'pro', 'enterprise']);
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendente',
+  in_progress: 'Em producao',
+  quality_check: 'Em controle de qualidade',
+  ready: 'Pronta para entrega',
+  delivered: 'Entregue',
+  cancelled: 'Cancelada',
+  suspended: 'Suspensa',
+  rework_in_progress: 'Remoldagem em andamento',
+};
 
 function buildClientAddress(client: {
   street: string | null;
@@ -66,6 +79,86 @@ function buildClientAddress(client: {
 
   const clinicAddress = client.clinic?.trim();
   return clinicAddress && clinicAddress.length > 0 ? clinicAddress : null;
+}
+
+function getStatusLabel(status: string): string {
+  return STATUS_LABELS[status] ?? status;
+}
+
+async function shouldSendClientStatusEmail(tenantId: number): Promise<boolean> {
+  const [tenant] = await db
+    .select({ plan: tenants.plan })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+
+  return Boolean(tenant?.plan && CLIENT_STATUS_EMAIL_PLANS.has(tenant.plan));
+}
+
+async function notifyClientStatusChange(args: {
+  tenantId: number;
+  jobId: number;
+  jobCode: string;
+  clientId: number;
+  newStatus: string;
+  previousStatus: string;
+  deadline: Date;
+}): Promise<void> {
+  if (!await shouldSendClientStatusEmail(args.tenantId)) {
+    return;
+  }
+
+  const [client] = await db
+    .select({
+      name: clients.name,
+      email: clients.email,
+    })
+    .from(clients)
+    .where(and(
+      eq(clients.tenantId, args.tenantId),
+      eq(clients.id, args.clientId),
+      isNull(clients.deletedAt),
+    ))
+    .limit(1);
+
+  if (!client?.email) return;
+
+  try {
+    const sent = await sendEmail({
+      to: client.email,
+      subject: `Atualizacao da OS ${args.jobCode}`,
+      text:
+        `Olá ${client.name},\n\n` +
+        `A OS ${args.jobCode} mudou de status:\n` +
+        `- De: ${getStatusLabel(args.previousStatus)}\n` +
+        `- Para: ${getStatusLabel(args.newStatus)}\n` +
+        `- Prazo previsto: ${args.deadline.toLocaleDateString('pt-BR')}\n\n` +
+        'Mensagem automatica do Portal do Cliente ProteticFlow.',
+    });
+
+    logger.info(
+      {
+        action: 'job.client_status_email',
+        tenantId: args.tenantId,
+        jobId: args.jobId,
+        clientId: args.clientId,
+        sent: sent.sent,
+        status: args.newStatus,
+      },
+      'Notificacao de status para cliente processada',
+    );
+  } catch (error) {
+    logger.error(
+      {
+        action: 'job.client_status_email.error',
+        tenantId: args.tenantId,
+        jobId: args.jobId,
+        clientId: args.clientId,
+        error,
+      },
+      'Falha ao enviar notificacao de status para cliente',
+    );
+  }
 }
 
 // â”€â”€â”€ PAD-04: Order Number com SELECT FOR UPDATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -541,6 +634,17 @@ export async function changeStatus(tenantId: number, input: ChangeStatusInput, u
     oldValue: { status: job.status },
     newValue: updated,
   });
+
+  await notifyClientStatusChange({
+    tenantId,
+    jobId: input.jobId,
+    jobCode: job.code,
+    clientId: job.clientId,
+    newStatus: input.newStatus,
+    previousStatus: job.status,
+    deadline: job.deadline,
+  });
+
   return updated;
 }
 
@@ -1104,6 +1208,16 @@ export async function moveKanban(tenantId: number, jobId: number, newStatus: str
   });
 
   logger.info({ action: 'kanban.move', tenantId, jobId, from: job.status, to: newStatus, userId }, 'Card do Kanban movido');
+
+  await notifyClientStatusChange({
+    tenantId,
+    jobId,
+    jobCode: job.code,
+    clientId: job.clientId,
+    newStatus,
+    previousStatus: job.status,
+    deadline: job.deadline,
+  });
 }
 
 export async function assignTechnician(tenantId: number, jobId: number, employeeId: number | null, userId: number) {

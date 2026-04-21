@@ -7,6 +7,9 @@ export const notificationEventSchema = z.enum([
   'report_ready',
   'deadline_24h',
   'ar_overdue',
+  'trial_expiring',
+  'payment_overdue',
+  'plan_upgraded',
 ]);
 
 export const listNotificationsSchema = z.object({
@@ -43,4 +46,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<z.infer<typeof notificationEventS
   report_ready: 'Relatorios por email',
   deadline_24h: 'Alerta de prazo em 24h',
   ar_overdue: 'Lembrete de contas vencidas',
+  trial_expiring: 'Aviso de trial expirando',
+  payment_overdue: 'Pagamento em atraso',
+  plan_upgraded: 'Upgrade de plano',
 };

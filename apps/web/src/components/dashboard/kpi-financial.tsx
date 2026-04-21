@@ -7,9 +7,18 @@ export function KpiFinancial({
   data,
   revenueSparkline,
 }: {
-  data: FinancialKpis;
+  data: FinancialKpis | null;
   revenueSparkline?: SparklineData;
 }) {
+  if (!data) {
+    return (
+      <div className="col-span-full rounded-xl border border-dashed border-zinc-700 p-6 text-center text-zinc-500 text-sm">
+        Dados financeiros disponíveis a partir do plano Starter.{' '}
+        <a href="/planos" className="text-sky-400 hover:underline">Fazer upgrade</a>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <KpiCard

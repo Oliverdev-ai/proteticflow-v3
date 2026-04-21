@@ -229,7 +229,7 @@ describe('Dashboard Service', () => {
     // Dashboard do tenant1 deve estar vazio
     const summary = await getDashboardSummary(tenant1.id);
 
-    expect(summary.financial.pendingArCents).toBe(0);
+    expect(summary.financial?.pendingArCents ?? 0).toBe(0);
     expect(summary.jobs.active).toBe(0);
     expect(summary.recentJobs).toHaveLength(0);
   });

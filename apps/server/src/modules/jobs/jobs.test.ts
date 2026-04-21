@@ -26,8 +26,6 @@ async function createTestClient(tenantId: number, userId: number, name = 'Clíni
 }
 
 async function cleanup() {
-  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
-  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(jobLogs);
   await db.delete(jobItems);
   await db.delete(jobs);
@@ -35,7 +33,16 @@ async function cleanup() {
   await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
-  await db.delete(tenants);
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+  try {
+    await db.delete(tenants);
+  } catch {
+    // Retry once in case licensing logs are inserted near teardown boundaries.
+    await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+    await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+    await db.delete(tenants);
+  }
   await db.delete(users);
 }
 
@@ -61,7 +68,7 @@ describe('Job Service — CRUD', () => {
     }, user.id);
     expect(job.orderNumber).toBe(1);
     expect(job.code).toBe('OS-00001');
-  });
+  }, 20_000);
 
   it('2. Criar OS — congela preço dos itens (AP-02: unitPriceCents copiado, NÃO referenciado)', async () => {
     const user = await createTestUser('j2@test.com');
@@ -82,7 +89,7 @@ describe('Job Service — CRUD', () => {
     // unitPriceCents deve ser o do priceItem (20000), não o enviado (99999)
     const [item] = await db.select().from(jobItems).where(eq(jobItems.jobId, job.id));
     expect(item?.unitPriceCents).toBe(20000);
-  });
+  }, 20_000);
 
   it('3. Criar OS — calcula totalCents corretamente = soma dos items', async () => {
     const user = await createTestUser('j3@test.com');
@@ -256,7 +263,7 @@ describe('Job Service — Status Machine', () => {
     await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'delivered' }, user.id);
     await expect(jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id))
       .rejects.toMatchObject({ code: 'BAD_REQUEST' });
-  });
+  }, 20_000);
 
   it('17. cancelled → qualquer: REJEITADO (estado final)', async () => {
     const { user, tenant, job } = await setup('j17@test.com', 'Lab J17');

@@ -1,5 +1,8 @@
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import { router, protectedProcedure, adminProcedure, tenantProcedure } from '../../trpc/trpc.js';
+import { db } from '../../db/index.js';
+import { tenants } from '../../db/schema/tenants.js';
 import {
   createTenantSchema,
   updateTenantSchema,
@@ -36,6 +39,14 @@ export const tenantRouter = router({
     .input(acceptInviteSchema)
     .mutation(async ({ input, ctx }) => {
       await tenantService.acceptInvite(input.token, ctx.user!.id);
+      return { success: true };
+    }),
+
+  completeOnboarding: tenantProcedure
+    .mutation(async ({ ctx }) => {
+      await db.update(tenants)
+        .set({ onboardingCompleted: true })
+        .where(eq(tenants.id, ctx.tenantId!));
       return { success: true };
     }),
 

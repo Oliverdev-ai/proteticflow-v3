@@ -222,4 +222,40 @@ describe('Scans Service', () => {
     const created = await scanService.createScan(tenantA.id, { scannerType: 'outro' }, userA.id);
     await expect(scanService.getScan(tenantB.id, created.id)).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
+
+  it('13. Upload rejeita extensao invalida para tipo STL', async () => {
+    const user = await createTestUser('scan13@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Scan 13');
+    const created = await scanService.createScan(tenant.id, { scannerType: 'outro' }, user.id);
+
+    const invalidContent = Buffer.from('arquivo invalido');
+    await expect(
+      scanService.uploadScanFile(
+        tenant.id,
+        created.id,
+        'stl_upper',
+        invalidContent,
+        'malicioso.exe',
+        user.id,
+      ),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  it('14. Upload rejeita arquivo acima do limite', async () => {
+    const user = await createTestUser('scan14@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Scan 14');
+    const created = await scanService.createScan(tenant.id, { scannerType: 'outro' }, user.id);
+
+    const oversizedXml = Buffer.alloc(6 * 1024 * 1024, 'x');
+    await expect(
+      scanService.uploadScanFile(
+        tenant.id,
+        created.id,
+        'xml',
+        oversizedXml,
+        'scan.xml',
+        user.id,
+      ),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+  });
 });

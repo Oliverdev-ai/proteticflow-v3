@@ -23,6 +23,18 @@ vi.mock('./push.js', () => ({
   getPublicVapidKey: vi.fn(() => 'vapid-public-key'),
 }));
 
+vi.mock('../licensing/service.js', () => ({
+  checkManagerActionLimit: vi.fn(async () => {}),
+  consumeManagerAction: vi.fn(async () => {}),
+  checkFeatureAccess: vi.fn(async () => {}),
+  getLicenseStatus: vi.fn(async () => ({
+    plan: 'starter',
+    featureAccess: { financial: true, reports: true, ai: 'basic', portal: false, voiceCommands: false },
+    isTrialExpired: false,
+    daysUntilExpiry: null,
+  })),
+}));
+
 import { notificationRouter } from './router.js';
 import * as notificationService from './service.js';
 

@@ -1,5 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
+import { assertTenantRateLimit } from './tenant-rate-limit.js';
 
 const DEFAULT_STT_API_URL = 'https://api.openai.com/v1/audio/transcriptions';
 const DEFAULT_STT_MODEL = 'whisper-1';
@@ -103,6 +104,8 @@ export async function transcribeAudio(input: TranscribeAudioInput): Promise<Tran
       message: 'Transcricao por voz nao configurada',
     });
   }
+
+  assertTenantRateLimit(input.tenantId, 'stt');
 
   const apiUrl = process.env.STT_API_URL?.trim() || DEFAULT_STT_API_URL;
   const model = process.env.STT_MODEL?.trim() || DEFAULT_STT_MODEL;

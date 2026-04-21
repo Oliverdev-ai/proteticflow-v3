@@ -7,6 +7,7 @@ import { detectCommand } from './commands.js';
 import { AI_TOOLS } from './tools.js';
 import { parseNaturalDate, resolveClientByName, resolveServiceItems } from './resolvers.js';
 import * as jobService from '../jobs/service.js';
+import { assertTenantRateLimit } from './tenant-rate-limit.js';
 
 export type StreamChunk =
   | { type: 'delta'; text: string }
@@ -71,6 +72,8 @@ export async function* streamAiResponse(
     yield { type: 'done', commandDetected, tokensUsed: 0 };
     return;
   }
+
+  assertTenantRateLimit(tenantId, 'llm');
 
   const context = await buildLabContext(tenantId);
   const systemPrompt = buildSystemPrompt(context, userRole);

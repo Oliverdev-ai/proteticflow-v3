@@ -134,6 +134,13 @@ export function OnboardingWizard() {
     );
   }
 
+  const completeOnboarding = trpc.tenant.completeOnboarding.useMutation({
+    onSuccess: () => {
+      void utils.tenant.getCurrent.invalidate();
+      navigate('/');
+    },
+  });
+
   if (step === 4) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
@@ -146,11 +153,19 @@ export function OnboardingWizard() {
           <p className="text-zinc-400">
             Tudo pronto para operar seu laboratório no painel principal.
           </p>
+          {completeOnboarding.error && (
+            <p className="text-red-400 text-sm">{completeOnboarding.error.message}</p>
+          )}
           <button
-            onClick={() => navigate('/')}
-            className="w-full bg-primary hover:bg-primary text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+            onClick={() => completeOnboarding.mutate()}
+            disabled={completeOnboarding.isPending}
+            className="w-full bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            Acessar o painel <ArrowRight size={16} />
+            {completeOnboarding.isPending ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+            ) : (
+              <>Acessar o painel <ArrowRight size={16} /></>
+            )}
           </button>
         </div>
       </div>

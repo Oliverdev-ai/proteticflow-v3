@@ -162,6 +162,14 @@ function resolvePlanByPriceId(priceId: string | null): PlanTier | null {
   return null;
 }
 
+function resolveStripeObjectId(value: string | { id: string } | null | undefined): string | null {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && 'id' in value && typeof value.id === 'string') {
+    return value.id;
+  }
+  return null;
+}
+
 async function getTenantOrThrow(tenantId: number): Promise<TenantWithCounters> {
   const [tenant] = await db
     .select({
@@ -702,6 +710,53 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<StripeEve
   return 'processed';
 }
 
+async function handleInvoicePaymentSucceeded(event: Stripe.Event): Promise<StripeEventHandlerResult> {
+  const invoice = event.data.object as Stripe.Invoice;
+  const customerId = resolveStripeObjectId(invoice.customer);
+  const subscriptionId = resolveStripeObjectId(invoice.parent?.subscription_details?.subscription);
+
+  if (!customerId || !subscriptionId) {
+    logger.warn(
+      {
+        action: 'licensing.webhook.invoice_payment_succeeded_missing_refs',
+        eventId: event.id,
+        customerId,
+        subscriptionId,
+      },
+      'Invoice payment_succeeded sem customer/subscription valido',
+    );
+    return 'ignored';
+  }
+
+  let priceId = invoice.lines.data
+    .map((line) => resolveStripeObjectId(line.pricing?.price_details?.price))
+    .find((id): id is string => Boolean(id)) ?? null;
+  if (!priceId) {
+    const [customer] = await db
+      .select({ stripePriceId: stripeCustomers.stripePriceId })
+      .from(stripeCustomers)
+      .where(eq(stripeCustomers.stripeCustomerId, customerId))
+      .limit(1);
+
+    priceId = customer?.stripePriceId ?? null;
+  }
+
+  await syncSubscriptionToTenant(customerId, subscriptionId, priceId, null);
+
+  logger.info(
+    {
+      action: 'licensing.webhook.invoice_payment_succeeded',
+      eventId: event.id,
+      customerId,
+      subscriptionId,
+      priceId,
+    },
+    'Pagamento Stripe confirmado',
+  );
+
+  return 'processed';
+}
+
 export async function handleStripeWebhook(
   rawBody: Buffer | string,
   signature: string,
@@ -746,6 +801,9 @@ export async function handleStripeWebhook(
         break;
       case 'customer.subscription.deleted':
         result = await handleSubscriptionDeleted(event);
+        break;
+      case 'invoice.payment_succeeded':
+        result = await handleInvoicePaymentSucceeded(event);
         break;
       case 'invoice.payment_failed':
         logger.warn(

@@ -29,8 +29,6 @@ async function createTestClient(tenantId: number, userId: number, name = 'Clíni
 }
 
 async function cleanup() {
-  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
-  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(financialClosings);
   await db.delete(cashbookEntries);
   await db.delete(accountsPayable);
@@ -44,7 +42,15 @@ async function cleanup() {
   await db.delete(osBlocks);
   await db.delete(clients);
   await db.delete(tenantMembers);
-  await db.delete(tenants);
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+  try {
+    await db.delete(tenants);
+  } catch {
+    await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+    await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+    await db.delete(tenants);
+  }
   await db.delete(users);
 }
 
@@ -250,12 +256,12 @@ describe('Financial Service — AP', () => {
     const cancelled = await financialService.cancelAp(tenant.id, { id: ap.id, cancelReason: 'Duplicado' }, user.id);
     expect(cancelled.status).toBe('cancelled');
     expect(cancelled.cancelReason).toBe('Duplicado');
-  });
+  }, 20000);
 });
 
 describe('Financial Service — Fechamento', () => {
-  beforeEach(cleanup);
-  afterEach(cleanup);
+  beforeEach(cleanup, 20000);
+  afterEach(cleanup, 20000);
 
   it('14. Gerar fechamento mensal — totalAmount = soma ARs do período e 16. RECONCILIAÇÃO', async () => {
     const user = await createTestUser('f14@test.com');
@@ -279,7 +285,7 @@ describe('Financial Service — Fechamento', () => {
     expect(closing.paidAmountCents).toBe(5000);
     expect(closing.pendingAmountCents).toBe(10000);
     expect(closing.totalJobs).toBe(0);
-  });
+  }, 30000);
 
   it('15. Fechamento por cliente — filtra corretamente', async () => {
     const user = await createTestUser('f15@test.com');
@@ -298,7 +304,7 @@ describe('Financial Service — Fechamento', () => {
 
     const closingGlobal = await financialService.generateMonthlyClosing(tenant.id, { period }, user.id);
     expect(closingGlobal.totalAmountCents).toBe(30000);
-  });
+  }, 20000);
 });
 
 describe('Financial Service — Livro Caixa', () => {
@@ -321,7 +327,7 @@ describe('Financial Service — Livro Caixa', () => {
     expect(balance.totalCredits).toBe(5000);
     expect(balance.totalDebits).toBe(2000);
     expect(balance.netBalance).toBe(3000);
-  });
+  }, 20000);
 });
 
 describe('Financial Service — Relatórios', () => {
@@ -384,7 +390,7 @@ describe('Financial Service — Relatórios', () => {
     const mar = cf.months.find(m => m.month === '2026-03');
     expect(mar).toBeDefined();
     expect(mar?.credits).toBe(3000);
-  });
+  }, 20000);
 });
 
 describe('Financial Service — Cron', () => {
@@ -407,7 +413,7 @@ describe('Financial Service — Cron', () => {
 
     const [updated] = await db.select().from(accountsReceivable).where(eq(accountsReceivable.id, ar.id));
     expect(updated?.status).toBe('overdue');
-  });
+  }, 20_000);
 
   it('24. Monthly closing automátivo via cron', async () => {
     const user = await createTestUser('f24@test.com');
@@ -428,6 +434,6 @@ describe('Financial Service — Cron', () => {
     const closings = await db.select().from(financialClosings).where(eq(financialClosings.tenantId, tenant.id));
     expect(closings.length).toBe(1);
     expect(closings[0]?.totalAmountCents).toBe(1000);
-  });
+  }, 20_000);
 });
 

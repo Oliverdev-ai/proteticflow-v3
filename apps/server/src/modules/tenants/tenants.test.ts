@@ -33,13 +33,19 @@ async function createTestUser(email: string) {
 }
 
 async function cleanup() {
-  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
-  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
   await db.delete(invites);
   await db.delete(osBlocks);
   await db.delete(tenantMembers);
   await db.delete(fiscalSettings);
-  await db.delete(tenants);
+  await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+  await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+  try {
+    await db.delete(tenants);
+  } catch {
+    await db.execute(sql`DELETE FROM feature_usage_logs`).catch(() => {});
+    await db.execute(sql`DELETE FROM license_checks`).catch(() => {});
+    await db.delete(tenants);
+  }
   await db.delete(users);
 }
 

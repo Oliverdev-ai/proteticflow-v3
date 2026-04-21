@@ -34,6 +34,7 @@ export const tenants = pgTable('tenants', {
   city: varchar('city', { length: 128 }),
   state: varchar('state', { length: 2 }),
   isActive: boolean('is_active').default(true).notNull(),
+  onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
   parentTenantId: integer('parent_tenant_id'),
   clientCount: integer('client_count').notNull().default(0),
   jobCountThisMonth: integer('job_count_this_month').notNull().default(0),
