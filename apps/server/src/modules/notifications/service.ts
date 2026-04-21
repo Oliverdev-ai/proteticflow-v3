@@ -29,6 +29,9 @@ const DEFAULT_EVENTS: NotificationEvent[] = [
   'report_ready',
   'deadline_24h',
   'ar_overdue',
+  'trial_expiring',
+  'payment_overdue',
+  'plan_upgraded',
 ];
 
 function normalizeType(type: NotificationType): 'info' | 'warning' | 'error' {
