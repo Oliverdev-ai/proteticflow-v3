@@ -86,3 +86,19 @@ tmp/mcp-*/
 .tmp/
 tmp/
 # CLAUDE.md deve ser commitado — é a lei do projeto para todos os agentes
+
+# Artefatos de agentes IA
+.agents/
+.planning/
+.tmp-dev-sync/
+*.skill
+AGENTS.md
+WORKSPACE_CANONICO.md
+_tmp_*
+audit.js
+test_audit.py
+tmp_recon.py
+ui_audit.json
+item.eventKey
+{
+
