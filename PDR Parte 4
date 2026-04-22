@@ -1,0 +1,955 @@
+# ProteticFlow v3 — Documento Técnico Definitivo
+## PRD Parte 4 de 4: Fase Pré-Lançamento (Go-to-Production)
+
+**Versão:** 4.1
+**Data:** 2026-04-22
+**Autor:** Claude Opus 4.7
+**Auditor:** Claude Sonnet
+**Status:** Canônico desta rodada
+
+> **Supersede:** este documento define a Fase Pré-Lançamento, que **não existia** nos PRDs anteriores (Partes 1-3). PRDs 1/2/3 descrevem produto e sprints de desenvolvimento (F1-F39). **Parte 4 é o que vem depois** da v1.2.0 (Flow IA GA) + aperfeiçoamento UI/UX, e antes do acesso público pago.
+
+> **Changelog v4.1 (2026-04-22):** adicionada seção **0.1 — Separação Dev vs Produção** para explicitar que nenhum módulo M-PL-* é ativado durante desenvolvimento. Custo em dev permanece ~R$ 0/mês até D-45.
+
+---
+
+## Navegação
+
+- [[../status|status]]
+- [[../decisions|decisions]]
+- [[../flow-ia/Brief-Master-Flow-IA-Executive-Summary|Brief Master Flow IA]]
+- [[../flow-ia/PLAN_LIMITS|PLAN_LIMITS]]
+- [[../../proteticflow/docs-base/PRD_PARTE_1_de_2|PRD PARTE 1 (legado v3.3)]]
+- [[../../proteticflow/docs-base/PRD_PARTE_2_de_2|PRD PARTE 2 (legado v3.3)]]
+- [[../../proteticflow/docs-base/PRD_PARTE_3_de_3|PRD PARTE 3 (legado v3.4)]]
+
+---
+
+## 0. TL;DR
+
+Antes de abrir a porta do ProteticFlow ao público pagante, há um conjunto fechado de configurações, integrações externas, contratos e gates de segurança/compliance que **não podem ser feitos em dev** porque exigem (a) credenciais reais de fornecedores, (b) verificação com terceiros (Meta, Receita Federal via NFS-e, bancos, Stripe), (c) domínio e URL públicos, ou (d) auditoria jurídica. Essa é a Parte 4.
+
+**Objetivo:** ir do ambiente de desenvolvimento (v1.2.0 + UI/UX polido) para **ambiente produtivo pago funcional** com as garantias mínimas de um SaaS B2B brasileiro: pagamento recorrente, fiscal completo, WhatsApp corporativo, observabilidade, continuidade, compliance LGPD. Zero aventura; zero "deploy quando der".
+
+**Duração estimada:** 15-20 dias úteis corridos, mas com **caminhos críticos externos** que estendem para ~45 dias calendário (verificação Meta BSP por tenant, NFS-e prefeitura, cartões homologados Stripe Brasil).
+
+**Critério de sucesso:** 5 tenants pagos reais ativos em produção por 30 dias com SLO cumprido, zero incidente P0, zero falha fiscal, conversão Trial → Starter ≥ 10%.
+
+---
+
+## 0.1 — Separação Dev vs Produção (custo zero durante desenvolvimento)
+
+**Princípio operacional:** a fatura só começa a correr no **D-14** do Go-Live. Durante as Fases 1-7 (Flow IA + UI/UX), o ambiente inteiro roda em **free tier + sandbox/test mode**. Nenhum módulo M-PL-* é ativado antes do código estar pronto.
+
+### Matriz Dev vs Pré-Lançamento
+
+| Serviço | Dev (Fases 1-7) | Pré-Lançamento (M-PL-*) | Custo Dev |
+|---|---|---|---|
+| **Doppler** | Free (1 user, 3 configs) | Team $17/mês | $0 |
+| **Neon Postgres** | Free (0.5 GB, 1 branch) | Scale $69/mês | $0 |
+| **Upstash Redis** | Free (10k cmd/dia) | Pro $30/mês | $0 |
+| **Cloudflare R2** | Free (10 GB + 10M ops) | Pay-as-go (~$3) | $0 |
+| **Cloudflare DNS/WAF** | Free (proxy + WAF base) | Free (mesmo tier) | $0 |
+| **Render hosting** | Free tier / Docker local | Standard $50/mês | $0 |
+| **Stripe** | **Test mode** (`sk_test_`, cartões `4242…`) | **Live mode** (`sk_live_`) | $0 |
+| **Asaas** | Sandbox grátis | Produção (R$ 2,99/boleto) | $0 |
+| **Focus NFe** | Homologação grátis (prefeitura sandbox) | Produção R$ 99/mês + R$ 0,39/nota | $0 |
+| **Resend email** | Free (100/dia, 3k/mês) | $20/mês (50k) | $0 |
+| **Sentry** | Dev free (5k errors/mês) | Team $26/mês | $0 |
+| **Grafana Cloud** | Free (10k métricas, 50GB logs) | Pro $29/mês | $0 |
+| **BetterStack** | Free (10 monitors, 3 status components) | $29/mês | $0 |
+| **Plausible Analytics** | — (só existe pós-landing) | $9/mês | $0 |
+| **Domínio proteticflow.com.br** | Comprar no D-45 | Já comprado | ~R$ 40/ano |
+| **GitHub Actions CI** | Free (2k min/mês privado) | Mesmo tier | $0 |
+
+**Total dev realista:** **R$ 0-40/mês** (apenas domínio, opcional até D-45).
+
+### Regras invioláveis durante Dev
+
+1. **Stripe test keys** só. Usar cartões de teste (`4242 4242 4242 4242`). Webhooks apontam para `localhost` via `stripe listen` CLI ou ngrok.
+2. **Asaas sandbox** até D-14. Nenhum boleto real emitido em desenvolvimento.
+3. **Focus NFe homologação** até cidade-piloto estar cadastrada em produção. Notas fiscais geradas em homologação **não têm valor fiscal** e não aparecem no município.
+4. **Email via Resend free tier** → usar domínio sandbox (ex: `dev.proteticflow.com.br` com DNS próprio) para não contaminar reputação do domínio produtivo.
+5. **LLMs (Gemini + Anthropic):** usar próprias credenciais pessoais em dev com cap de gasto diário configurado via console ($5-10/dia máx). **Não compartilhar keys de produção.**
+6. **Nenhum secret produtivo entra em dev.** Doppler com 2 configs separadas: `dev` (free) e `prod` (Team tier só no D-14).
+
+### Gatilhos de upgrade (quando apertar o botão)
+
+| Momento | Ação | Custo incremental mensal |
+|---|---|---|
+| **D-45** | Compra de domínio + Cloudflare DNS | ~R$ 40/ano |
+| **D-30** | Abre conta Stripe BR + Asaas PJ + Focus NFe (aguardando homologação) | R$ 0 até aprovar |
+| **D-14** | Upgrade Neon → Scale, Upstash → Pro, Doppler → Team | **~$120/mês** |
+| **D-7** | Ativa Sentry Team, Grafana Pro, BetterStack, Resend pago | **+$105/mês** |
+| **D-3** | Stripe/Asaas/Focus em live mode, Plausible on | **+$9/mês + transações** |
+| **D (go-live)** | Render Standard ($50) + Docker prod | **+$50/mês** |
+| **D+30** | Custo fixo estabilizado | **~$304/mês** |
+
+### Enforcement técnico
+
+- **CI/CD staging**: `NODE_ENV=staging` força Stripe test keys, Asaas sandbox, Focus homologação. Hardcoded check em `packages/billing/src/providers/*.ts` que bloqueia live keys fora de prod.
+- **Doppler**: config `dev` **não tem permissão de ler secrets `prod.*`**. Separação física.
+- **Pre-commit hook** `scripts/check-no-live-keys.sh`: grep por `sk_live_`, `pk_live_` em diffs — bloqueia commit.
+- **Feature flag `ENVIRONMENT_LIVE_MODE=false` default**: app em modo dev assume tudo sandbox. Flip só no D-3 após smoke tests.
+
+### Consequência para o Cronograma
+
+A contagem regressiva começa **depois que o código está pronto** (v1.2.0 + UI/UX GA). Só então as 6 semanas do Cronograma (seção 12) iniciam, com spending incremental conforme tabela de gatilhos acima.
+
+**Cenário pior caso:** se jurídico ou Stripe BR atrasarem, o projeto paga **apenas $120/mês (D-14 upgrades)** enquanto aguarda externos — não $304. A exposição financeira é controlada mês a mês.
+
+---
+
+## 1. Gates de bloqueio (pré-condições)
+
+A Fase Pré-Lançamento **não começa** sem estes marcos. Violar = retrabalho garantido.
+
+| Gate | Evidência exigida |
+|---|---|
+| v1.2.0 taggeada | `git tag v1.2.0` publicada, changelog pronto |
+| Sprint UI/UX concluída | Design system aplicado, Lighthouse ≥ 90 desktop/mobile, A11y AA |
+| Smoke tests E2E passando | Playwright 100% verde em staging nas 3 jornadas críticas (OS, Financeiro, Flow IA) |
+| Migrations até 0033 aplicadas | Schema `ai_memory`, `whatsapp_*`, `active_sessions`, `ai_usage_daily`, `login_attempts` em staging |
+| Staging estável 14 dias | Dashboard Grafana sem P0, erro < 1%, p95 API < 500ms |
+| PLAN_LIMITS enforcement 100% wired | `licensedProcedure` bloqueando casos de teste manuais |
+| Security review Sonnet OK | Relatório assinado: OWASP Top 10 clean, tenant isolation auditada |
+| Decisão comercial fechada | Preços finais (R$ 97/197/498), ciclo de billing, trial 14d, política de reembolso |
+
+---
+
+## 2. Estrutura da fase
+
+Dividida em 20 módulos (M-PL-01 a M-PL-20), agrupados em 4 blocos. Execução paralela **quando dependência permite**.
+
+### Bloco A — Infra e Plataforma (fundação)
+M-PL-01 Secrets management · M-PL-02 Banco produção · M-PL-03 Redis produção · M-PL-04 Object storage · M-PL-05 Domínio + DNS + SSL · M-PL-06 Nginx + Cloudflare WAF · M-PL-07 CI/CD produção
+
+### Bloco B — Integrações Externas (caminho crítico em dias corridos)
+M-PL-08 Stripe Brasil · M-PL-09 Boletos (Asaas) · M-PL-10 NFS-e (Focus NFe) · M-PL-11 WhatsApp BSP real · M-PL-12 Email deliverability
+
+### Bloco C — Compliance, Legal, LGPD
+M-PL-13 Documentos legais (ToS, PP, DPA) · M-PL-14 LGPD ANPD (DPIA + Encarregado) · M-PL-15 Política de retenção e purge
+
+### Bloco D — Operação e Go-Live
+M-PL-16 Observabilidade produção (Grafana Cloud + Sentry) · M-PL-17 Status page pública · M-PL-18 On-call rotation · M-PL-19 DR + Backup + runbook restore · M-PL-20 Landing + Marketing + SEO · **Go-Live Checklist + Rollback Plan**
+
+---
+
+## 3. Bloco A — Infra e Plataforma
+
+### M-PL-01 — Secrets Management
+
+**Objetivo:** zero secrets em código, repo ou Obsidian. Rotação padronizada. Quem rotaciona, loga.
+
+**Requisitos:**
+- Cofre: **Doppler** (recomendado, custo baixo, SDK TS maduro) ou **HashiCorp Vault** (self-hosted, pesado) ou **AWS Secrets Manager** (se for AWS).
+- Decisão: **Doppler** — preço e simplicidade vencem para o porte atual.
+- Sync automático: Render/Neon/CDN lêem de Doppler via integração nativa.
+- Rotação:
+  - Secrets fiscais (Asaas, Focus NFe): 90 dias
+  - `JWT_SECRET`, `REFRESH_SECRET`: 180 dias (invalida sessões — agendar)
+  - Stripe `STRIPE_SECRET_KEY`: rotação on-demand pós-incidente
+  - BSP WhatsApp por tenant: 12 meses ou mudança de provider
+  - `WHATSAPP_CONFIG_ENCRYPTION_KEY`: anual, com re-encrypt script
+- Template de secrets obrigatórios (ver seção 10).
+
+**Entregável:** `docs/runbooks/secrets-rotation.md` + script `pnpm run rotate:secret --name=<nome>`.
+
+---
+
+### M-PL-02 — Banco Produção (Neon)
+
+**Objetivo:** PostgreSQL 16 produtivo com HA, PITR, backups testados.
+
+**Requisitos:**
+- **Plano Neon:** Scale ($69/mês base) — branching, autoscaling, PITR 7 dias, `pgvector` nativo.
+- **Extensões:** `pgvector`, `pgcrypto`, `pg_stat_statements`, `uuid-ossp`.
+- **Backups:**
+  - Snapshot diário 03:00 BRT retenção 30 dias (além do PITR 7 dias do plano)
+  - Export lógico semanal via `pg_dump` para bucket S3 offsite, retenção 90 dias
+  - Teste de restore mensal obrigatório (runbook executado, log em `docs/runbooks/restore-tests/`)
+- **Observabilidade:** integração Grafana Cloud Agent puxando `pg_stat_*` → dashboard `postgres-health`.
+- **Tuning inicial:**
+  - `max_connections=200`, `pool_size=20` no pgbouncer embutido do Neon
+  - `work_mem=32MB`, `maintenance_work_mem=256MB`
+  - `effective_cache_size=3GB` (ajustar conforme plano)
+- **Pool de conexões:** apps/server usa Neon serverless driver (HTTP) OU pgbouncer TCP. Decisão: **pgbouncer transaction mode** — estável com BullMQ workers.
+
+**Migration freeze:** de Parte 4 em diante, migrations só em janela de manutenção anunciada 48h antes. Forward-only (reversíveis lógicas, nunca DROP TABLE sem feature flag).
+
+---
+
+### M-PL-03 — Redis Produção
+
+**Objetivo:** Redis 7 produtivo para cache, sessões, BullMQ (Fase 5), rate limiting.
+
+**Requisitos:**
+- **Provider:** **Upstash Pro** (serverless, global replication, $10-30/mês no tier inicial) OU **Redis Cloud Fixed** ($5/mês 250MB).
+- Decisão: **Upstash Pro** — latência consistente no Brasil via réplica SA-East.
+- **Persistência:** AOF every-second + RDB snapshots diários.
+- **Eviction policy:** `allkeys-lru` (cache friendly) — mas filas BullMQ usam keys com TTL, que bypassa LRU.
+- **Namespacing por ambiente:** `pf:prod:*`, `pf:staging:*` — nunca mesmo client falando com os 2.
+- **Observabilidade:** métricas exportadas para Grafana via Upstash integration.
+
+---
+
+### M-PL-04 — Object Storage
+
+**Objetivo:** armazenamento de scans, PDFs, imagens de OS, exports — durável, cifrado, com regras de retenção por plano.
+
+**Decisão:** **AWS S3 São Paulo (sa-east-1)** via SDK v3, ou **Cloudflare R2** se quiser zero egress cost.
+Comparativo:
+
+| Critério | S3 | R2 |
+|---|---|---|
+| Latência Brasil | ✅ sa-east-1 | 🟡 (POP BR, mas objeto em DC EU/US) |
+| Egress cost | ~$0.09/GB | **$0 free** |
+| Lifecycle rules | ✅ | ✅ |
+| Server-side encryption | ✅ KMS | ✅ default |
+| Preço $/GB | $0.025 | **$0.015** |
+| SDK TS maduro | ✅ | ✅ (S3-compatible) |
+
+**Recomendação:** **Cloudflare R2** — egress zero é decisivo para SaaS com fotos/PDFs de OS.
+
+**Requisitos:**
+- Buckets: `pf-prod-uploads` (scans, anexos OS), `pf-prod-exports` (PDFs gerados), `pf-prod-backups-pg` (pg_dump semanal)
+- Versionamento habilitado em `uploads` (anti-ransomware)
+- Lifecycle: uploads não acessados > 180 dias → classe Infrequent Access (S3) ou auto-arquivo (R2)
+- Purge por LGPD: worker mensal consulta `tenants WHERE data_purge_at < NOW()` e limpa objetos do tenant
+- Signed URLs TTL 5min para download autenticado
+
+---
+
+### M-PL-05 — Domínio + DNS + SSL
+
+**Objetivo:** domínio principal comprado, DNS gerenciado, SSL automático, subdomínios multi-tenant.
+
+**Decisão de arquitetura:** subdomínio por tenant vs path-based?
+- Path-based (`app.proteticflow.com.br/tenant-abc`): 1 cert, simples, OK inicialmente
+- Subdomínio (`abc.proteticflow.com.br`): branding próprio, cert wildcard necessário
+- **Decisão v1:** path-based. Subdomínio custom vira feature Enterprise paga no futuro.
+
+**Requisitos:**
+- Domínio: comprar `proteticflow.com.br` + `.com` defensivamente (Registro.br + Namecheap)
+- DNS: **Cloudflare DNS** (grátis, proxy on)
+- Registros:
+  - `A @ → Cloudflare proxy` (front do app)
+  - `CNAME app → <render-custom-domain>`
+  - `CNAME www → app`
+  - `MX` via Google Workspace ou Zoho Mail
+  - `TXT` SPF, DKIM, DMARC (ver M-PL-12)
+  - `CAA` `letsencrypt.org, cloudflare.com`
+- **SSL:** Cloudflare Full Strict. Origin cert assinado por Cloudflare (15 anos) ou Let's Encrypt auto-renovado.
+- **WAF + DDoS:** Cloudflare Free já cobre camada 3/4. Rules específicas em M-PL-06.
+
+**Caminho crítico:** compra de domínio é imediata, mas propagação DNS + emissão SSL = 2-24h. Agendar 48h antes do go-live.
+
+---
+
+### M-PL-06 — Nginx + Cloudflare WAF
+
+**Objetivo:** edge security + routing + rate limit agressivo no perímetro.
+
+**Arquitetura:**
+```
+[Cliente] ──► Cloudflare (WAF + Rate limit edge)
+           ──► Render (Nginx reverse proxy) ──► apps/server (Node 22 tRPC)
+                                          └──► apps/web (Vite SPA static)
+```
+
+**Cloudflare WAF rules mínimas:**
+1. **Bot Fight Mode:** ON — bloqueia scrapers conhecidos
+2. **Managed Rules:** OWASP + Cloudflare Managed → ON
+3. **Rate limit edge:**
+   - `/api/*` 60 req/min/IP (além do `apiRatePerMinute` do plano no app)
+   - `/api/auth/login` 10 req/min/IP + escalação do login (M-PL-06.2)
+   - `/webhooks/*` 100 req/min/IP, HMAC enforced in-app
+4. **Challenge para IPs de TOR/VPN suspeitos** em rotas de registro
+5. **Country allow-list para admin** `/admin/*`: apenas BR + IPs whitelist
+6. **Bloquear `User-Agent` vazios** em POST
+
+**Render/Nginx:**
+- Header `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: geolocation=(), microphone=(self), camera=(self)` (self p/ Flow voz)
+- `Content-Security-Policy` estrita: `default-src 'self'; script-src 'self'; connect-src 'self' https://api.gemini.google.com https://api.anthropic.com wss://...` — completar com domínios dos BSPs, Stripe.js, Cloudflare Turnstile
+
+---
+
+### M-PL-07 — CI/CD Produção
+
+**Objetivo:** deploy seguro, com approval gate, rollback imediato.
+
+**Pipeline (`deploy.yml` — **intocável, ajustes apenas novos jobs**):**
+
+```
+push main ──► [build + test + typecheck + lint + tenant-isolation check]
+          ──► [docker build + push ghcr]
+          ──► [deploy staging automático]
+          ──► [smoke tests E2E staging]
+          ──► [🔒 manual approval gate — Marcelo]
+          ──► [deploy produção canary 10%]
+          ──► [healthcheck + métricas 15min]
+          ──► [promote 100% ou rollback automático]
+```
+
+**Rollback automático se em 15min:**
+- Error rate > 2% no canary
+- p95 API > 1s sustentado
+- Qualquer alerta P0 do Prometheus
+
+**Artefatos:** Docker images taggeadas `sha-<commit>` + `v<version>` + `latest`. Retenção 90 dias no GHCR.
+
+**Secrets do pipeline:** Doppler Service Tokens (ver M-PL-01).
+
+---
+
+## 4. Bloco B — Integrações Externas
+
+### M-PL-08 — Stripe Brasil (Payment Gates)
+
+**Objetivo:** cobrança recorrente em BRL, checkout hospedado, portal self-service, webhooks 100% fiáveis.
+
+**Pré-requisitos externos:**
+- Conta Stripe Brasil verificada (CNPJ + documentos PJ)
+- Cartões homologados pela Stripe Brasil (~5-10 dias)
+- Tipo: Business (Customer Portal + Checkout + Billing)
+
+**Configuração:**
+- **Produtos e PRICE_IDs:**
+  - `starter_monthly` → R$ 97,00
+  - `pro_monthly` → R$ 197,00
+  - `enterprise_monthly` → R$ 498,00
+  - `enterprise_monthly_llm_upgrade` → +R$ X (delta Sonnet/Opus — definir)
+- **Checkout:** Stripe Checkout hospedado (menos superfície PCI). Modo `subscription` com `trial_period_days=14` apenas no `starter_monthly` (upgrade do Trial expira).
+- **Tax:** Stripe Tax habilitado para Brasil (emite nota com valor correto de retenção). **Verificar:** Brasil ainda exige NFS-e separada — Stripe Tax cobre só tributação de origem.
+- **Customer Portal:** self-service para atualizar cartão, baixar invoices, cancelar.
+- **Webhooks:**
+  - Endpoint: `POST /webhooks/stripe` (público, com `stripe-signature` HMAC)
+  - Eventos consumidos: `invoice.payment_succeeded`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.trial_will_end` (3d antes)
+  - Idempotência via `Stripe-Event-Id` + tabela `stripe_events_processed`
+- **Recovery flow:** `payment_failed` → grace period 7 dias → tenant em modo `read-only` + banner upgrade → 30 dias inadimplente → purge conforme política
+
+**Env vars obrigatórias (via Doppler):**
+```
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_PRICE_STARTER=price_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_ENTERPRISE=price_...
+STRIPE_TAX_ENABLED=true
+```
+
+**Teste pré-go-live:**
+- Cobrança real de R$ 1 (cartão teste aprovado por Stripe Brasil) em staging
+- Webhook chega, `invoices` tabela atualiza, usuário recebe email
+- Cancelamento via Customer Portal → subscription termina no fim do ciclo
+- Cartão recusado → `payment_failed` → banner aparece no app
+
+**Armadilhas:**
+- **PIX:** Stripe Brasil suporta PIX, mas com latência (confirmação em minutos). Habilitar **após** cartão estável.
+- **Taxa de processamento:** 3.99% + R$ 0.39 por transação aprovada. Impacta margem (documentar no financial model).
+- **Disputes:** Brasil tem taxa de dispute baixa comparada a US, mas monitorar. Grafana painel `stripe-disputes`.
+
+---
+
+### M-PL-09 — Boletos (Asaas) Produção
+
+**Objetivo:** módulo de boletos funcional em produção (já desenvolvido em Fase 24/25 — só falta credencial produtiva + tuning).
+
+**Configuração:**
+- Conta Asaas PJ verificada
+- Ambiente Sandbox → Production após aprovação
+- Webhook Asaas → `POST /webhooks/asaas` com HMAC
+- Taxa por boleto: ~R$ 2,99 (repasse ao cliente ou absorve — decisão Marcelo)
+
+**Env vars:**
+```
+ASAAS_API_KEY=<prod-key>
+ASAAS_WEBHOOK_SECRET=<secret>
+ASAAS_ENVIRONMENT=production
+```
+
+**Teste pré-go-live:** emissão real de 1 boleto R$ 0,50, pagamento via app bancário, webhook chega, `account_receivable.status='paid'`.
+
+---
+
+### M-PL-10 — NFS-e Produção (Focus NFe / eNotas)
+
+**Objetivo:** emissão de nota fiscal de serviço eletrônica por município dos dentistas/clientes.
+
+**Complexidade:** **alta**. Cada cidade tem layout próprio (ABRASF v1/v2/v2.03, modelos proprietários). Focus NFe abstrai ~80% dos municípios; fallback manual nos outros.
+
+**Pré-requisitos:**
+- CNPJ emissor cadastrado em cada prefeitura onde emitir
+- Certificado digital A1 (arquivo `.pfx`) por emissor (cifrado no banco, nunca plaintext)
+- Cadastro fiscal: CNAE, regime tributário, alíquota ISS por serviço
+
+**Configuração:**
+- Provider: **Focus NFe** (R$ 0,39/nota + R$ 99/mês mínimo)
+- Webhook → `POST /webhooks/focus-nfe`
+- Retry policy: falha de emissão → retry exponencial 3x → email ao dono + status `error` na OS
+- Cancelamento: janela de 24h (varia por município), endpoint separado
+
+**Teste pré-go-live:** emissão real em 1 cidade-piloto, consulta via API, PDF gerado, XML válido.
+
+**Armadilha crítica:** certificado digital com senha e certificado A3 (token físico). **Sistema só suporta A1** (arquivo). Documentar no onboarding: "cliente precisa ter certificado A1 PFX".
+
+---
+
+### M-PL-11 — WhatsApp BSP Real (Meta Business Verification)
+
+**Objetivo:** transformar o mock da Fase 5 + sandbox da Fase 6 em provider produtivo por tenant.
+
+**Caminho crítico externo:** 5-30 dias por tenant.
+
+**Responsabilidades do dentista (tenant):**
+1. Criar conta Meta Business Manager (grátis)
+2. Adicionar número de telefone Business (não pode ser pessoal)
+3. Verificar domínio da empresa (TXT DNS)
+4. Verificação de negócio (upload de CNPJ + comprovante de endereço)
+5. Após aprovação Meta, ativar na BSP escolhida (Take Blip) e enviar credenciais para o ProteticFlow via wizard
+
+**Responsabilidades do ProteticFlow:**
+1. Wizard `/configuracoes/whatsapp` (já implementado Fase 6) orquestra credenciais
+2. Templates obrigatórios submetidos pela primeira vez pelo wizard, aprovação 24-48h
+3. Monitorar tier messaging Meta (250 → 1k → 10k → 100k msgs/dia) — aumenta com uso saudável
+4. Runbook suporte para onboarding WhatsApp — equipe comercial ajuda tenants com dificuldade
+
+**Produção toggle:**
+- Feature flag `FEATURE_WHATSAPP_REAL` default **false** por tenant (opt-in individual)
+- Tenant liga quando estiver com número verificado e templates aprovados
+- Admin panel para Marcelo liberar tenant-a-tenant conforme vê status pronto
+
+**Env var global:**
+```
+WHATSAPP_CONFIG_ENCRYPTION_KEY=<32 bytes base64>
+TAKEBLIP_GLOBAL_API_BASE=https://msging.net/
+TWILIO_GLOBAL_FALLBACK_ENABLED=false
+```
+
+Credenciais específicas por tenant em `tenants.whatsapp_config JSONB` cifrado.
+
+---
+
+### M-PL-12 — Email Deliverability (SPF/DKIM/DMARC)
+
+**Objetivo:** emails do ProteticFlow entregam em Gmail, Outlook, domínios corporativos — não em spam.
+
+**Provider:** **Resend** ($20/mês tier 50k envios, DX excelente) OU **Amazon SES** ($0.10/1k, SMTP nativo, mais burocrático).
+
+**Decisão:** **Resend** — tempo de setup e dashboard justificam o preço.
+
+**Configuração DNS (em Cloudflare):**
+```
+TXT @ "v=spf1 include:_spf.resend.com ~all"
+TXT resend._domainkey <chave fornecida pelo Resend>
+TXT _dmarc "v=DMARC1; p=quarantine; rua=mailto:dmarc@proteticflow.com.br; pct=100"
+```
+
+**Warm-up:** Resend recomenda ramping até chegar a 1k envios/dia em 7 dias. Scheduler da Fase 5 respeita durante warm-up (dispara gradualmente).
+
+**Tipos de email:**
+- Transacional: reset senha, invoice paid, trial expiring (alta prioridade, inbox forçado)
+- Operacional: briefing diário (Fase 5), alertas
+- Marketing: **fora do ProteticFlow v1** (usar MailChimp/Resend separado em marketing)
+
+**Monitoring:** dashboard `email-deliverability` no Grafana com bounce rate, complaint rate, open rate.
+
+**Env vars:**
+```
+RESEND_API_KEY=<prod>
+EMAIL_FROM_NOREPLY=noreply@proteticflow.com.br
+EMAIL_FROM_SUPPORT=suporte@proteticflow.com.br
+```
+
+---
+
+## 5. Bloco C — Compliance, Legal, LGPD
+
+### M-PL-13 — Documentos Legais
+
+**Objetivo:** Termos de Uso, Política de Privacidade, DPA (Data Processing Addendum) revisados por advogado.
+
+**Documentos obrigatórios:**
+1. **Termos de Uso** (público em `/termos`) — contrato entre ProteticFlow e tenant
+2. **Política de Privacidade** (público em `/privacidade`) — tratamento de dados LGPD
+3. **DPA (Data Processing Addendum)** (disponível sob demanda) — controlador vs operador, cláusulas padrão ANPD
+4. **Política de Cookies** (banner + página) — essenciais vs opcionais
+5. **Aviso de uso de IA** (banner em Flow) — "este recurso usa IA externa (Google/Anthropic); dados processados sob essas políticas"
+6. **Termo específico WhatsApp** (assinatura no wizard) — compliance Meta
+7. **Política de reembolso** (7 dias CDC, contra cartão em até 30 dias)
+
+**Timeline:**
+- Redação inicial pelo time: 3 dias (prompts com Opus)
+- Revisão jurídica: 7-14 dias externos
+- Publicação final: 2 dias (tela + links + redirects)
+
+**Requisitos técnicos:**
+- Versionamento: cada termo tem `version`, `effective_date`. Tabela `legal_acceptances (user_id, doc_type, version, accepted_at, ip)` persiste aceite.
+- Ao publicar nova versão: todos os usuários forçados a re-aceitar no próximo login.
+- Páginas públicas indexáveis (SEO) mas sem tracking ads/analytics de terceiros.
+
+---
+
+### M-PL-14 — LGPD ANPD Compliance Final
+
+**Objetivo:** ProteticFlow está em condição defensável caso ANPD solicite auditoria.
+
+**Itens obrigatórios (auditáveis):**
+
+1. **Encarregado de Dados (DPO)** designado:
+   - Nome + email publicado em `/privacidade` (pode ser Marcelo inicialmente)
+   - Canal de contato: `dpo@proteticflow.com.br`
+   - Treinamento inicial documentado
+2. **DPIA (Data Protection Impact Assessment)** — avaliação de risco de tratamento:
+   - Documento `docs/compliance/DPIA-2026.md`
+   - Cobre: Flow IA (dados sensíveis processados por LLM externo), memória persistente, WhatsApp (comunicação direta com paciente), NFS-e (dados fiscais)
+3. **RIPD (Relatório de Impacto)** — obrigatório quando houver dados sensíveis
+4. **Registro de Operações de Tratamento (ROT)** conforme Art. 37 LGPD — planilha em `docs/compliance/ROT.xlsx`
+5. **Política de retenção** documentada e enforced:
+   - Ativo: enquanto contrato vigente
+   - Inadimplente: 90 dias read-only, depois purge
+   - Trial expirado: 30 dias read-only, depois purge
+   - Audit logs: 5 anos (obrigação fiscal/contábil)
+   - Memória Flow IA: 180 dias default + TTL customizável
+6. **Right-to-be-forgotten**: endpoint `settings.eraseMyData` com cascade em todas as tabelas + R2 objects
+7. **Portabilidade**: export ZIP (JSON + PDFs) disponível em `/configuracoes/exportar-dados`
+8. **Comunicação de incidente**: runbook `docs/runbooks/lgpd-breach.md` com SLA 72h ANPD + notificação aos titulares
+9. **Transferência internacional**: Google (Gemini) + Anthropic (Haiku/Opus) processam nos EUA. Cláusula no PP + DPA explicando.
+10. **Consentimento**: opt-in granular para WhatsApp (M-PL-11) + memória Flow IA (Fase 7) + cookies.
+
+**Cronograma:**
+- Escrita DPIA + ROT: 5 dias
+- Nomeação DPO + canal: 1 dia
+- Revisão jurídica: 14 dias externos
+- **Não bloqueia go-live absolutamente** (ANPD tolera 6 meses de adequação para startups ≤ 250 pessoas) mas **bloqueia contratos Enterprise** que pedem DPA assinado.
+
+---
+
+### M-PL-15 — Política de Retenção e Purge
+
+**Objetivo:** dados não vivem para sempre. Cron automático purga conforme política M-PL-14.
+
+**Implementação:**
+
+Tabela nova `retention_policies`:
+```sql
+CREATE TABLE retention_policies (
+  entity_type TEXT PRIMARY KEY,          -- 'tenant_inactive', 'trial_expired', 'ai_memory', 'audit_logs', 'whatsapp_messages'
+  retention_days INT NOT NULL,
+  purge_action TEXT NOT NULL CHECK (purge_action IN ('hard_delete', 'anonymize', 'archive_s3'))
+);
+```
+
+Cron diário em BullMQ (queue `retention.purge.daily`):
+- `tenants WHERE data_purge_at < NOW()` → hard_delete cascade (FKs ON DELETE CASCADE garantem integridade)
+- `audit_logs WHERE created_at < NOW() - INTERVAL '5 years'` → archive_s3 (Glacier)
+- `ai_memory WHERE expires_at < NOW()` → hard_delete
+- `whatsapp_messages WHERE created_at < NOW() - INTERVAL '2 years'` → anonymize (body → `[REMOVED]`, phone → hash)
+
+**Dry-run obrigatório:** cron roda com flag `DRY_RUN=true` na primeira semana — loga o que seria deletado sem deletar. Marcelo inspeciona log antes de ligar para `false`.
+
+---
+
+## 6. Bloco D — Operação e Go-Live
+
+### M-PL-16 — Observabilidade Produção
+
+**Objetivo:** Marcelo + ops enxergam saúde do sistema em tempo real; incidentes detectados antes do cliente reclamar.
+
+**Stack:**
+- **Métricas:** Prometheus scraping apps + Grafana Cloud (tier free até 10k métricas/dia; depois $29/mês)
+- **Logs:** Loki (Grafana Cloud integrado) com labels por `tenant_id`, `service`, `level`
+- **Traces:** Tempo (Grafana) para tracing distribuído apps/server + workers BullMQ
+- **Errors:** **Sentry** ($26/mês tier dev, escala com volume) para apps/web + apps/server com source maps
+
+**Dashboards obrigatórios no Grafana:**
+1. `overview` — SLIs principais (uptime, p95, error rate, req/s, active tenants)
+2. `tenant-drilldown` — métricas por tenant (top N por CPU/uso/erros)
+3. `financial-health` — MRR, churn, pagamentos aprovados/falhos (Stripe)
+4. `flow-ia-health` — uso Flow por tenant, custo LLM, latência, cache hit (herda da Fase 4)
+5. `proactive-motor` — fila BullMQ, dedup rate, canal success (herda da Fase 5)
+6. `whatsapp-delivery` — sent/delivered/read/opt-out por tenant (herda da Fase 6)
+7. `postgres-health` — conexões, query slow log, bloat, replication lag
+8. `infra-costs` — R2 + Neon + Upstash + Render cost por dia (via billing APIs)
+9. `email-deliverability` — bounce, complaint, open rate
+10. `security-events` — WAF blocks, login attempts escalados, injection attempts
+
+**Alertas críticos (PagerDuty/Opsgenie M-PL-18):**
+- `ServiceDown` critical → API /healthz > 3min down
+- `ErrorRate5min` critical → > 5%
+- `DatabaseDown` critical → Neon unreachable
+- `PaymentWebhookBacklog` warning → > 100 eventos pendentes
+- `TenantDataPurgePending` warning → lista retention_policies atrasada
+- `HighCostBurn` warning → gasto LLM > $50/hora sustentado
+
+---
+
+### M-PL-17 — Status Page Pública
+
+**Objetivo:** quando algo quebra, cliente consulta `status.proteticflow.com.br` antes de abrir ticket.
+
+**Decisão:** **BetterStack Status Page** ($29/mês, SLA monitoring + incident management) OU **Atlassian Statuspage** ($29-99/mês) OU **self-hosted via Cachet** (complexo).
+
+**Recomendação:** **BetterStack** — unifica uptime check + status page.
+
+**Componentes monitorados:**
+- API (apps/server)
+- Web App (apps/web)
+- Flow IA (Gemini + Haiku)
+- WhatsApp (por BSP)
+- Banco (Neon)
+- Email (Resend)
+- Stripe webhooks
+
+**Incident workflow:**
+1. Alerta Grafana → PagerDuty → on-call ack
+2. On-call cria incident na BetterStack → página atualiza automática
+3. Updates a cada 30min até resolvido
+4. Post-mortem em `docs/postmortems/YYYY-MM-DD.md` para P0/P1
+
+---
+
+### M-PL-18 — On-Call Rotation
+
+**Objetivo:** alguém responsável por incidente 24/7 nos primeiros 6 meses.
+
+**Ferramenta:** **BetterStack On-Call** (incluso no plano) OU **PagerDuty Professional** ($21/user/mês).
+
+**Rotação inicial (equipe pequena):**
+- Primária: Marcelo (business hours BRT)
+- Fallback: contratar SRE freelance de plantão fim-de-semana ou escalar apenas P0 (API down)
+- Escalonamento: primária não ack em 15min → fallback
+
+**Severidade:**
+- **P0:** serviço totalmente down, multi-tenant leak, comprometimento de segurança → ack 15min, fix 4h
+- **P1:** funcionalidade crítica degradada (pagamento, emissão fiscal) → ack 1h, fix 24h
+- **P2:** bug com workaround → ack 1 dia útil
+- **P3:** melhoria/request → fila normal
+
+**Runbooks obrigatórios em `docs/runbooks/`:**
+- `api-down.md`, `database-down.md`, `stripe-webhook-failing.md`
+- `whatsapp-bsp-outage.md`, `focus-nfe-outage.md`
+- `memory-breach.md` (da Fase 7), `multi-tenant-leak.md` (P0 máximo), `dr-restore.md`
+- `secrets-compromised.md`, `ddos-in-progress.md`
+
+---
+
+### M-PL-19 — DR + Backup + Restore
+
+**Objetivo:** "o banco morreu" é um exercício que já foi feito e o procedimento funciona.
+
+**RTO (Recovery Time Objective):** 1 hora
+**RPO (Recovery Point Objective):** 1 hora (PITR Neon)
+
+**Backup:**
+- Neon PITR 7 dias (M-PL-02)
+- `pg_dump` semanal → R2 bucket `pf-prod-backups-pg`, retenção 90 dias
+- R2 tem versionamento (M-PL-04)
+- Redis: AOF + RDB, mas fila BullMQ pode perder < 10min em falha sem grande prejuízo
+
+**Disaster scenarios cobertos:**
+1. **DB corrompido** → restore via PITR para timestamp anterior, replay de webhooks Stripe idempotentes
+2. **R2 região inteira down** → fallback bucket secundário em outra cloud (Backblaze B2)
+3. **Render SA inteira down** → redeploy Docker image em outra região via manifest K8s pré-testado (stretch goal)
+4. **Stripe indisponível** → retries com backoff; app funciona em read-only para cobrança; bannerzinho "estamos reconectando"
+5. **Doppler indisponível** → cache de secrets em memória do processo; reboot não sobe até voltar
+
+**Teste mensal:**
+- 1ª segunda-feira 08:00 BRT → runbook `dr-restore.md` executado em staging com dados de prod (LGPD-compliant: dados anonimizados no restore)
+- Log em `docs/runbooks/restore-tests/YYYY-MM.md`
+- Se teste falhar → P1 imediato para fix
+
+---
+
+### M-PL-20 — Landing + Marketing + SEO
+
+**Objetivo:** site público que converte Trial sign-ups, SEO no top-3 para "software laboratório prótese dentária".
+
+**Tecnicamente separado do app** (pode ser Astro + MDX, Next.js ISR, ou Webflow). Decisão: **Astro** — fast static, hospeda na Cloudflare Pages free.
+
+**Páginas mínimas:**
+- `/` Home — hero + dor do cliente + features + CTA Trial
+- `/precos` — tabela Trial/Starter/Pro/Enterprise com features
+- `/funcionalidades` — flow IA, financeiro, entregas, fiscal
+- `/como-funciona` — screenshots/vídeos
+- `/seguranca` — LGPD, criptografia, backup
+- `/blog` — SEO content (prazo: 6 posts em 6 meses)
+- `/contato` — form + email
+- `/login` → redirect para `app.proteticflow.com.br`
+- `/trial` → CTA principal
+
+**SEO on-page:**
+- `<title>` otimizado por página (≤ 60 chars)
+- Meta description (≤ 155 chars)
+- Schema.org SoftwareApplication + FAQPage + Organization
+- Sitemap XML + robots.txt
+- Open Graph + Twitter Cards
+
+**Analytics:**
+- **Plausible** (leve, LGPD-friendly, $9/mês) OU **Umami** (self-hosted grátis)
+- **Zero Google Analytics** — evita cookie invasivo e consentimento explícito
+
+**Conversão:**
+- Form de registro Trial no landing + apps/web (1 clique leva ao onboarding wizard)
+- Pixel de conversão: Cloudflare Web Analytics (grátis, cookieless) suficiente v1
+
+---
+
+## 7. Go-Live Checklist (dia D)
+
+Imprimir. Marcar cada item. Nenhum pulado.
+
+### D-7 (uma semana antes)
+- [ ] Docs legais aprovados por advogado (M-PL-13)
+- [ ] DPO nomeado + canal `dpo@` ativo (M-PL-14)
+- [ ] DNS configurado, propagação confirmada (`dig app.proteticflow.com.br` ✅)
+- [ ] SSL Full Strict ativo (`curl -I https://app.proteticflow.com.br` ✅ HSTS)
+- [ ] Stripe produção: produtos + PRICE_IDs + webhook criados (M-PL-08)
+- [ ] Asaas produção conectado + 1 boleto teste R$ 0,50 pago (M-PL-09)
+- [ ] Focus NFe: 1 nota teste emitida em cidade-piloto (M-PL-10)
+- [ ] Resend: warm-up iniciado, DMARC aligned (M-PL-12)
+- [ ] Status page viva com componentes (M-PL-17)
+- [ ] Runbooks completos em `docs/runbooks/` (M-PL-18)
+- [ ] DR restore teste passou (M-PL-19)
+- [ ] Landing deploy Cloudflare Pages (M-PL-20)
+- [ ] Backup de secrets offline (senior executive vault — 2 pessoas)
+
+### D-1 (um dia antes)
+- [ ] Smoke tests E2E 100% verdes em staging
+- [ ] Canary deploy 10% produção feito, 24h estável
+- [ ] Grafana dashboards rodando, alertas armados
+- [ ] Equipe on-call briefada, PagerDuty testado
+- [ ] Comunicado pronto (email + blog + social)
+- [ ] Rollback plan revisado, scripts em branco
+- [ ] Feature flag `FEATURE_WHATSAPP_REAL=false` (ativação gradual pós-GA)
+
+### D (go-live)
+- [ ] 08:00 BRT: promote canary 10% → 100%
+- [ ] Healthcheck + métricas primeiros 60min
+- [ ] Publicar comunicado 10:00 BRT
+- [ ] Monitor ativo p95, error rate, Stripe webhooks
+- [ ] Primeiro ticket de cliente em produção: responder < 1h
+
+### D+1 (dia seguinte)
+- [ ] Post-mortem se houve qualquer intercorrência (mesmo que resolvida)
+- [ ] Métricas 24h coletadas: registros, erros, custos
+- [ ] First invoice cycle rodando
+
+### D+7 / D+30
+- [ ] NPS para primeiros 20 tenants
+- [ ] Revisar retention_policies dry-run → enable
+- [ ] Audit: LGPD, SOC-2 readiness (stretch)
+
+---
+
+## 8. Rollback Plan
+
+**Trigger (qualquer um):**
+- Error rate > 5% sustentado 15min pós-promote
+- P0 não resolvível em < 1h
+- Vazamento multi-tenant confirmado
+- Cobrança indevida em massa (Stripe config bug)
+
+**Procedimento:**
+1. Alert → on-call ack → decisão rollback por Marcelo (ou fallback se Marcelo indisponível)
+2. Revert Docker image via GHCR tag anterior (`v1.x.x-1`)
+3. Render: deploy a imagem antiga via one-click rollback
+4. Banco: **rollback de migration não é automático**. Se migração quebrou, triggerar PITR para antes da migration (aceitar perda de dados entre migration e rollback)
+5. DNS/Cloudflare: não precisa tocar (mesmo origin)
+6. Stripe webhook: reprocessar eventos pendentes via `stripe events resend`
+7. Comunicado: status page + email opt-in
+
+**Mitigação preventiva:** migrations forward-only com double-write quando há mudança destrutiva (ex: rename column → add new → dual-write → drop old em release seguinte).
+
+---
+
+## 9. Custos mensais estimados produção
+
+| Item | Custo/mês |
+|---|---|
+| Neon Scale | $69 |
+| Upstash Pro | $30 |
+| Cloudflare R2 (200GB + egress free) | $3 |
+| Render (apps/server + workers + CI) | $50 |
+| Cloudflare Pages (landing) | $0 |
+| Doppler Team | $17 |
+| Resend 50k emails | $20 |
+| BetterStack (status + on-call) | $29 |
+| Sentry Team | $26 |
+| Grafana Cloud | $29 |
+| Plausible Analytics | $9 |
+| Stripe (transaction fees) | variável (3.99% + R$0.39/tx) |
+| Asaas (boletos) | variável (R$ 2,99/boleto) |
+| Focus NFe | $20 (R$99) + R$ 0,39/nota |
+| Domínios | $2 (amortizado) |
+| **Total fixo mensal** | **~$304 (R$ 1.520)** |
+
+**Variable cost:** Stripe + Asaas + Focus NFe + LLM + WhatsApp BSP — escala com receita. Margem mantida pelo PLAN_LIMITS (WhatsApp cap, Flow IA cap, LLM cap).
+
+**Break-even:** ~16 tenants Pro (R$ 197 × 16 = R$ 3.152) cobrem infra + variáveis. A partir de 50 tenants Pro, LTV começa a escalar linearmente.
+
+**Nota cross-reference:** a progressão de custos dev → prod está detalhada em 0.1 (Gatilhos de upgrade).
+
+---
+
+## 10. Template de Secrets (Doppler)
+
+Template mínimo — cada ambiente (staging, production) preenche valores próprios.
+
+```
+# Infra
+DATABASE_URL=postgres://...
+REDIS_URL=rediss://...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET_UPLOADS=pf-prod-uploads
+R2_BUCKET_EXPORTS=pf-prod-exports
+R2_BUCKET_BACKUPS=pf-prod-backups-pg
+R2_ENDPOINT=https://<account>.r2.cloudflarestorage.com
+
+# Auth
+JWT_SECRET=<64 bytes base64>
+REFRESH_SECRET=<64 bytes base64>
+SESSION_COOKIE_DOMAIN=.proteticflow.com.br
+WHATSAPP_CONFIG_ENCRYPTION_KEY=<32 bytes base64>
+
+# LLM + TTS
+GEMINI_API_KEY=AIza...
+GEMINI_MODEL_PRIMARY=gemini-2.5-flash
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL_FALLBACK=claude-haiku-4-5
+GOOGLE_TTS_API_KEY=<GCP API key>
+GOOGLE_TTS_VOICE_DEFAULT=pt-BR-Chirp3-HD-...
+
+# Stripe
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_PRICE_STARTER=price_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_ENTERPRISE=price_...
+STRIPE_PRICE_ENTERPRISE_LLM_UPGRADE=price_...
+
+# Boletos/Fiscal
+ASAAS_API_KEY=...
+ASAAS_WEBHOOK_SECRET=...
+ASAAS_ENVIRONMENT=production
+FOCUS_NFE_API_KEY=...
+FOCUS_NFE_WEBHOOK_SECRET=...
+
+# WhatsApp (globais — credenciais por tenant em DB cifradas)
+WHATSAPP_PROVIDER_DEFAULT=takeblip
+TAKEBLIP_GLOBAL_API_BASE=https://msging.net/
+TWILIO_GLOBAL_FALLBACK_ENABLED=false
+
+# Email
+RESEND_API_KEY=...
+EMAIL_FROM_NOREPLY=noreply@proteticflow.com.br
+EMAIL_FROM_SUPPORT=suporte@proteticflow.com.br
+
+# Observability
+SENTRY_DSN_SERVER=...
+SENTRY_DSN_WEB=...
+GRAFANA_CLOUD_API_KEY=...
+BETTERSTACK_UPTIME_TOKEN=...
+
+# Feature flags
+FEATURE_WHATSAPP_REAL=false
+FEATURE_MEMORY_ENABLED=true
+FEATURE_LLM_UPGRADE_ENABLED=true
+ENVIRONMENT_LIVE_MODE=false
+
+# App
+NODE_ENV=production
+APP_URL=https://app.proteticflow.com.br
+API_URL=https://app.proteticflow.com.br/api
+LANDING_URL=https://proteticflow.com.br
+```
+
+**Nunca, em hipótese alguma,** qualquer um desses valores entra em repo, Obsidian, Slack, email ou anexo. Doppler é source-of-truth.
+
+---
+
+## 11. Riscos e Mitigações (consolidado)
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|---|---|---|---|
+| Stripe Brasil homologação atrasa | Média | Alto | Iniciar conta 30d antes do D-7 |
+| Verificação Meta BSP trava tenant | Alta | Médio | Wizard explica processo + equipe comercial apoia |
+| Cidade-piloto NFS-e não suportada pelo Focus | Média | Médio | Aviso claro no onboarding + fallback emissão manual v1 |
+| LGPD ANPD audita antes de compliance pronta | Baixa | Crítico | DPO + DPIA prontos D-7; resposta documentada pronta |
+| Vazamento de secret (dev commita por engano) | Média | Crítico | Pre-commit hook `git-secrets` + Doppler + rotação imediata |
+| Incidente multi-tenant pós-go-live | Baixa | Crítico | Runbook P0 + rollback + PITR + comunicação transparente |
+| Disputa Stripe fraudulenta volumosa | Baixa | Alto | Stripe Radar ON + verificação email/telefone no signup |
+| Fila BullMQ backlog explosivo | Média | Médio | Workers auto-scale (Render cron + docs) + alerta Grafana |
+| R2 downtime região | Baixa | Alto | Bucket espelho Backblaze + fallback client-side |
+| Fornecedor muda preço (LLM, BSP) | Alta | Médio | Abstrações permitem trocar em 1 dia |
+| **Dev acidentalmente gasta em produção** | Média | Alto | Enforcement técnico seção 0.1 + pre-commit hook no-live-keys + Doppler config separation |
+
+---
+
+## 12. Cronograma (calendário estimado)
+
+**Premissa:** início da Fase Pré-Lançamento = D0 após Fase 7 do Flow IA + UI/UX. **Durante as Fases 1-7, tudo em free tier** (ver seção 0.1).
+
+```
+Semana 1 (D0 → D7):
+  Bloco A parcial — M-PL-01 (Doppler), M-PL-02 (Neon), M-PL-03 (Upstash), M-PL-05 (Domínio compra)
+  Bloco B paralelo — iniciar Stripe verification, Asaas PJ, Focus NFe cadastro
+
+Semana 2 (D8 → D14):
+  Bloco A completo — M-PL-04 (R2), M-PL-06 (WAF), M-PL-07 (CI/CD prod)
+  Bloco B — M-PL-12 (Resend warm-up), iniciar DPIA + docs legais (externo paralelo)
+
+Semana 3 (D15 → D21):
+  Bloco C parcial — M-PL-14 (DPO), M-PL-15 (retention cron)
+  Bloco D — M-PL-16 (Grafana), M-PL-17 (BetterStack), M-PL-18 (on-call), M-PL-19 (DR)
+
+Semana 4 (D22 → D28):
+  Integração final — testes E2E staging com credenciais prod (staging ambiente escurecido)
+  Canary deploy 10% produção, 7 dias monitoramento
+
+Semana 5-6 (D29 → D42):
+  Aguardar externos travando (jurídico, Meta BSP para primeiros tenants, Focus cidade)
+  M-PL-20 (Landing SEO) em paralelo
+  D-7 checklist
+
+D = go-live público, trial aberto.
+```
+
+**Itens que podem atrasar externos (sem controle direto):**
+- Jurídico (docs legais): 7-14 dias
+- Stripe Brasil homologação: 5-10 dias
+- NFS-e cadastro prefeitura-piloto: 10-30 dias
+- Meta Business verificação (por tenant, não bloqueia go-live geral): 5-30 dias
+
+---
+
+## 13. Post-Launch (D+30 e além)
+
+Não faz parte desta fase, mas para evitar buracos pós-go-live:
+
+- **Sprint S6+ (pós go-live):** bug fixes prioritários vindos de produção, NPS feedback
+- **SOC-2 Type I readiness:** objetivo Q3 pós-launch, abre portas Enterprise
+- **Multi-região:** quando MRR > R$ 50k, avaliar Neon multi-region + Render US-East mirror
+- **Mobile native app:** PWA vs React Native — decisão após 100 tenants ativos
+- **Subdomínio por tenant (white-label):** feature Enterprise paga, arquitetura já planejada em M-PL-05
+
+---
+
+## 14. Links e Referências
+
+- [[../flow-ia/Brief-Master-Flow-IA-Executive-Summary|Brief Master Flow IA]] — pré-requisito (v1.2.0)
+- [[../flow-ia/PLAN_LIMITS|PLAN_LIMITS]] — enforcement dos planos
+- [[../decisions|decisions.md]] — decisões de produto
+- [[../../proteticflow/docs-base/PRD_PARTE_1_de_2|PRD PARTE 1 (legado)]]
+- [[../../proteticflow/docs-base/PRD_PARTE_2_de_2|PRD PARTE 2 (legado)]]
+- [[../../proteticflow/docs-base/PRD_PARTE_3_de_3|PRD PARTE 3 (legado)]]
+
+---
+
+*Documento canônico 2026-04-22 (v4.1). Gerado pelo Claude Opus 4.7, sessão Cowork. Supersede qualquer menção anterior de "fase de produção" em PROMPTs ou briefs: os 20 módulos M-PL-* desta Parte 4 são a fonte de verdade para o go-to-production. Adenda 2026-04-22: seção 0.1 adicionada para explicitar separação dev/prod e custo zero durante desenvolvimento.*
