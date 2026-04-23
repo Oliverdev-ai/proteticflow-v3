@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   User, Building2, Users, ShieldCheck,
   CreditCard, Bell, Receipt, ChevronLeft,
-  ChevronRight, Settings2, Activity,
+  ChevronRight, Settings2, Activity, Mic,
 } from 'lucide-react';
 import { ProfileForm } from './profile-form';
 import { LabTab } from './lab-tab';
@@ -10,6 +10,7 @@ import { EmployeesTab } from './employees-tab';
 import { AuthorizationsTab } from './authorizations-tab';
 import { PlansTab } from './plans-tab';
 import { NotificationsTab } from './notifications-tab';
+import { FlowAiTab } from './flow-ai-tab';
 import { FiscalSettingsForm } from '../fiscal/fiscal-settings-form';
 import { cn } from '../../lib/utils';
 import { PageTransition } from '../shared/page-transition';
@@ -29,6 +30,7 @@ const SETTINGS_TABS: TabItem[] = [
   { id: 'autorizacoes', label: 'Privilégios', icon: ShieldCheck, component: <AuthorizationsTab />, roles: ['superadmin'] },
   { id: 'plano', label: 'Assinatura', icon: CreditCard, component: <PlansTab />, roles: ['superadmin'] },
   { id: 'notificacoes', label: 'Notificações', icon: Bell, component: <NotificationsTab /> },
+  { id: 'flow-ia', label: 'Flow IA', icon: Mic, component: <FlowAiTab /> },
   { id: 'fiscal', label: 'Fiscal & Gateway', icon: Receipt, component: <FiscalSettingsForm />, roles: ['superadmin'] },
 ];
 

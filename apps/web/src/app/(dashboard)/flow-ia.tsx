@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AiSession } from '@proteticflow/shared';
 import { trpc } from '../../lib/trpc';
-import { usePermissions } from '../../hooks/use-permissions';
 import { SessionList } from '../../components/ai/session-list';
 import { ChatWindow } from '../../components/ai/chat-window';
 import { ChatInput } from '../../components/ai/chat-input';
 import { ProactiveBanner } from '../../components/ai/proactive-banner';
-import { FlowAssistant } from '../../components/ai/flow-assistant';
 
 export default function FlowIAPage() {
-  const { role } = usePermissions();
   const utils = trpc.useUtils();
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
 
@@ -50,14 +47,6 @@ export default function FlowIAPage() {
     await utils.ai.listSessions.invalidate();
   }
 
-  async function handleEnsureSession(): Promise<number> {
-    if (selectedSessionId) return selectedSessionId;
-    const created = await createSessionMutation.mutateAsync({});
-    setSelectedSessionId(created.id);
-    await utils.ai.listSessions.invalidate();
-    return created.id;
-  }
-
   async function handleArchiveSession(sessionId: number) {
     await archiveSessionMutation.mutateAsync({ sessionId });
     if (selectedSessionId === sessionId) {
@@ -83,14 +72,6 @@ export default function FlowIAPage() {
 
   async function handleQuickAction(prompt: string) {
     await handleSend(prompt);
-  }
-
-  async function handleCommandResolved() {
-    if (selectedSessionId) {
-      await refreshSessionState(selectedSessionId);
-      return;
-    }
-    await utils.ai.listSessions.invalidate();
   }
 
   const sessions: AiSession[] = sessionsQuery.data?.data ?? [];
@@ -125,13 +106,14 @@ export default function FlowIAPage() {
         </div>
 
         <div className="xl:col-span-3 space-y-4">
-          <FlowAssistant
-            role={role}
-            sessionId={selectedSessionId}
-            disabled={busy}
-            onEnsureSession={handleEnsureSession}
-            onCommandResolved={handleCommandResolved}
-          />
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
+            <p className="text-sm text-zinc-200">
+              O Flow Assistant agora e global no dashboard.
+            </p>
+            <p className="text-xs text-zinc-400 mt-1">
+              Use o atalho <span className="font-semibold text-zinc-200">Ctrl+Shift+Space</span> em qualquer tela para abrir o overlay.
+            </p>
+          </div>
           <ChatWindow messages={messages} isLoading={sendMessageMutation.isPending} />
           <ChatInput
             disabled={busy}

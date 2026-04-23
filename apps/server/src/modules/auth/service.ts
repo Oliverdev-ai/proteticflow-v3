@@ -324,10 +324,27 @@ export async function getProfile(userId: number) {
 }
 
 export async function updateProfile(userId: number, input: UpdateProfileInput) {
-  const [updated] = await db.update(users).set({
-    ...(input.name && { name: input.name }),
-    ...(input.phone && { phone: input.phone }),
-  }).where(eq(users.id, userId)).returning();
+  const updatePayload: Partial<typeof users.$inferInsert> = {};
+
+  if (input.name !== undefined) {
+    updatePayload.name = input.name;
+  }
+  if (input.phone !== undefined) {
+    updatePayload.phone = input.phone;
+  }
+  if (input.aiVoiceEnabled !== undefined) {
+    updatePayload.aiVoiceEnabled = input.aiVoiceEnabled;
+  }
+  if (input.aiVoiceGender !== undefined) {
+    updatePayload.aiVoiceGender = input.aiVoiceGender;
+  }
+  if (input.aiVoiceSpeed !== undefined) {
+    updatePayload.aiVoiceSpeed = input.aiVoiceSpeed;
+  }
+
+  updatePayload.updatedAt = new Date();
+
+  const [updated] = await db.update(users).set(updatePayload).where(eq(users.id, userId)).returning();
   return updated;
 }
 

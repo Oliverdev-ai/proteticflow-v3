@@ -52,6 +52,8 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: optionalText(),
   ANTHROPIC_MODEL: optionalText(),
   GCP_TTS_API_KEY: optionalText(),
+  GCP_TTS_VOICE_DEFAULT: optionalText(),
+  GCP_TTS_VOICE_MALE: optionalText(),
   OPENAI_API_KEY: optionalText(),
   STRIPE_SECRET_KEY: optionalText(),
   STRIPE_WEBHOOK_SECRET: optionalText(),

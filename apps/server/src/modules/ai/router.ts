@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import {
   aiFeatureFlagsSchema,
   archiveSessionSchema,
@@ -22,6 +23,8 @@ import {
 import * as aiService from './service.js';
 import { buildLabContext } from './context-builder.js';
 import { streamAiResponse } from './flow-engine.js';
+import { assertTenantRateLimit } from './tenant-rate-limit.js';
+import { assertTtsPlanEnabled, logTtsUsage, synthesize, type TtsVoice } from './tts.service.js';
 import { transcribeAudio } from './voice.service.js';
 
 const getSessionSchema = z.object({
@@ -57,6 +60,13 @@ const transcribeSchema = z.object({
   audio: z.string().min(1),
   mimeType: z.string().min(1).max(128),
   durationMs: z.number().int().positive().max(60_000).optional(),
+});
+
+const ttsSchema = z.object({
+  text: z.string().min(1).max(5_000),
+  voice: z.enum(['female', 'male']).optional(),
+  speakingRate: z.number().min(0.25).max(4).optional(),
+  ssml: z.boolean().default(false),
 });
 
 export const aiRouter = router({
@@ -162,6 +172,40 @@ export const aiRouter = router({
       };
 
       return transcribeAudio(payload);
+    }),
+
+  tts: voiceProcedure
+    .input(ttsSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertTenantRateLimit(ctx.tenantId!, 'tts');
+      await assertTtsPlanEnabled(ctx.tenantId!);
+
+      const synthesizePayload = {
+        text: input.text,
+        ssml: input.ssml,
+        charactersBilled: input.text.length,
+        ...(input.voice !== undefined ? { voice: input.voice } : {}),
+        ...(input.speakingRate !== undefined ? { speakingRate: input.speakingRate } : {}),
+      };
+
+      const result = await synthesize(synthesizePayload);
+
+      if (!result) {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message: 'TTS indisponivel: configure GCP_TTS_API_KEY neste ambiente.',
+        });
+      }
+
+      await logTtsUsage({
+        tenantId: ctx.tenantId!,
+        userId: ctx.user!.id,
+        charactersBilled: result.charactersBilled,
+        audioBytes: result.audioBytes,
+        voice: (input.voice ?? 'female') as TtsVoice,
+      });
+
+      return result;
     }),
 
   getLabContext: aiProcedure

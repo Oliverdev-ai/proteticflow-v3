@@ -110,3 +110,18 @@ export const aiCommandRuns = pgTable('ai_command_runs', {
   uniqueIndex('ai_command_runs_idempotency_uniq').on(table.tenantId, table.idempotencyKey),
   index('ai_command_runs_status_idx').on(table.executionStatus),
 ]);
+
+export const ttsUsage = pgTable('tts_usage', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => tenants.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  charactersBilled: integer('characters_billed').notNull(),
+  audioBytes: integer('audio_bytes').notNull(),
+  voice: varchar('voice', { length: 16 }).notNull().default('female'),
+  source: varchar('source', { length: 32 }).notNull().default('ai.tts'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('tts_usage_tenant_idx').on(table.tenantId),
+  index('tts_usage_user_idx').on(table.userId),
+  index('tts_usage_created_idx').on(table.createdAt),
+]);
