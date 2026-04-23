@@ -204,6 +204,13 @@
                         "when":  1745190060000,
                         "tag":  "0029_notifications_enum",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  29,
+                        "version":  "7",
+                        "when":  1776902400000,
+                        "tag":  "0030_flow_ia_registry_unification",
+                        "breakpoints":  true
                     }
                 ]
 }

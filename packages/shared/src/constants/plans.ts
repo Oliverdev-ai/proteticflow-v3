@@ -105,3 +105,49 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimitsConfig> = {
 
 export type LimitableFeature = 'labs' | 'clients' | 'jobsPerMonth' | 'users' | 'priceTables';
 export type GatedFeature = keyof PlanFeatureAccess;
+
+export type PlanAiProvider = 'gemini' | 'anthropic';
+
+export type PlanAiConfig = {
+  llmProvider: PlanAiProvider;
+  llmModel: string;
+  fallbackProvider: PlanAiProvider | null;
+  callsPerDay: number;
+  ttsEnabled: boolean;
+  allowProviderOverride: boolean;
+};
+
+export const PLAN_AI_CONFIG: Record<PlanTier, PlanAiConfig> = {
+  trial: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: null,
+    callsPerDay: 10,
+    ttsEnabled: true,
+    allowProviderOverride: false,
+  },
+  starter: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: null,
+    callsPerDay: 10,
+    ttsEnabled: false,
+    allowProviderOverride: false,
+  },
+  pro: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: null,
+    callsPerDay: 50,
+    ttsEnabled: true,
+    allowProviderOverride: false,
+  },
+  enterprise: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: 'anthropic',
+    callsPerDay: 100,
+    ttsEnabled: true,
+    allowProviderOverride: true,
+  },
+};

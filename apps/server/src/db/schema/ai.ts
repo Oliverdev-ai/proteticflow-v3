@@ -10,6 +10,7 @@ import {
   jsonb,
   timestamp,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './users';
@@ -90,6 +91,12 @@ export const aiCommandRuns = pgTable('ai_command_runs', {
   toolName: varchar('tool_name', { length: 64 }),
   toolInputJson: jsonb('tool_input_json').$type<Record<string, unknown>>(),
   toolOutputJson: jsonb('tool_output_json').$type<Record<string, unknown>>(),
+  source: varchar('source', { length: 32 }).notNull().default('manual'),
+  idempotencyKey: varchar('idempotency_key', { length: 191 }),
+  providerUsed: varchar('provider_used', { length: 64 }),
+  modelUsed: varchar('model_used', { length: 128 }),
+  cached: boolean('cached').notNull().default(false),
+  costCents: integer('cost_cents').notNull().default(0),
   executionStatus: aiCommandExecutionStatusEnum('execution_status').notNull().default('pending'),
   errorCode: varchar('error_code', { length: 32 }),
   errorMessage: text('error_message'),
@@ -100,5 +107,6 @@ export const aiCommandRuns = pgTable('ai_command_runs', {
   index('ai_command_runs_tenant_idx').on(table.tenantId),
   index('ai_command_runs_session_idx').on(table.sessionId),
   index('ai_command_runs_intent_idx').on(table.intent),
+  uniqueIndex('ai_command_runs_idempotency_uniq').on(table.tenantId, table.idempotencyKey),
   index('ai_command_runs_status_idx').on(table.executionStatus),
 ]);
