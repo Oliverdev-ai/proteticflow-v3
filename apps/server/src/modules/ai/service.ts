@@ -685,6 +685,25 @@ function summarizeCommandMessage(
 
 function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities): Record<string, unknown> {
   const input: Record<string, unknown> = { ...entities };
+  const normalizePeriodKeyword = (value: string): 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom' | null => {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'today' || normalized === 'hoje') return 'today';
+    if (normalized === 'week' || normalized === 'semana') return 'week';
+    if (normalized === 'month' || normalized === 'mes') return 'month';
+    if (normalized === 'quarter' || normalized === 'trimestre') return 'quarter';
+    if (normalized === 'year' || normalized === 'ano') return 'year';
+    if (normalized === 'custom') return 'custom';
+    return null;
+  };
+  const monthPeriodToDateRange = (period: string): { startDate: string; endDate: string } | null => {
+    const match = period.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
+    if (!match?.[1] || !match[2]) return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    const end = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+    return { startDate: start.toISOString(), endDate: end.toISOString() };
+  };
 
   if (intent === 'clients.search' && typeof entities.clientName === 'string') {
     input.term = entities.clientName;
@@ -728,6 +747,143 @@ function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities
     }
     if (typeof input.reminderMinutesBefore !== 'number') {
       input.reminderMinutesBefore = 60;
+    }
+  }
+
+  if (intent === 'deliveries.routeByDay') {
+    if (typeof entities.date === 'string') {
+      input.date = entities.date;
+    }
+    if (typeof entities.deliveryPersonId === 'number') {
+      input.deliveryPersonId = entities.deliveryPersonId;
+    }
+    if (typeof entities.deliveryPersonName === 'string') {
+      input.deliveryPersonName = entities.deliveryPersonName;
+    }
+  }
+
+  if (intent === 'stock.checkMaterial') {
+    if (typeof entities.materialId === 'number') {
+      input.materialId = entities.materialId;
+    }
+    if (typeof entities.materialName === 'string') {
+      input.materialName = entities.materialName;
+    }
+  }
+
+  if (intent === 'stock.alerts' && typeof entities.thresholdType === 'string') {
+    input.thresholdType = entities.thresholdType;
+  }
+
+  if (intent === 'employees.productivity') {
+    if (typeof entities.employeeId === 'number') {
+      input.employeeId = entities.employeeId;
+    }
+    if (typeof entities.employeeName === 'string') {
+      input.employeeName = entities.employeeName;
+    }
+    if (typeof entities.period === 'string') {
+      const periodKeyword = normalizePeriodKeyword(entities.period);
+      if (periodKeyword && periodKeyword !== 'year' && periodKeyword !== 'custom') {
+        input.period = periodKeyword;
+      }
+    }
+    if (typeof entities.metric === 'string') {
+      input.metric = entities.metric;
+    }
+  }
+
+  if (intent === 'agenda.today') {
+    if (typeof entities.userId === 'number') {
+      input.userId = entities.userId;
+    }
+    if (typeof entities.scope === 'string') {
+      input.scope = entities.scope;
+    }
+  }
+
+  if (intent === 'jobs.overdue') {
+    if (typeof entities.severity === 'string') {
+      input.severity = entities.severity;
+    }
+    if (typeof entities.assignedTo === 'number') {
+      input.assignedTo = entities.assignedTo;
+    } else if (typeof entities.employeeId === 'number') {
+      input.assignedTo = entities.employeeId;
+    }
+  }
+
+  if (intent === 'jobs.statusUpdate') {
+    if (typeof entities.jobId === 'number') {
+      input.jobId = entities.jobId;
+    }
+    if (typeof entities.newStatus === 'string') {
+      input.newStatus = entities.newStatus;
+    }
+    if (typeof entities.note === 'string') {
+      input.note = entities.note;
+    } else if (typeof entities.reason === 'string' && entities.newStatus !== 'cancelled') {
+      input.note = entities.reason;
+    }
+    if (typeof entities.cancelReason === 'string') {
+      input.cancelReason = entities.cancelReason;
+    } else if (entities.newStatus === 'cancelled' && typeof entities.reason === 'string') {
+      input.cancelReason = entities.reason;
+    }
+  }
+
+  if (intent === 'messages.draftToClient') {
+    if (typeof entities.clientId === 'number') {
+      input.clientId = entities.clientId;
+    }
+    if (typeof entities.clientName === 'string') {
+      input.clientName = entities.clientName;
+    }
+    if (typeof entities.messageContext === 'string') {
+      input.messageContext = entities.messageContext;
+    }
+    if (typeof entities.channel === 'string') {
+      input.channel = entities.channel;
+    }
+    if (typeof entities.jobId === 'number') {
+      input.jobId = entities.jobId;
+    }
+  }
+
+  if (intent === 'financial.revenueToDate' || intent === 'financial.expensesToDate') {
+    if (typeof entities.period === 'string') {
+      const periodKeyword = normalizePeriodKeyword(entities.period);
+      if (periodKeyword) {
+        input.period = periodKeyword;
+      } else {
+        const monthRange = monthPeriodToDateRange(entities.period);
+        if (monthRange) {
+          input.period = 'custom';
+          input.startDate = monthRange.startDate;
+          input.endDate = monthRange.endDate;
+        }
+      }
+    }
+    if (typeof entities.startDate === 'string') {
+      input.startDate = entities.startDate;
+    }
+    if (typeof entities.endDate === 'string') {
+      input.endDate = entities.endDate;
+    }
+    if (typeof entities.breakdown === 'string') {
+      input.breakdown = entities.breakdown;
+    }
+  }
+
+  if (intent === 'financial.quarterlyReport') {
+    if (typeof entities.quarter === 'string') {
+      input.quarter = entities.quarter.toUpperCase();
+    }
+    if (typeof entities.year === 'number') {
+      input.year = entities.year;
+    }
+    if (typeof entities.exportFormat === 'string') {
+      input.exportFormat = entities.exportFormat;
     }
   }
 
@@ -791,6 +947,7 @@ function humanizeFieldLabel(field: string): string {
   const labels: Record<string, string> = {
     jobId: 'ID da OS',
     clientId: 'ID do cliente',
+    clientName: 'Nome do cliente',
     serviceId: 'ID do servico',
     materialId: 'ID do material',
     supplierId: 'ID do fornecedor',
@@ -798,6 +955,9 @@ function humanizeFieldLabel(field: string): string {
     purchaseId: 'ID da compra',
     periodId: 'ID do periodo',
     period: 'Periodo (YYYY-MM)',
+    newStatus: 'Novo status',
+    messageContext: 'Mensagem',
+    cancelReason: 'Motivo do cancelamento',
     reason: 'Motivo',
     deadline: 'Prazo',
     id: 'ID',

@@ -1,12 +1,23 @@
 import { TRPCError } from '@trpc/server';
 import {
+  agendaTodaySchema,
   createClientSchema,
   createEventSchema,
   createPurchaseSchema,
   createReworkSchema,
+  deliveriesRouteByDaySchema,
+  employeesProductivitySchema,
+  financialExpensesToDateSchema,
+  financialQuarterlyReportSchema,
+  financialRevenueToDateSchema,
+  jobsOverdueSchema,
+  jobsStatusUpdateSchema,
   listArSchema,
   listClientsSchema,
   listJobsSchema,
+  messagesDraftToClientSchema,
+  stockAlertsSchema,
+  stockCheckMaterialSchema,
   suspendJobSchema,
   toggleUrgentSchema,
   type Role,
@@ -32,12 +43,27 @@ import * as jobService from '../jobs/service.js';
 import * as purchaseService from '../purchases/service.js';
 import {
   buildFinancialCloseAccountPreviewStep,
+  executeFinancialExpensesToDate,
   buildFinancialMonthlyClosingPreviewStep,
   executeFinancialCloseAccount,
   executeFinancialMonthlyClosing,
+  executeFinancialQuarterlyReport,
+  executeFinancialRevenueToDate,
   financialCloseAccountToolSchema,
   financialMonthlyClosingToolSchema,
 } from './tools/financial-tools.js';
+import { executeDeliveriesRouteByDay } from './tools/deliveries-tools.js';
+import { executeEmployeesProductivity } from './tools/employees-tools.js';
+import { executeAgendaToday } from './tools/agenda-tools.js';
+import {
+  buildJobsStatusUpdatePreviewStep,
+  executeJobsOverdue,
+  executeJobsStatusUpdate,
+} from './tools/jobs-tools.js';
+import {
+  buildMessagesDraftToClientPreviewStep,
+  executeMessagesDraftToClient,
+} from './tools/messages-tools.js';
 import {
   buildPayrollGeneratePreviewStep,
   executePayrollGenerate,
@@ -48,6 +74,10 @@ import {
   executePurchaseReceive,
   purchasesReceiveToolSchema,
 } from './tools/purchase-tools.js';
+import {
+  executeStockAlerts,
+  executeStockCheckMaterial,
+} from './tools/stock-tools.js';
 
 const jobsGetSchema = z.object({
   jobId: z.coerce.number().int().positive(),
@@ -242,7 +272,7 @@ function buildDefaultConfirmationStep(
   };
 }
 
-const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
+export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
   'jobs.listPending': {
     name: 'jobs.listPending',
     inputSchema: jobsListPendingSchema,
@@ -279,6 +309,24 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
         dateTo: range.end,
       });
     },
+  },
+  'deliveries.routeByDay': {
+    name: 'deliveries.routeByDay',
+    inputSchema: deliveriesRouteByDaySchema,
+    execute: async (ctx, input) =>
+      executeDeliveriesRouteByDay(ctx, deliveriesRouteByDaySchema.parse(input)),
+  },
+  'stock.checkMaterial': {
+    name: 'stock.checkMaterial',
+    inputSchema: stockCheckMaterialSchema,
+    execute: async (ctx, input) =>
+      executeStockCheckMaterial(ctx, stockCheckMaterialSchema.parse(input)),
+  },
+  'stock.alerts': {
+    name: 'stock.alerts',
+    inputSchema: stockAlertsSchema,
+    execute: async (ctx, input) =>
+      executeStockAlerts(ctx, stockAlertsSchema.parse(input)),
   },
   'clients.search': {
     name: 'clients.search',
@@ -355,6 +403,12 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
         monthFlowCents: summary.monthFlowCents,
       };
     },
+  },
+  'employees.productivity': {
+    name: 'employees.productivity',
+    inputSchema: employeesProductivitySchema,
+    execute: async (ctx, input) =>
+      executeEmployeesProductivity(ctx, employeesProductivitySchema.parse(input)),
   },
   'jobs.createDraft': {
     name: 'jobs.createDraft',
@@ -433,6 +487,34 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
       ctx.userId,
     ),
   },
+  'agenda.today': {
+    name: 'agenda.today',
+    inputSchema: agendaTodaySchema,
+    execute: async (ctx, input) =>
+      executeAgendaToday(ctx, agendaTodaySchema.parse(input)),
+  },
+  'jobs.overdue': {
+    name: 'jobs.overdue',
+    inputSchema: jobsOverdueSchema,
+    execute: async (ctx, input) =>
+      executeJobsOverdue(ctx, jobsOverdueSchema.parse(input)),
+  },
+  'jobs.statusUpdate': {
+    name: 'jobs.statusUpdate',
+    inputSchema: jobsStatusUpdateSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildJobsStatusUpdatePreviewStep(ctx, jobsStatusUpdateSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executeJobsStatusUpdate(ctx, jobsStatusUpdateSchema.parse(input)),
+  },
+  'messages.draftToClient': {
+    name: 'messages.draftToClient',
+    inputSchema: messagesDraftToClientSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildMessagesDraftToClientPreviewStep(ctx, messagesDraftToClientSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executeMessagesDraftToClient(ctx, messagesDraftToClientSchema.parse(input)),
+  },
   'clients.createDraft': {
     name: 'clients.createDraft',
     inputSchema: clientsCreateDraftSchema,
@@ -467,6 +549,24 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
     execute: async (ctx, input) =>
       executeFinancialMonthlyClosing(ctx, financialMonthlyClosingToolSchema.parse(input)),
   },
+  'financial.revenueToDate': {
+    name: 'financial.revenueToDate',
+    inputSchema: financialRevenueToDateSchema,
+    execute: async (ctx, input) =>
+      executeFinancialRevenueToDate(ctx, financialRevenueToDateSchema.parse(input)),
+  },
+  'financial.expensesToDate': {
+    name: 'financial.expensesToDate',
+    inputSchema: financialExpensesToDateSchema,
+    execute: async (ctx, input) =>
+      executeFinancialExpensesToDate(ctx, financialExpensesToDateSchema.parse(input)),
+  },
+  'financial.quarterlyReport': {
+    name: 'financial.quarterlyReport',
+    inputSchema: financialQuarterlyReportSchema,
+    execute: async (ctx, input) =>
+      executeFinancialQuarterlyReport(ctx, financialQuarterlyReportSchema.parse(input)),
+  },
   'payroll.generate': {
     name: 'payroll.generate',
     inputSchema: payrollGenerateToolSchema,
@@ -485,7 +585,11 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
   },
 };
 
-type ExecuteToolOptions = { confirmed?: boolean };
+export type ExecuteToolOptions = {
+  confirmed?: boolean;
+  source?: 'manual' | 'llm' | 'resolve_step' | 'confirm';
+  idempotencyKey?: string;
+};
 
 export async function executeTool(
   ctx: ToolContext,
@@ -534,6 +638,10 @@ export async function confirmAndExecute(
   ctx: ToolContext,
   command: FlowCommandName,
   rawInput: unknown,
+  options?: Omit<ExecuteToolOptions, 'confirmed'>,
 ): Promise<ToolExecutionResult> {
-  return executeTool(ctx, command, rawInput, { confirmed: true });
+  return executeTool(ctx, command, rawInput, {
+    ...(options ?? {}),
+    confirmed: true,
+  });
 }

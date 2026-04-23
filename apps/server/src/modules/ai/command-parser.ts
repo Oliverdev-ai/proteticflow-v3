@@ -32,7 +32,22 @@ export const FLOW_COMMANDS = {
   'deliveries.listToday': {
     risk: 'read_only',
     roles: ['superadmin', 'gerente', 'producao', 'recepcao', 'contabil'],
-    patterns: [/entregas?.*(hoje|dia)/i, /roteiro de entrega/i],
+    patterns: [/listar entregas?.*hoje/i, /entregas?.*previstas?.*hoje/i],
+  },
+  'deliveries.routeByDay': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'producao', 'recepcao', 'contabil'],
+    patterns: [/rota de entrega/i, /roteiro.*(dia|data)/i, /rota.*(entregador|motorista)/i],
+  },
+  'stock.checkMaterial': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'producao', 'contabil'],
+    patterns: [/estoque do material/i, /saldo do material/i, /quantidade.*material/i],
+  },
+  'stock.alerts': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'producao', 'contabil'],
+    patterns: [/alertas?.*estoque/i, /materiais?.*abaixo/i, /estoque critico/i],
   },
   'clients.search': {
     risk: 'read_only',
@@ -70,6 +85,21 @@ export const FLOW_COMMANDS = {
     roles: ['superadmin', 'gerente', 'contabil'],
     patterns: [/previs(a|a)o de receita/i, /forecast de receita/i, /projecao de faturamento/i],
   },
+  'employees.productivity': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'contabil'],
+    patterns: [/produtividade.*(funcionarios|equipe|colaboradores)/i, /desempenho.*funcionarios/i, /ranking.*funcionarios/i],
+  },
+  'agenda.today': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'producao', 'recepcao', 'contabil'],
+    patterns: [/agenda.*hoje/i, /compromissos?.*hoje/i, /o que tenho hoje/i],
+  },
+  'jobs.overdue': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'producao', 'recepcao', 'contabil'],
+    patterns: [/os.*atrasad/i, /trabalhos?.*atrasad/i, /ordens?.*vencidas?/i],
+  },
   'jobs.createDraft': {
     risk: 'transactional',
     roles: ['superadmin', 'gerente', 'recepcao'],
@@ -106,6 +136,18 @@ export const FLOW_COMMANDS = {
     patterns: [/agendar/i, /criar evento/i, /marcar (prova|reuniao|entrega)/i],
     requiredFields: ['title', 'startAt', 'endAt'],
   },
+  'jobs.statusUpdate': {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'producao'],
+    patterns: [/(alterar|mudar|atualizar).*(status).*(os|trabalho)/i, /status da os.*para/i, /marcar os.*como/i],
+    requiredFields: ['jobId', 'newStatus'],
+  },
+  'messages.draftToClient': {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao'],
+    patterns: [/(enviar|rascunho|montar|escrever).*(mensagem).*(cliente|dr|dra|dentista)/i, /avisar.*cliente/i],
+    requiredFields: ['messageContext'],
+  },
   'clients.createDraft': {
     risk: 'transactional',
     roles: ['superadmin', 'gerente', 'recepcao'],
@@ -127,6 +169,21 @@ export const FLOW_COMMANDS = {
     risk: 'critical',
     roles: ['superadmin', 'gerente', 'contabil'],
     patterns: [/fechamento mensal/i, /fechar mes/i],
+  },
+  'financial.revenueToDate': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'contabil'],
+    patterns: [/receita.*(ate|periodo)/i, /faturamento.*(ate|periodo)/i, /quanto fatur/i],
+  },
+  'financial.expensesToDate': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'contabil'],
+    patterns: [/despesas?.*(ate|periodo)/i, /gastos?.*(ate|periodo)/i, /total de despesas/i],
+  },
+  'financial.quarterlyReport': {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'contabil'],
+    patterns: [/relatorio trimestral/i, /balanco trimestral/i, /demonstrativo trimestral/i],
   },
   'payroll.generate': {
     risk: 'critical',
@@ -189,6 +246,34 @@ function parseNaturalPeriod(rawInput: string): string | undefined {
   return undefined;
 }
 
+function parseJobStatus(normalizedInput: string): string | undefined {
+  if (/\bcancel(ad[ao]|ar|amento)?\b/i.test(normalizedInput)) {
+    return 'cancelled';
+  }
+  if (/\b(entregue|entregar|finalizad[ao]|finalizar|concluid[ao]|concluir)\b/i.test(normalizedInput)) {
+    return 'delivered';
+  }
+  if (/\b(suspens[ao]|suspender|pausar|pausad[ao])\b/i.test(normalizedInput)) {
+    return 'suspended';
+  }
+  if (/\b(remoldagem|rework|retrabalho)\b/i.test(normalizedInput)) {
+    return 'rework_in_progress';
+  }
+  if (/\bpront[ao]\b/i.test(normalizedInput)) {
+    return 'ready';
+  }
+  if (/\b(qualidade|controle de qualidade)\b/i.test(normalizedInput)) {
+    return 'quality_check';
+  }
+  if (/\b(em producao|andamento|em andamento|producao)\b/i.test(normalizedInput)) {
+    return 'in_progress';
+  }
+  if (/\bpendente\b/i.test(normalizedInput)) {
+    return 'pending';
+  }
+  return undefined;
+}
+
 function parseEntities(rawInput: string, normalizedInput: string): ParsedEntities {
   const entities: ParsedEntities = {};
 
@@ -210,15 +295,74 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
     entities.arId = arId;
   }
 
+  const clientIdMatch = normalizedInput.match(/\bcliente\s*#?\s*(\d{1,8})\b/);
+  const clientId = parseEntityInt(clientIdMatch, 1);
+  if (clientId !== undefined) {
+    entities.clientId = clientId;
+  }
+
+  const materialIdMatch = normalizedInput.match(/\bmaterial\s*#?\s*(\d{1,8})\b/);
+  const materialId = parseEntityInt(materialIdMatch, 1);
+  if (materialId !== undefined) {
+    entities.materialId = materialId;
+  }
+
+  const supplierIdMatch = normalizedInput.match(/\bfornecedor\s*#?\s*(\d{1,8})\b/);
+  const supplierId = parseEntityInt(supplierIdMatch, 1);
+  if (supplierId !== undefined) {
+    entities.supplierId = supplierId;
+  }
+
+  const employeeIdMatch = normalizedInput.match(/\b(?:funcionario|colaborador|tecnico)\s*#?\s*(\d{1,8})\b/);
+  const employeeId = parseEntityInt(employeeIdMatch, 1);
+  if (employeeId !== undefined) {
+    entities.employeeId = employeeId;
+  }
+
+  const deliveryPersonIdMatch = normalizedInput.match(/\b(?:entregador|motorista)\s*#?\s*(\d{1,8})\b/);
+  const deliveryPersonId = parseEntityInt(deliveryPersonIdMatch, 1);
+  if (deliveryPersonId !== undefined) {
+    entities.deliveryPersonId = deliveryPersonId;
+  }
+
   const period = parseNaturalPeriod(normalizedInput);
   if (period) {
     entities.period = period;
+  }
+
+  if (!period) {
+    if (normalizedInput.includes('hoje')) {
+      entities.period = 'today';
+    } else if (normalizedInput.includes('semana')) {
+      entities.period = 'week';
+    } else if (normalizedInput.includes('mes') || normalizedInput.includes('mês')) {
+      entities.period = 'month';
+    } else if (normalizedInput.includes('trimestre') || /\bq[1-4]\b/.test(normalizedInput)) {
+      entities.period = 'quarter';
+    } else if (normalizedInput.includes('ano')) {
+      entities.period = 'year';
+    }
   }
 
   const periodIdMatch = normalizedInput.match(/\bperiodo\s*#?\s*(\d{1,8})\b/);
   const periodId = parseEntityInt(periodIdMatch, 1);
   if (periodId !== undefined) {
     entities.periodId = periodId;
+  }
+
+  const quarterMatch = normalizedInput.match(/\bq([1-4])\b(?:[^\d]*(20\d{2}))?/);
+  if (quarterMatch?.[1]) {
+    entities.quarter = `Q${quarterMatch[1]}`;
+    if (quarterMatch[2]) {
+      entities.year = Number(quarterMatch[2]);
+    }
+  }
+
+  if (entities.year === undefined) {
+    const yearMatch = normalizedInput.match(/\b(?:ano|year)\s*(20\d{2})\b/);
+    if (yearMatch?.[1]) {
+      entities.year = Number(yearMatch[1]);
+    }
   }
 
   const quantityMatch = normalizedInput.match(/\b(\d+(?:[.,]\d+)?)\s*(?:un|unid|itens?)\b/);
@@ -253,9 +397,80 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
     entities.serviceName = serviceNameMatch[1].trim();
   }
 
+  const employeeNameMatch = rawInput.match(/(?:funcionario|funcionário|colaborador|tecnico|técnico)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9\s'-]{2,80})/i);
+  if (employeeNameMatch?.[1]) {
+    entities.employeeName = employeeNameMatch[1].trim();
+  }
+
+  const deliveryPersonNameMatch = rawInput.match(/(?:entregador|motorista)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9\s'-]{2,80})/i);
+  if (deliveryPersonNameMatch?.[1]) {
+    entities.deliveryPersonName = deliveryPersonNameMatch[1].trim();
+  }
+
   const reasonMatch = rawInput.match(/(?:motivo|porque|por)\s+(.+)/i);
   if (reasonMatch?.[1]) {
     entities.reason = reasonMatch[1].trim();
+  }
+
+  const noteMatch = rawInput.match(/(?:obs|observacao|observação|nota)\s*[:\-]\s*(.+)$/i);
+  if (noteMatch?.[1]) {
+    entities.note = noteMatch[1].trim();
+  }
+
+  const newStatus = parseJobStatus(normalizedInput);
+  if (newStatus) {
+    entities.newStatus = newStatus;
+    if (newStatus === 'cancelled' && typeof entities.reason === 'string') {
+      entities.cancelReason = entities.reason;
+    }
+  }
+
+  if (normalizedInput.includes('whatsapp')) {
+    entities.channel = 'whatsapp';
+  } else if (normalizedInput.includes('sms')) {
+    entities.channel = 'sms';
+  } else if (normalizedInput.includes('email') || normalizedInput.includes('e-mail')) {
+    entities.channel = 'email';
+  }
+
+  if (normalizedInput.includes('pdf')) {
+    entities.exportFormat = 'pdf';
+  } else if (normalizedInput.includes('xlsx') || normalizedInput.includes('excel') || normalizedInput.includes('planilha')) {
+    entities.exportFormat = 'xlsx';
+  } else if (normalizedInput.includes('inline')) {
+    entities.exportFormat = 'inline';
+  }
+
+  if (normalizedInput.includes('por cliente')) {
+    entities.breakdown = 'by_client';
+  } else if (normalizedInput.includes('por servico') || normalizedInput.includes('por serviço')) {
+    entities.breakdown = 'by_service';
+  } else if (normalizedInput.includes('por categoria')) {
+    entities.breakdown = 'by_category';
+  }
+
+  if (normalizedInput.includes('valor produzido') || normalizedInput.includes('faturamento por funcionario')) {
+    entities.metric = 'value_produced';
+  } else if (normalizedInput.includes('tempo medio') || normalizedInput.includes('tempo médio')) {
+    entities.metric = 'avg_time_per_job';
+  } else if (normalizedInput.includes('qtd') || normalizedInput.includes('quantidade') || normalizedInput.includes('concluidas')) {
+    entities.metric = 'jobs_completed';
+  }
+
+  if (normalizedInput.includes('estoque critico') || normalizedInput.includes('estoque crítico')) {
+    entities.thresholdType = 'critical';
+  } else if (normalizedInput.includes('todos alertas') || normalizedInput.includes('todos os alertas')) {
+    entities.thresholdType = 'all';
+  }
+
+  if (normalizedInput.includes('atrasos criticos') || normalizedInput.includes('atrasos críticos') || normalizedInput.includes('critic')) {
+    entities.severity = 'critical';
+  }
+
+  if (normalizedInput.includes('agenda da equipe') || normalizedInput.includes('agenda de todos') || normalizedInput.includes('toda equipe')) {
+    entities.scope = 'all';
+  } else if (normalizedInput.includes('minha agenda') || normalizedInput.includes('agenda de hoje')) {
+    entities.scope = 'own';
   }
 
   if (normalizedInput.includes('desmarcar urgente') || normalizedInput.includes('tirar urgente')) {
@@ -269,6 +484,7 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
     entities.deadline = `${deadlineIso[1]}T12:00:00.000Z`;
     entities.startAt = `${deadlineIso[1]}T12:00:00.000Z`;
     entities.endAt = `${deadlineIso[1]}T12:30:00.000Z`;
+    entities.date = `${deadlineIso[1]}T00:00:00.000Z`;
   }
 
   if (normalizedInput.includes('hoje')) {
@@ -280,6 +496,7 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
     entities.deadline = start.toISOString();
     entities.startAt = start.toISOString();
     entities.endAt = end.toISOString();
+    entities.date = 'hoje';
   }
 
   if (normalizedInput.includes('amanha') || normalizedInput.includes('amanhã')) {
@@ -291,6 +508,7 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
     entities.deadline = start.toISOString();
     entities.startAt = start.toISOString();
     entities.endAt = end.toISOString();
+    entities.date = 'amanha';
   }
 
   if (normalizedInput.startsWith('agendar') || normalizedInput.includes('criar evento')) {
@@ -304,6 +522,23 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
       .trim();
     if (name.length >= 3) {
       entities.name = name;
+    }
+  }
+
+  const quotedMessageMatch = rawInput.match(/["“”'`]\s*([^"“”'`]{3,600})\s*["“”'`]/);
+  if (quotedMessageMatch?.[1]) {
+    entities.messageContext = quotedMessageMatch[1].trim();
+  } else if (
+    normalizedInput.includes('mensagem')
+    || normalizedInput.includes('avisar')
+    || normalizedInput.includes('avise')
+    || normalizedInput.includes('notificar')
+  ) {
+    const contextualMessageMatch = rawInput.match(
+      /(?:mensagem|avisar|avise|notificar|enviar)\b[^:]*[:\-]\s*(.+)$/i,
+    );
+    if (contextualMessageMatch?.[1]) {
+      entities.messageContext = contextualMessageMatch[1].trim();
     }
   }
 

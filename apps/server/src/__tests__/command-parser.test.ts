@@ -169,4 +169,28 @@ describe('F38 O1 - command parser', () => {
       .where(and(eq(clients.id, createdClient!.id), eq(clients.tenantId, tenantA.tenantId)));
     expect(dbCheck?.tenantId).toBe(tenantA.tenantId);
   });
+
+  it('11. identifica deliveries.routeByDay e extrai entregador', async () => {
+    const parsed = await parseIntent('montar rota de entrega de hoje com entregador Carlos', 1);
+    expect(parsed.intent).toBe('deliveries.routeByDay');
+    expect(parsed.entities.deliveryPersonName).toBe('Carlos');
+  });
+
+  it('12. identifica jobs.statusUpdate e extrai newStatus', async () => {
+    const parsed = await parseIntent('atualizar status da os 321 para pronto obs: ajuste final', 1);
+    expect(parsed.intent).toBe('jobs.statusUpdate');
+    expect(parsed.entities.jobId).toBe(321);
+    expect(parsed.entities.newStatus).toBe('ready');
+    expect(parsed.entities.note).toBe('ajuste final');
+  });
+
+  it('13. identifica messages.draftToClient e extrai contexto', async () => {
+    const parsed = await parseIntent(
+      'enviar mensagem para cliente Ana: sua OS #12 ficou pronta para retirada',
+      1,
+    );
+    expect(parsed.intent).toBe('messages.draftToClient');
+    expect(parsed.entities.clientName).toBe('Ana');
+    expect(parsed.entities.messageContext).toContain('sua OS #12 ficou pronta');
+  });
 });
