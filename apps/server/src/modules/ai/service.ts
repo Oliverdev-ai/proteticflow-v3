@@ -43,6 +43,7 @@ import {
   type RiskLevel,
 } from './command-parser.js';
 import { confirmAndExecute, executeTool, type ConfirmationStep } from './tool-executor.js';
+import { fromLlmToolName } from './tools/schema-adapter.js';
 import * as predictions from './predictions.js';
 import * as risk from './risk.js';
 import * as scheduling from './scheduling.js';
@@ -74,6 +75,7 @@ type AIRecommendationType =
   | 'price_adjustment';
 
 type CommandChannel = 'text' | 'voice';
+type CommandSource = 'manual' | 'llm' | 'resolve_step' | 'confirm';
 type CommandExecutionStatus =
   | 'pending'
   | 'awaiting_confirmation'
@@ -86,6 +88,19 @@ type ExecuteCommandInput = {
   sessionId?: number | undefined;
   content: string;
   channel?: CommandChannel;
+};
+
+export type ExecuteLlmToolCallInput = {
+  sessionId?: number | undefined;
+  channel?: CommandChannel;
+  rawInput: string;
+  toolName: string;
+  toolInput: Record<string, unknown>;
+  idempotencyKey: string;
+  providerUsed: string;
+  modelUsed: string;
+  cached: boolean;
+  costCents: number;
 };
 
 type ConfirmCommandInput = {
@@ -126,6 +141,12 @@ type CommandRunModel = {
   toolName: string | null;
   toolInput: Record<string, unknown> | null;
   toolOutput: Record<string, unknown> | null;
+  source: CommandSource;
+  idempotencyKey: string | null;
+  providerUsed: string | null;
+  modelUsed: string | null;
+  cached: boolean;
+  costCents: number;
   executionStatus: CommandExecutionStatus;
   errorCode: string | null;
   errorMessage: string | null;
@@ -172,6 +193,13 @@ function parseNumeric(value: unknown): number {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') return Number(value);
   return 0;
+}
+
+function toCommandSource(value: string): CommandSource {
+  if (value === 'llm' || value === 'resolve_step' || value === 'confirm') {
+    return value;
+  }
+  return 'manual';
 }
 
 function toSessionModel(row: SessionRow, messageCount?: number): AiSession {
@@ -233,6 +261,12 @@ function toCommandRunModel(row: CommandRunRow): CommandRunModel {
     toolName: row.toolName ?? null,
     toolInput,
     toolOutput,
+    source: toCommandSource(row.source),
+    idempotencyKey: row.idempotencyKey ?? null,
+    providerUsed: row.providerUsed ?? null,
+    modelUsed: row.modelUsed ?? null,
+    cached: row.cached,
+    costCents: row.costCents ?? 0,
     executionStatus: row.executionStatus,
     errorCode: row.errorCode ?? null,
     errorMessage: row.errorMessage ?? null,
@@ -440,6 +474,12 @@ type CreateCommandRunPayload = {
   toolName?: string | null;
   toolInput?: Record<string, unknown> | null;
   toolOutput?: Record<string, unknown> | null;
+  source?: CommandSource;
+  idempotencyKey?: string | null;
+  providerUsed?: string | null;
+  modelUsed?: string | null;
+  cached?: boolean;
+  costCents?: number;
   executionStatus: CommandExecutionStatus;
   errorCode?: string | null;
   errorMessage?: string | null;
@@ -459,6 +499,12 @@ type UpdateCommandRunPayload = Partial<{
   toolName: string | null;
   toolInput: Record<string, unknown> | null;
   toolOutput: Record<string, unknown> | null;
+  source: CommandSource;
+  idempotencyKey: string | null;
+  providerUsed: string | null;
+  modelUsed: string | null;
+  cached: boolean;
+  costCents: number;
   executionStatus: CommandExecutionStatus;
   errorCode: string | null;
   errorMessage: string | null;
@@ -486,6 +532,12 @@ async function createCommandRun(
     toolName: payload.toolName ?? null,
     toolInputJson: payload.toolInput ?? null,
     toolOutputJson: payload.toolOutput ?? null,
+    source: payload.source ?? 'manual',
+    idempotencyKey: payload.idempotencyKey ?? null,
+    providerUsed: payload.providerUsed ?? null,
+    modelUsed: payload.modelUsed ?? null,
+    cached: payload.cached ?? false,
+    costCents: payload.costCents ?? 0,
     executionStatus: payload.executionStatus,
     errorCode: payload.errorCode ?? null,
     errorMessage: payload.errorMessage ?? null,
@@ -523,6 +575,12 @@ async function updateCommandRun(
   if (payload.toolName !== undefined) updateData.toolName = payload.toolName;
   if (payload.toolInput !== undefined) updateData.toolInputJson = payload.toolInput;
   if (payload.toolOutput !== undefined) updateData.toolOutputJson = payload.toolOutput;
+  if (payload.source !== undefined) updateData.source = payload.source;
+  if (payload.idempotencyKey !== undefined) updateData.idempotencyKey = payload.idempotencyKey;
+  if (payload.providerUsed !== undefined) updateData.providerUsed = payload.providerUsed;
+  if (payload.modelUsed !== undefined) updateData.modelUsed = payload.modelUsed;
+  if (payload.cached !== undefined) updateData.cached = payload.cached;
+  if (payload.costCents !== undefined) updateData.costCents = payload.costCents;
   if (payload.executionStatus !== undefined) updateData.executionStatus = payload.executionStatus;
   if (payload.errorCode !== undefined) updateData.errorCode = payload.errorCode;
   if (payload.errorMessage !== undefined) updateData.errorMessage = payload.errorMessage;
@@ -551,6 +609,25 @@ async function getCommandRunOrThrow(tenantId: number, commandRunId: number): Pro
     throw new TRPCError({ code: 'NOT_FOUND', message: 'Command run nao encontrado' });
   }
   return row;
+}
+
+async function getCommandRunByIdempotencyKey(
+  tenantId: number,
+  idempotencyKey: string,
+): Promise<CommandRunRow | null> {
+  const [row] = await db
+    .select()
+    .from(aiCommandRuns)
+    .where(and(eq(aiCommandRuns.tenantId, tenantId), eq(aiCommandRuns.idempotencyKey, idempotencyKey)))
+    .limit(1);
+
+  return row ?? null;
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  if (!('code' in error)) return false;
+  return (error as { code?: unknown }).code === '23505';
 }
 
 function applyResolvedEntities(entities: ParsedEntities, resolved: ResolvedEntities): ParsedEntities {
@@ -957,6 +1034,7 @@ export async function executeCommand(
       { tenantId, userId, role: userRole, sessionId: input.sessionId },
       intent,
       toolInput,
+      { source: 'manual' },
     );
 
     if (result.status === 'awaiting_confirmation') {
@@ -1039,6 +1117,227 @@ export async function executeCommand(
     }
 
     return response;
+  }
+}
+
+function getStoredOutput(toolOutputJson: Record<string, unknown> | null): unknown {
+  if (!toolOutputJson) return undefined;
+  if ('output' in toolOutputJson) {
+    return toolOutputJson.output;
+  }
+  return undefined;
+}
+
+function buildReplayResponse(run: CommandRunRow): CommandExecutionResponse {
+  const model = toCommandRunModel(run);
+  const command = run.intent;
+  const output = getStoredOutput(model.toolOutput);
+
+  if (run.executionStatus === 'awaiting_confirmation') {
+    const confirmationStep = model.toolOutput && 'step' in model.toolOutput
+      ? model.toolOutput.step as ConfirmationStep
+      : undefined;
+    const preview = model.toolOutput && 'preview' in model.toolOutput
+      ? model.toolOutput.preview as CommandExecutionResponse['preview']
+      : undefined;
+
+    return {
+      status: 'awaiting_confirmation',
+      run: model,
+      message: summarizeCommandMessage('awaiting_confirmation', command),
+      ...(preview ? { preview } : {}),
+      ...(confirmationStep ? { confirmationStep } : {}),
+    };
+  }
+
+  if (run.executionStatus === 'success') {
+    return {
+      status: 'executed',
+      run: model,
+      output,
+      message: summarizeCommandMessage('executed', command, output),
+    };
+  }
+
+  return {
+    status: 'error',
+    run: model,
+    message: summarizeCommandMessage('error', command),
+  };
+}
+
+export async function executeLlmToolCall(
+  tenantId: number,
+  userId: number,
+  userRole: Role,
+  input: ExecuteLlmToolCallInput,
+): Promise<CommandExecutionResponse> {
+  const channel = input.channel ?? 'text';
+  const intent = fromLlmToolName(input.toolName)
+    ?? (input.toolName in FLOW_COMMANDS ? input.toolName as FlowCommandName : null);
+
+  if (!intent) {
+    const run = await createCommandRun(tenantId, userId, {
+      sessionId: input.sessionId,
+      channel,
+      rawInput: input.rawInput,
+      intent: null,
+      toolName: input.toolName,
+      toolInput: input.toolInput,
+      source: 'llm',
+      idempotencyKey: input.idempotencyKey,
+      providerUsed: input.providerUsed,
+      modelUsed: input.modelUsed,
+      cached: input.cached,
+      costCents: input.costCents,
+      executionStatus: 'error',
+      errorCode: 'NOT_IMPLEMENTED',
+      errorMessage: `Comando ${input.toolName} nao implementado`,
+      executedAt: new Date(),
+    });
+
+    return {
+      status: 'error',
+      run: toCommandRunModel(run),
+      message: summarizeCommandMessage('error', null),
+    };
+  }
+
+  if (!checkCommandAccess(intent, userRole)) {
+    const run = await createCommandRun(tenantId, userId, {
+      sessionId: input.sessionId,
+      channel,
+      rawInput: input.rawInput,
+      intent,
+      riskLevel: FLOW_COMMANDS[intent].risk,
+      toolName: intent,
+      toolInput: input.toolInput,
+      source: 'llm',
+      idempotencyKey: input.idempotencyKey,
+      providerUsed: input.providerUsed,
+      modelUsed: input.modelUsed,
+      cached: input.cached,
+      costCents: input.costCents,
+      executionStatus: 'error',
+      errorCode: 'FORBIDDEN',
+      errorMessage: 'Sem permissao para executar este comando',
+      executedAt: new Date(),
+    });
+
+    return {
+      status: 'blocked',
+      run: toCommandRunModel(run),
+      message: summarizeCommandMessage('blocked', intent),
+    };
+  }
+
+  const replay = await getCommandRunByIdempotencyKey(tenantId, input.idempotencyKey);
+  if (replay) {
+    return buildReplayResponse(replay);
+  }
+
+  let commandRun: CommandRunRow;
+  try {
+    commandRun = await createCommandRun(tenantId, userId, {
+      sessionId: input.sessionId,
+      channel,
+      rawInput: input.rawInput,
+      intent,
+      riskLevel: FLOW_COMMANDS[intent].risk,
+      requiresConfirmation:
+        FLOW_COMMANDS[intent].risk === 'transactional' || FLOW_COMMANDS[intent].risk === 'critical',
+      toolName: intent,
+      toolInput: input.toolInput,
+      source: 'llm',
+      idempotencyKey: input.idempotencyKey,
+      providerUsed: input.providerUsed,
+      modelUsed: input.modelUsed,
+      cached: input.cached,
+      costCents: input.costCents,
+      executionStatus: 'executing',
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      const existing = await getCommandRunByIdempotencyKey(tenantId, input.idempotencyKey);
+      if (existing) {
+        return buildReplayResponse(existing);
+      }
+    }
+    throw error;
+  }
+
+  try {
+    const result = await executeTool(
+      { tenantId, userId, role: userRole, sessionId: input.sessionId },
+      intent,
+      input.toolInput,
+      { source: 'llm', idempotencyKey: input.idempotencyKey },
+    );
+
+    if (result.status === 'awaiting_confirmation') {
+      const updated = await updateCommandRun(tenantId, commandRun.id, {
+        executionStatus: 'awaiting_confirmation',
+        requiresConfirmation: true,
+        toolInput: result.validatedInput as Record<string, unknown>,
+        toolOutput: {
+          preview: result.preview,
+          step: result.step,
+        },
+      });
+
+      return {
+        status: 'awaiting_confirmation',
+        run: toCommandRunModel(updated),
+        message: summarizeCommandMessage('awaiting_confirmation', intent),
+        preview: result.preview,
+        confirmationStep: result.step,
+      };
+    }
+
+    const updated = await updateCommandRun(tenantId, commandRun.id, {
+      executionStatus: 'success',
+      toolInput: result.validatedInput as Record<string, unknown>,
+      toolOutput: { output: result.output },
+      executedAt: new Date(),
+      errorCode: null,
+      errorMessage: null,
+    });
+
+    void logAudit({
+      tenantId,
+      userId,
+      action: 'ai.command.execute',
+      entityType: 'ai_command_runs',
+      entityId: updated.id,
+      newValue: {
+        intent,
+        riskLevel: result.riskLevel,
+        source: 'llm',
+      },
+    });
+
+    return {
+      status: 'executed',
+      run: toCommandRunModel(updated),
+      output: result.output,
+      message: summarizeCommandMessage('executed', intent, result.output),
+    };
+  } catch (error) {
+    const message = error instanceof TRPCError ? error.message : 'Erro inesperado no comando';
+    const code = error instanceof TRPCError ? error.code : 'INTERNAL_SERVER_ERROR';
+
+    const updated = await updateCommandRun(tenantId, commandRun.id, {
+      executionStatus: 'error',
+      executedAt: new Date(),
+      errorCode: code,
+      errorMessage: message,
+    });
+
+    return {
+      status: 'error',
+      run: toCommandRunModel(updated),
+      message: summarizeCommandMessage('error', intent),
+    };
   }
 }
 
@@ -1141,6 +1440,7 @@ export async function resolveCommandStep(
       { tenantId, userId, role: userRole, sessionId: run.sessionId ?? undefined },
       intent,
       toolInput,
+      { source: 'resolve_step' },
     );
 
     if (result.status === 'awaiting_confirmation') {
@@ -1251,6 +1551,7 @@ export async function confirmCommand(
       { tenantId, userId, role: userRole, sessionId: run.sessionId ?? undefined },
       intent,
       toolInput,
+      { source: 'confirm' },
     );
 
     const now = new Date();
