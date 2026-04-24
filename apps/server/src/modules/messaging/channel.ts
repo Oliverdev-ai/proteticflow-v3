@@ -8,6 +8,7 @@ import { env } from '../../env.js';
 import { logger } from '../../logger.js';
 import { sendEmail } from '../notifications/email.js';
 import { sendPushToUser } from '../notifications/push.js';
+import { sendBlipWhatsApp } from './providers/blip.provider.js';
 import { countChannelDispatchesThisMonth } from '../proactive/alert-log.service.js';
 import {
   getQuietHoursReleaseAt,
@@ -201,14 +202,17 @@ class InAppChannel implements MessageChannel {
   }
 }
 
-class WhatsAppChannel implements MessageChannel {
+export class WhatsAppChannel implements MessageChannel {
   readonly name: ChannelName = 'whatsapp';
 
   async canSend(ctx: TenantCtx, to: Recipient, msg: OutboundMessage): Promise<boolean> {
     if (!isChannelEnabled(to.preferences, this.name)) return false;
     if (isAlertMuted(to.preferences, msg.alertType)) return false;
     if (!to.phone) return false;
-    if (env.WHATSAPP_PROVIDER !== 'mock') return false;
+
+    if (env.WHATSAPP_PROVIDER !== 'mock') {
+      if (!env.BLIP_API_TOKEN || !env.BLIP_FROM_NUMBER) return false;
+    }
 
     const limit = PLAN_LIMITS[ctx.plan].whatsappPerMonth;
     if (limit === 0) return false;
@@ -221,14 +225,33 @@ class WhatsAppChannel implements MessageChannel {
   }
 
   async send(ctx: TenantCtx, to: Recipient, msg: OutboundMessage): Promise<SendResult> {
+    if (env.WHATSAPP_PROVIDER === 'mock') {
+      logger.info(
+        {
+          action: 'messaging.whatsapp.mock_send',
+          tenantId: ctx.tenantId,
+          userId: to.userId,
+          alertType: msg.alertType,
+        },
+        'WhatsApp mock: mensagem registrada apenas em log',
+      );
+      return { channel: this.name, status: 'sent' };
+    }
+
+    if (!to.phone) {
+      throw new Error('Destinatario sem phone');
+    }
+
+    const e164 = to.phone.replace(/\D/g, '');
+    await sendBlipWhatsApp(e164, msg.body);
+
     logger.info(
       {
-        action: 'messaging.whatsapp.mock_send',
+        action: 'messaging.whatsapp.blip_sent',
         tenantId: ctx.tenantId,
         userId: to.userId,
-        alertType: msg.alertType,
       },
-      'WhatsApp mock: mensagem registrada apenas em log',
+      'WhatsApp enviado via Blip BSP',
     );
     return { channel: this.name, status: 'sent' };
   }

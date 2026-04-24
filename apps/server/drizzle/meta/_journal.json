@@ -225,6 +225,13 @@
                         "when":  1777075200000,
                         "tag":  "0032_phase5_proactive_motor",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  32,
+                        "version":  "7",
+                        "when":  1777161600000,
+                        "tag":  "0033_whatsapp_real_provider",
+                        "breakpoints":  true
                     }
                 ]
 }

@@ -30,7 +30,9 @@ export async function listBriefingRecipients(now: Date = new Date()): Promise<Pr
       userId: users.id,
       name: users.name,
       email: users.email,
+      phoneE164: users.phoneE164,
       phone: users.phone,
+      whatsappOptIn: users.whatsappOptIn,
       plan: tenants.plan,
     })
     .from(userPreferences)
@@ -57,7 +59,7 @@ export async function listBriefingRecipients(now: Date = new Date()): Promise<Pr
       userId: row.userId,
       name: row.name,
       email: row.email,
-      phone: row.phone,
+      phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
       plan: row.plan,
       preferences,
     });
@@ -76,7 +78,9 @@ export async function getRecipient(
       userId: users.id,
       name: users.name,
       email: users.email,
+      phoneE164: users.phoneE164,
       phone: users.phone,
+      whatsappOptIn: users.whatsappOptIn,
     })
     .from(tenantMembers)
     .innerJoin(users, and(
@@ -98,7 +102,7 @@ export async function getRecipient(
     userId: row.userId,
     name: row.name,
     email: row.email,
-    phone: row.phone,
+    phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
     plan: row.plan,
     preferences: await getUserPreferences(tenantId, userId),
   };
@@ -112,7 +116,9 @@ export async function listActiveTenantRecipients(tenantId: number): Promise<Proa
       userId: users.id,
       name: users.name,
       email: users.email,
+      phoneE164: users.phoneE164,
       phone: users.phone,
+      whatsappOptIn: users.whatsappOptIn,
     })
     .from(tenantMembers)
     .innerJoin(users, and(
@@ -133,7 +139,7 @@ export async function listActiveTenantRecipients(tenantId: number): Promise<Proa
       userId: row.userId,
       name: row.name,
       email: row.email,
-      phone: row.phone,
+      phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
       preferences: await getUserPreferences(row.tenantId, row.userId),
     });
   }
