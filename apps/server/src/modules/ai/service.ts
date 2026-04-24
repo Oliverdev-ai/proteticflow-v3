@@ -854,6 +854,21 @@ function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities
     }
   }
 
+  if (intent === 'messages.muteAlerts') {
+    if (typeof entities.userId === 'number') {
+      input.userId = entities.userId;
+    }
+    if (typeof entities.alertTypes === 'string') {
+      input.alertTypes = entities.alertTypes
+        .split(',')
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0);
+    }
+    if (typeof entities.until === 'string') {
+      input.until = entities.until;
+    }
+  }
+
   if (intent === 'financial.revenueToDate' || intent === 'financial.expensesToDate') {
     if (typeof entities.period === 'string') {
       const periodKeyword = normalizePeriodKeyword(entities.period);

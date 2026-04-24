@@ -1,4 +1,5 @@
 import { ShieldAlert, Loader2, Settings2, ShieldCheck, Activity } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { usePermissions } from '../../../hooks/use-permissions';
 import { useSettings } from '../../../hooks/use-settings';
 import { SettingsTabs } from '../../../components/settings/settings-tabs';
@@ -6,8 +7,10 @@ import { PageTransition, ScaleIn } from '../../../components/shared/page-transit
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
 
 export default function SettingsPage() {
+  const location = useLocation();
   const { hasAccess, isLoading: permsLoading } = usePermissions();
   const { overview } = useSettings();
+  const initialTabId = location.pathname === '/configuracoes/preferencias' ? 'preferencias' : undefined;
 
   if (permsLoading || overview.isLoading) {
     return (
@@ -80,7 +83,7 @@ export default function SettingsPage() {
 
       {/* Settings Grid Navigation & Content */}
       <ScaleIn delay={0.1}>
-        <SettingsTabs />
+        <SettingsTabs {...(initialTabId ? { initialTabId } : {})} />
       </ScaleIn>
 
       <ScaleIn

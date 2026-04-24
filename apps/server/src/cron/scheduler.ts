@@ -15,6 +15,7 @@ import { processExpiredTrials, resetMonthlyJobCounter } from '../modules/licensi
 import { trialExpiringNotifications } from './trial-expiring.js';
 import { logger } from '../logger.js';
 import { cleanupIdempotencyKeys } from '../jobs/cleanup-idempotency.js';
+import { startFlowQueueWorkers } from '../modules/jobs-queue/worker.js';
 
 export function startCronJobs() {
   // 07.04: Fechamento automático — dia 1 de cada mês às 6h
@@ -99,6 +100,13 @@ export function startCronJobs() {
   cron.schedule('5 0 1 * *', async () => {
     logger.info({ action: 'cron.licensing.jobs_counter_reset.start' }, 'Resetando contador mensal de jobs');
     await resetMonthlyJobCounter();
+  });
+
+  startFlowQueueWorkers().catch((err) => {
+    logger.error(
+      { err, action: 'jobs_queue.bootstrap.error' },
+      'Falha ao iniciar workers do motor proativo',
+    );
   });
 
   logger.info('Cron jobs registrados');

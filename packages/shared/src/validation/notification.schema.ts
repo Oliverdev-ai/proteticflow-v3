@@ -12,6 +12,49 @@ export const notificationEventSchema = z.enum([
   'plan_upgraded',
 ]);
 
+export const proactiveAlertTypeSchema = z.enum([
+  'briefing_daily',
+  'deadline_24h',
+  'deadline_overdue',
+  'stock_low',
+  'payment_overdue',
+]);
+
+const hhmmSchema = z.string().regex(/^\d{2}:\d{2}$/, 'Formato esperado HH:MM');
+
+export const proactiveChannelsSchema = z.object({
+  push: z.boolean(),
+  email: z.boolean(),
+  whatsapp: z.boolean(),
+  in_app: z.boolean(),
+  mutedUntilByType: z.record(z.string(), z.string().datetime()).optional(),
+});
+
+export const userPreferencesSchema = z.object({
+  briefingEnabled: z.boolean(),
+  briefingTime: hhmmSchema,
+  quietHoursStart: hhmmSchema,
+  quietHoursEnd: hhmmSchema,
+  channels: proactiveChannelsSchema,
+  alertTypesMuted: z.array(proactiveAlertTypeSchema),
+  updatedAt: z.string().datetime(),
+});
+
+export const updateUserPreferencesSchema = z.object({
+  briefingEnabled: z.boolean().optional(),
+  briefingTime: hhmmSchema.optional(),
+  quietHoursStart: hhmmSchema.optional(),
+  quietHoursEnd: hhmmSchema.optional(),
+  channels: proactiveChannelsSchema.partial().optional(),
+  alertTypesMuted: z.array(proactiveAlertTypeSchema).optional(),
+});
+
+export const muteAlertsSchema = z.object({
+  userId: z.number().int().positive().optional(),
+  alertTypes: z.array(proactiveAlertTypeSchema).min(1),
+  until: z.string().datetime().optional(),
+});
+
 export const listNotificationsSchema = z.object({
   unreadOnly: z.boolean().default(false),
   limit: z.number().int().min(1).max(100).default(20),
@@ -50,3 +93,15 @@ export const NOTIFICATION_EVENT_LABELS: Record<z.infer<typeof notificationEventS
   payment_overdue: 'Pagamento em atraso',
   plan_upgraded: 'Upgrade de plano',
 };
+
+export const PROACTIVE_ALERT_LABELS: Record<z.infer<typeof proactiveAlertTypeSchema>, string> = {
+  briefing_daily: 'Briefing diário',
+  deadline_24h: 'Prazo em 24h',
+  deadline_overdue: 'Prazo atrasado',
+  stock_low: 'Estoque baixo',
+  payment_overdue: 'Pagamento em atraso',
+};
+
+export type ProactiveAlertType = z.infer<typeof proactiveAlertTypeSchema>;
+export type UpdateUserPreferencesInput = z.infer<typeof updateUserPreferencesSchema>;
+export type MuteAlertsInput = z.infer<typeof muteAlertsSchema>;

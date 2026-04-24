@@ -13,6 +13,7 @@ import {
   jobsOverdueSchema,
   jobsStatusUpdateSchema,
   listArSchema,
+  muteAlertsSchema,
   listClientsSchema,
   listJobsSchema,
   messagesDraftToClientSchema,
@@ -62,6 +63,7 @@ import {
 } from './tools/jobs-tools.js';
 import {
   buildMessagesDraftToClientPreviewStep,
+  executeMessagesMuteAlerts,
   executeMessagesDraftToClient,
 } from './tools/messages-tools.js';
 import {
@@ -523,6 +525,12 @@ export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
       buildMessagesDraftToClientPreviewStep(ctx, messagesDraftToClientSchema.parse(input)),
     execute: async (ctx, input) =>
       executeMessagesDraftToClient(ctx, messagesDraftToClientSchema.parse(input)),
+  },
+  'messages.muteAlerts': {
+    name: 'messages.muteAlerts',
+    inputSchema: muteAlertsSchema,
+    execute: async (ctx, input) =>
+      executeMessagesMuteAlerts(ctx, muteAlertsSchema.parse(input)),
   },
   'clients.createDraft': {
     name: 'clients.createDraft',

@@ -1,13 +1,16 @@
 import { TRPCError } from '@trpc/server';
 import { and, eq, isNull } from 'drizzle-orm';
 import {
+  muteAlertsSchema,
   messagesDraftToClientSchema,
+  type MuteAlertsInput,
   type MessagesDraftToClientInput,
 } from '@proteticflow/shared';
 import { db } from '../../../db/index.js';
 import { clients } from '../../../db/schema/clients.js';
 import { jobs } from '../../../db/schema/jobs.js';
 import { sendEmail } from '../../notifications/email.js';
+import * as proactivePreferencesService from '../../proactive/preferences.service.js';
 import type { CommandPreview, ConfirmationStep, ToolContext } from '../tool-executor.js';
 import { resolveClientByName } from '../resolvers.js';
 
@@ -294,5 +297,37 @@ export async function executeMessagesDraftToClient(
     dispatched: false,
     draft,
     message: `Canal ${channel} ainda nao possui adaptador ativo neste ambiente.`,
+  };
+}
+
+export async function executeMessagesMuteAlerts(
+  ctx: ToolContext,
+  input: MuteAlertsInput,
+) {
+  const parsed = muteAlertsSchema.parse(input);
+  const targetUserId = parsed.userId ?? ctx.userId;
+
+  if (
+    targetUserId !== ctx.userId
+    && ctx.role !== 'superadmin'
+    && ctx.role !== 'gerente'
+  ) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Sem permissao para silenciar alertas de outro usuario',
+    });
+  }
+
+  const updated = await proactivePreferencesService.muteAlerts(ctx.tenantId, ctx.userId, {
+    userId: targetUserId,
+    alertTypes: parsed.alertTypes,
+    until: parsed.until,
+  });
+
+  return {
+    status: 'ok',
+    userId: updated.userId,
+    alertTypesMuted: updated.alertTypesMuted,
+    until: parsed.until ?? null,
   };
 }

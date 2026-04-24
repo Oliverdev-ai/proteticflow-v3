@@ -148,6 +148,12 @@ export const FLOW_COMMANDS = {
     patterns: [/(enviar|rascunho|montar|escrever).*(mensagem).*(cliente|dr|dra|dentista)/i, /avisar.*cliente/i],
     requiredFields: ['messageContext'],
   },
+  'messages.muteAlerts': {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
+    patterns: [/silenc(iar|ie).*(alerta|notifica)/i, /mute.*(alerta|notifica)/i, /nao me avise/i],
+    requiredFields: ['alertTypes'],
+  },
   'clients.createDraft': {
     risk: 'transactional',
     roles: ['superadmin', 'gerente', 'recepcao'],
@@ -539,6 +545,36 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
     );
     if (contextualMessageMatch?.[1]) {
       entities.messageContext = contextualMessageMatch[1].trim();
+    }
+  }
+
+  if (/silenc|mute|nao me avise|não me avise/i.test(normalizedInput)) {
+    const alertTypes: Array<'stock_low' | 'deadline_24h' | 'deadline_overdue' | 'payment_overdue' | 'briefing_daily'> = [];
+    if (normalizedInput.includes('estoque')) alertTypes.push('stock_low');
+    if (normalizedInput.includes('pagamento') || normalizedInput.includes('financeir')) alertTypes.push('payment_overdue');
+    if (normalizedInput.includes('briefing')) alertTypes.push('briefing_daily');
+    if (normalizedInput.includes('prazo')) {
+      if (normalizedInput.includes('atras')) {
+        alertTypes.push('deadline_overdue');
+      } else {
+        alertTypes.push('deadline_24h');
+      }
+    }
+
+    if (alertTypes.length > 0) {
+      entities.alertTypes = [...new Set(alertTypes)].join(',');
+    }
+
+    const daysMatch = normalizedInput.match(/(\d{1,3})\s*dias?/);
+    if (daysMatch?.[1]) {
+      const days = Number(daysMatch[1]);
+      if (Number.isFinite(days) && days > 0) {
+        entities.until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      }
+    } else if (normalizedInput.includes('hoje')) {
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      entities.until = endOfDay.toISOString();
     }
   }
 

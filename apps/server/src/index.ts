@@ -77,6 +77,14 @@ app.use(
   }),
 );
 
+if (env.NODE_ENV === 'production' && env.WHATSAPP_PROVIDER === 'mock') {
+  logger.error(
+    { action: 'bootstrap.invalid_whatsapp_provider' },
+    'WHATSAPP_PROVIDER=mock nao permitido em producao',
+  );
+  process.exit(1);
+}
+
 app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'Server iniciado');
   

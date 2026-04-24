@@ -39,7 +39,7 @@ function normalizeTenantLabel(value: LabelValue): string {
 }
 
 function normalizeLabel(labelName: string, value: LabelValue): string {
-  if (labelName === 'tenantId') {
+  if (labelName === 'tenantId' || labelName === 'tenant_id') {
     return normalizeTenantLabel(value);
   }
 
@@ -282,6 +282,50 @@ export const aiIdempotencyCleanupTotal = new CounterMetric({
   help: 'Total idempotency rows deleted by scheduled cleanup',
 });
 
+export const flowBriefingSentTotal = new CounterMetric({
+  name: 'flow_briefing_sent_total',
+  help: 'Total de briefings proativos enviados',
+  labelNames: ['tenant_id', 'status'],
+});
+
+export const flowAlertTriggeredTotal = new CounterMetric({
+  name: 'flow_alert_triggered_total',
+  help: 'Total de alertas proativos disparados',
+  labelNames: ['tenant_id', 'alert_type', 'dedup_hit'],
+});
+
+export const flowChannelSendTotal = new CounterMetric({
+  name: 'flow_channel_send_total',
+  help: 'Total de envios por canal',
+  labelNames: ['channel', 'status'],
+});
+
+export const flowChannelLatencyMs = new HistogramMetric({
+  name: 'flow_channel_latency_ms',
+  help: 'Latencia de envio por canal',
+  labelNames: ['channel'],
+  buckets: [25, 50, 100, 250, 500, 1000, 2000, 5000],
+});
+
+export const flowQueueDepth = new GaugeMetric({
+  name: 'flow_queue_depth',
+  help: 'Profundidade atual da fila',
+  labelNames: ['queue'],
+});
+
+export const flowQueueJobDurationMs = new HistogramMetric({
+  name: 'flow_queue_job_duration_ms',
+  help: 'Duracao dos jobs por fila e tipo',
+  labelNames: ['queue', 'job_type'],
+  buckets: [10, 50, 100, 250, 500, 1000, 3000, 10000, 30000],
+});
+
+export const flowQueueStalledTotal = new CounterMetric({
+  name: 'flow_queue_stalled_total',
+  help: 'Total de jobs stalled por fila',
+  labelNames: ['queue'],
+});
+
 export function recordAiToolCall(input: {
   tenantId: number;
   tool: string;
@@ -352,6 +396,51 @@ export function addAiIdempotencyCleanup(deletedRows: number): void {
   aiIdempotencyCleanupTotal.inc({}, deletedRows);
 }
 
+export function recordFlowBriefingSent(tenantId: number, status: 'sent' | 'skipped'): void {
+  flowBriefingSentTotal.inc({
+    tenant_id: tenantId,
+    status,
+  });
+}
+
+export function recordFlowAlertTriggered(
+  tenantId: number,
+  alertType: string,
+  dedupHit: boolean,
+): void {
+  flowAlertTriggeredTotal.inc({
+    tenant_id: tenantId,
+    alert_type: alertType,
+    dedup_hit: dedupHit,
+  });
+}
+
+export function recordFlowChannelSend(channel: string, status: 'sent' | 'failed'): void {
+  flowChannelSendTotal.inc({
+    channel,
+    status,
+  });
+}
+
+export function observeFlowChannelLatency(channel: string, latencyMs: number): void {
+  flowChannelLatencyMs.observe({ channel }, latencyMs);
+}
+
+export function setFlowQueueDepth(queue: string, depth: number): void {
+  flowQueueDepth.set({ queue }, depth);
+}
+
+export function observeFlowQueueJobDuration(queue: string, jobType: string, durationMs: number): void {
+  flowQueueJobDurationMs.observe({
+    queue,
+    job_type: jobType,
+  }, durationMs);
+}
+
+export function recordFlowQueueStalled(queue: string): void {
+  flowQueueStalledTotal.inc({ queue });
+}
+
 export function renderMetrics(): string {
   const sections = [
     aiToolCallTotal.render(),
@@ -363,6 +452,13 @@ export function renderMetrics(): string {
     aiInjectionAttemptTotal.render(),
     ttsCharactersBilled.render(),
     aiIdempotencyCleanupTotal.render(),
+    flowBriefingSentTotal.render(),
+    flowAlertTriggeredTotal.render(),
+    flowChannelSendTotal.render(),
+    flowChannelLatencyMs.render(),
+    flowQueueDepth.render(),
+    flowQueueJobDurationMs.render(),
+    flowQueueStalledTotal.render(),
   ];
 
   return `${sections.join('\n\n')}\n`;

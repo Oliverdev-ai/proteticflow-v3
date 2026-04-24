@@ -218,6 +218,13 @@
                         "when":  1776999600000,
                         "tag":  "0031_phase3_tts_voice_ux",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  31,
+                        "version":  "7",
+                        "when":  1777075200000,
+                        "tag":  "0032_phase5_proactive_motor",
+                        "breakpoints":  true
                     }
                 ]
 }

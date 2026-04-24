@@ -63,3 +63,6 @@ export * from './os-blocks';
 
 // Timesheets
 export * from './timesheets';
+
+// Motor proativo (briefing + alertas dedup + preferencias)
+export * from './proactive';
