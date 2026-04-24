@@ -1,4 +1,5 @@
 import { logger } from '../../../logger.js';
+import { recordAiProviderFailover } from '../../../metrics/ai-metrics.js';
 import { AnthropicProvider } from './AnthropicProvider.js';
 import { GeminiProvider } from './GeminiProvider.js';
 import type { ILlmProvider, LlmContext, LlmGenerateResult, LlmToolDefinition } from './ILlmProvider.js';
@@ -116,6 +117,7 @@ export class ProviderResolver {
         const fallback = orderedProviders[index + 1];
         if (fallback) {
           aiProviderFailoverTotal += 1;
+          recordAiProviderFailover(provider.id, fallback.id);
           logger.warn(
             {
               fromProvider: provider.id,

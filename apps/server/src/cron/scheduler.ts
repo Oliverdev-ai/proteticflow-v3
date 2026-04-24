@@ -14,6 +14,7 @@ import { portalTokenCleanup } from '../modules/portal/tasks.js';
 import { processExpiredTrials, resetMonthlyJobCounter } from '../modules/licensing/service.js';
 import { trialExpiringNotifications } from './trial-expiring.js';
 import { logger } from '../logger.js';
+import { cleanupIdempotencyKeys } from '../jobs/cleanup-idempotency.js';
 
 export function startCronJobs() {
   // 07.04: Fechamento automático — dia 1 de cada mês às 6h
@@ -44,6 +45,12 @@ export function startCronJobs() {
   cron.schedule('0 3 * * *', async () => {
     logger.info({ action: 'cron.portal_token_cleanup.start' }, 'Iniciando cleanup de tokens do portal');
     await portalTokenCleanup();
+  });
+
+  // F4: Cleanup de idempotency keys da IA (retencao 90 dias) - diario as 03:00
+  cron.schedule('0 3 * * *', async () => {
+    logger.info({ action: 'cron.ai.idempotency_cleanup.start' }, 'Iniciando cleanup de idempotency keys');
+    await cleanupIdempotencyKeys();
   });
 
   // 22.xx AI: previsao de receita - diario as 04h

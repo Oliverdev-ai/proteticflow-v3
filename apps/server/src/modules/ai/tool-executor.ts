@@ -78,6 +78,13 @@ import {
   executeStockAlerts,
   executeStockCheckMaterial,
 } from './tools/stock-tools.js';
+import {
+  observeAiLatency,
+  recordAiToolCall,
+  setAiCacheHitRate,
+} from '../../metrics/ai-metrics.js';
+import { checkToolRateLimit, type ToolRateLimitState } from './rate-limit.js';
+import { sanitizeToolInput } from './security/sanitize.js';
 
 const jobsGetSchema = z.object({
   jobId: z.coerce.number().int().positive(),
@@ -203,12 +210,14 @@ export type ToolExecutionResult =
     preview: CommandPreview;
     step: ConfirmationStep;
     validatedInput: unknown;
+    rateLimit: null;
   }
   | {
     status: 'success';
     riskLevel: RiskLevel;
     output: unknown;
     validatedInput: unknown;
+    rateLimit: ToolRateLimitState | null;
   };
 
 function isoTodayRange(baseDate?: string): { start: string; end: string } {
@@ -589,6 +598,10 @@ export type ExecuteToolOptions = {
   confirmed?: boolean;
   source?: 'manual' | 'llm' | 'resolve_step' | 'confirm';
   idempotencyKey?: string;
+  providerUsed?: string;
+  modelUsed?: string;
+  costCents?: number;
+  cached?: boolean;
 };
 
 export async function executeTool(
@@ -607,31 +620,73 @@ export async function executeTool(
   }
 
   const validatedInput = tool.inputSchema.parse(rawInput);
+  const sanitized = sanitizeToolInput(command, validatedInput, {
+    tenantId: ctx.tenantId,
+    userId: ctx.userId,
+  });
+  const safeInput = tool.inputSchema.parse(sanitized.input);
   const riskLevel = FLOW_COMMANDS[command].risk;
   const action = resolveAction(riskLevel);
 
   if (!options?.confirmed && action !== 'execute') {
     const previewBuild = tool.buildPreviewStep
-      ? await tool.buildPreviewStep(ctx, validatedInput, riskLevel)
-      : buildDefaultConfirmationStep(command, validatedInput, riskLevel);
+      ? await tool.buildPreviewStep(ctx, safeInput, riskLevel)
+      : buildDefaultConfirmationStep(command, safeInput, riskLevel);
 
-    const nextInput = previewBuild.resolvedInput ?? validatedInput;
+    const nextInput = previewBuild.resolvedInput ?? safeInput;
     return {
       status: 'awaiting_confirmation',
       riskLevel,
       preview: previewBuild.preview,
       step: previewBuild.step,
       validatedInput: nextInput,
+      rateLimit: null,
     };
   }
 
-  const output = await tool.execute(ctx, validatedInput);
-  return {
-    status: 'success',
-    riskLevel,
-    output,
-    validatedInput,
-  };
+  const source = options?.source ?? 'manual';
+  const provider = options?.providerUsed ?? 'internal';
+  const startedAt = Date.now();
+
+  try {
+    const rateLimit = await checkToolRateLimit(ctx.tenantId, riskLevel);
+    const output = await tool.execute(ctx, safeInput);
+
+    recordAiToolCall({
+      tenantId: ctx.tenantId,
+      tool: command,
+      status: 'success',
+      source,
+      provider,
+    });
+
+    if (options?.cached !== undefined) {
+      setAiCacheHitRate(provider, options.cached);
+    }
+
+    return {
+      status: 'success',
+      riskLevel,
+      output,
+      validatedInput: safeInput,
+      rateLimit,
+    };
+  } catch (error) {
+    recordAiToolCall({
+      tenantId: ctx.tenantId,
+      tool: command,
+      status: 'error',
+      source,
+      provider,
+    });
+    throw error;
+  } finally {
+    observeAiLatency({
+      provider,
+      source,
+      latencyMs: Date.now() - startedAt,
+    });
+  }
 }
 
 export async function confirmAndExecute(

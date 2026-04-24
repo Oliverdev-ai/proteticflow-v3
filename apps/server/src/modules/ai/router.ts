@@ -23,7 +23,7 @@ import {
 import * as aiService from './service.js';
 import { buildLabContext } from './context-builder.js';
 import { streamAiResponse } from './flow-engine.js';
-import { assertTenantRateLimit } from './tenant-rate-limit.js';
+import { applyRateLimitHeaders, checkTtsRateLimit } from './rate-limit.js';
 import { assertTtsPlanEnabled, logTtsUsage, synthesize, type TtsVoice } from './tts.service.js';
 import { transcribeAudio } from './voice.service.js';
 
@@ -139,18 +139,27 @@ export const aiRouter = router({
 
   executeCommand: aiProcedure
     .input(executeCommandSchema)
-    .mutation(({ ctx, input }) =>
-      aiService.executeCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+    .mutation(async ({ ctx, input }) => {
+      const response = await aiService.executeCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input);
+      applyRateLimitHeaders(ctx.res, response.rateLimit);
+      return response;
+    }),
 
   resolveCommandStep: aiProcedure
     .input(resolveCommandStepSchema)
-    .mutation(({ ctx, input }) =>
-      aiService.resolveCommandStep(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+    .mutation(async ({ ctx, input }) => {
+      const response = await aiService.resolveCommandStep(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input);
+      applyRateLimitHeaders(ctx.res, response.rateLimit);
+      return response;
+    }),
 
   confirmCommand: aiProcedure
     .input(confirmCommandSchema)
-    .mutation(({ ctx, input }) =>
-      aiService.confirmCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+    .mutation(async ({ ctx, input }) => {
+      const response = await aiService.confirmCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input);
+      applyRateLimitHeaders(ctx.res, response.rateLimit);
+      return response;
+    }),
 
   cancelCommand: aiProcedure
     .input(cancelCommandSchema)
@@ -177,7 +186,8 @@ export const aiRouter = router({
   tts: voiceProcedure
     .input(ttsSchema)
     .mutation(async ({ ctx, input }) => {
-      assertTenantRateLimit(ctx.tenantId!, 'tts');
+      const ttsRateLimit = await checkTtsRateLimit(ctx.tenantId!, ctx.user!.id);
+      applyRateLimitHeaders(ctx.res, ttsRateLimit);
       await assertTtsPlanEnabled(ctx.tenantId!);
 
       const synthesizePayload = {

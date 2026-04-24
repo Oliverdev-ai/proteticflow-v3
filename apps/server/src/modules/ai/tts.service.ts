@@ -6,6 +6,7 @@ import { ttsUsage } from '../../db/schema/ai.js';
 import { tenants } from '../../db/schema/tenants.js';
 import { env } from '../../env.js';
 import { logger } from '../../logger.js';
+import { addTtsCharactersBilled } from '../../metrics/ai-metrics.js';
 import { toTtsSsml } from './tts-ssml.js';
 
 export type TtsVoice = 'female' | 'male';
@@ -104,6 +105,7 @@ export async function logTtsUsage(input: {
   source?: string;
 }): Promise<void> {
   const source = input.source ?? 'ai.tts';
+  addTtsCharactersBilled(input.tenantId, input.voice, input.charactersBilled);
 
   await db.insert(ttsUsage).values({
     tenantId: input.tenantId,

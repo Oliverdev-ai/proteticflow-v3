@@ -1,6 +1,7 @@
 import type { AiMessage, Role } from '@proteticflow/shared';
 import type Anthropic from '@anthropic-ai/sdk';
 import { logger } from '../../logger.js';
+import { addAiCostUsd, observeAiLatency, setAiCacheHitRate } from '../../metrics/ai-metrics.js';
 import { buildLabContext, buildSystemPrompt } from './context-builder.js';
 import { detectCommand } from './commands.js';
 import { assertTenantRateLimit } from './tenant-rate-limit.js';
@@ -70,6 +71,7 @@ export async function* streamAiResponse(
   let yieldedAnyDelta = false;
 
   try {
+    const providerStartedAt = Date.now();
     const providerResult = await providerResolver.generate(
       {
         tenantId,
@@ -81,6 +83,19 @@ export async function* streamAiResponse(
       },
       llmTools,
     );
+
+    observeAiLatency({
+      provider: providerResult.providerUsed,
+      source: 'stream_message',
+      latencyMs: Date.now() - providerStartedAt,
+    });
+    setAiCacheHitRate(providerResult.providerUsed, providerResult.cached);
+    addAiCostUsd({
+      tenantId,
+      provider: providerResult.providerUsed,
+      model: providerResult.modelUsed,
+      costCents: providerResult.costCents,
+    });
 
     totalTokens = providerResult.usage.totalTokens;
 

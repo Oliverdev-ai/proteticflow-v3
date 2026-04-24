@@ -92,3 +92,29 @@ export async function checkRedisConnection(): Promise<boolean> {
     return false;
   }
 }
+
+export async function withRedisClient<T>(
+  operation: (client: Redis) => Promise<T>,
+): Promise<T | null> {
+  if (redisDisabled && !env.REDIS_REQUIRED) return null;
+
+  const client = getRedisClient();
+  if (!client) return null;
+
+  try {
+    if (client.status === 'wait') {
+      await client.connect();
+    }
+    return await operation(client);
+  } catch (err) {
+    if (!env.REDIS_REQUIRED) {
+      const isClosedConnection =
+        err instanceof Error && /connection is closed/i.test(err.message);
+      if (isRecoverableConnectionError(err) || isClosedConnection || redisDisabled) {
+        disableRedis(err);
+        return null;
+      }
+    }
+    throw err;
+  }
+}

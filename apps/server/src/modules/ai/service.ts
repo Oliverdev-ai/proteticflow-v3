@@ -175,6 +175,10 @@ type CommandExecutionResponse = {
   ambiguities?: ResolvedEntities;
   missingFields?: string[];
   suggestedIntents?: FlowCommandName[];
+  rateLimit?: {
+    remaining: number;
+    resetAt: number;
+  } | null;
 };
 
 const PLAN_RANK: Record<string, number> = {
@@ -1214,6 +1218,7 @@ export async function executeCommand(
         message: summarizeCommandMessage('awaiting_confirmation', intent),
         preview: result.preview,
         confirmationStep: result.step,
+        rateLimit: result.rateLimit,
       };
 
       if (input.sessionId) {
@@ -1248,6 +1253,7 @@ export async function executeCommand(
       run: toCommandRunModel(updated),
       output: result.output,
       message: summarizeCommandMessage('executed', intent, result.output),
+      rateLimit: result.rateLimit,
     };
 
     if (input.sessionId) {
@@ -1431,7 +1437,14 @@ export async function executeLlmToolCall(
       { tenantId, userId, role: userRole, sessionId: input.sessionId },
       intent,
       input.toolInput,
-      { source: 'llm', idempotencyKey: input.idempotencyKey },
+      {
+        source: 'llm',
+        idempotencyKey: input.idempotencyKey,
+        providerUsed: input.providerUsed,
+        modelUsed: input.modelUsed,
+        costCents: input.costCents,
+        cached: input.cached,
+      },
     );
 
     if (result.status === 'awaiting_confirmation') {
@@ -1451,6 +1464,7 @@ export async function executeLlmToolCall(
         message: summarizeCommandMessage('awaiting_confirmation', intent),
         preview: result.preview,
         confirmationStep: result.step,
+        rateLimit: result.rateLimit,
       };
     }
 
@@ -1481,6 +1495,7 @@ export async function executeLlmToolCall(
       run: toCommandRunModel(updated),
       output: result.output,
       message: summarizeCommandMessage('executed', intent, result.output),
+      rateLimit: result.rateLimit,
     };
   } catch (error) {
     const message = error instanceof TRPCError ? error.message : 'Erro inesperado no comando';
@@ -1620,6 +1635,7 @@ export async function resolveCommandStep(
         message: summarizeCommandMessage('awaiting_confirmation', intent),
         preview: result.preview,
         confirmationStep: result.step,
+        rateLimit: result.rateLimit,
       };
     }
 
@@ -1646,6 +1662,7 @@ export async function resolveCommandStep(
       run: toCommandRunModel(updated),
       output: result.output,
       message: summarizeCommandMessage('executed', intent, result.output),
+      rateLimit: result.rateLimit,
     };
 
     if (run.sessionId) {
@@ -1744,6 +1761,7 @@ export async function confirmCommand(
       run: toCommandRunModel(updated),
       output: result.output,
       message: summarizeCommandMessage('executed', intent, result.output),
+      rateLimit: result.rateLimit,
     };
 
     if (run.sessionId) {

@@ -6,6 +6,7 @@ import { checkDbConnection } from '../db/index.js';
 import { env } from '../env.js';
 import { checkRedisConnection } from '../redis.js';
 import { logger } from '../logger.js';
+import { metricsContentType, renderMetrics } from '../metrics/ai-metrics.js';
 
 export const healthRouter: Router = ExpressRouter();
 
@@ -37,4 +38,9 @@ healthRouter.get('/health', async (_req, res) => {
       storage: storageOk ? 'ok' : 'error',
     },
   });
+});
+
+healthRouter.get('/metrics', (_req, res) => {
+  res.setHeader('Content-Type', metricsContentType);
+  res.status(200).send(renderMetrics());
 });

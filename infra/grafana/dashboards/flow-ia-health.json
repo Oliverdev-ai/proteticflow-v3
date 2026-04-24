@@ -1,0 +1,231 @@
+{
+  "id": null,
+  "uid": "flow-ia-health",
+  "title": "Flow IA Health",
+  "tags": [
+    "flow-ia",
+    "observability"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "editable": true,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "tenant",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(ai_tool_call_total, tenantId)",
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "refresh": 2
+      },
+      {
+        "name": "provider",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(ai_tool_call_total, provider)",
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "refresh": 2
+      },
+      {
+        "name": "tool",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(ai_tool_call_total, tool)",
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Tool Call Throughput",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (tenantId) (rate(ai_tool_call_total{tenantId=~\"$tenant\",tool=~\"$tool\",provider=~\"$provider\"}[5m]))",
+          "legendFormat": "tenant {{tenantId}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Error Rate (5m)",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(ai_tool_call_total{tenantId=~\"$tenant\",status=\"error\",tool=~\"$tool\",provider=~\"$provider\"}[5m])) / clamp_min(sum(rate(ai_tool_call_total{tenantId=~\"$tenant\",tool=~\"$tool\",provider=~\"$provider\"}[5m])), 1)",
+          "legendFormat": "error_rate"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Latency p50 / p95 / p99",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, provider) (rate(ai_latency_ms_bucket{provider=~\"$provider\"}[5m])))",
+          "legendFormat": "p50 {{provider}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, provider) (rate(ai_latency_ms_bucket{provider=~\"$provider\"}[5m])))",
+          "legendFormat": "p95 {{provider}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, provider) (rate(ai_latency_ms_bucket{provider=~\"$provider\"}[5m])))",
+          "legendFormat": "p99 {{provider}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Cost (USD) per Hour / Day",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(ai_cost_usd_total{tenantId=~\"$tenant\",provider=~\"$provider\"}[1h]))",
+          "legendFormat": "1h"
+        },
+        {
+          "expr": "sum(increase(ai_cost_usd_total{tenantId=~\"$tenant\",provider=~\"$provider\"}[1d]))",
+          "legendFormat": "1d"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "bargauge",
+      "title": "Top 10 Tenants by Volume",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (tenantId) (increase(ai_tool_call_total[1h])))",
+          "legendFormat": "{{tenantId}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "bargauge",
+      "title": "Top 10 Tools",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (tool) (increase(ai_tool_call_total{tenantId=~\"$tenant\",provider=~\"$provider\"}[1h])))",
+          "legendFormat": "{{tool}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Cache Hit Rate",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "avg by (provider) (ai_cache_hit_rate{provider=~\"$provider\"})",
+          "legendFormat": "{{provider}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "Provider Distribution",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (provider) (increase(ai_tool_call_total{tenantId=~\"$tenant\",provider=~\"$provider\"}[1h]))",
+          "legendFormat": "{{provider}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Rate Limit Hits by Plan",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (plan) (increase(ai_rate_limit_hit_total{tenantId=~\"$tenant\"}[1h]))",
+          "legendFormat": "{{plan}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Injection Attempts / Hour",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (tenantId) (increase(ai_injection_attempt_total{tenantId=~\"$tenant\"}[1h]))",
+          "legendFormat": "tenant {{tenantId}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "TTS Characters Billed",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (tenantId, voice) (increase(tts_characters_billed_total{tenantId=~\"$tenant\"}[1h]))",
+          "legendFormat": "tenant {{tenantId}} voice {{voice}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Tokens in/out by Provider",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (provider) (increase(ai_tool_call_total{tenantId=~\"$tenant\",provider=~\"$provider\"}[1h]))",
+          "legendFormat": "tool-calls proxy {{provider}}"
+        }
+      ]
+    }
+  ]
+}
