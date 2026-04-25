@@ -163,6 +163,7 @@ function AppContent() {
             <Route path="/suporte/chatbot-config" element={<ChatbotConfigPage />} />
             <Route path="/suporte/sugestoes" element={<SupportSuggestionsPage />} />
             <Route path="/configuracoes" element={<SettingsPage />} />
+            <Route path="/configuracoes/preferencias" element={<SettingsPage />} />
             <Route path="/auditoria" element={<AuditPage />} />
           </Route>
 

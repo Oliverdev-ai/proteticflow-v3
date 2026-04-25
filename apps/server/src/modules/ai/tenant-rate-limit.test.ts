@@ -7,6 +7,7 @@ describe('ai tenant rate limit', () => {
     __testOnly.reset();
     delete process.env.AI_RATE_LIMIT_LLM_PER_MIN;
     delete process.env.AI_RATE_LIMIT_STT_PER_MIN;
+    delete process.env.AI_RATE_LIMIT_TTS_PER_MIN;
   });
 
   it('aplica limite por tenant no escopo llm', () => {
@@ -20,14 +21,18 @@ describe('ai tenant rate limit', () => {
   it('mantem contadores isolados por tenant e escopo', () => {
     process.env.AI_RATE_LIMIT_LLM_PER_MIN = '1';
     process.env.AI_RATE_LIMIT_STT_PER_MIN = '1';
+    process.env.AI_RATE_LIMIT_TTS_PER_MIN = '1';
 
     assertTenantRateLimit(21, 'llm');
     assertTenantRateLimit(22, 'llm');
     assertTenantRateLimit(21, 'stt');
     assertTenantRateLimit(22, 'stt');
+    assertTenantRateLimit(21, 'tts');
+    assertTenantRateLimit(22, 'tts');
 
     expect(() => assertTenantRateLimit(21, 'llm')).toThrowError(TRPCError);
     expect(() => assertTenantRateLimit(22, 'stt')).toThrowError(TRPCError);
+    expect(() => assertTenantRateLimit(21, 'tts')).toThrowError(TRPCError);
   });
 });
 

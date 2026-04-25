@@ -57,7 +57,7 @@ describe('ai prompts e fallback', () => {
     const last = chunks[chunks.length - 1];
 
     expect(first?.type).toBe('delta');
-    expect(first && 'text' in first ? first.text : '').toContain('chave da Anthropic');
+    expect(first && 'text' in first ? first.text : '').toContain('configure GEMINI_API_KEY ou ANTHROPIC_API_KEY');
     expect(last?.type).toBe('done');
   });
 });

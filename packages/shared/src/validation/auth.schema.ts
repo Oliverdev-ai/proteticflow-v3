@@ -41,6 +41,9 @@ export const changePasswordSchema = z.object({
 export const updateProfileSchema = z.object({
   name: z.string().min(2).optional(),
   phone: z.string().max(32).optional(),
+  aiVoiceEnabled: z.boolean().optional(),
+  aiVoiceGender: z.enum(['female', 'male']).optional(),
+  aiVoiceSpeed: z.number().min(0.25).max(4).optional(),
   // avatarUrl será setado via upload, não via este schema
 });
 

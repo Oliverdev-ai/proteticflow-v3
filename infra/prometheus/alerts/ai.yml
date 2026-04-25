@@ -1,0 +1,53 @@
+groups:
+  - name: ai_flow_alerts
+    rules:
+      - alert: AiCostPerTenantExceeded
+        expr: |
+          sum by (tenantId) (increase(ai_cost_usd_total[30d])) > 100
+        for: 5m
+        labels:
+          severity: warning
+          channel: ai-ops
+        annotations:
+          summary: Tenant {{ $labels.tenantId }} exceeded $100/month in AI
+
+      - alert: AiErrorRateHigh
+        expr: |
+          sum(rate(ai_tool_call_total{status="error"}[5m])) /
+          sum(rate(ai_tool_call_total[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: critical
+          channel: ai-ops
+        annotations:
+          summary: AI error rate > 5% for 10min
+
+      - alert: AiLatencyP95High
+        expr: |
+          histogram_quantile(0.95, rate(ai_latency_ms_bucket[5m])) > 2000
+        for: 10m
+        labels:
+          severity: warning
+          channel: ai-ops
+        annotations:
+          summary: AI p95 latency > 2s
+
+      - alert: AiProviderFailoverSustained
+        expr: |
+          rate(ai_provider_failover_total[5m]) > 0
+        for: 15m
+        labels:
+          severity: critical
+          channel: ai-ops
+        annotations:
+          summary: Continuous provider failover - primary degraded
+
+      - alert: AiInjectionSpike
+        expr: |
+          sum by (tenantId) (rate(ai_injection_attempt_total[1h])) > 10
+        for: 5m
+        labels:
+          severity: critical
+          channel: ai-ops
+        annotations:
+          summary: Tenant {{ $labels.tenantId }} with > 10 injection attempts/h - potential abuse

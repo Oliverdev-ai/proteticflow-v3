@@ -14,6 +14,9 @@ import { portalTokenCleanup } from '../modules/portal/tasks.js';
 import { processExpiredTrials, resetMonthlyJobCounter } from '../modules/licensing/service.js';
 import { trialExpiringNotifications } from './trial-expiring.js';
 import { logger } from '../logger.js';
+import { cleanupIdempotencyKeys } from '../jobs/cleanup-idempotency.js';
+import { cleanupAiMemory } from '../jobs/cleanup-ai-memory.js';
+import { startFlowQueueWorkers } from '../modules/jobs-queue/worker.js';
 
 export function startCronJobs() {
   // 07.04: Fechamento automático — dia 1 de cada mês às 6h
@@ -44,6 +47,18 @@ export function startCronJobs() {
   cron.schedule('0 3 * * *', async () => {
     logger.info({ action: 'cron.portal_token_cleanup.start' }, 'Iniciando cleanup de tokens do portal');
     await portalTokenCleanup();
+  });
+
+  // F4: Cleanup de idempotency keys da IA (retencao 90 dias) - diario as 03:00
+  cron.schedule('0 3 * * *', async () => {
+    logger.info({ action: 'cron.ai.idempotency_cleanup.start' }, 'Iniciando cleanup de idempotency keys');
+    await cleanupIdempotencyKeys();
+  });
+
+  // F7: Cleanup de memoria IA expirada - diario as 03:10
+  cron.schedule('10 3 * * *', async () => {
+    logger.info({ action: 'cron.ai.memory_cleanup.start' }, 'Iniciando cleanup de memoria IA expirada');
+    await cleanupAiMemory();
   });
 
   // 22.xx AI: previsao de receita - diario as 04h
@@ -92,6 +107,13 @@ export function startCronJobs() {
   cron.schedule('5 0 1 * *', async () => {
     logger.info({ action: 'cron.licensing.jobs_counter_reset.start' }, 'Resetando contador mensal de jobs');
     await resetMonthlyJobCounter();
+  });
+
+  startFlowQueueWorkers().catch((err) => {
+    logger.error(
+      { err, action: 'jobs_queue.bootstrap.error' },
+      'Falha ao iniciar workers do motor proativo',
+    );
   });
 
   logger.info('Cron jobs registrados');

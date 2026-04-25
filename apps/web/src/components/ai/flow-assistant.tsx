@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Role } from '@proteticflow/shared';
 import { trpc } from '../../lib/trpc';
+import { useAuth } from '../../hooks/use-auth';
+import { AudioPlayer } from './audio-player';
+import { ClarificationChips } from './clarification-chips';
 import { FlowActionConfirmation } from './flow-action-confirmation';
 import { FlowQuickActions } from './flow-quick-actions';
 import { FlowTranscriptPreview } from './flow-transcript-preview';
@@ -13,6 +16,37 @@ type CommandRunView = {
   createdAt: string;
 };
 
+type DisambiguationStep = {
+  type: 'disambiguate';
+  field: string;
+  options: Array<{ id: number; label: string; detail?: string }>;
+};
+
+type FillMissingStep = {
+  type: 'fill_missing';
+  fields: Array<{ name: string; label: string; type: string; required: boolean }>;
+};
+
+type ReviewStep = {
+  type: 'review';
+  preview: {
+    title: string;
+    summary: string;
+    details: Array<{ label: string; value: string }>;
+  };
+};
+
+type ConfirmStep = {
+  type: 'confirm';
+  warning: string;
+  action: string;
+  preview?: {
+    title: string;
+    summary: string;
+    details: Array<{ label: string; value: string }>;
+  };
+};
+
 type CommandResponse = {
   status: 'executed' | 'awaiting_confirmation' | 'ambiguous' | 'missing_fields' | 'blocked' | 'no_intent' | 'error';
   message: string;
@@ -22,34 +56,7 @@ type CommandResponse = {
     summary: string;
     details: Array<{ label: string; value: string }>;
   };
-  confirmationStep?:
-    | {
-      type: 'disambiguate';
-      field: string;
-      options: Array<{ id: number; label: string; detail?: string }>;
-    }
-    | {
-      type: 'fill_missing';
-      fields: Array<{ name: string; label: string; type: string; required: boolean }>;
-    }
-    | {
-      type: 'review';
-      preview: {
-        title: string;
-        summary: string;
-        details: Array<{ label: string; value: string }>;
-      };
-    }
-    | {
-      type: 'confirm';
-      warning: string;
-      action: string;
-      preview?: {
-        title: string;
-        summary: string;
-        details: Array<{ label: string; value: string }>;
-      };
-    };
+  confirmationStep?: DisambiguationStep | FillMissingStep | ReviewStep | ConfirmStep;
   missingFields?: string[];
   suggestedIntents?: string[];
 };
@@ -62,10 +69,61 @@ type FlowAssistantProps = {
   onCommandResolved?: () => Promise<void> | void;
 };
 
+const VOICE_CLARIFICATION_TIMEOUT_MS = 15_000;
+
 function formatRunDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '-';
   return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function normalizeText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function mapOrdinalIndex(text: string): number | null {
+  const normalized = normalizeText(text);
+  if (normalized.includes('primeiro') || /\b1\b/.test(normalized)) return 0;
+  if (normalized.includes('segundo') || /\b2\b/.test(normalized)) return 1;
+  if (normalized.includes('terceiro') || /\b3\b/.test(normalized)) return 2;
+  if (normalized.includes('quarto') || /\b4\b/.test(normalized)) return 3;
+  return null;
+}
+
+function resolveClarificationOption(step: DisambiguationStep, transcript: string): { id: number } | null {
+  const normalizedTranscript = normalizeText(transcript);
+  if (normalizedTranscript.length === 0) return null;
+
+  const ordinalIndex = mapOrdinalIndex(normalizedTranscript);
+  if (ordinalIndex !== null && step.options[ordinalIndex]) {
+    return { id: step.options[ordinalIndex]!.id };
+  }
+
+  const byLabel = step.options.find((option) => {
+    const normalizedLabel = normalizeText(option.label);
+    return normalizedLabel.includes(normalizedTranscript) || normalizedTranscript.includes(normalizedLabel);
+  });
+
+  if (byLabel) {
+    return { id: byLabel.id };
+  }
+
+  const tokens = normalizedTranscript
+    .split(/\s+/)
+    .filter((token) => token.length >= 3);
+
+  for (const token of tokens) {
+    const match = step.options.find((option) => normalizeText(option.label).includes(token));
+    if (match) {
+      return { id: match.id };
+    }
+  }
+
+  return null;
 }
 
 export function FlowAssistant({
@@ -75,21 +133,30 @@ export function FlowAssistant({
   onEnsureSession,
   onCommandResolved,
 }: FlowAssistantProps) {
+  const { user } = useAuth();
   const [lastResponse, setLastResponse] = useState<CommandResponse | null>(null);
   const [commandInput, setCommandInput] = useState('');
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [transcriptText, setTranscriptText] = useState('');
   const [transcriptConfidence, setTranscriptConfidence] = useState<number | undefined>(undefined);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Array<{ audioBase64: string; text: string }>>([]);
+  const [clarificationVoiceDeadline, setClarificationVoiceDeadline] = useState<number | null>(null);
+  const lastSpokenKeyRef = useRef<string | null>(null);
 
   const executeCommandMutation = trpc.ai.executeCommand.useMutation();
   const resolveCommandStepMutation = trpc.ai.resolveCommandStep.useMutation();
   const confirmCommandMutation = trpc.ai.confirmCommand.useMutation();
   const cancelCommandMutation = trpc.ai.cancelCommand.useMutation();
+  const ttsMutation = trpc.ai.tts.useMutation();
   const listRunsQuery = trpc.ai.listCommandRuns.useQuery(
     { sessionId: sessionId ?? undefined, limit: 8 },
     { enabled: Boolean(sessionId) },
   );
+
+  const voiceEnabled = user?.aiVoiceEnabled ?? true;
+  const voiceGender = user?.aiVoiceGender === 'male' ? 'male' : 'female';
+  const voiceSpeed = typeof user?.aiVoiceSpeed === 'number' ? user.aiVoiceSpeed : 1;
 
   const isBusy = disabled
     || voiceBusy
@@ -98,11 +165,60 @@ export function FlowAssistant({
     || confirmCommandMutation.isPending
     || cancelCommandMutation.isPending;
 
+  const disambiguationStep = lastResponse?.confirmationStep?.type === 'disambiguate'
+    ? lastResponse.confirmationStep
+    : null;
+
+  const isClarificationVoiceWindowOpen = clarificationVoiceDeadline !== null
+    && clarificationVoiceDeadline > Date.now();
+
   async function refresh() {
     await listRunsQuery.refetch();
     if (onCommandResolved) {
       await onCommandResolved();
     }
+  }
+
+  function beginClarificationWindow(response: CommandResponse) {
+    if (response.status === 'ambiguous' && response.confirmationStep?.type === 'disambiguate') {
+      setClarificationVoiceDeadline(Date.now() + VOICE_CLARIFICATION_TIMEOUT_MS);
+      return;
+    }
+    setClarificationVoiceDeadline(null);
+  }
+
+  async function enqueueTtsFromResponse(response: CommandResponse) {
+    if (!voiceEnabled) return;
+    if (response.message.trim().length === 0) return;
+
+    const spokenKey = `${response.run.id}:${response.status}:${response.message}`;
+    if (lastSpokenKeyRef.current === spokenKey) return;
+    lastSpokenKeyRef.current = spokenKey;
+
+    try {
+      const synthesized = await ttsMutation.mutateAsync({
+        text: response.message,
+        voice: voiceGender,
+        speakingRate: voiceSpeed,
+        ssml: false,
+      });
+
+      setAudioChunks((current) => [...current, {
+        audioBase64: synthesized.audioBase64,
+        text: response.message,
+      }].slice(-24));
+      setVoiceError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao gerar audio da resposta.';
+      setVoiceError(message);
+    }
+  }
+
+  async function applyResponse(response: CommandResponse) {
+    setLastResponse(response);
+    beginClarificationWindow(response);
+    await refresh();
+    await enqueueTtsFromResponse(response);
   }
 
   async function runCommand(content: string, channel: 'text' | 'voice' = 'text') {
@@ -116,13 +232,32 @@ export function FlowAssistant({
       channel,
     });
 
-    setLastResponse(response as CommandResponse);
-    await refresh();
+    await applyResponse(response as CommandResponse);
   }
 
   async function handleSendTranscript() {
     const text = transcriptText.trim();
     if (!text) return;
+
+    if (lastResponse?.status === 'ambiguous' && disambiguationStep) {
+      if (!isClarificationVoiceWindowOpen) {
+        setVoiceError('Tempo da resposta por voz expirou. Selecione um chip para continuar.');
+        return;
+      }
+
+      const resolved = resolveClarificationOption(disambiguationStep, text);
+      if (resolved) {
+        const response = await resolveCommandStepMutation.mutateAsync({
+          commandRunId: lastResponse.run.id,
+          values: { [disambiguationStep.field]: resolved.id },
+        });
+        await applyResponse(response as CommandResponse);
+        setTranscriptText('');
+        setTranscriptConfidence(undefined);
+        return;
+      }
+    }
+
     await runCommand(text, 'voice');
     setTranscriptText('');
     setTranscriptConfidence(undefined);
@@ -137,8 +272,7 @@ export function FlowAssistant({
 
   async function handleConfirm(runId: number) {
     const response = await confirmCommandMutation.mutateAsync({ commandRunId: runId });
-    setLastResponse(response as CommandResponse);
-    await refresh();
+    await applyResponse(response as CommandResponse);
   }
 
   async function handleResolveStep(runId: number, values: Record<string, unknown>) {
@@ -146,8 +280,7 @@ export function FlowAssistant({
       commandRunId: runId,
       values,
     });
-    setLastResponse(response as CommandResponse);
-    await refresh();
+    await applyResponse(response as CommandResponse);
   }
 
   async function handleCancel(runId: number) {
@@ -162,6 +295,7 @@ export function FlowAssistant({
         createdAt: new Date().toISOString(),
       },
     });
+    setClarificationVoiceDeadline(null);
     await refresh();
   }
 
@@ -170,6 +304,10 @@ export function FlowAssistant({
   return (
     <div className="space-y-3">
       <FlowQuickActions disabled={isBusy} onAction={runCommand} />
+
+      {audioChunks.length > 0 ? (
+        <AudioPlayer audioChunks={audioChunks} />
+      ) : null}
 
       {transcriptText ? (
         <FlowTranscriptPreview
@@ -240,7 +378,30 @@ export function FlowAssistant({
         </div>
       ) : null}
 
-      {lastResponse && ['awaiting_confirmation', 'ambiguous', 'missing_fields'].includes(lastResponse.status) ? (
+      {lastResponse?.status === 'ambiguous' && disambiguationStep ? (
+        <div className="space-y-2">
+          <ClarificationChips
+            candidates={disambiguationStep.options}
+            disabled={isBusy}
+            onSelect={(option) => {
+              void handleResolveStep(lastResponse.run.id, {
+                [disambiguationStep.field]: option.id,
+              });
+            }}
+          />
+          {isClarificationVoiceWindowOpen ? (
+            <p className="text-[11px] text-zinc-400">
+              Responda por voz em ate 15s (ex: "o segundo" ou "Silva"), ou clique em um chip.
+            </p>
+          ) : (
+            <p className="text-[11px] text-zinc-500">
+              Janela de resposta por voz encerrada. Continue pelos chips.
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {lastResponse && ['awaiting_confirmation', 'missing_fields'].includes(lastResponse.status) ? (
         <FlowActionConfirmation
           runId={lastResponse.run.id}
           command={lastResponse.run.intent ?? 'comando'}

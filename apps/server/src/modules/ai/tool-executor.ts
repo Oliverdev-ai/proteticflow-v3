@@ -1,12 +1,24 @@
 import { TRPCError } from '@trpc/server';
 import {
+  agendaTodaySchema,
   createClientSchema,
   createEventSchema,
   createPurchaseSchema,
   createReworkSchema,
+  deliveriesRouteByDaySchema,
+  employeesProductivitySchema,
+  financialExpensesToDateSchema,
+  financialQuarterlyReportSchema,
+  financialRevenueToDateSchema,
+  jobsOverdueSchema,
+  jobsStatusUpdateSchema,
   listArSchema,
+  muteAlertsSchema,
   listClientsSchema,
   listJobsSchema,
+  messagesDraftToClientSchema,
+  stockAlertsSchema,
+  stockCheckMaterialSchema,
   suspendJobSchema,
   toggleUrgentSchema,
   type Role,
@@ -17,6 +29,12 @@ import { abcCurveInputSchema } from '../reports/abc-curve.validators.js';
 import { generateAbcCurveReport } from '../reports/abc-curve.service.js';
 import { getDashboardSummary } from '../dashboard/service.js';
 import { parseNaturalDate } from './resolvers.js';
+import {
+  countMemoryKeys,
+  deleteMemoryKey,
+  MAX_MEMORY_KEYS,
+  setMemory,
+} from './memory.service.js';
 import {
   FLOW_COMMANDS,
   checkCommandAccess,
@@ -32,12 +50,28 @@ import * as jobService from '../jobs/service.js';
 import * as purchaseService from '../purchases/service.js';
 import {
   buildFinancialCloseAccountPreviewStep,
+  executeFinancialExpensesToDate,
   buildFinancialMonthlyClosingPreviewStep,
   executeFinancialCloseAccount,
   executeFinancialMonthlyClosing,
+  executeFinancialQuarterlyReport,
+  executeFinancialRevenueToDate,
   financialCloseAccountToolSchema,
   financialMonthlyClosingToolSchema,
 } from './tools/financial-tools.js';
+import { executeDeliveriesRouteByDay } from './tools/deliveries-tools.js';
+import { executeEmployeesProductivity } from './tools/employees-tools.js';
+import { executeAgendaToday } from './tools/agenda-tools.js';
+import {
+  buildJobsStatusUpdatePreviewStep,
+  executeJobsOverdue,
+  executeJobsStatusUpdate,
+} from './tools/jobs-tools.js';
+import {
+  buildMessagesDraftToClientPreviewStep,
+  executeMessagesMuteAlerts,
+  executeMessagesDraftToClient,
+} from './tools/messages-tools.js';
 import {
   buildPayrollGeneratePreviewStep,
   executePayrollGenerate,
@@ -48,6 +82,17 @@ import {
   executePurchaseReceive,
   purchasesReceiveToolSchema,
 } from './tools/purchase-tools.js';
+import {
+  executeStockAlerts,
+  executeStockCheckMaterial,
+} from './tools/stock-tools.js';
+import {
+  observeAiLatency,
+  recordAiToolCall,
+  setAiCacheHitRate,
+} from '../../metrics/ai-metrics.js';
+import { checkToolRateLimit, type ToolRateLimitState } from './rate-limit.js';
+import { sanitizeToolInput } from './security/sanitize.js';
 
 const jobsGetSchema = z.object({
   jobId: z.coerce.number().int().positive(),
@@ -113,6 +158,15 @@ const accountsReceivableSchema = listArSchema.partial().extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+const memoryRememberSchema = z.object({
+  key: z.string().trim().min(2).max(100).regex(/^[a-z0-9_]+$/),
+  value: z.string().trim().min(1).max(500),
+});
+
+const memoryForgetSchema = z.object({
+  key: z.string().trim().min(2).max(100).regex(/^[a-z0-9_]+$/),
+});
+
 export type ToolContext = {
   tenantId: number;
   userId: number;
@@ -173,12 +227,14 @@ export type ToolExecutionResult =
     preview: CommandPreview;
     step: ConfirmationStep;
     validatedInput: unknown;
+    rateLimit: null;
   }
   | {
     status: 'success';
     riskLevel: RiskLevel;
     output: unknown;
     validatedInput: unknown;
+    rateLimit: ToolRateLimitState | null;
   };
 
 function isoTodayRange(baseDate?: string): { start: string; end: string } {
@@ -242,7 +298,7 @@ function buildDefaultConfirmationStep(
   };
 }
 
-const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
+export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
   'jobs.listPending': {
     name: 'jobs.listPending',
     inputSchema: jobsListPendingSchema,
@@ -279,6 +335,24 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
         dateTo: range.end,
       });
     },
+  },
+  'deliveries.routeByDay': {
+    name: 'deliveries.routeByDay',
+    inputSchema: deliveriesRouteByDaySchema,
+    execute: async (ctx, input) =>
+      executeDeliveriesRouteByDay(ctx, deliveriesRouteByDaySchema.parse(input)),
+  },
+  'stock.checkMaterial': {
+    name: 'stock.checkMaterial',
+    inputSchema: stockCheckMaterialSchema,
+    execute: async (ctx, input) =>
+      executeStockCheckMaterial(ctx, stockCheckMaterialSchema.parse(input)),
+  },
+  'stock.alerts': {
+    name: 'stock.alerts',
+    inputSchema: stockAlertsSchema,
+    execute: async (ctx, input) =>
+      executeStockAlerts(ctx, stockAlertsSchema.parse(input)),
   },
   'clients.search': {
     name: 'clients.search',
@@ -355,6 +429,12 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
         monthFlowCents: summary.monthFlowCents,
       };
     },
+  },
+  'employees.productivity': {
+    name: 'employees.productivity',
+    inputSchema: employeesProductivitySchema,
+    execute: async (ctx, input) =>
+      executeEmployeesProductivity(ctx, employeesProductivitySchema.parse(input)),
   },
   'jobs.createDraft': {
     name: 'jobs.createDraft',
@@ -433,6 +513,62 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
       ctx.userId,
     ),
   },
+  'agenda.today': {
+    name: 'agenda.today',
+    inputSchema: agendaTodaySchema,
+    execute: async (ctx, input) =>
+      executeAgendaToday(ctx, agendaTodaySchema.parse(input)),
+  },
+  'jobs.overdue': {
+    name: 'jobs.overdue',
+    inputSchema: jobsOverdueSchema,
+    execute: async (ctx, input) =>
+      executeJobsOverdue(ctx, jobsOverdueSchema.parse(input)),
+  },
+  'jobs.statusUpdate': {
+    name: 'jobs.statusUpdate',
+    inputSchema: jobsStatusUpdateSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildJobsStatusUpdatePreviewStep(ctx, jobsStatusUpdateSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executeJobsStatusUpdate(ctx, jobsStatusUpdateSchema.parse(input)),
+  },
+  'messages.draftToClient': {
+    name: 'messages.draftToClient',
+    inputSchema: messagesDraftToClientSchema,
+    buildPreviewStep: async (ctx, input) =>
+      buildMessagesDraftToClientPreviewStep(ctx, messagesDraftToClientSchema.parse(input)),
+    execute: async (ctx, input) =>
+      executeMessagesDraftToClient(ctx, messagesDraftToClientSchema.parse(input)),
+  },
+  'messages.muteAlerts': {
+    name: 'messages.muteAlerts',
+    inputSchema: muteAlertsSchema,
+    execute: async (ctx, input) =>
+      executeMessagesMuteAlerts(ctx, muteAlertsSchema.parse(input)),
+  },
+  'memory.remember': {
+    name: 'memory.remember',
+    inputSchema: memoryRememberSchema,
+    execute: async (ctx, input) => {
+      const parsed = memoryRememberSchema.parse(input);
+      const count = await countMemoryKeys(ctx.tenantId, ctx.userId);
+      if (count >= MAX_MEMORY_KEYS) {
+        return { success: false, reason: 'limite de memoria atingido' };
+      }
+      await setMemory(ctx.tenantId, ctx.userId, parsed.key, parsed.value, 'assistant');
+      return { success: true };
+    },
+  },
+  'memory.forget': {
+    name: 'memory.forget',
+    inputSchema: memoryForgetSchema,
+    execute: async (ctx, input) => {
+      const parsed = memoryForgetSchema.parse(input);
+      await deleteMemoryKey(ctx.tenantId, ctx.userId, parsed.key);
+      return { success: true };
+    },
+  },
   'clients.createDraft': {
     name: 'clients.createDraft',
     inputSchema: clientsCreateDraftSchema,
@@ -467,6 +603,24 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
     execute: async (ctx, input) =>
       executeFinancialMonthlyClosing(ctx, financialMonthlyClosingToolSchema.parse(input)),
   },
+  'financial.revenueToDate': {
+    name: 'financial.revenueToDate',
+    inputSchema: financialRevenueToDateSchema,
+    execute: async (ctx, input) =>
+      executeFinancialRevenueToDate(ctx, financialRevenueToDateSchema.parse(input)),
+  },
+  'financial.expensesToDate': {
+    name: 'financial.expensesToDate',
+    inputSchema: financialExpensesToDateSchema,
+    execute: async (ctx, input) =>
+      executeFinancialExpensesToDate(ctx, financialExpensesToDateSchema.parse(input)),
+  },
+  'financial.quarterlyReport': {
+    name: 'financial.quarterlyReport',
+    inputSchema: financialQuarterlyReportSchema,
+    execute: async (ctx, input) =>
+      executeFinancialQuarterlyReport(ctx, financialQuarterlyReportSchema.parse(input)),
+  },
   'payroll.generate': {
     name: 'payroll.generate',
     inputSchema: payrollGenerateToolSchema,
@@ -485,7 +639,15 @@ const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
   },
 };
 
-type ExecuteToolOptions = { confirmed?: boolean };
+export type ExecuteToolOptions = {
+  confirmed?: boolean;
+  source?: 'manual' | 'llm' | 'resolve_step' | 'confirm';
+  idempotencyKey?: string;
+  providerUsed?: string;
+  modelUsed?: string;
+  costCents?: number;
+  cached?: boolean;
+};
 
 export async function executeTool(
   ctx: ToolContext,
@@ -503,37 +665,83 @@ export async function executeTool(
   }
 
   const validatedInput = tool.inputSchema.parse(rawInput);
+  const sanitized = sanitizeToolInput(command, validatedInput, {
+    tenantId: ctx.tenantId,
+    userId: ctx.userId,
+  });
+  const safeInput = tool.inputSchema.parse(sanitized.input);
   const riskLevel = FLOW_COMMANDS[command].risk;
   const action = resolveAction(riskLevel);
 
   if (!options?.confirmed && action !== 'execute') {
     const previewBuild = tool.buildPreviewStep
-      ? await tool.buildPreviewStep(ctx, validatedInput, riskLevel)
-      : buildDefaultConfirmationStep(command, validatedInput, riskLevel);
+      ? await tool.buildPreviewStep(ctx, safeInput, riskLevel)
+      : buildDefaultConfirmationStep(command, safeInput, riskLevel);
 
-    const nextInput = previewBuild.resolvedInput ?? validatedInput;
+    const nextInput = previewBuild.resolvedInput ?? safeInput;
     return {
       status: 'awaiting_confirmation',
       riskLevel,
       preview: previewBuild.preview,
       step: previewBuild.step,
       validatedInput: nextInput,
+      rateLimit: null,
     };
   }
 
-  const output = await tool.execute(ctx, validatedInput);
-  return {
-    status: 'success',
-    riskLevel,
-    output,
-    validatedInput,
-  };
+  const source = options?.source ?? 'manual';
+  const provider = options?.providerUsed ?? 'internal';
+  const startedAt = Date.now();
+
+  try {
+    const rateLimit = await checkToolRateLimit(ctx.tenantId, riskLevel);
+    const output = await tool.execute(ctx, safeInput);
+
+    recordAiToolCall({
+      tenantId: ctx.tenantId,
+      tool: command,
+      status: 'success',
+      source,
+      provider,
+    });
+
+    if (options?.cached !== undefined) {
+      setAiCacheHitRate(provider, options.cached);
+    }
+
+    return {
+      status: 'success',
+      riskLevel,
+      output,
+      validatedInput: safeInput,
+      rateLimit,
+    };
+  } catch (error) {
+    recordAiToolCall({
+      tenantId: ctx.tenantId,
+      tool: command,
+      status: 'error',
+      source,
+      provider,
+    });
+    throw error;
+  } finally {
+    observeAiLatency({
+      provider,
+      source,
+      latencyMs: Date.now() - startedAt,
+    });
+  }
 }
 
 export async function confirmAndExecute(
   ctx: ToolContext,
   command: FlowCommandName,
   rawInput: unknown,
+  options?: Omit<ExecuteToolOptions, 'confirmed'>,
 ): Promise<ToolExecutionResult> {
-  return executeTool(ctx, command, rawInput, { confirmed: true });
+  return executeTool(ctx, command, rawInput, {
+    ...(options ?? {}),
+    confirmed: true,
+  });
 }

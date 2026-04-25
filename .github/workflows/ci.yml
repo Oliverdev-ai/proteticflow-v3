@@ -162,7 +162,7 @@ jobs:
           name: build-output
           path: .
       - name: Run Lighthouse CI
-        run: pnpm --filter web lighthouse
+        run: pnpm --filter @proteticflow/web lighthouse
       - name: Upload Lighthouse Report
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,0 +1,34 @@
+groups:
+  - name: flow_proactive_alerts
+    rules:
+      - alert: FlowQueueBacklog
+        expr: |
+          sum(flow_queue_depth) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          channel: ai-ops
+        annotations:
+          summary: Backlog do motor proativo acima de 1000 jobs
+
+      - alert: FlowChannelFailureRateHigh
+        expr: |
+          sum(rate(flow_channel_send_total{status="failed"}[10m])) /
+          clamp_min(sum(rate(flow_channel_send_total[10m])), 0.001) > 0.10
+        for: 10m
+        labels:
+          severity: critical
+          channel: ai-ops
+        annotations:
+          summary: Taxa de falha de canal acima de 10% nos últimos 10 minutos
+
+      - alert: FlowBriefingSkippedHigh
+        expr: |
+          sum(rate(flow_briefing_sent_total{status="skipped"}[1h])) /
+          clamp_min(sum(rate(flow_briefing_sent_total[1h])), 0.001) > 0.05
+        for: 15m
+        labels:
+          severity: warning
+          channel: ai-ops
+        annotations:
+          summary: Briefings ignorados acima de 5% na última hora

@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server';
 import { logger } from '../../logger.js';
 
-export type AiRateLimitScope = 'llm' | 'stt';
+export type AiRateLimitScope = 'llm' | 'stt' | 'tts';
 
 type Bucket = {
   count: number;
@@ -12,11 +12,13 @@ const WINDOW_MS = 60_000;
 const DEFAULT_LIMITS: Record<AiRateLimitScope, number> = {
   llm: 30,
   stt: 20,
+  tts: 20,
 };
 
 const scopeEnvMap: Record<AiRateLimitScope, string> = {
   llm: 'AI_RATE_LIMIT_LLM_PER_MIN',
   stt: 'AI_RATE_LIMIT_STT_PER_MIN',
+  tts: 'AI_RATE_LIMIT_TTS_PER_MIN',
 };
 
 const buckets = new Map<string, Bucket>();

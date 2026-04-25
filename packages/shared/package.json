@@ -13,13 +13,13 @@
     "lint": "eslint src/"
   },
   "peerDependencies": {
-    "drizzle-orm": ">=0.36.0"
+    "drizzle-orm": ">=0.45.2"
   },
   "dependencies": {
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "drizzle-orm": "^0.36.0",
+    "drizzle-orm": "^0.45.2",
     "typescript": "*",
     "vitest": "*"
   }

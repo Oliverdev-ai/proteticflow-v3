@@ -1,14 +1,18 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { adminProcedure, router, tenantProcedure } from '../../trpc/trpc.js';
 import {
   deletePushSubscriptionSchema,
   listNotificationsSchema,
   markNotificationsReadSchema,
+  muteAlertsSchema,
   savePushSubscriptionSchema,
+  updateUserPreferencesSchema,
   upsertNotificationPreferenceSchema,
 } from '@proteticflow/shared';
 import { getPublicVapidKey } from './push.js';
 import * as notificationService from './service.js';
+import * as proactivePreferencesService from '../proactive/preferences.service.js';
 
 export const notificationRouter = router({
   list: tenantProcedure
@@ -27,6 +31,25 @@ export const notificationRouter = router({
 
   listPreferences: tenantProcedure
     .query(({ ctx }) => notificationService.listPreferences(ctx.tenantId!, ctx.user!.id)),
+
+  getUserPreferences: tenantProcedure
+    .query(({ ctx }) => proactivePreferencesService.getUserPreferences(ctx.tenantId!, ctx.user!.id)),
+
+  updateUserPreferences: tenantProcedure
+    .input(updateUserPreferencesSchema)
+    .mutation(({ ctx, input }) =>
+      proactivePreferencesService.updateUserPreferences(ctx.tenantId!, ctx.user!.id, input)),
+
+  muteAlerts: tenantProcedure
+    .input(muteAlertsSchema)
+    .mutation(({ ctx, input }) => {
+      const targetUserId = input.userId ?? ctx.user!.id;
+      const canMuteOtherUsers = ctx.user!.role === 'superadmin' || ctx.user!.role === 'gerente';
+      if (targetUserId !== ctx.user!.id && !canMuteOtherUsers) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissao para alterar preferencias de outro usuario' });
+      }
+      return proactivePreferencesService.muteAlerts(ctx.tenantId!, ctx.user!.id, input);
+    }),
 
   upsertPreference: tenantProcedure
     .input(upsertNotificationPreferenceSchema)

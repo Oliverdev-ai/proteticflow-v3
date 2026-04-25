@@ -21,6 +21,7 @@ export type PlanLimitsConfig = {
   labs: number | null;
   clients: number | null;
   jobsPerMonth: number | null;
+  whatsappPerMonth: number | null;
   users: number | null;
   priceTables: number | null;
   managerActionsPerMonth: number | null;
@@ -34,6 +35,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimitsConfig> = {
     labs: 1,
     clients: 10,
     jobsPerMonth: 10,
+    whatsappPerMonth: 0,
     users: 1,
     priceTables: 1,
     managerActionsPerMonth: 10,
@@ -52,6 +54,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimitsConfig> = {
     labs: 1,
     clients: 20,
     jobsPerMonth: 100,
+    whatsappPerMonth: 200,
     users: 3,
     priceTables: 2,
     managerActionsPerMonth: null,
@@ -70,6 +73,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimitsConfig> = {
     labs: 3,
     clients: 50,
     jobsPerMonth: 300,
+    whatsappPerMonth: 1000,
     users: 10,
     priceTables: 5,
     managerActionsPerMonth: null,
@@ -88,6 +92,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimitsConfig> = {
     labs: null,
     clients: null,
     jobsPerMonth: null,
+    whatsappPerMonth: null,
     users: null,
     priceTables: null,
     managerActionsPerMonth: null,
@@ -105,3 +110,49 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimitsConfig> = {
 
 export type LimitableFeature = 'labs' | 'clients' | 'jobsPerMonth' | 'users' | 'priceTables';
 export type GatedFeature = keyof PlanFeatureAccess;
+
+export type PlanAiProvider = 'gemini' | 'anthropic';
+
+export type PlanAiConfig = {
+  llmProvider: PlanAiProvider;
+  llmModel: string;
+  fallbackProvider: PlanAiProvider | null;
+  callsPerDay: number;
+  ttsEnabled: boolean;
+  allowProviderOverride: boolean;
+};
+
+export const PLAN_AI_CONFIG: Record<PlanTier, PlanAiConfig> = {
+  trial: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: null,
+    callsPerDay: 10,
+    ttsEnabled: true,
+    allowProviderOverride: false,
+  },
+  starter: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: null,
+    callsPerDay: 10,
+    ttsEnabled: false,
+    allowProviderOverride: false,
+  },
+  pro: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: null,
+    callsPerDay: 50,
+    ttsEnabled: true,
+    allowProviderOverride: false,
+  },
+  enterprise: {
+    llmProvider: 'gemini',
+    llmModel: 'gemini-2.5-flash',
+    fallbackProvider: 'anthropic',
+    callsPerDay: 100,
+    ttsEnabled: true,
+    allowProviderOverride: true,
+  },
+};

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import {
   aiFeatureFlagsSchema,
   archiveSessionSchema,
@@ -16,13 +17,18 @@ import {
   aiFullAdminProcedure,
   aiFullProcedure,
   aiProcedure,
+  tenantProcedure,
   router,
   voiceProcedure,
 } from '../../trpc/trpc.js';
 import * as aiService from './service.js';
 import { buildLabContext } from './context-builder.js';
 import { streamAiResponse } from './flow-engine.js';
+import { applyRateLimitHeaders, checkTtsRateLimit } from './rate-limit.js';
+import { assertTtsPlanEnabled, logTtsUsage, synthesize, type TtsVoice } from './tts.service.js';
 import { transcribeAudio } from './voice.service.js';
+import * as lgpdService from './lgpd.service.js';
+import { getUserPreferences, isWithinQuietHours } from '../proactive/preferences.service.js';
 
 const getSessionSchema = z.object({
   sessionId: z.number().int().positive(),
@@ -59,6 +65,26 @@ const transcribeSchema = z.object({
   durationMs: z.number().int().positive().max(60_000).optional(),
 });
 
+const ttsSchema = z.object({
+  text: z.string().min(1).max(5_000),
+  voice: z.enum(['female', 'male']).optional(),
+  speakingRate: z.number().min(0.25).max(4).optional(),
+  ssml: z.boolean().default(false),
+});
+
+async function assertAssistantOutOfQuietMode(tenantId: number, userId: number): Promise<void> {
+  const preferences = await getUserPreferences(tenantId, userId);
+  if (preferences.quietModeEnabled && isWithinQuietHours({
+    quietHoursStart: preferences.quietModeStart,
+    quietHoursEnd: preferences.quietModeEnd,
+  })) {
+    throw new TRPCError({
+      code: 'PRECONDITION_FAILED',
+      message: 'Assistente em quiet mode. Tente novamente mais tarde.',
+    });
+  }
+}
+
 export const aiRouter = router({
   createSession: aiProcedure
     .input(createSessionSchema)
@@ -79,6 +105,7 @@ export const aiRouter = router({
   sendMessage: aiProcedure
     .input(sendMessageSchema)
     .mutation(async ({ ctx, input }) => {
+      await assertAssistantOutOfQuietMode(ctx.tenantId!, ctx.user!.id);
       const history = await aiService.getRecentMessages(ctx.tenantId!, input.sessionId, ctx.user!.id, 10);
 
       await aiService.saveMessage(
@@ -99,6 +126,7 @@ export const aiRouter = router({
         input.content,
         history,
         ctx.user!.id,
+        input.sessionId,
       )) {
         if (chunk.type === 'delta') {
           assistantText += chunk.text;
@@ -128,18 +156,36 @@ export const aiRouter = router({
 
   executeCommand: aiProcedure
     .input(executeCommandSchema)
-    .mutation(({ ctx, input }) =>
-      aiService.executeCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+    .mutation(async ({ ctx, input }) => {
+      await assertAssistantOutOfQuietMode(ctx.tenantId!, ctx.user!.id);
+      const response = await aiService.executeCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input);
+      applyRateLimitHeaders(ctx.res, response.rateLimit);
+      return response;
+    }),
+
+  lgpd: router({
+    requestExport: tenantProcedure
+      .mutation(({ ctx }) => lgpdService.requestLgpdExport(ctx.tenantId!, ctx.user!.id)),
+
+    requestDelete: tenantProcedure
+      .mutation(({ ctx }) => lgpdService.requestLgpdDelete(ctx.tenantId!, ctx.user!.id)),
+  }),
 
   resolveCommandStep: aiProcedure
     .input(resolveCommandStepSchema)
-    .mutation(({ ctx, input }) =>
-      aiService.resolveCommandStep(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+    .mutation(async ({ ctx, input }) => {
+      const response = await aiService.resolveCommandStep(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input);
+      applyRateLimitHeaders(ctx.res, response.rateLimit);
+      return response;
+    }),
 
   confirmCommand: aiProcedure
     .input(confirmCommandSchema)
-    .mutation(({ ctx, input }) =>
-      aiService.confirmCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input)),
+    .mutation(async ({ ctx, input }) => {
+      const response = await aiService.confirmCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input);
+      applyRateLimitHeaders(ctx.res, response.rateLimit);
+      return response;
+    }),
 
   cancelCommand: aiProcedure
     .input(cancelCommandSchema)
@@ -161,6 +207,41 @@ export const aiRouter = router({
       };
 
       return transcribeAudio(payload);
+    }),
+
+  tts: voiceProcedure
+    .input(ttsSchema)
+    .mutation(async ({ ctx, input }) => {
+      const ttsRateLimit = await checkTtsRateLimit(ctx.tenantId!, ctx.user!.id);
+      applyRateLimitHeaders(ctx.res, ttsRateLimit);
+      await assertTtsPlanEnabled(ctx.tenantId!);
+
+      const synthesizePayload = {
+        text: input.text,
+        ssml: input.ssml,
+        charactersBilled: input.text.length,
+        ...(input.voice !== undefined ? { voice: input.voice } : {}),
+        ...(input.speakingRate !== undefined ? { speakingRate: input.speakingRate } : {}),
+      };
+
+      const result = await synthesize(synthesizePayload);
+
+      if (!result) {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message: 'TTS indisponivel: configure GCP_TTS_API_KEY neste ambiente.',
+        });
+      }
+
+      await logTtsUsage({
+        tenantId: ctx.tenantId!,
+        userId: ctx.user!.id,
+        charactersBilled: result.charactersBilled,
+        audioBytes: result.audioBytes,
+        voice: (input.voice ?? 'female') as TtsVoice,
+      });
+
+      return result;
     }),
 
   getLabContext: aiProcedure

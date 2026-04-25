@@ -204,6 +204,41 @@
                         "when":  1745190060000,
                         "tag":  "0029_notifications_enum",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  29,
+                        "version":  "7",
+                        "when":  1776902400000,
+                        "tag":  "0030_flow_ia_registry_unification",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  30,
+                        "version":  "7",
+                        "when":  1776999600000,
+                        "tag":  "0031_phase3_tts_voice_ux",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  31,
+                        "version":  "7",
+                        "when":  1777075200000,
+                        "tag":  "0032_phase5_proactive_motor",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  32,
+                        "version":  "7",
+                        "when":  1777161600000,
+                        "tag":  "0033_whatsapp_real_provider",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  33,
+                        "version":  "7",
+                        "when":  1777248000000,
+                        "tag":  "0034_phase7_memory_quiet_lgpd",
+                        "breakpoints":  true
                     }
                 ]
 }

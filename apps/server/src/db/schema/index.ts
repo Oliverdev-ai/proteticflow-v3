@@ -46,6 +46,9 @@ export * from './ai';
 // IA Avancada
 export * from './ai-advanced';
 
+// Memoria IA + LGPD
+export * from './ai-memory';
+
 // Suporte automatizado
 export * from './support';
 
@@ -63,3 +66,6 @@ export * from './os-blocks';
 
 // Timesheets
 export * from './timesheets';
+
+// Motor proativo (briefing + alertas dedup + preferencias)
+export * from './proactive';

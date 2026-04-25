@@ -11,6 +11,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
+    "session:check": "cmd /c scripts\\session-check.cmd",
     "local:setup": "docker compose -f docker/docker-compose.dev.yml up -d && tsx scripts/setup-local.ts",
     "local:up": "docker compose -f docker/docker-compose.dev.yml up -d && pnpm dev",
     "local:stop": "docker compose -f docker/docker-compose.dev.yml stop"
@@ -25,11 +26,12 @@
     "typescript": "^5.5.0"
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=22 <23",
     "pnpm": ">=9.0.0"
   },
   "pnpm": {
     "overrides": {
+      "basic-ftp": "^5.3.0",
       "path-to-regexp": "^8.4.0",
       "picomatch": "^4.0.4"
     }
