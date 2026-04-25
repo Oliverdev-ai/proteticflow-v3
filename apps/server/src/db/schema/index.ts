@@ -46,6 +46,9 @@ export * from './ai';
 // IA Avancada
 export * from './ai-advanced';
 
+// Memoria IA + LGPD
+export * from './ai-memory';
+
 // Suporte automatizado
 export * from './support';
 

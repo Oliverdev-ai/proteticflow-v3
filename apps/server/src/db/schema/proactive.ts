@@ -46,6 +46,9 @@ export const userPreferences = pgTable('user_preferences', {
   briefingTime: time('briefing_time', { withTimezone: false }).notNull().default('08:00'),
   quietHoursStart: time('quiet_hours_start', { withTimezone: false }).notNull().default('20:00'),
   quietHoursEnd: time('quiet_hours_end', { withTimezone: false }).notNull().default('07:00'),
+  quietModeEnabled: boolean('quiet_mode_enabled').notNull().default(false),
+  quietModeStart: text('quiet_mode_start').notNull().default('22:00'),
+  quietModeEnd: text('quiet_mode_end').notNull().default('07:00'),
   channels: jsonb('channels')
     .$type<UserChannelsConfig>()
     .notNull()

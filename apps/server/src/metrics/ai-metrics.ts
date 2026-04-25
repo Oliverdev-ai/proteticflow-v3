@@ -282,6 +282,11 @@ export const aiIdempotencyCleanupTotal = new CounterMetric({
   help: 'Total idempotency rows deleted by scheduled cleanup',
 });
 
+export const aiMemoryCleanupTotal = new CounterMetric({
+  name: 'ai_memory_cleanup_total',
+  help: 'Total memory rows deleted by scheduled cleanup',
+});
+
 export const flowBriefingSentTotal = new CounterMetric({
   name: 'flow_briefing_sent_total',
   help: 'Total de briefings proativos enviados',
@@ -396,6 +401,11 @@ export function addAiIdempotencyCleanup(deletedRows: number): void {
   aiIdempotencyCleanupTotal.inc({}, deletedRows);
 }
 
+export function addAiMemoryCleanup(deletedRows: number): void {
+  if (!Number.isFinite(deletedRows) || deletedRows <= 0) return;
+  aiMemoryCleanupTotal.inc({}, deletedRows);
+}
+
 export function recordFlowBriefingSent(tenantId: number, status: 'sent' | 'skipped'): void {
   flowBriefingSentTotal.inc({
     tenant_id: tenantId,
@@ -452,6 +462,7 @@ export function renderMetrics(): string {
     aiInjectionAttemptTotal.render(),
     ttsCharactersBilled.render(),
     aiIdempotencyCleanupTotal.render(),
+    aiMemoryCleanupTotal.render(),
     flowBriefingSentTotal.render(),
     flowAlertTriggeredTotal.render(),
     flowChannelSendTotal.render(),

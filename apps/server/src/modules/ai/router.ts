@@ -17,6 +17,7 @@ import {
   aiFullAdminProcedure,
   aiFullProcedure,
   aiProcedure,
+  tenantProcedure,
   router,
   voiceProcedure,
 } from '../../trpc/trpc.js';
@@ -26,6 +27,8 @@ import { streamAiResponse } from './flow-engine.js';
 import { applyRateLimitHeaders, checkTtsRateLimit } from './rate-limit.js';
 import { assertTtsPlanEnabled, logTtsUsage, synthesize, type TtsVoice } from './tts.service.js';
 import { transcribeAudio } from './voice.service.js';
+import * as lgpdService from './lgpd.service.js';
+import { getUserPreferences, isWithinQuietHours } from '../proactive/preferences.service.js';
 
 const getSessionSchema = z.object({
   sessionId: z.number().int().positive(),
@@ -69,6 +72,19 @@ const ttsSchema = z.object({
   ssml: z.boolean().default(false),
 });
 
+async function assertAssistantOutOfQuietMode(tenantId: number, userId: number): Promise<void> {
+  const preferences = await getUserPreferences(tenantId, userId);
+  if (preferences.quietModeEnabled && isWithinQuietHours({
+    quietHoursStart: preferences.quietModeStart,
+    quietHoursEnd: preferences.quietModeEnd,
+  })) {
+    throw new TRPCError({
+      code: 'PRECONDITION_FAILED',
+      message: 'Assistente em quiet mode. Tente novamente mais tarde.',
+    });
+  }
+}
+
 export const aiRouter = router({
   createSession: aiProcedure
     .input(createSessionSchema)
@@ -89,6 +105,7 @@ export const aiRouter = router({
   sendMessage: aiProcedure
     .input(sendMessageSchema)
     .mutation(async ({ ctx, input }) => {
+      await assertAssistantOutOfQuietMode(ctx.tenantId!, ctx.user!.id);
       const history = await aiService.getRecentMessages(ctx.tenantId!, input.sessionId, ctx.user!.id, 10);
 
       await aiService.saveMessage(
@@ -140,10 +157,19 @@ export const aiRouter = router({
   executeCommand: aiProcedure
     .input(executeCommandSchema)
     .mutation(async ({ ctx, input }) => {
+      await assertAssistantOutOfQuietMode(ctx.tenantId!, ctx.user!.id);
       const response = await aiService.executeCommand(ctx.tenantId!, ctx.user!.id, ctx.user!.role, input);
       applyRateLimitHeaders(ctx.res, response.rateLimit);
       return response;
     }),
+
+  lgpd: router({
+    requestExport: tenantProcedure
+      .mutation(({ ctx }) => lgpdService.requestLgpdExport(ctx.tenantId!, ctx.user!.id)),
+
+    requestDelete: tenantProcedure
+      .mutation(({ ctx }) => lgpdService.requestLgpdDelete(ctx.tenantId!, ctx.user!.id)),
+  }),
 
   resolveCommandStep: aiProcedure
     .input(resolveCommandStepSchema)

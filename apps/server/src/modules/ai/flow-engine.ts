@@ -4,6 +4,7 @@ import { logger } from '../../logger.js';
 import { addAiCostUsd, observeAiLatency, setAiCacheHitRate } from '../../metrics/ai-metrics.js';
 import { buildLabContext, buildSystemPrompt } from './context-builder.js';
 import { detectCommand } from './commands.js';
+import { getMemory } from './memory.service.js';
 import { assertTenantRateLimit } from './tenant-rate-limit.js';
 import { executeLlmToolCall } from './service.js';
 import { setAnthropicClientForTests as setAnthropicClientForTestsInternal } from './providers/AnthropicProvider.js';
@@ -63,7 +64,13 @@ export async function* streamAiResponse(
   assertTenantRateLimit(tenantId, 'llm');
 
   const context = await buildLabContext(tenantId);
-  const systemPrompt = buildSystemPrompt(context, userRole);
+  const baseSystemPrompt = buildSystemPrompt(context, userRole);
+  const memory = await getMemory(tenantId, userId);
+  const memoryEntries = Object.entries(memory);
+  const memoryContext = memoryEntries.length > 0
+    ? `\n\nMemoria do usuario:\n${memoryEntries.map(([key, value]) => `- ${key}: ${value}`).join('\n')}`
+    : '';
+  const systemPrompt = `${baseSystemPrompt}${memoryContext}`;
   const llmTools = buildLlmTools(userRole);
   const llmHistory = toProviderHistory(history);
 

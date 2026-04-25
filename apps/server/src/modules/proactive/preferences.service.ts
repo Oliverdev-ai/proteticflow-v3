@@ -100,6 +100,9 @@ async function ensurePreferencesRow(tenantId: number, userId: number) {
       briefingTime: '08:00',
       quietHoursStart: '20:00',
       quietHoursEnd: '07:00',
+      quietModeEnabled: false,
+      quietModeStart: '22:00',
+      quietModeEnd: '07:00',
       channels: DEFAULT_CHANNELS,
       alertTypesMuted: [],
     })
@@ -119,6 +122,9 @@ export type ProactiveUserPreferences = {
   briefingTime: string;
   quietHoursStart: string;
   quietHoursEnd: string;
+  quietModeEnabled: boolean;
+  quietModeStart: string;
+  quietModeEnd: string;
   channels: UserChannelsConfig;
   alertTypesMuted: ProactiveAlertType[];
   updatedAt: string;
@@ -132,6 +138,9 @@ function toPreferencesModel(row: typeof userPreferencesTable.$inferSelect): Proa
     briefingTime: normalizeTime(row.briefingTime),
     quietHoursStart: normalizeTime(row.quietHoursStart),
     quietHoursEnd: normalizeTime(row.quietHoursEnd),
+    quietModeEnabled: row.quietModeEnabled,
+    quietModeStart: normalizeTime(row.quietModeStart),
+    quietModeEnd: normalizeTime(row.quietModeEnd),
     channels: normalizeChannels(row.channels),
     alertTypesMuted: ensureAlertTypeArray(row.alertTypesMuted),
     updatedAt: row.updatedAt.toISOString(),
@@ -173,6 +182,9 @@ export async function updateUserPreferences(
       briefingTime: input.briefingTime ?? normalizeTime(existing.briefingTime),
       quietHoursStart: input.quietHoursStart ?? normalizeTime(existing.quietHoursStart),
       quietHoursEnd: input.quietHoursEnd ?? normalizeTime(existing.quietHoursEnd),
+      quietModeEnabled: input.quietModeEnabled ?? existing.quietModeEnabled,
+      quietModeStart: input.quietModeStart ?? normalizeTime(existing.quietModeStart),
+      quietModeEnd: input.quietModeEnd ?? normalizeTime(existing.quietModeEnd),
       channels: nextChannels,
       alertTypesMuted: input.alertTypesMuted ?? ensureAlertTypeArray(existing.alertTypesMuted),
       updatedAt: new Date(),

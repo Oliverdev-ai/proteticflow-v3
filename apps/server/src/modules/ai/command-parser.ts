@@ -154,6 +154,26 @@ export const FLOW_COMMANDS = {
     patterns: [/silenc(iar|ie).*(alerta|notifica)/i, /mute.*(alerta|notifica)/i, /nao me avise/i],
     requiredFields: ['alertTypes'],
   },
+  'memory.remember': {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
+    patterns: [
+      /lembr(e|ar).*(memoria|memória)/i,
+      /salv(e|ar).*(memoria|memória)/i,
+      /memorize/i,
+    ],
+    requiredFields: ['key', 'value'],
+  },
+  'memory.forget': {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
+    patterns: [
+      /esqu(e|ecer).*(memoria|memória)/i,
+      /remov(a|er).*(memoria|memória)/i,
+      /forget/i,
+    ],
+    requiredFields: ['key'],
+  },
   'clients.createDraft': {
     risk: 'transactional',
     roles: ['superadmin', 'gerente', 'recepcao'],
@@ -575,6 +595,21 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
       const endOfDay = new Date();
       endOfDay.setHours(23, 59, 59, 999);
       entities.until = endOfDay.toISOString();
+    }
+  }
+
+  if (/lembr|memor|salvar memoria/i.test(normalizedInput)) {
+    const keyValueMatch = rawInput.match(/(?:chave|key)\s*[:=]\s*([a-z0-9_]{2,100})[,\s]+(?:valor|value)\s*[:=]\s*(.{1,500})/i);
+    if (keyValueMatch?.[1] && keyValueMatch[2]) {
+      entities.key = keyValueMatch[1].trim().toLowerCase();
+      entities.value = keyValueMatch[2].trim();
+    }
+  }
+
+  if (/esquecer|remover memoria|forget/i.test(normalizedInput)) {
+    const forgetMatch = rawInput.match(/(?:chave|key)\s*[:=]\s*([a-z0-9_]{2,100})/i);
+    if (forgetMatch?.[1]) {
+      entities.key = forgetMatch[1].trim().toLowerCase();
     }
   }
 

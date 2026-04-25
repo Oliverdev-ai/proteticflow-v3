@@ -869,6 +869,19 @@ function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities
     }
   }
 
+  if (intent === 'memory.remember') {
+    if (typeof entities.key === 'string') {
+      input.key = entities.key.trim().toLowerCase();
+    }
+    if (typeof entities.value === 'string') {
+      input.value = entities.value.trim();
+    }
+  }
+
+  if (intent === 'memory.forget' && typeof entities.key === 'string') {
+    input.key = entities.key.trim().toLowerCase();
+  }
+
   if (intent === 'financial.revenueToDate' || intent === 'financial.expensesToDate') {
     if (typeof entities.period === 'string') {
       const periodKeyword = normalizePeriodKeyword(entities.period);

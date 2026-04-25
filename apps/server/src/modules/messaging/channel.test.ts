@@ -49,6 +49,9 @@ function createRecipient(overrides?: Partial<Recipient>): Recipient {
       briefingTime: '08:00',
       quietHoursStart: '20:00',
       quietHoursEnd: '07:00',
+      quietModeEnabled: false,
+      quietModeStart: '22:00',
+      quietModeEnd: '07:00',
       channels: {
         push: true,
         email: true,

@@ -30,6 +30,12 @@ import { generateAbcCurveReport } from '../reports/abc-curve.service.js';
 import { getDashboardSummary } from '../dashboard/service.js';
 import { parseNaturalDate } from './resolvers.js';
 import {
+  countMemoryKeys,
+  deleteMemoryKey,
+  MAX_MEMORY_KEYS,
+  setMemory,
+} from './memory.service.js';
+import {
   FLOW_COMMANDS,
   checkCommandAccess,
   resolveAction,
@@ -150,6 +156,15 @@ const commonDateRangeSchema = z.object({
 
 const accountsReceivableSchema = listArSchema.partial().extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+const memoryRememberSchema = z.object({
+  key: z.string().trim().min(2).max(100).regex(/^[a-z0-9_]+$/),
+  value: z.string().trim().min(1).max(500),
+});
+
+const memoryForgetSchema = z.object({
+  key: z.string().trim().min(2).max(100).regex(/^[a-z0-9_]+$/),
 });
 
 export type ToolContext = {
@@ -531,6 +546,28 @@ export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
     inputSchema: muteAlertsSchema,
     execute: async (ctx, input) =>
       executeMessagesMuteAlerts(ctx, muteAlertsSchema.parse(input)),
+  },
+  'memory.remember': {
+    name: 'memory.remember',
+    inputSchema: memoryRememberSchema,
+    execute: async (ctx, input) => {
+      const parsed = memoryRememberSchema.parse(input);
+      const count = await countMemoryKeys(ctx.tenantId, ctx.userId);
+      if (count >= MAX_MEMORY_KEYS) {
+        return { success: false, reason: 'limite de memoria atingido' };
+      }
+      await setMemory(ctx.tenantId, ctx.userId, parsed.key, parsed.value, 'assistant');
+      return { success: true };
+    },
+  },
+  'memory.forget': {
+    name: 'memory.forget',
+    inputSchema: memoryForgetSchema,
+    execute: async (ctx, input) => {
+      const parsed = memoryForgetSchema.parse(input);
+      await deleteMemoryKey(ctx.tenantId, ctx.userId, parsed.key);
+      return { success: true };
+    },
   },
   'clients.createDraft': {
     name: 'clients.createDraft',

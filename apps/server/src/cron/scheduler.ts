@@ -15,6 +15,7 @@ import { processExpiredTrials, resetMonthlyJobCounter } from '../modules/licensi
 import { trialExpiringNotifications } from './trial-expiring.js';
 import { logger } from '../logger.js';
 import { cleanupIdempotencyKeys } from '../jobs/cleanup-idempotency.js';
+import { cleanupAiMemory } from '../jobs/cleanup-ai-memory.js';
 import { startFlowQueueWorkers } from '../modules/jobs-queue/worker.js';
 
 export function startCronJobs() {
@@ -52,6 +53,12 @@ export function startCronJobs() {
   cron.schedule('0 3 * * *', async () => {
     logger.info({ action: 'cron.ai.idempotency_cleanup.start' }, 'Iniciando cleanup de idempotency keys');
     await cleanupIdempotencyKeys();
+  });
+
+  // F7: Cleanup de memoria IA expirada - diario as 03:10
+  cron.schedule('10 3 * * *', async () => {
+    logger.info({ action: 'cron.ai.memory_cleanup.start' }, 'Iniciando cleanup de memoria IA expirada');
+    await cleanupAiMemory();
   });
 
   // 22.xx AI: previsao de receita - diario as 04h
