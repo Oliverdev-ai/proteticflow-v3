@@ -29,6 +29,7 @@ export const users = pgTable('users', {
   aiVoiceEnabled: boolean('ai_voice_enabled').notNull().default(true),
   aiVoiceGender: varchar('ai_voice_gender', { length: 16 }).notNull().default('female'),
   aiVoiceSpeed: real('ai_voice_speed').notNull().default(1.0),
+  themePreference: varchar('theme_preference', { length: 8 }).notNull().default('system'),
   avatarUrl: text('avatar_url'),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   twoFactorSecret: varchar('two_factor_secret', { length: 128 }),
