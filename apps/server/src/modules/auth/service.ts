@@ -348,6 +348,16 @@ export async function updateProfile(userId: number, input: UpdateProfileInput) {
   return updated;
 }
 
+export async function setThemePreference(
+  userId: number,
+  theme: 'system' | 'light' | 'dark',
+): Promise<void> {
+  await db
+    .update(users)
+    .set({ themePreference: theme, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
 export async function getSessions(userId: number, currentTokenHash: string) {
   const activeSessions = await db.select().from(refreshTokens)
     .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)))

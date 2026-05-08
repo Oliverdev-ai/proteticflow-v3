@@ -60,3 +60,7 @@ export const createUserSchema = z.object({
   email: z.string().email(),
   role: z.enum(['superadmin', 'gerente', 'producao', 'recepcao', 'contabil']),
 });
+
+export const themePreferenceSchema = z.object({
+  theme: z.enum(['system', 'light', 'dark']),
+});
