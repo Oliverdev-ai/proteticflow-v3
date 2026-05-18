@@ -8,10 +8,11 @@ import { UsageBanner } from '../../components/shared/usage-banner';
 import { FlowAssistantOverlay } from '../../components/ai/flow-assistant-overlay';
 import { useAuth } from '../../hooks/use-auth';
 import { trpc } from '../../lib/trpc';
+import { useLocalStorage } from '../../hooks/use-local-storage';
 
 export function DashboardLayout() {
   const { isAuthenticated, isAuthPending, isAuthResolved, user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useLocalStorage('ptf-sidebar-collapsed', false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { data: currentTenant, isLoading: isTenantLoading } = trpc.tenant.getCurrent.useQuery(
@@ -22,7 +23,7 @@ export function DashboardLayout() {
   if (!isAuthResolved && isAuthPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]" />
       </div>
     );
   }
@@ -33,7 +34,7 @@ export function DashboardLayout() {
   if (isTenantLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]" />
       </div>
     );
   }
