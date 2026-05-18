@@ -64,11 +64,14 @@ CI/CD:    GitHub Actions
 - Áudio de voz: processado em memória, **nunca persistido em storage**.
   Gate: `grep 'writeFile|putObject|upload' apps/server/src/services/voice.service.ts` → ZERO.
 
-### 3.5 Design System
-- **Accent color: `sky-500` (light) / `sky-400` (dark). PERMANENTE.**
-- Zero `violet`, `indigo`, `purple`, `neutral-[0-9]` em qualquer componente.
-- Tokens semânticos obrigatórios: `--primary`, `--muted`, `--border`, `--destructive`, `--warning`, `--success`.
-- PR com cor proibida → reprovado automaticamente.
+### 3.5 Design System — v1.3.0 (substitui sky-500/zinc-950)
+- **Paleta oficial: `amber-500` (#E97316) primary · `teal-600` (#0F766E) accent · `cream-100` (#FAF7F2) surface light · `ink-900` (#0F1419) surface dark · `navy-900` (#0B1220) sidebar PERMANENTE nos dois temas.**
+- Fonte display: `Instrument Serif` (>24px). Fonte UI: `Inter`. Fonte mono: `JetBrains Mono`.
+- Zero `sky-*`, `violet`, `indigo`, `purple`, `zinc-*`, `slate-*` hardcoded em qualquer componente.
+- Tokens semânticos obrigatórios (todos definidos em `globals.css`): `--primary`, `--accent`, `--bg`, `--fg`, `--fg-muted`, `--border`, `--destructive`, `--warning`, `--success`, `--ring`, `--shell-sidebar-bg`.
+- Usar variáveis CSS (`var(--primary)`) ou classes Tailwind mapeadas em `@theme`. Nunca hex hardcoded fora de `globals.css`.
+- Fonte canônica do DS: `docs/design-system/INDEX.md` · Tokens: `docs/design-system/colors_and_type.css`.
+- PR com cor proibida ou hex hardcoded fora do DS → reprovado automaticamente.
 
 ### 3.6 Módulo Completo ou Inexistente
 Nenhum módulo pode existir parcialmente. A sequência obrigatória é:

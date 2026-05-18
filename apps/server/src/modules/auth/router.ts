@@ -8,7 +8,8 @@ import {
   updateProfileSchema,
   setup2faSchema,
   verify2faSchema,
-  createUserSchema
+  createUserSchema,
+  themePreferenceSchema,
 } from '@proteticflow/shared';
 import { z } from 'zod';
 import * as authService from './service.js';
@@ -134,4 +135,10 @@ export const authRouter = router({
   createUser: adminProcedure.input(createUserSchema).mutation(async ({ input, ctx }) => {
     return authService.createUser(ctx.tenantId!, input);
   }),
+  setThemePreference: protectedProcedure
+    .input(themePreferenceSchema)
+    .mutation(async ({ input, ctx }) => {
+      await authService.setThemePreference(ctx.user!.id, input.theme);
+      return { success: true };
+    }),
 });
