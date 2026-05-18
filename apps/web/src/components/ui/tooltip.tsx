@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { cloneElement, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 
 export type TooltipSide = 'top' | 'bottom' | 'left' | 'right';
+
+type TooltipChildProps = React.AriaAttributes;
 
 export interface TooltipProps {
   content: React.ReactNode;
   side?: TooltipSide;
   delay?: number;
-  children: React.ReactElement;
+  children: React.ReactElement<TooltipChildProps>;
   disabled?: boolean;
 }
 
@@ -44,9 +46,8 @@ export function Tooltip({ content, side = 'top', delay = 400, children, disabled
       onFocus={show}
       onBlur={hide}
     >
-      {/* Clone child to attach aria-describedby */}
       {visible
-        ? { ...children, props: { ...children.props, 'aria-describedby': id } }
+        ? cloneElement(children, { 'aria-describedby': id })
         : children}
 
       {visible && (

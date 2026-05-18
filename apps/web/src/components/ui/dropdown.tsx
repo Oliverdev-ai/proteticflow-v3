@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { cloneElement, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 
 export interface DropdownItem {
@@ -18,8 +18,12 @@ export interface DropdownSeparator {
 
 export type DropdownOption = DropdownItem | DropdownSeparator;
 
+type DropdownTriggerProps = React.AriaAttributes & {
+  onClick?: React.MouseEventHandler<HTMLElement>;
+};
+
 export interface DropdownProps {
-  trigger: React.ReactElement;
+  trigger: React.ReactElement<DropdownTriggerProps>;
   items: DropdownOption[];
   onSelect?: (key: string) => void;
   align?: 'start' | 'end';
@@ -44,17 +48,15 @@ export function Dropdown({ trigger, items, onSelect, align = 'start', width = 20
 
   return (
     <div ref={ref} className="relative inline-flex">
-      {/* Clone trigger to attach aria attrs */}
-      {{ ...trigger, props: {
-        ...trigger.props,
+      {cloneElement(trigger, {
         'aria-haspopup': 'menu',
         'aria-expanded': open,
         'aria-controls': id,
-        onClick: (e: React.MouseEvent) => {
+        onClick: (e: React.MouseEvent<HTMLElement>) => {
           setOpen((v) => !v);
           trigger.props.onClick?.(e);
         },
-      }}}
+      })}
 
       {open && (
         <div

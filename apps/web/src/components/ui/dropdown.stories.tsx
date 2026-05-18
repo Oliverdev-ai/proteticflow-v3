@@ -12,6 +12,8 @@ const meta: Meta<typeof Dropdown> = {
 export default meta;
 type Story = StoryObj<typeof Dropdown>;
 
+const noopSelect = () => {};
+
 const osActions: DropdownOption[] = [
   { key: 'edit',      label: 'Editar OS',         icon: <Edit2 size={14} /> },
   { key: 'duplicate', label: 'Duplicar',           icon: <Copy size={14} /> },
@@ -25,7 +27,7 @@ export const Default: Story = {
     <Dropdown
       trigger={<Button variant="secondary" size="sm">Ações <ChevronDown size={14} /></Button>}
       items={osActions}
-      onSelect={(k) => console.log('selected:', k)}
+      onSelect={noopSelect}
     />
   ),
 };
