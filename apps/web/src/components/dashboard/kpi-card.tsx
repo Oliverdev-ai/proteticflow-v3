@@ -33,7 +33,7 @@ function Sparkline({ data }: { data: SparklineData }) {
   const step = w / (points.length - 1);
   const coords = points.map((v, i) => `${i * step},${h - (v / max) * h}`).join(' ');
   const strokeColor =
-    data.trend === 'up' ? '#34d399' : data.trend === 'down' ? '#f87171' : '#737373';
+    data.trend === 'up' ? '#34d399' : data.trend === 'down' ? '#f87171' : '#737373'; // design-tokens-ok — SVG path, sem suporte a CSS var
 
   return (
     <svg

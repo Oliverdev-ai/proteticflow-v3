@@ -110,7 +110,7 @@ export function Hero({
         aria-hidden="true"
         style={{
           background:
-            'radial-gradient(ellipse at 80% 50%, rgba(233,115,22,0.06) 0%, transparent 60%)',
+            'radial-gradient(ellipse at 80% 50%, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 60%)',
         }}
       />
     </div>

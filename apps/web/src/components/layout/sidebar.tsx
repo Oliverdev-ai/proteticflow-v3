@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   ChevronDown,
   ChevronLeft,
@@ -112,14 +112,15 @@ function NavGroupSection({
 }) {
   const { hasAccess } = usePermissions();
   const [open, setOpen] = useLocalStorage(`${STORAGE_KEY_PREFIX}${group.id}`, true);
+  const { pathname } = useLocation();
   const Icon = group.icon;
   const visibleItems = group.items.filter((item) => hasAccess(item.module));
 
   if (visibleItems.length === 0) return null;
 
   const isAnyActive = visibleItems.some((item) =>
-    window.location.pathname === item.href ||
-    (item.href !== '/' && window.location.pathname.startsWith(item.href + '/')),
+    pathname === item.href ||
+    (item.href !== '/' && pathname.startsWith(item.href + '/')),
   );
 
   if (collapsed) {
@@ -333,7 +334,7 @@ function SidebarContent({
             className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold"
             style={{
               backgroundColor: 'var(--primary)',
-              color: '#fff',
+              color: 'var(--primary-foreground)',
             }}
           >
             {getInitials(profile?.name)}
@@ -348,7 +349,7 @@ function SidebarContent({
                 {plan && (
                   <span
                     className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                    style={{ background: 'rgba(233, 115, 22, 0.2)', color: 'var(--primary)' }}
+                    style={{ background: 'color-mix(in srgb, var(--primary) 20%, transparent)', color: 'var(--primary)' }}
                   >
                     {plan}
                   </span>

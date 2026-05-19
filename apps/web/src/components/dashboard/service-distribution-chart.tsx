@@ -12,7 +12,7 @@ import { FadeIn } from '../shared/page-transition';
 import { EmptyState } from '../shared/empty-state';
 import { PieChart as PieChartIcon } from 'lucide-react';
 
-const COLORS = ['#818cf8', '#a78bfa', '#6366f1', '#4f46e5', '#3b82f6', '#0ea5e9'];
+const COLORS = ['#818cf8', '#a78bfa', '#6366f1', '#4f46e5', '#3b82f6', '#0ea5e9']; // design-tokens-ok — recharts Cell fill, sem suporte a CSS var
 
 export function ServiceDistributionChart({ data }: { data: ServiceDistribution[] }) {
   const hasData = data.some((d) => d.totalCents > 0);
@@ -40,7 +40,7 @@ export function ServiceDistributionChart({ data }: { data: ServiceDistribution[]
               innerRadius={40}
             >
               {data.map((_, index) => (
-                <Cell key={index} fill={COLORS[index % COLORS.length] ?? '#7c3aed'} />
+                <Cell key={index} fill={COLORS[index % COLORS.length]!} />
               ))}
             </Pie>
             <Tooltip
@@ -56,7 +56,7 @@ export function ServiceDistributionChart({ data }: { data: ServiceDistribution[]
               formatter={(value) => [formatBRL(Number(value ?? 0)), 'Receita']}
             />
             <Legend
-              wrapperStyle={{ fontSize: 11, color: '#a3a3a3' }}
+              wrapperStyle={{ fontSize: 11, color: '#a3a3a3' }} // design-tokens-ok
               formatter={(value: string) =>
                 value.length > 20 ? value.slice(0, 20) + '…' : value
               }

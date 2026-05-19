@@ -5,6 +5,7 @@ import 'simplebar-react/dist/simplebar.min.css';
 import { Sidebar } from '../../components/layout/sidebar';
 import { Header } from '../../components/layout/header';
 import { UsageBanner } from '../../components/shared/usage-banner';
+import { Breadcrumb } from '../../components/layout/breadcrumb';
 import { FlowAssistantOverlay } from '../../components/ai/flow-assistant-overlay';
 import { useAuth } from '../../hooks/use-auth';
 import { trpc } from '../../lib/trpc';
@@ -61,6 +62,7 @@ export function DashboardLayout() {
           <SimpleBar className="h-full">
             <div className="p-4 md:p-6">
               <UsageBanner />
+              <Breadcrumb />
               <Outlet />
             </div>
           </SimpleBar>

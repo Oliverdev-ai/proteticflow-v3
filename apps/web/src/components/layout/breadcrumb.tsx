@@ -103,7 +103,7 @@ export function Breadcrumb() {
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1;
         return (
-          <span key={i} className="flex items-center gap-1">
+          <span key={crumb.href ?? crumb.label} className="flex items-center gap-1">
             {i > 0 && <ChevronRight size={12} className="text-muted-foreground/40 shrink-0" />}
             {isLast || !crumb.href ? (
               <span

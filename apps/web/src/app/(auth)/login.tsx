@@ -97,7 +97,10 @@ export default function LoginPage() {
           <Link to="/forgot-password" className="text-zinc-400 hover:text-zinc-200">
             Esqueci a senha
           </Link>
-          <Link to="/register" className="text-sky-400 hover:text-sky-300 font-medium">
+          <Link
+            to="/register"
+            className="text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium"
+          >
             Criar conta
           </Link>
         </div>
