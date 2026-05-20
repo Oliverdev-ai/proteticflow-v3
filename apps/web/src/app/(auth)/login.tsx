@@ -78,6 +78,7 @@ export default function LoginPage() {
             type={showPassword ? 'text' : 'password'}
             required
             className="input-field"
+            style={{ paddingRight: '3rem' }}
             placeholder="Senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -86,7 +87,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200"
+            className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition-colors hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -105,7 +106,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium disabled:opacity-50 transition-colors"
+          className="w-full h-11 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-medium disabled:opacity-50 transition-colors"
         >
           {loading ? 'Entrando...' : 'Entrar'}
         </button>
