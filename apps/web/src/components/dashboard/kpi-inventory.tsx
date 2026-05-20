@@ -14,7 +14,7 @@ export function KpiInventory({ data }: { data: InventoryKpis }) {
         label="Abaixo do Mínimo"
         value={data.belowMinimum}
         icon={PackageX}
-        trend={data.belowMinimum > 0 ? { value: data.belowMinimum, direction: 'down' } : { value: 0, direction: 'neutral' }}
+        trend={data.belowMinimum > 0 ? { direction: 'down' } : undefined}
       />
     </div>
   );

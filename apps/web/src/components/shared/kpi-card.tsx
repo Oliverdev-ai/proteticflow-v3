@@ -6,7 +6,11 @@ export type KpiCardProps = {
   label: string;
   value: string | number;
   format?: 'currency' | 'number' | 'percent';
-  trend?: { value: number; direction: 'up' | 'down' | 'neutral' } | undefined;
+  trend?: {
+    value?: number;
+    direction: 'up' | 'down' | 'neutral';
+    format?: 'percent' | 'number';
+  } | undefined;
   icon?: LucideIcon | undefined;
   loading?: boolean;
   className?: string | undefined;
@@ -24,6 +28,13 @@ function formatValue(value: string | number, format: KpiCardProps['format']) {
   if (format === 'currency') return currencyFormatter.format(value / 100);
   if (format === 'percent') return `${numberFormatter.format(value)}%`;
   return numberFormatter.format(value);
+}
+
+function formatTrendValue(trend: NonNullable<KpiCardProps['trend']>) {
+  if (trend.value === undefined) return null;
+  const prefix = trend.value > 0 ? '+' : '';
+  const suffix = trend.format === 'number' ? '' : '%';
+  return `${prefix}${numberFormatter.format(trend.value)}${suffix}`;
 }
 
 function KpiCardSkeleton({ className }: { className?: string | undefined }) {
@@ -57,6 +68,7 @@ export function KpiCard({
     : trend?.direction === 'down'
       ? ArrowDownRight
       : ArrowRight;
+  const trendValue = trend ? formatTrendValue(trend) : null;
 
   return (
     <div className={cn('bg-card border border-border rounded-2xl p-5', className)}>
@@ -86,8 +98,7 @@ export function KpiCard({
           )}
         >
           <TrendIcon size={14} aria-hidden="true" />
-          {trend.value > 0 ? '+' : ''}
-          {numberFormatter.format(trend.value)}%
+          {trendValue && <span>{trendValue}</span>}
         </div>
       )}
     </div>

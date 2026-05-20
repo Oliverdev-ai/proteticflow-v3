@@ -18,13 +18,14 @@ export function KpiJobs({
         trend={activeSparkline ? {
           value: activeSparkline.changePercent,
           direction: activeSparkline.trend,
+          format: 'percent',
         } : undefined}
       />
       <KpiCard
         label="Atrasados"
         value={data.overdue}
         icon={AlertCircle}
-        trend={data.overdue > 0 ? { value: data.overdue, direction: 'down' } : { value: 0, direction: 'neutral' }}
+        trend={data.overdue > 0 ? { direction: 'down' } : undefined}
       />
       <KpiCard
         label="Pendentes"

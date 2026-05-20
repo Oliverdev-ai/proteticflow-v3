@@ -31,7 +31,7 @@ export function KpiFinancial({
         value={data.overdueArCents}
         format="currency"
         icon={AlertTriangle}
-        trend={data.overdueArCents > 0 ? { value: 100, direction: 'down' } : { value: 0, direction: 'neutral' }}
+        trend={data.overdueArCents > 0 ? { direction: 'down' } : undefined}
       />
       <KpiCard
         label="Receita do Mês"
@@ -41,6 +41,7 @@ export function KpiFinancial({
         trend={revenueSparkline ? {
           value: revenueSparkline.changePercent,
           direction: revenueSparkline.trend,
+          format: 'percent',
         } : undefined}
       />
       <KpiCard
@@ -48,7 +49,7 @@ export function KpiFinancial({
         value={data.cashFlowCents}
         format="currency"
         icon={Activity}
-        trend={{ value: 0, direction: data.cashFlowCents >= 0 ? 'neutral' : 'down' }}
+        trend={data.cashFlowCents < 0 ? { direction: 'down' } : undefined}
       />
     </div>
   );

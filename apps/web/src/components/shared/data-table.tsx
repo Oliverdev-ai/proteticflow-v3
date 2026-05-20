@@ -16,6 +16,7 @@ export type ColumnDef<T> = {
 export type DataTableProps<T> = {
   columns: ColumnDef<T>[];
   data: T[];
+  rowKey: (row: T) => string | number;
   loading?: boolean;
   emptyMessage?: string;
   emptyAction?: ReactNode;
@@ -50,6 +51,7 @@ function TableSkeleton({ columns }: { columns: number }) {
 export function DataTable<T>({
   columns,
   data,
+  rowKey,
   loading = false,
   emptyMessage = 'Nenhum registro encontrado.',
   emptyAction,
@@ -117,8 +119,8 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              data.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-muted/30">
+              data.map((row) => (
+                <tr key={rowKey(row)} className="hover:bg-muted/30">
                   {columns.map((column, columnIndex) => (
                     <td
                       key={column.id ?? String(columnIndex)}

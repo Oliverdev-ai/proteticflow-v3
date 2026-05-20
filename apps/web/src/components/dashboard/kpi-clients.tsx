@@ -28,6 +28,7 @@ export function KpiClients({
         trend={newClientsSparkline ? {
           value: newClientsSparkline.changePercent,
           direction: newClientsSparkline.trend,
+          format: 'percent',
         } : undefined}
       />
     </div>
