@@ -36,6 +36,21 @@ function normalizeTime(value: string): string {
   return `${hh}:${mm}`;
 }
 
+function getCurrentMinutesBRT(now: Date): number {
+  const parts = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(now);
+
+  const rawHour = Number(parts.find((part) => part.type === 'hour')?.value ?? '0');
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? '0');
+  const hour = rawHour === 24 ? 0 : rawHour;
+
+  return hour * 60 + minute;
+}
+
 function normalizeChannels(channels: UserChannelsConfig | null | undefined): UserChannelsConfig {
   const source = channels ?? DEFAULT_CHANNELS;
   return {
@@ -261,7 +276,7 @@ export function isWithinQuietHours(
   const start = parseTimeToMinutes(preferences.quietHoursStart);
   const end = parseTimeToMinutes(preferences.quietHoursEnd);
   if (start === end) return false;
-  const current = now.getHours() * 60 + now.getMinutes();
+  const current = getCurrentMinutesBRT(now);
   if (start < end) {
     return current >= start && current < end;
   }
@@ -276,17 +291,13 @@ export function getQuietHoursReleaseAt(
   const [endHourText = '0', endMinuteText = '0'] = end.split(':');
   const endHour = Number.parseInt(endHourText, 10);
   const endMinute = Number.parseInt(endMinuteText, 10);
-  const releaseAt = new Date(now);
-  releaseAt.setSeconds(0, 0);
-  releaseAt.setHours(
-    Number.isFinite(endHour) ? endHour : 0,
-    Number.isFinite(endMinute) ? endMinute : 0,
-    0,
-    0,
-  );
+  const endMinutes = (Number.isFinite(endHour) ? endHour : 0) * 60
+    + (Number.isFinite(endMinute) ? endMinute : 0);
+  const currentMinutes = getCurrentMinutesBRT(now);
+  let deltaMs = (endMinutes - currentMinutes) * 60_000;
+  if (deltaMs <= 0) deltaMs += 24 * 60 * 60_000;
 
-  if (releaseAt.getTime() <= now.getTime()) {
-    releaseAt.setDate(releaseAt.getDate() + 1);
-  }
-  return releaseAt;
+  const releaseAt = new Date(now);
+  releaseAt.setUTCSeconds(0, 0);
+  return new Date(releaseAt.getTime() + deltaMs);
 }
