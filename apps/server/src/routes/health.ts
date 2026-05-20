@@ -7,6 +7,7 @@ import { env } from '../env.js';
 import { checkRedisConnection } from '../redis.js';
 import { logger } from '../logger.js';
 import { metricsContentType, renderMetrics } from '../metrics/ai-metrics.js';
+import { getMetricsAuthFailure } from './metrics-auth.js';
 
 export const healthRouter: Router = ExpressRouter();
 
@@ -40,7 +41,18 @@ healthRouter.get('/health', async (_req, res) => {
   });
 });
 
-healthRouter.get('/metrics', (_req, res) => {
+healthRouter.get('/metrics', (req, res) => {
+  const authFailure = getMetricsAuthFailure({
+    nodeEnv: env.NODE_ENV,
+    token: env.METRICS_TOKEN,
+    authorizationHeader: req.get('authorization'),
+  });
+
+  if (authFailure) {
+    res.status(authFailure.status).json(authFailure.body);
+    return;
+  }
+
   res.setHeader('Content-Type', metricsContentType);
   res.status(200).send(renderMetrics());
 });
