@@ -1,7 +1,7 @@
 User-agent: *
+Allow: /
 Allow: /landing
 Allow: /login
 Allow: /register
-Disallow: /
 
 Sitemap: https://proteticflow.com.br/sitemap.xml

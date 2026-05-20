@@ -13,15 +13,15 @@ export function BrandingForm() {
 
   const [reportHeader, setReportHeader] = useState(branding?.reportHeader ?? '');
   const [reportFooter, setReportFooter] = useState(branding?.reportFooter ?? '');
-  const [primaryColor, setPrimaryColor] = useState(branding?.primaryColor ?? '#1a56db');
-  const [secondaryColor, setSecondaryColor] = useState(branding?.secondaryColor ?? '#6b7280');
+  const [primaryColor, setPrimaryColor] = useState(branding?.primaryColor ?? '#1a56db'); // design-tokens-ok — valor hex de branding do tenant (color picker)
+  const [secondaryColor, setSecondaryColor] = useState(branding?.secondaryColor ?? '#6b7280'); // design-tokens-ok
 
   useEffect(() => {
     if (!branding) return;
     setReportHeader(branding.reportHeader ?? '');
     setReportFooter(branding.reportFooter ?? '');
-    setPrimaryColor(branding.primaryColor ?? '#1a56db');
-    setSecondaryColor(branding.secondaryColor ?? '#6b7280');
+    setPrimaryColor(branding.primaryColor ?? '#1a56db'); // design-tokens-ok
+    setSecondaryColor(branding.secondaryColor ?? '#6b7280'); // design-tokens-ok
   }, [branding]);
 
   const inputClass = "w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/30";

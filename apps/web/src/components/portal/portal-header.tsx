@@ -14,7 +14,7 @@ export function PortalHeader({ tenantName, tenantLogoUrl, tenantPrimaryColor, cl
         ) : (
           <div
             className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
-            style={{ backgroundColor: tenantPrimaryColor ?? '#0f766e' }}
+            style={{ backgroundColor: tenantPrimaryColor ?? '#0f766e' }} // design-tokens-ok — cor de branding do tenant (valor do banco)
           >
             {tenantName.slice(0, 1).toUpperCase()}
           </div>

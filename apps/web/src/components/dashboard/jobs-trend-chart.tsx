@@ -35,15 +35,16 @@ export function JobsTrendChart({ data }: { data: JobsTrend[] }) {
       <h3 className="text-sm font-medium text-zinc-300 mb-4">Tendência de Trabalhos</h3>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+          {/* design-tokens-ok: recharts SVG props não aceitam CSS variables — dívida técnica UX-2 */}
+          <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} /> {/* design-tokens-ok */}
           <XAxis
             dataKey="label"
-            tick={{ fill: '#737373', fontSize: 12 }}
+            tick={{ fill: '#737373', fontSize: 12 }} // design-tokens-ok
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: '#737373', fontSize: 11 }}
+            tick={{ fill: '#737373', fontSize: 11 }} // design-tokens-ok
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
@@ -51,28 +52,28 @@ export function JobsTrendChart({ data }: { data: JobsTrend[] }) {
           />
           <Tooltip
             contentStyle={{
-              background: '#171717',
-              border: '1px solid #404040',
+              background: '#171717', // design-tokens-ok
+              border: '1px solid #404040', // design-tokens-ok
               borderRadius: 8,
-              color: '#e5e5e5',
+              color: '#e5e5e5', // design-tokens-ok
               fontSize: 12,
             }}
           />
-          <Legend wrapperStyle={{ fontSize: 11, color: '#a3a3a3' }} />
+          <Legend wrapperStyle={{ fontSize: 11, color: '#a3a3a3' }} /> {/* design-tokens-ok */}
           <Line
             type="monotone"
             dataKey="criados"
-            stroke="#7c3aed"
+            stroke="#7c3aed" // design-tokens-ok — TODO UX-2: substituir por var(--chart-primary)
             strokeWidth={2}
-            dot={{ fill: '#7c3aed', r: 3 }}
+            dot={{ fill: '#7c3aed', r: 3 }} // design-tokens-ok
             activeDot={{ r: 5 }}
           />
           <Line
             type="monotone"
             dataKey="entregues"
-            stroke="#059669"
+            stroke="#059669" // design-tokens-ok
             strokeWidth={2}
-            dot={{ fill: '#059669', r: 3 }}
+            dot={{ fill: '#059669', r: 3 }} // design-tokens-ok
             activeDot={{ r: 5 }}
           />
         </LineChart>

@@ -5,9 +5,12 @@ import { trpc } from '../../lib/trpc';
 type NotificationUiType = 'info' | 'warning' | 'error';
 
 const TYPE_UI: Record<NotificationUiType, { label: string; className: string }> = {
-  info: { label: 'Info', className: 'bg-sky-500/20 text-sky-300 border-sky-500/40' },
-  warning: { label: 'Warning', className: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
-  error: { label: 'Error', className: 'bg-red-500/20 text-red-300 border-red-500/40' },
+  info: {
+    label: 'Info',
+    className: 'bg-[var(--primary)]/15 text-[var(--primary)] border-[var(--primary)]/30',
+  },
+  warning: { label: 'Aviso', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  error: { label: 'Erro', className: 'bg-red-500/15 text-red-400 border-red-500/30' },
 };
 
 export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boolean }) {
@@ -43,7 +46,7 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative text-zinc-400 hover:text-white transition-colors"
+        className="relative text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Notificacoes"
       >
         <Bell size={18} />
@@ -55,13 +58,13 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-9 z-50 w-[360px] max-h-[420px] overflow-auto bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800">
-            <p className="text-sm font-semibold text-zinc-200">Notificacoes</p>
+        <div className="absolute right-0 top-9 z-50 w-[360px] max-h-[420px] overflow-auto bg-card border border-border rounded-xl shadow-xl">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <p className="text-sm font-semibold text-foreground">Notificacoes</p>
             <button
               type="button"
               onClick={() => markAllReadMutation.mutate()}
-              className="text-xs text-primary hover:text-primary disabled:opacity-40"
+              className="text-xs text-[var(--primary)] hover:text-[var(--primary-hover)] disabled:opacity-40"
               disabled={markAllReadMutation.isPending}
             >
               Marcar todas como lidas
@@ -69,37 +72,40 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
           </div>
 
           {listQuery.isLoading ? (
-            <div className="p-5 text-sm text-zinc-400 flex items-center gap-2">
+            <div className="p-5 text-sm text-muted-foreground flex items-center gap-2">
               <Loader2 size={14} className="animate-spin" />
               Carregando notificacoes...
             </div>
           ) : items.length === 0 ? (
-            <div className="p-5 text-sm text-zinc-500">Sem notificacoes recentes.</div>
+            <div className="p-5 text-sm text-muted-foreground">Sem notificacoes recentes.</div>
           ) : (
-            <ul className="divide-y divide-zinc-800">
+            <ul className="divide-y divide-border">
               {items.map((item) => (
-                <li key={item.id} className={`px-3 py-3 ${item.isRead ? 'bg-transparent' : 'bg-primary/5'}`}>
+                <li
+                  key={item.id}
+                  className={`px-3 py-3 ${item.isRead ? 'bg-transparent' : 'bg-primary/5'}`}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       {(() => {
                         const type = (item.type ?? 'info') as NotificationUiType;
                         const ui = TYPE_UI[type] ?? TYPE_UI.info;
                         return (
-                      <span
-                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ui.className}`}
-                      >
-                        {ui.label}
-                      </span>
+                          <span
+                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ui.className}`}
+                          >
+                            {ui.label}
+                          </span>
                         );
                       })()}
-                      <p className="text-sm text-zinc-200 font-medium">{item.title}</p>
-                      <p className="text-xs text-zinc-400 mt-1">{item.message}</p>
+                      <p className="text-sm text-foreground font-medium">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{item.message}</p>
                     </div>
                     {!item.isRead ? (
                       <button
                         type="button"
                         onClick={() => markReadMutation.mutate({ ids: [item.id] })}
-                        className="text-zinc-400 hover:text-green-400"
+                        className="text-muted-foreground hover:text-[var(--primary)]"
                         title="Marcar como lida"
                       >
                         <CheckCheck size={14} />

@@ -77,8 +77,7 @@ export default function LoginPage() {
           <input
             type={showPassword ? 'text' : 'password'}
             required
-            className="input-field"
-            style={{ paddingRight: '3rem' }}
+            className="input-field !pr-11"
             placeholder="Senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -87,7 +86,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition-colors hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[var(--fg-subtle)] transition-colors hover:text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
             aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -98,7 +97,10 @@ export default function LoginPage() {
           <Link to="/forgot-password" className="text-zinc-400 hover:text-zinc-200">
             Esqueci a senha
           </Link>
-          <Link to="/register" className="text-sky-400 hover:text-sky-300 font-medium">
+          <Link
+            to="/register"
+            className="text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium"
+          >
             Criar conta
           </Link>
         </div>
@@ -106,7 +108,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 rounded-xl bg-sky-700 hover:bg-sky-800 text-white font-medium disabled:opacity-50 transition-colors"
+          className="w-full h-11 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--fg-on-primary)] font-medium disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
         >
           {loading ? 'Entrando...' : 'Entrar'}
         </button>

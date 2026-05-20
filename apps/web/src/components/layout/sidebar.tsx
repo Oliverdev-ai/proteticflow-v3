@@ -1,74 +1,190 @@
-import { NavLink } from 'react-router-dom';
+import { useCallback } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Briefcase,
-  Brain,
-  Calculator,
-  Calendar,
+  ChevronDown,
   ChevronLeft,
-  ChevronRight,
-  Coins,
-  Columns3,
-  CreditCard,
-  DollarSign,
-  FileSpreadsheet,
-  Headphones,
-  LayoutDashboard,
-  Package,
-  Receipt,
-  Scan,
-  Settings,
-  Shield,
-  ShoppingCart,
+  LogOut,
   Sparkles,
-  Stethoscope,
-  Truck,
-  UserCog,
-  Users,
-  BarChart3,
+  LayoutDashboard,
 } from 'lucide-react';
 import { usePermissions } from '../../hooks/use-permissions';
-import { useTenant } from '../../hooks/use-tenant';
-import { PlanBadge } from '../licensing/plan-badge';
-import { NAV_ITEMS } from './navigation';
+import { useLocalStorage } from '../../hooks/use-local-storage';
+import { trpc } from '../../lib/trpc';
+import { useAuth } from '../../hooks/use-auth';
+import { cn } from '../../lib/utils';
+import {
+  NAV_DASHBOARD,
+  NAV_GROUPS,
+  NAV_FLOW_IA,
+  type NavGroup,
+  type NavItem,
+} from './navigation';
 
-type SidebarProps = {
+/* ─── constantes de dimensão ──────────────────────────────── */
+const W_EXPANDED  = 256; // px
+const W_COLLAPSED =  72; // px
+
+/* ─── helpers ─────────────────────────────────────────────── */
+function getInitials(name?: string | null) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  if (parts.length >= 2) {
+    return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
+  }
+  return (parts[0]?.slice(0, 2) ?? '?').toUpperCase();
+}
+
+/* ─── NavItemRow ───────────────────────────────────────────── */
+function NavItemRow({
+  item,
+  collapsed,
+  nested = false,
+}: {
+  item: NavItem;
   collapsed: boolean;
-  mobileOpen: boolean;
-  onCloseMobile: () => void;
-  onToggleCollapse: () => void;
-};
+  nested?: boolean;
+}) {
+  const Icon = item.icon;
+  const isDashboard = item.href === '/';
 
-const ICONS = {
-  '/': LayoutDashboard,
-  '/clientes': Users,
-  '/trabalhos': Briefcase,
-  '/kanban': Columns3,
-  '/scans': Scan,
-  '/agenda': Calendar,
-  '/entregas': Truck,
-  '/financeiro': DollarSign,
-  '/precos': FileSpreadsheet,
-  '/comissoes': Coins,
-  '/payroll': DollarSign,
-  '/fiscal/boletos': Receipt,
-  '/estoque': Package,
-  '/compras': ShoppingCart,
-  '/funcionarios': UserCog,
-  '/relatorios': BarChart3,
-  '/relatorios/faturamento': BarChart3,
-  '/relatorios/despesas': BarChart3,
-  '/relatorios/dre': BarChart3,
-  '/relatorios/curva-abc': BarChart3,
-  '/simulador': Calculator,
-  '/planos': CreditCard,
-  '/flow-ia': Sparkles,
-  '/ia-avancada': Brain,
-  '/suporte/tickets': Headphones,
-  '/suporte/sugestoes': Headphones,
-  '/configuracoes': Settings,
-  '/auditoria': Shield,
-} as const;
+  return (
+    <NavLink
+      to={item.href}
+      end={isDashboard}
+      title={collapsed ? item.label : undefined}
+      className={({ isActive }) =>
+        cn(
+          'group/item relative flex items-center gap-3 rounded-lg text-[13px] font-medium',
+          'transition-colors duration-[80ms] outline-none',
+          'focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50',
+          collapsed ? 'justify-center px-0 py-2.5 mx-1' : 'px-3 py-2',
+          nested && !collapsed ? 'pl-8' : '',
+          isActive
+            ? [
+                'text-[var(--primary)]',
+                !collapsed && 'before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2',
+                !collapsed && 'before:h-5 before:w-[3px] before:rounded-r-full before:bg-[var(--primary)]',
+              ]
+            : [
+                'text-white/55 hover:text-white/90',
+                'hover:bg-white/[0.06]',
+              ],
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon
+            size={collapsed ? 17 : 15}
+            className={cn(
+              'shrink-0 transition-colors duration-[80ms]',
+              isActive ? 'text-[var(--primary)]' : 'text-white/45 group-hover/item:text-white/75',
+            )}
+          />
 
+          {/* dot indicator quando ativo + collapsed */}
+          {isActive && collapsed && (
+            <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
+          )}
+          {/* dot indicator quando ativo + expanded (lado direito) */}
+          {isActive && !collapsed && (
+            <span className="absolute right-3 h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
+          )}
+
+          {!collapsed && <span className="truncate">{item.label}</span>}
+          {collapsed && <span className="sr-only">{item.label}</span>}
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+/* ─── NavGroupSection ──────────────────────────────────────── */
+const STORAGE_KEY_PREFIX = 'ptf-sidebar-group-';
+
+function NavGroupSection({
+  group,
+  collapsed,
+}: {
+  group: NavGroup;
+  collapsed: boolean;
+}) {
+  const { hasAccess } = usePermissions();
+  const [open, setOpen] = useLocalStorage(`${STORAGE_KEY_PREFIX}${group.id}`, true);
+  const { pathname } = useLocation();
+  const Icon = group.icon;
+  const visibleItems = group.items.filter((item) => hasAccess(item.module));
+
+  if (visibleItems.length === 0) return null;
+
+  const isAnyActive = visibleItems.some((item) =>
+    pathname === item.href ||
+    (item.href !== '/' && pathname.startsWith(item.href + '/')),
+  );
+
+  if (collapsed) {
+    return (
+      <div className="mx-1">
+        <div
+          title={group.label}
+          className={cn(
+            'flex justify-center items-center py-2 rounded-lg',
+            'text-white/40 text-[10px] font-bold uppercase tracking-wider',
+          )}
+        >
+          <Icon
+            size={15}
+            className={cn(
+              'transition-colors duration-[80ms]',
+              isAnyActive ? 'text-[var(--primary)]' : 'text-white/30',
+            )}
+          />
+        </div>
+        <div className="space-y-0.5">
+          {visibleItems.map((item) => (
+            <NavItemRow key={item.href} item={item} collapsed={collapsed} nested />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          'w-full flex items-center gap-2 px-3 py-2 rounded-lg',
+          'text-white/35 text-[10px] font-bold uppercase tracking-[0.12em]',
+          'hover:text-white/55 hover:bg-white/[0.04] transition-colors duration-[80ms]',
+          'outline-none focus-visible:ring-1 focus-visible:ring-white/20',
+        )}
+        aria-expanded={open}
+      >
+        <Icon size={13} />
+        <span className="flex-1 text-left">{group.label}</span>
+        <ChevronDown
+          size={12}
+          className={cn(
+            'transition-transform duration-200',
+            open ? 'rotate-0' : '-rotate-90',
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="space-y-0.5 mt-0.5">
+          {visibleItems.map((item) => (
+            <NavItemRow key={item.href} item={item} collapsed={false} nested />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── SidebarContent ───────────────────────────────────────── */
 function SidebarContent({
   collapsed,
   onToggleCollapse,
@@ -77,107 +193,224 @@ function SidebarContent({
   onToggleCollapse: () => void;
 }) {
   const { hasAccess } = usePermissions();
-  const { current } = useTenant();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const { data: profile } = trpc.auth.getProfile.useQuery();
+  const { data: licenseStatus } = trpc.licensing.getStatus.useQuery(undefined, {
+    staleTime: 60_000,
+    retry: false,
+  });
 
-  const rootItems = NAV_ITEMS.filter((item) => !item.group && hasAccess(item.module));
-  const financeChildren = NAV_ITEMS.filter((item) => item.group === 'financeiro' && hasAccess(item.module));
+  const width = collapsed ? W_COLLAPSED : W_EXPANDED;
+  const plan = licenseStatus?.plan?.toUpperCase() ?? null;
+
+  const handleFlowIa = useCallback(() => {
+    if (hasAccess(NAV_FLOW_IA.module)) navigate(NAV_FLOW_IA.href);
+  }, [hasAccess, navigate]);
 
   return (
     <aside
-      className={`h-full bg-card border-r border-border flex flex-col transition-all duration-200 shadow-sm ${
-        collapsed ? 'w-20' : 'w-64'
-      }`}
+      style={{
+        width,
+        minWidth: width,
+        backgroundColor: 'var(--shell-sidebar-bg)',
+      }}
+      className="h-full flex flex-col transition-all duration-200 border-r border-white/[0.06] overflow-hidden"
     >
-      <div className="p-4 border-b border-border flex items-center gap-2">
-        <Stethoscope className="text-primary shrink-0" size={20} />
-        {!collapsed && <span className="text-foreground font-semibold text-base tracking-tight">ProteticFlow</span>}
+      {/* ── Top: logo ──────────────────────────────────────── */}
+      <div
+        className={cn(
+          'flex items-center h-14 shrink-0 border-b border-white/[0.06]',
+          collapsed ? 'justify-center px-3' : 'px-4 gap-2.5',
+        )}
+      >
+        <img
+          src="/brand/logo-mark.svg"
+          alt="ProteticFlow"
+          width={collapsed ? 28 : 24}
+          height={collapsed ? 28 : 24}
+          className="shrink-0"
+          onError={(e) => {
+            // fallback: oculta a imagem quebrada se o svg não existir ainda
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+        {!collapsed && (
+          <span
+            className="text-white/90 font-semibold text-[15px] tracking-tight leading-none"
+            style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+          >
+            ProteticFlow
+          </span>
+        )}
       </div>
 
-      {current && !collapsed && (
-        <div className="px-5 pt-4 pb-2">
-          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mb-1">Laboratório</p>
-          <p className="text-sm text-foreground font-semibold truncate">{current.name}</p>
-        </div>
-      )}
+      {/* ── Nav: Dashboard + 7 grupos ──────────────────────── */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-1.5 space-y-0.5">
 
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-        {rootItems.map((item) => {
-          const Icon = ICONS[item.href as keyof typeof ICONS] ?? LayoutDashboard;
-          const isDashboard = item.href === '/';
-          return (
+        {/* Dashboard solo */}
+        {hasAccess(NAV_DASHBOARD.module) && (
+          <div className={cn(collapsed ? 'mx-1' : '')}>
             <NavLink
-              key={item.href}
-              to={item.href}
-              end={isDashboard}
-              title={collapsed ? item.label : undefined}
+              to={NAV_DASHBOARD.href}
+              end
+              title={collapsed ? NAV_DASHBOARD.label : undefined}
               className={({ isActive }) =>
-                `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                cn(
+                  'relative flex items-center gap-3 rounded-lg text-[13px] font-semibold',
+                  'transition-colors duration-[80ms] outline-none mb-2',
+                  'focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50',
+                  collapsed ? 'justify-center px-0 py-2.5 mx-0' : 'px-3 py-2',
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                }`
+                    ? [
+                        'text-[var(--primary)]',
+                        !collapsed && 'before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2',
+                        !collapsed && 'before:h-5 before:w-[3px] before:rounded-r-full before:bg-[var(--primary)]',
+                      ]
+                    : 'text-white/60 hover:text-white/90 hover:bg-white/[0.06]',
+                )
               }
             >
-              <Icon size={17} />
-              {!collapsed && item.label}
+              {({ isActive }) => (
+                <>
+                  <LayoutDashboard
+                    size={collapsed ? 17 : 15}
+                    className={cn(
+                      'shrink-0 transition-colors duration-[80ms]',
+                      isActive ? 'text-[var(--primary)]' : 'text-white/45',
+                    )}
+                  />
+                  {!collapsed && <span>Dashboard</span>}
+                  {collapsed && isActive && (
+                    <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
+                  )}
+                  {!collapsed && isActive && (
+                    <span className="absolute right-3 h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
+                  )}
+                </>
+              )}
             </NavLink>
-          );
-        })}
-
-        {financeChildren.length > 0 && !collapsed && (
-          <>
-            <div className="pt-4 pb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
-              Financeiro
-            </div>
-            {financeChildren.map((item) => {
-              const Icon = ICONS[item.href as keyof typeof ICONS] ?? DollarSign;
-              return (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 pl-6 pr-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                    }`
-                  }
-                >
-                  <Icon size={15} />
-                  {item.label}
-                </NavLink>
-              );
-            })}
-          </>
+          </div>
         )}
+
+        {/* divisor sutil */}
+        <div className="h-px bg-white/[0.06] mx-3 my-1" />
+
+        {/* 7 grupos */}
+        {NAV_GROUPS.map((group) => (
+          <NavGroupSection key={group.id} group={group} collapsed={collapsed} />
+        ))}
       </nav>
 
-      <div className="p-3 border-t border-border space-y-3">
-        <PlanBadge />
-        {!collapsed && <p className="text-[11px] text-muted-foreground text-center">Powered by ProteticFlow</p>}
+      {/* ── Footer ─────────────────────────────────────────── */}
+      <div className="shrink-0 border-t border-white/[0.06] p-2 space-y-1.5">
+
+        {/* Flow IA CTA */}
+        {hasAccess(NAV_FLOW_IA.module) && (
+          <button
+            onClick={handleFlowIa}
+            title={collapsed ? 'Flow IA' : undefined}
+            className={cn(
+              'w-full flex items-center rounded-lg text-[13px] font-semibold',
+              'bg-[var(--primary)]/15 hover:bg-[var(--primary)]/25',
+              'text-[var(--primary)] transition-colors duration-[80ms]',
+              'outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/50',
+              collapsed ? 'justify-center py-2.5' : 'gap-2.5 px-3 py-2',
+            )}
+          >
+            <Sparkles size={16} className="shrink-0" />
+            {!collapsed && <span>Flow IA</span>}
+          </button>
+        )}
+
+        {/* User profile */}
+        <div
+          className={cn(
+            'flex items-center rounded-lg',
+            collapsed ? 'justify-center py-2' : 'gap-2.5 px-2 py-1.5',
+          )}
+        >
+          <div
+            className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold"
+            style={{
+              backgroundColor: 'var(--primary)',
+              color: 'var(--primary-foreground)',
+            }}
+          >
+            {getInitials(profile?.name)}
+          </div>
+
+          {!collapsed && (
+            <>
+              <div className="flex-1 min-w-0">
+                <p className="text-white/85 text-[13px] font-medium truncate leading-tight">
+                  {profile?.name ?? '—'}
+                </p>
+                {plan && (
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    style={{ background: 'color-mix(in srgb, var(--primary) 20%, transparent)', color: 'var(--primary)' }}
+                  >
+                    {plan}
+                  </span>
+                )}
+              </div>
+
+              <button
+                onClick={() => void logout()}
+                title="Sair"
+                className="ml-auto h-7 w-7 flex items-center justify-center rounded-md text-white/35 hover:text-red-400 hover:bg-white/[0.06] transition-colors duration-[80ms]"
+                aria-label="Sair da conta"
+              >
+                <LogOut size={14} />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Botão recolher — desktop only */}
         <button
           onClick={onToggleCollapse}
-          className="hidden lg:flex w-full items-center justify-center gap-2 h-9 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          className={cn(
+            'hidden lg:flex w-full items-center justify-center gap-1.5 h-7 rounded-lg',
+            'text-white/25 hover:text-white/50 hover:bg-white/[0.05]',
+            'text-[11px] transition-colors duration-[80ms]',
+            'outline-none focus-visible:ring-1 focus-visible:ring-white/20',
+          )}
+          aria-label={collapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          {!collapsed && 'Recolher'}
+          <ChevronLeft
+            size={14}
+            className={cn('transition-transform duration-200', collapsed && 'rotate-180')}
+          />
+          {!collapsed && <span>Recolher</span>}
         </button>
       </div>
     </aside>
   );
 }
 
+/* ─── Sidebar (export público) ─────────────────────────────── */
+export type SidebarProps = {
+  collapsed: boolean;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+  onToggleCollapse: () => void;
+};
+
 export function Sidebar({ collapsed, mobileOpen, onCloseMobile, onToggleCollapse }: SidebarProps) {
   return (
     <>
-      <div className="hidden lg:block">
+      {/* Desktop */}
+      <div className="hidden lg:block h-screen sticky top-0">
         <SidebarContent collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
       </div>
 
+      {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onCloseMobile}
             aria-label="Fechar menu"
           />
@@ -189,5 +422,3 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile, onToggleCollapse
     </>
   );
 }
-
-
