@@ -1,4 +1,5 @@
-import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not, desc } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, sql, count, gt, lt, gte, lte, inArray, not, desc, asc } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
 import { db } from '../../db/index.js';
 import { jobs, jobItems, jobLogs, jobStages, jobPhotos } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
@@ -7,7 +8,7 @@ import { priceItems } from '../../db/schema/clients.js';
 import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import { canTransition, DEFAULT_STAGES } from '@proteticflow/shared';
-import { uploadBuffer, deleteObject } from '../../core/storage.js';
+import { uploadBuffer, deleteObject, generateUploadUrl, generateDownloadUrl } from '../../core/storage.js';
 import { autoCreateArFromJob } from '../financial/service.js';
 import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
 import { logAudit } from '../audit/service.js';
@@ -48,6 +49,44 @@ type ReturnProofInput  = z.infer<typeof returnProofSchema>;
 type CreateReworkInput = z.infer<typeof createReworkSchema>;
 type ToggleUrgentInput = z.infer<typeof toggleUrgentSchema>;
 type JobStatus = typeof jobs.$inferSelect.status;
+type JobListOrderBy = 'deadline' | 'createdAt';
+type JobListOrder = 'asc' | 'desc';
+type TimelineEventType = 'STATUS_CHANGE' | 'NOTA' | 'ARQUIVO' | 'ENTREGA';
+
+export type ListJobsPageInput = {
+  page: number;
+  pageSize: number;
+  statuses?: JobStatus[] | undefined;
+  clientId?: number | undefined;
+  deadlineFrom?: Date | undefined;
+  deadlineTo?: Date | undefined;
+  search?: string | undefined;
+  orderBy?: JobListOrderBy | undefined;
+  order?: JobListOrder | undefined;
+};
+
+export type TimelinePageInput = {
+  jobId: number;
+  cursor?: number | undefined;
+  limit: number;
+};
+
+export type PresignedUploadInput = {
+  jobId: number;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+};
+
+export type ConfirmUploadInput = {
+  jobId: number;
+  key: string;
+  filename: string;
+  description?: string | undefined;
+};
+
+const ALLOWED_JOB_FILE_TYPES = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+const MAX_JOB_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 const FINAL_JOB_STATUSES = ['delivered', 'cancelled'] as const;
 const PAUSED_JOB_STATUSES = ['rework_in_progress', 'suspended'] as const;
@@ -413,6 +452,151 @@ export async function listJobs(tenantId: number, filters: ListJobsInput) {
   const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
 
   return { data: items, nextCursor };
+}
+
+function buildListPageConditions(tenantId: number, filters: ListJobsPageInput) {
+  const conditions = [
+    eq(jobs.tenantId, tenantId),
+    isNull(jobs.deletedAt),
+  ];
+
+  if (filters.statuses && filters.statuses.length > 0) {
+    conditions.push(
+      filters.statuses.length === 1
+        ? eq(jobs.status, filters.statuses[0]!)
+        : inArray(jobs.status, filters.statuses),
+    );
+  }
+  if (filters.clientId) conditions.push(eq(jobs.clientId, filters.clientId));
+  if (filters.deadlineFrom) conditions.push(gte(jobs.deadline, filters.deadlineFrom));
+  if (filters.deadlineTo) conditions.push(lte(jobs.deadline, filters.deadlineTo));
+  if (filters.search?.trim()) {
+    const term = `%${filters.search.trim()}%`;
+    conditions.push(or(
+      ilike(jobs.code, term),
+      ilike(jobs.patientName, term),
+      ilike(jobs.prothesisType, term),
+      ilike(clients.name, term),
+    )!);
+  }
+
+  return conditions;
+}
+
+export async function listJobsPage(tenantId: number, filters: ListJobsPageInput) {
+  const page = Math.max(1, filters.page);
+  const pageSize = Math.min(Math.max(1, filters.pageSize), 100);
+  const conditions = buildListPageConditions(tenantId, filters);
+  const orderBy = filters.orderBy ?? 'deadline';
+  const order = filters.order ?? 'asc';
+  const orderExpression = orderBy === 'createdAt'
+    ? (order === 'desc' ? desc(jobs.createdAt) : asc(jobs.createdAt))
+    : (order === 'desc' ? desc(jobs.deadline) : asc(jobs.deadline));
+
+  const [totalRow] = await db
+    .select({ value: count() })
+    .from(jobs)
+    .leftJoin(clients, and(eq(jobs.clientId, clients.id), eq(clients.tenantId, tenantId)))
+    .where(and(...conditions));
+
+  const items = await db
+    .select({
+      id: jobs.id,
+      code: jobs.code,
+      status: jobs.status,
+      totalCents: jobs.totalCents,
+      deadline: jobs.deadline,
+      patientName: jobs.patientName,
+      prothesisType: jobs.prothesisType,
+      material: jobs.material,
+      assignedTo: jobs.assignedTo,
+      createdAt: jobs.createdAt,
+      clientName: clients.name,
+      clientId: jobs.clientId,
+      jobSubType: jobs.jobSubType,
+      isUrgent: jobs.isUrgent,
+      suspendedAt: jobs.suspendedAt,
+    })
+    .from(jobs)
+    .leftJoin(clients, and(eq(jobs.clientId, clients.id), eq(clients.tenantId, tenantId)))
+    .where(and(...conditions))
+    .orderBy(orderExpression)
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  return {
+    items,
+    total: totalRow?.value ?? 0,
+    page,
+    pageSize,
+  };
+}
+
+function escapeCsvValue(value: string | number | null | undefined): string {
+  const text = value === null || value === undefined ? '' : String(value);
+  if (/[;"\r\n]/.test(text)) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+  return text;
+}
+
+function formatJobCsvRow(job: Awaited<ReturnType<typeof listJobsPage>>['items'][number]): string {
+  return [
+    job.code,
+    job.clientName ?? '',
+    job.patientName ?? '',
+    getStatusLabel(job.status),
+    job.deadline.toISOString(),
+    job.isUrgent ? 'URGENTE' : 'NORMAL',
+    job.totalCents,
+    job.createdAt.toISOString(),
+  ].map(escapeCsvValue).join(';');
+}
+
+export async function* streamJobsCsv(
+  tenantId: number,
+  filters: Omit<ListJobsPageInput, 'page' | 'pageSize'>,
+): AsyncGenerator<string> {
+  const header = [
+    'Codigo',
+    'Cliente',
+    'Paciente',
+    'Status',
+    'Prazo',
+    'Prioridade',
+    'ValorCentavos',
+    'CriadoEm',
+  ];
+
+  yield `\uFEFF${header.map(escapeCsvValue).join(';')}\n`;
+
+  let page = 1;
+  const pageSize = 100;
+  while (true) {
+    const result = await listJobsPage(tenantId, {
+      ...filters,
+      page,
+      pageSize,
+    });
+
+    if (result.items.length === 0) return;
+
+    yield `${result.items.map(formatJobCsvRow).join('\n')}\n`;
+
+    if (result.items.length < pageSize) return;
+    page += 1;
+  }
+}
+
+export async function exportJobsCsv(
+  tenantId: number,
+  filters: Omit<ListJobsPageInput, 'page' | 'pageSize'>,
+): Promise<string> {
+  let csv = '';
+  for await (const chunk of streamJobsCsv(tenantId, filters)) {
+    csv += chunk;
+  }
+  return csv;
 }
 
 export async function getJob(tenantId: number, jobId: number) {
@@ -954,6 +1138,64 @@ export async function getLogs(tenantId: number, jobId: number) {
     .orderBy(sql`${jobLogs.createdAt} DESC`);
 }
 
+function getTimelineEventType(log: typeof jobLogs.$inferSelect): TimelineEventType {
+  if (log.notes?.startsWith('Arquivo anexado:')) return 'ARQUIVO';
+  if (log.notes?.startsWith('Nota:')) return 'NOTA';
+  if (log.toStatus === 'delivered') return 'ENTREGA';
+  return 'STATUS_CHANGE';
+}
+
+export async function listTimeline(tenantId: number, input: TimelinePageInput) {
+  await getScopedJobOrThrow(tenantId, input.jobId);
+
+  const conditions = [
+    eq(jobLogs.tenantId, tenantId),
+    eq(jobLogs.jobId, input.jobId),
+  ];
+  if (input.cursor) conditions.push(lt(jobLogs.id, input.cursor));
+
+  const rows = await db
+    .select()
+    .from(jobLogs)
+    .where(and(...conditions))
+    .orderBy(desc(jobLogs.id))
+    .limit(input.limit + 1);
+
+  const hasMore = rows.length > input.limit;
+  const items = (hasMore ? rows.slice(0, input.limit) : rows).map((log) => ({
+    id: log.id,
+    tipo: getTimelineEventType(log),
+    descricao: log.notes ?? (log.fromStatus ? 'Status alterado' : 'Trabalho criado'),
+    fromStatus: log.fromStatus,
+    toStatus: log.toStatus,
+    criadoEm: log.createdAt,
+    usuarioNome: log.userName ?? (log.userId ? `Usuario #${log.userId}` : 'Sistema'),
+  }));
+
+  return {
+    items,
+    nextCursor: hasMore ? items.at(-1)?.id : undefined,
+  };
+}
+
+export async function addNote(tenantId: number, jobId: number, text: string, userId: number) {
+  const job = await getScopedJobOrThrow(tenantId, jobId);
+
+  const [created] = await db
+    .insert(jobLogs)
+    .values({
+      tenantId,
+      jobId,
+      userId,
+      fromStatus: job.status,
+      toStatus: job.status,
+      notes: `Nota: ${text.trim()}`,
+    })
+    .returning();
+
+  return created;
+}
+
 // â”€â”€â”€ Fotos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function uploadPhoto(tenantId: number, input: UploadPhotoInput, uploadedBy: number) {
@@ -988,6 +1230,81 @@ export async function listPhotos(tenantId: number, jobId: number) {
   return db.select().from(jobPhotos)
     .where(and(eq(jobPhotos.tenantId, tenantId), eq(jobPhotos.jobId, jobId)))
     .orderBy(sql`${jobPhotos.createdAt} ASC`);
+}
+
+function sanitizeFilename(filename: string): string {
+  return filename
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 120);
+}
+
+export async function getPresignedUploadUrl(
+  tenantId: number,
+  input: PresignedUploadInput,
+): Promise<{ uploadUrl: string; key: string }> {
+  await getScopedJobOrThrow(tenantId, input.jobId);
+
+  if (!ALLOWED_JOB_FILE_TYPES.has(input.contentType)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Tipo de arquivo nao permitido' });
+  }
+  if (input.sizeBytes > MAX_JOB_FILE_SIZE_BYTES) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Arquivo excede 10MB' });
+  }
+
+  const key = `tenants/${tenantId}/jobs/${input.jobId}/files/${randomUUID()}-${sanitizeFilename(input.filename)}`;
+  const uploadUrl = await generateUploadUrl(key, input.contentType);
+  return { uploadUrl, key };
+}
+
+export async function confirmUpload(
+  tenantId: number,
+  input: ConfirmUploadInput,
+  uploadedBy: number,
+) {
+  const job = await getScopedJobOrThrow(tenantId, input.jobId);
+
+  const expectedPrefix = `tenants/${tenantId}/jobs/${input.jobId}/files/`;
+  if (!input.key.startsWith(expectedPrefix)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Chave de upload invalida' });
+  }
+
+  const photo = await db.transaction(async (tx) => {
+    const [createdPhoto] = await tx.insert(jobPhotos).values({
+      tenantId,
+      jobId: input.jobId,
+      stageId: null,
+      url: input.key,
+      description: input.description ?? input.filename,
+      uploadedBy,
+    }).returning();
+
+    await tx.insert(jobLogs).values({
+      tenantId,
+      jobId: input.jobId,
+      userId: uploadedBy,
+      fromStatus: job.status,
+      toStatus: job.status,
+      notes: `Arquivo anexado: ${input.filename}`,
+    });
+
+    return createdPhoto;
+  });
+
+  return photo;
+}
+
+export async function getPresignedDownloadUrl(
+  tenantId: number,
+  photoId: number,
+): Promise<{ downloadUrl: string }> {
+  const [photo] = await db.select().from(jobPhotos).where(
+    and(eq(jobPhotos.tenantId, tenantId), eq(jobPhotos.id, photoId)),
+  );
+  if (!photo) throw new TRPCError({ code: 'NOT_FOUND', message: 'Arquivo nao encontrado' });
+  return { downloadUrl: await generateDownloadUrl(photo.url) };
 }
 
 export async function deletePhoto(tenantId: number, photoId: number) {

@@ -179,6 +179,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/trpc': devApiUrl,
+      '/api': devApiUrl,
       '/health': devApiUrl,
     },
   },

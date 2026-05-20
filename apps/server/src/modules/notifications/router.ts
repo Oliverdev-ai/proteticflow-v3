@@ -35,6 +35,19 @@ export const notificationRouter = router({
   getUserPreferences: tenantProcedure
     .query(({ ctx }) => proactivePreferencesService.getUserPreferences(ctx.tenantId!, ctx.user!.id)),
 
+  getUiPreferences: tenantProcedure
+    .query(({ ctx }) => proactivePreferencesService.getUserPreferences(ctx.tenantId!, ctx.user!.id)
+      .then((preferences) => preferences.uiPreferences)),
+
+  updateUiPreferences: tenantProcedure
+    .input(z.object({
+      kanbanDensity: z.enum(['compact', 'comfortable']).optional(),
+      sidebarCollapsed: z.boolean().optional(),
+      sidebarGroups: z.record(z.string(), z.boolean()).optional(),
+    }))
+    .mutation(({ ctx, input }) =>
+      proactivePreferencesService.updateUiPreferences(ctx.tenantId!, ctx.user!.id, input)),
+
   updateUserPreferences: tenantProcedure
     .input(updateUserPreferencesSchema)
     .mutation(({ ctx, input }) =>

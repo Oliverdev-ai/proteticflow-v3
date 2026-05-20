@@ -1,29 +1,27 @@
-﻿import { useMemo, useState } from 'react';
-import { DndContext, DragOverlay, useDraggable, useDroppable, closestCenter } from '@dnd-kit/core';
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  AlertCircle,
-  AlertTriangle,
-  Clock,
-  Loader2,
-  Monitor,
-  PauseCircle,
-  PlayCircle,
-  User,
-} from 'lucide-react';
-import { trpc } from '../../lib/trpc';
-import {
-  canTransition,
-  JOB_STATUS_LABELS,
-  KANBAN_COLUMNS,
-  type JobStatus,
-} from '@proteticflow/shared';
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
+import { AlertCircle, AlertTriangle, GripVertical, Loader2, PauseCircle, PlayCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PageTransition } from '../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../components/shared/typography';
+import { canTransition, JOB_STATUS_LABELS, type JobStatus } from '@proteticflow/shared';
+import { trpc } from '../../lib/trpc';
 import { cn } from '../../lib/utils';
-import { ProofBadge } from '../../components/jobs/proof-badge';
+import { PageTransition } from '../../components/shared/page-transition';
+import { H1, Muted, Subtitle } from '../../components/shared/typography';
 import { SuspendDialog } from '../../components/jobs/suspend-dialog';
+
+type KanbanStatus = 'pending' | 'in_progress' | 'quality_check' | 'ready' | 'delivered';
+type Density = 'compact' | 'comfortable';
 
 type KanbanJob = {
   id: number;
@@ -42,621 +40,435 @@ type KanbanJob = {
   isUrgent: boolean;
   suspendedAt?: string | Date | null;
   suspendReason?: string | null;
-  proofDueDate?: string | Date | null;
-  proofReturnedAt?: string | Date | null;
-  reworkParentId?: number | null;
 };
 
-type MoveStatus = 'pending' | 'in_progress' | 'quality_check' | 'ready' | 'delivered';
+type SuspendedJob = Pick<
+  KanbanJob,
+  'id' | 'code' | 'status' | 'jobSubType' | 'isUrgent' | 'patientName' | 'clientName' | 'deadline' | 'suspendedAt' | 'suspendReason'
+>;
 
-type SuspendedJob = {
-  id: number;
-  code: string;
-  status: JobStatus;
-  jobSubType: 'standard' | 'proof' | 'rework';
-  isUrgent: boolean;
-  patientName: string | null;
-  clientName: string | null;
-  deadline: string | Date;
-  suspendedAt: string | Date | null;
-  suspendReason: string | null;
-};
+const KANBAN_STATUSES: KanbanStatus[] = ['pending', 'in_progress', 'quality_check', 'ready', 'delivered'];
 
-const COLUMN_COLORS: Record<string, string> = {
-  pending: 'border-muted',
-  in_progress: 'border-blue-500/30',
-  quality_check: 'border-amber-500/30',
-  ready: 'border-primary/50',
-  delivered: 'border-emerald-500/30',
-};
+function getUrgency(deadline: string | Date, status: JobStatus) {
+  if (status === 'delivered') return 'onTime';
+  const diffMs = new Date(deadline).getTime() - Date.now();
+  if (diffMs < 0) return 'overdue';
+  if (diffMs < 24 * 60 * 60 * 1000) return 'due24h';
+  return 'onTime';
+}
 
-const URGENCY_DOT: Record<string, string> = {
-  overdue: 'bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]',
-  due24h: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]',
-  onTime: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
-};
+function UrgencyDot({ urgency }: { urgency: 'overdue' | 'due24h' | 'onTime' }) {
+  return (
+    <span
+      className={cn(
+        'h-2 w-2 rounded-full',
+        urgency === 'overdue' && 'bg-destructive',
+        urgency === 'due24h' && 'bg-warning',
+        urgency === 'onTime' && 'bg-success',
+      )}
+    />
+  );
+}
 
-function JobCard({
+function KanbanCard({
   job,
+  density,
   dragging = false,
   onSuspend,
 }: {
   job: KanbanJob;
+  density: Density;
   dragging?: boolean;
   onSuspend?: (job: KanbanJob) => void;
 }) {
   const navigate = useNavigate();
-  const deadline = new Date(job.deadline);
-  const now = Date.now();
-  const diff = deadline.getTime() - now;
-  const urgency = diff < 0 ? 'overdue' : diff < 86400000 ? 'due24h' : 'onTime';
+  const urgency = getUrgency(job.deadline, job.status);
 
   return (
-    <div
-      data-testid={`kanban-card-${job.id}`}
-      onClick={() => !dragging && navigate(`/trabalhos/${job.id}`)}
+    <article
       className={cn(
-        'flex cursor-pointer flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-all active:scale-[0.98]',
-        dragging
-          ? 'rotate-2 scale-105 border-primary opacity-50 shadow-2xl ring-2 ring-primary/20'
-          : 'hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5',
+        'group flex cursor-pointer flex-col rounded-2xl border border-border bg-card shadow-sm transition-all hover:border-primary/50',
+        density === 'compact' ? 'min-h-[72px] gap-2 p-3' : 'min-h-[112px] gap-3 p-4',
+        job.isUrgent && 'border-l-[3px] border-l-primary',
+        dragging && 'cursor-grabbing opacity-50 ring-2 ring-primary/30',
       )}
+      onClick={() => !dragging && navigate(`/trabalhos/${job.id}`)}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="rounded-lg bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-primary">
-          {job.code}
-        </span>
-        <div
-          className={cn('h-2 w-2 rounded-full', URGENCY_DOT[urgency] || 'bg-muted')}
-          title={
-            urgency === 'overdue' ? 'Atrasado' : urgency === 'due24h' ? 'Vence em 24h' : 'No Prazo'
-          }
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5">
-        {job.isUrgent ? (
-          <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-destructive">
-            URGENTE
-          </span>
-        ) : null}
-
-        {job.jobSubType === 'proof' ? (
-          <ProofBadge proofDueDate={job.proofDueDate} proofReturnedAt={job.proofReturnedAt} />
-        ) : null}
-
-        {job.jobSubType === 'rework' ? (
-          <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-500">
-            REMOLDAGEM
-          </span>
-        ) : null}
-      </div>
-
-      <div className="space-y-0.5">
-        {job.clientName ? (
-          <p className="line-clamp-1 text-xs font-bold text-foreground">{job.clientName}</p>
-        ) : null}
-        {job.patientName ? (
-          <p className="line-clamp-1 text-[11px] font-semibold italic text-muted-foreground">
-            {job.patientName}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-mono text-xs font-semibold text-primary">{job.code}</p>
+          <p className="truncate text-sm font-semibold text-foreground">
+            {job.clientName ?? 'Cliente nao informado'}
           </p>
-        ) : null}
-
-        {job.firstItemName ? (
-          <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/30 p-1.5">
-            <div className="rounded-md bg-background p-1 text-muted-foreground">
-              <Clock size={10} />
-            </div>
-            <p className="flex-1 truncate text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
-              {job.firstItemName}
-            </p>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-1">
-        <span
-          className={cn(
-            'flex items-center gap-1 text-[10px] font-bold',
-            urgency === 'overdue'
-              ? 'text-destructive'
-              : urgency === 'due24h'
-                ? 'text-amber-500'
-                : 'text-muted-foreground',
-          )}
-        >
-          {deadline.toLocaleDateString('pt-BR')}
-        </span>
-
+        </div>
         <div className="flex items-center gap-2">
-          {job.assignedTo ? (
-            <div className="flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase text-muted-foreground">
-              <User size={8} /> #{job.assignedTo}
-            </div>
-          ) : null}
-
-          {onSuspend ? (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onSuspend(job);
-              }}
-              className="rounded-md border border-border bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground transition-all hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-            >
-              Suspender
-            </button>
-          ) : null}
+          <UrgencyDot urgency={urgency} />
+          <GripVertical size={14} className="text-muted-foreground opacity-60" />
         </div>
       </div>
-    </div>
-  );
-}
 
-function DroppableColumn({
-  status,
-  jobs,
-  isDragOver,
-  onSuspend,
-}: {
-  status: string;
-  jobs: KanbanJob[];
-  isDragOver: boolean;
-  onSuspend: (job: KanbanJob) => void;
-}) {
-  const { setNodeRef } = useDroppable({ id: status });
+      {density === 'comfortable' ? (
+        <div className="min-w-0 space-y-1">
+          <p className="truncate text-xs text-muted-foreground">
+            {job.firstItemName || job.patientName || 'Trabalho sem descricao'}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className={urgency === 'overdue' ? 'text-destructive' : ''}>
+              {new Date(job.deadline).toLocaleDateString('pt-BR')}
+            </span>
+            {job.isUrgent ? <span className="text-primary">Urgente</span> : null}
+          </div>
+        </div>
+      ) : null}
 
-  return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        'flex min-h-[300px] flex-col gap-3 rounded-2xl p-2 transition-all duration-300',
-        isDragOver ? 'bg-primary/5 ring-2 ring-primary/20 backdrop-blur-sm' : '',
-      )}
-    >
-      {jobs.map((job) => (
-        <DraggableCard key={job.id} job={job} onSuspend={onSuspend} />
-      ))}
-    </div>
+      {onSuspend && job.status !== 'delivered' ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSuspend(job);
+          }}
+          className="w-fit rounded-md border border-border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+        >
+          Suspender
+        </button>
+      ) : null}
+    </article>
   );
 }
 
 function DraggableCard({
   job,
+  density,
   onSuspend,
 }: {
   job: KanbanJob;
+  density: Density;
   onSuspend: (job: KanbanJob) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: job.id.toString(),
+    id: String(job.id),
     data: { status: job.status },
   });
 
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={{ touchAction: 'none' }}>
-      <JobCard job={job} dragging={isDragging} onSuspend={onSuspend} />
+    <div ref={setNodeRef} {...attributes} {...listeners} style={{ touchAction: 'none' }}>
+      <KanbanCard job={job} density={density} dragging={isDragging} onSuspend={onSuspend} />
     </div>
   );
 }
 
+function KanbanColumn({
+  status,
+  jobs,
+  density,
+  active,
+  onSuspend,
+}: {
+  status: KanbanStatus;
+  jobs: KanbanJob[];
+  density: Density;
+  active: boolean;
+  onSuspend: (job: KanbanJob) => void;
+}) {
+  const { setNodeRef } = useDroppable({ id: status });
+
+  return (
+    <section className="flex w-[284px] min-w-[284px] flex-col rounded-2xl border border-border bg-muted/20">
+      <header className="flex items-center justify-between border-b border-border px-4 py-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {JOB_STATUS_LABELS[status]}
+        </h2>
+        <span className="rounded-md bg-card px-2 py-1 font-tabular text-xs font-semibold text-foreground">
+          {jobs.length}
+        </span>
+      </header>
+      <div
+        ref={setNodeRef}
+        className={cn(
+          'flex min-h-[360px] flex-1 flex-col gap-3 p-3 transition-all',
+          active && 'bg-primary/10 ring-2 ring-primary/30',
+        )}
+      >
+        {jobs.length === 0 ? (
+          <div className="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+            Solte aqui
+          </div>
+        ) : (
+          jobs.map((job) => (
+            <DraggableCard key={job.id} job={job} density={density} onSuspend={onSuspend} />
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function buildColumns(data: unknown, overdueOnly: boolean): Record<KanbanStatus, KanbanJob[]> {
+  const columns: Record<KanbanStatus, KanbanJob[]> = {
+    pending: [],
+    in_progress: [],
+    quality_check: [],
+    ready: [],
+    delivered: [],
+  };
+  const source = data as { columns?: Array<{ status: string; jobs: KanbanJob[] }> } | undefined;
+
+  for (const status of KANBAN_STATUSES) {
+    const jobs = source?.columns?.find((column) => column.status === status)?.jobs ?? [];
+    columns[status] = jobs
+      .filter((job) => !overdueOnly || getUrgency(job.deadline, job.status) === 'overdue')
+      .sort((a, b) => {
+        const urgentDiff = Number(b.isUrgent) - Number(a.isUrgent);
+        if (urgentDiff !== 0) return urgentDiff;
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      });
+  }
+
+  return columns;
+}
+
 export default function KanbanPage() {
   const navigate = useNavigate();
-  const [overdueOnly, setOverdueOnly] = useState(false);
-  const [activeView, setActiveView] = useState<'active' | 'suspended'>('active');
-  const [pausedFilter, setPausedFilter] = useState<'all' | 'rework_in_progress' | 'suspended'>('all');
-  const [activeJob, setActiveJob] = useState<KanbanJob | null>(null);
-  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
-  const [toastMsg, setToastMsg] = useState('');
-  const [suspendTarget, setSuspendTarget] = useState<KanbanJob | null>(null);
   const utils = trpc.useUtils();
-  const activeColumns = KANBAN_COLUMNS.filter(
-    (status) => status !== 'rework_in_progress' && status !== 'suspended',
-  );
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
+  const [activeView, setActiveView] = useState<'active' | 'suspended'>('active');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [density, setDensity] = useState<Density>('comfortable');
+  const [activeJob, setActiveJob] = useState<KanbanJob | null>(null);
+  const [overColumn, setOverColumn] = useState<string | null>(null);
+  const [columns, setColumns] = useState<Record<KanbanStatus, KanbanJob[]> | null>(null);
+  const [toast, setToast] = useState('');
+  const [suspendTarget, setSuspendTarget] = useState<KanbanJob | null>(null);
 
-  const boardQuery = trpc.job.getBoard.useQuery(
-    {
-      overdue: activeView === 'active' && overdueOnly ? true : undefined,
-    },
-    {
-      enabled: activeView === 'active',
-    },
-  );
-
-  const suspendedQuery = trpc.job.listSuspended.useQuery(undefined, {
-    enabled: activeView === 'suspended',
-  });
-
+  const boardQuery = trpc.job.getBoard.useQuery({ overdue: overdueOnly || undefined }, { enabled: activeView === 'active' });
   const metricsQuery = trpc.job.getMetrics.useQuery();
-
-  const moveCard = trpc.job.moveCard.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.job.getBoard.invalidate(),
-        utils.job.getMetrics.invalidate(),
-        utils.job.listSuspended.invalidate(),
-      ]);
-    },
-    onError: (error) => setToastMsg(error.message),
-  });
-
+  const suspendedQuery = trpc.job.listSuspended.useQuery(undefined, { enabled: activeView === 'suspended' });
+  const uiPreferencesQuery = trpc.notification.getUiPreferences.useQuery();
+  const updateUiPreferences = trpc.notification.updateUiPreferences.useMutation();
+  const moveCard = trpc.job.updateStatus.useMutation();
   const suspendMutation = trpc.job.suspend.useMutation({
     onSuccess: async () => {
       setSuspendTarget(null);
-      await Promise.all([
-        utils.job.getBoard.invalidate(),
-        utils.job.getMetrics.invalidate(),
-        utils.job.listSuspended.invalidate(),
-      ]);
+      await Promise.all([utils.job.getBoard.invalidate(), utils.job.getMetrics.invalidate(), utils.job.listSuspended.invalidate()]);
     },
-    onError: (error) => setToastMsg(error.message),
+    onError: (error) => setToast(error.message),
   });
-
   const unsuspendMutation = trpc.job.unsuspend.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.job.getBoard.invalidate(),
-        utils.job.getMetrics.invalidate(),
-        utils.job.listSuspended.invalidate(),
-      ]);
+      await Promise.all([utils.job.getBoard.invalidate(), utils.job.getMetrics.invalidate(), utils.job.listSuspended.invalidate()]);
     },
-    onError: (error) => setToastMsg(error.message),
+    onError: (error) => setToast(error.message),
   });
 
-  const columnsMap = useMemo(() => {
-    const map: Record<string, KanbanJob[]> = {};
+  const serverColumns = useMemo(() => buildColumns(boardQuery.data, overdueOnly), [boardQuery.data, overdueOnly]);
 
-    for (const status of activeColumns) {
-      const col = boardQuery.data?.columns.find((column) => column.status === status);
-      const jobs = (col?.jobs ?? []) as KanbanJob[];
+  useEffect(() => {
+    setColumns(serverColumns);
+  }, [serverColumns]);
 
-      map[status] = [...jobs].sort((a, b) => {
-        const urgentDiff = Number(b.isUrgent) - Number(a.isUrgent);
-        if (urgentDiff !== 0) return urgentDiff;
-
-        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      });
+  useEffect(() => {
+    if (uiPreferencesQuery.data?.kanbanDensity) {
+      setDensity(uiPreferencesQuery.data.kanbanDensity);
     }
+  }, [uiPreferencesQuery.data?.kanbanDensity]);
 
-    return map;
-  }, [activeColumns, boardQuery.data]);
-
-  const suspendedJobs = (suspendedQuery.data ?? []) as SuspendedJob[];
-  const reworkJobsCount = suspendedJobs.filter((job) => job.status === 'rework_in_progress').length;
-  const suspendedOnlyCount = suspendedJobs.filter((job) => job.status === 'suspended').length;
-  const filteredPausedJobs = suspendedJobs.filter((job) => {
-    if (pausedFilter === 'all') return true;
-    return job.status === pausedFilter;
-  });
+  function changeDensity(next: Density) {
+    setDensity(next);
+    updateUiPreferences.mutate({ kanbanDensity: next });
+  }
 
   function handleDragStart(event: DragStartEvent) {
-    const jobId = Number(event.active.id);
-    if (!Number.isFinite(jobId)) return;
-
-    const job = Object.values(columnsMap)
+    const id = Number(event.active.id);
+    const job = Object.values(columns ?? {})
       .flat()
-      .find((item) => item.id === jobId);
-
+      .find((item) => item.id === id);
     setActiveJob(job ?? null);
   }
 
-  function handleDragOver(event: { over: { id: string | number } | null }) {
-    setDragOverCol(event.over?.id?.toString() ?? null);
+  function handleDragOver(event: DragOverEvent) {
+    setOverColumn(event.over?.id?.toString() ?? null);
   }
 
-  function handleDragEnd(event: DragEndEvent) {
-    setDragOverCol(null);
+  async function handleDragEnd(event: DragEndEvent) {
+    setOverColumn(null);
     setActiveJob(null);
 
-    const { active, over } = event;
-    if (!over || !active.data.current) return;
-
-    const fromStatus = active.data.current.status as JobStatus;
-    const toStatus = over.id as MoveStatus;
-    if (fromStatus === 'cancelled') return;
-    if (fromStatus === toStatus) return;
-
+    const fromStatus = event.active.data.current?.status as JobStatus | undefined;
+    const toStatus = event.over?.id as KanbanStatus | undefined;
+    const jobId = Number(event.active.id);
+    if (!fromStatus || !toStatus || !Number.isFinite(jobId) || fromStatus === toStatus) return;
     if (!canTransition(fromStatus, toStatus)) {
-      setToastMsg(
-        `Transição de "${JOB_STATUS_LABELS[fromStatus]}" para "${JOB_STATUS_LABELS[toStatus]}" não é permitida`,
-      );
-      setTimeout(() => setToastMsg(''), 4000);
+      setToast(`Transicao para ${JOB_STATUS_LABELS[toStatus]} nao permitida`);
+      setTimeout(() => setToast(''), 4000);
       return;
     }
 
-    const jobId = Number(active.id);
-    if (!Number.isFinite(jobId)) return;
+    const previous = columns ?? serverColumns;
+    const moving = previous[fromStatus as KanbanStatus]?.find((job) => job.id === jobId);
+    if (!moving) return;
 
-    moveCard.mutate({ jobId, newStatus: toStatus });
+    setColumns({
+      ...previous,
+      [fromStatus]: (previous[fromStatus as KanbanStatus] ?? []).filter((job) => job.id !== jobId),
+      [toStatus]: [{ ...moving, status: toStatus }, ...(previous[toStatus] ?? [])],
+    });
+
+    try {
+      await moveCard.mutateAsync({ jobId, newStatus: toStatus });
+      await Promise.all([utils.job.getBoard.invalidate(), utils.job.getMetrics.invalidate()]);
+    } catch (error) {
+      setColumns(previous);
+      setToast(error instanceof Error ? error.message : 'Falha ao mover trabalho');
+      setTimeout(() => setToast(''), 4000);
+    }
   }
 
-  const isLoading = activeView === 'active' ? boardQuery.isLoading : suspendedQuery.isLoading;
-  const error = activeView === 'active' ? boardQuery.error : suspendedQuery.error;
+  const currentColumns = columns ?? serverColumns;
+  const suspendedJobs = (suspendedQuery.data ?? []) as SuspendedJob[];
 
   return (
     <PageTransition className="flex h-full flex-col gap-6 overflow-hidden p-4 md:p-1">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <H1>Fluxo de Produção</H1>
-          <Subtitle>Acompanhe status, urgências, provas e OS suspensas em tempo real</Subtitle>
+        <div>
+          <H1>Kanban de Produção</H1>
+          <Subtitle>Arraste trabalhos entre etapas com rollback automático em caso de falha.</Subtitle>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/kanban-tv')}
-            className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs font-bold text-sky-500 shadow-sm transition-all hover:bg-sky-500/10 active:scale-95"
-          >
-            <Monitor size={14} /> Modo TV
-          </button>
-
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-md border border-border bg-card p-1">
+            {(['comfortable', 'compact'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={cn(
+                  'rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground',
+                  density === option && 'bg-muted text-foreground',
+                )}
+                onClick={() => changeDensity(option)}
+              >
+                {option === 'comfortable' ? 'Confortavel' : 'Compacto'}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => setActiveView('active')}
-            className={cn(
-              'rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all',
-              activeView === 'active'
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
-            )}
+            className={cn('rounded-xl border px-4 py-2.5 text-xs font-semibold', activeView === 'active' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground')}
           >
             Ativas
           </button>
-
           <button
             type="button"
             onClick={() => setActiveView('suspended')}
-            className={cn(
-              'rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all',
-              activeView === 'suspended'
-                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500'
-                : 'border-border bg-card text-muted-foreground hover:border-amber-500/40 hover:text-foreground',
-            )}
+            className={cn('rounded-xl border px-4 py-2.5 text-xs font-semibold', activeView === 'suspended' ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground')}
           >
-            Pausadas ({suspendedQuery.data?.length ?? 0})
+            Pausadas ({suspendedJobs.length})
           </button>
-
           {activeView === 'active' ? (
             <button
               type="button"
               onClick={() => setOverdueOnly((value) => !value)}
-              className={cn(
-                'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold shadow-sm transition-all active:scale-95',
-                overdueOnly
-                  ? 'border-destructive bg-destructive text-destructive-foreground shadow-destructive/20'
-                  : 'border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground',
-              )}
+              className={cn('inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold', overdueOnly ? 'border-destructive bg-destructive-soft text-destructive' : 'border-border bg-card text-muted-foreground')}
             >
-              <AlertTriangle size={14} /> Somente atrasadas
+              <AlertTriangle size={15} /> Atrasadas
             </button>
           ) : null}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          Ativas: <span className="text-foreground">{metricsQuery.data?.activeCount ?? 0}</span>
-        </div>
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          Atrasadas:{' '}
-          <span className="text-destructive">{metricsQuery.data?.overdueCount ?? 0}</span>
-        </div>
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          Urgentes:{' '}
-          <span className="text-destructive">{metricsQuery.data?.urgentActiveCount ?? 0}</span>
-        </div>
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-          Provas vencidas:{' '}
-          <span className="text-amber-500">{metricsQuery.data?.proofOverdueCount ?? 0}</span>
-        </div>
+        <span className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+          Ativas <strong className="font-tabular text-foreground">{metricsQuery.data?.activeCount ?? 0}</strong>
+        </span>
+        <span className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+          Atrasadas <strong className="font-tabular text-destructive">{metricsQuery.data?.overdueCount ?? 0}</strong>
+        </span>
+        <span className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+          Urgentes <strong className="font-tabular text-primary">{metricsQuery.data?.urgentActiveCount ?? 0}</strong>
+        </span>
       </div>
 
       {activeView === 'active' ? (
-        <div className="flex items-center gap-6 px-1">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              No prazo
-            </span>
+        boardQuery.isLoading ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="animate-spin text-primary" size={28} />
+            <Muted>Carregando quadro...</Muted>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              24h restantes
-            </span>
+        ) : boardQuery.error ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-destructive">
+            <AlertCircle size={28} />
+            <p className="text-sm font-semibold">{boardQuery.error.message}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Atrasado
-            </span>
-          </div>
-        </div>
-      ) : null}
-
-      {activeView === 'suspended' ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setPausedFilter('all')}
-            className={cn(
-              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
-              pausedFilter === 'all'
-                ? 'border-primary/40 bg-primary/10 text-primary'
-                : 'border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground',
-            )}
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
           >
-            Todas ({suspendedJobs.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setPausedFilter('rework_in_progress')}
-            className={cn(
-              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
-              pausedFilter === 'rework_in_progress'
-                ? 'border-amber-500/40 bg-amber-500/10 text-amber-500'
-                : 'border-border bg-card text-muted-foreground hover:border-amber-500/40 hover:text-foreground',
-            )}
-          >
-            Remoldagem ({reworkJobsCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setPausedFilter('suspended')}
-            className={cn(
-              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
-              pausedFilter === 'suspended'
-                ? 'border-slate-400/40 bg-slate-500/10 text-slate-300'
-                : 'border-border bg-card text-muted-foreground hover:border-slate-400/40 hover:text-foreground',
-            )}
-          >
-            Suspenso ({suspendedOnlyCount})
-          </button>
-        </div>
-      ) : null}
-
-      {isLoading ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          <Loader2 className="animate-spin text-primary" size={32} />
-          <Muted>Carregando quadro de produção...</Muted>
-        </div>
-      ) : error ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3">
-          <AlertCircle className="font-black text-destructive" size={32} />
-          <p className="text-sm font-bold text-destructive">{error.message}</p>
-        </div>
-      ) : activeView === 'active' ? (
-        <DndContext
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver as never}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="custom-scrollbar flex flex-1 gap-4 overflow-x-auto pb-4">
-            {activeColumns.map((status) => {
-              const colJobs = columnsMap[status] ?? [];
-
-              return (
-                <div
+            <div className="flex flex-1 gap-4 overflow-x-auto pb-4">
+              {KANBAN_STATUSES.map((status) => (
+                <KanbanColumn
                   key={status}
-                  className={cn(
-                    'flex w-[280px] min-w-[280px] shrink-0 flex-col gap-4 rounded-3xl border bg-muted/20 p-4 transition-all',
-                    COLUMN_COLORS[status] || 'border-border',
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/50 bg-muted/40 p-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">
-                      {JOB_STATUS_LABELS[status] ?? status}
-                    </h3>
-                    <div className="rounded-lg bg-primary/20 px-2 py-0.5 text-[10px] font-black text-primary">
-                      {colJobs.length}
-                    </div>
-                  </div>
-
-                  <DroppableColumn
-                    status={status}
-                    jobs={colJobs}
-                    isDragOver={dragOverCol === status}
-                    onSuspend={(job) => setSuspendTarget(job)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          <DragOverlay>
-            {activeJob ? (
-              <div className="pointer-events-none scale-105 overflow-hidden rounded-2xl ring-4 ring-primary/20 drop-shadow-2xl">
-                <JobCard job={activeJob} dragging />
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+                  status={status}
+                  jobs={currentColumns[status] ?? []}
+                  density={density}
+                  active={overColumn === status}
+                  onSuspend={setSuspendTarget}
+                />
+              ))}
+            </div>
+            <DragOverlay>
+              {activeJob ? <KanbanCard job={activeJob} density={density} dragging /> : null}
+            </DragOverlay>
+          </DndContext>
+        )
       ) : (
-        <div className="custom-scrollbar flex-1 space-y-3 overflow-auto rounded-3xl border border-border bg-card/40 p-4">
-          {filteredPausedJobs.length === 0 ? (
-            <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 text-center">
-              <PauseCircle size={36} className="text-muted-foreground/30" />
-              <p className="text-sm font-black uppercase tracking-wider text-foreground">
-                Nenhuma OS nesta aba
-              </p>
-              <p className="max-w-md text-xs font-semibold text-muted-foreground">
-                Quando uma OS for suspensa, ela aparece aqui e pode ser reativada com um clique.
-              </p>
+        <div className="flex-1 overflow-auto rounded-2xl border border-border bg-card p-4">
+          {suspendedQuery.isLoading ? (
+            <div className="flex min-h-[260px] items-center justify-center">
+              <Loader2 className="animate-spin text-primary" size={28} />
+            </div>
+          ) : suspendedJobs.length === 0 ? (
+            <div className="flex min-h-[260px] flex-col items-center justify-center gap-2 text-center">
+              <PauseCircle className="text-muted-foreground" size={34} />
+              <p className="font-semibold text-foreground">Nenhum trabalho pausado</p>
+              <p className="max-w-sm text-sm text-muted-foreground">Trabalhos suspensos ou em remoldagem aparecem aqui.</p>
             </div>
           ) : (
-            filteredPausedJobs.map((job) => (
-              <div
-                key={job.id}
-                className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-lg bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-primary">
-                      {job.code}
-                    </span>
-                    {job.isUrgent ? (
-                      <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-destructive">
-                        URGENTE
-                      </span>
-                    ) : null}
-                    {job.jobSubType === 'proof' ? <ProofBadge /> : null}
-                    {job.jobSubType === 'rework' ? (
-                      <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-500">
-                        REMOLDAGEM
-                      </span>
-                    ) : null}
+            <div className="space-y-3">
+              {suspendedJobs.map((job) => (
+                <div key={job.id} className="flex flex-col gap-3 rounded-xl border border-border bg-muted/20 p-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-semibold text-foreground">{job.code} - {job.clientName ?? 'Cliente nao informado'}</p>
+                    <p className="text-sm text-muted-foreground">{job.suspendReason ?? JOB_STATUS_LABELS[job.status]}</p>
                   </div>
-
-                  <p className="text-sm font-black text-foreground">
-                    {job.clientName ?? 'Cliente não informado'} -{' '}
-                    {job.patientName ?? 'Paciente não informado'}
-                  </p>
-
-                  <p className="text-xs font-semibold text-muted-foreground">
-                    Suspensa em{' '}
-                    {job.suspendedAt
-                      ? new Date(job.suspendedAt).toLocaleString('pt-BR')
-                      : 'data não informada'}
-                    {job.suspendReason ? ` · ${job.suspendReason}` : ''}
-                  </p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => navigate(`/trabalhos/${job.id}`)} className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-card">
+                      Abrir
+                    </button>
+                    <button type="button" disabled={unsuspendMutation.isPending} onClick={() => unsuspendMutation.mutate({ jobId: job.id })} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground disabled:opacity-50">
+                      <PlayCircle size={14} /> Reativar
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/trabalhos/${job.id}`)}
-                    className="rounded-xl border border-border bg-muted px-3 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground transition-all hover:text-foreground"
-                  >
-                    Ver OS
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={unsuspendMutation.isPending}
-                    onClick={() => unsuspendMutation.mutate({ jobId: job.id })}
-                    className="flex items-center gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-500 transition-all hover:brightness-110 disabled:opacity-40"
-                  >
-                    <PlayCircle size={13} /> Reativar
-                  </button>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       )}
 
-      {toastMsg ? (
-        <div className="fixed bottom-10 left-1/2 z-[100] flex -translate-x-1/2 animate-in items-center gap-3 rounded-2xl border border-destructive-foreground/20 bg-destructive px-8 py-4 text-xs font-bold uppercase tracking-widest text-destructive-foreground shadow-2xl slide-in-from-bottom-5 duration-500">
-          <AlertCircle size={18} />
-          {toastMsg}
+      {toast ? (
+        <div className="fixed bottom-8 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-destructive shadow-xl">
+          <AlertCircle size={16} /> {toast}
         </div>
       ) : null}
 
       <SuspendDialog
         open={Boolean(suspendTarget)}
         isSubmitting={suspendMutation.isPending}
-        title={suspendTarget ? `Suspender ${suspendTarget.code}` : 'Suspender OS'}
+        title={suspendTarget ? `Suspender ${suspendTarget.code}` : 'Suspender trabalho'}
         onClose={() => setSuspendTarget(null)}
         onConfirm={async (reason) => {
           if (!suspendTarget) return;

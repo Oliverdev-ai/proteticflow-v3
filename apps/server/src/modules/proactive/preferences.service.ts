@@ -8,6 +8,7 @@ import type {
 import { db } from '../../db/index.js';
 import { tenantMembers } from '../../db/schema/tenants.js';
 import {
+  type UserUiPreferences,
   type UserChannelsConfig,
   userPreferences as userPreferencesTable,
 } from '../../db/schema/proactive.js';
@@ -17,6 +18,10 @@ const DEFAULT_CHANNELS: UserChannelsConfig = {
   email: true,
   whatsapp: false,
   in_app: true,
+};
+
+const DEFAULT_UI_PREFERENCES: Required<Pick<UserUiPreferences, 'kanbanDensity'>> = {
+  kanbanDensity: 'comfortable',
 };
 
 function parseTimeToMinutes(value: string): number {
@@ -59,6 +64,15 @@ function normalizeChannels(channels: UserChannelsConfig | null | undefined): Use
     whatsapp: source.whatsapp === true,
     in_app: source.in_app ?? source.inApp ?? true,
     ...(source.mutedUntilByType ? { mutedUntilByType: source.mutedUntilByType } : {}),
+  };
+}
+
+function normalizeUiPreferences(value: UserUiPreferences | null | undefined): UserUiPreferences {
+  const source = value ?? {};
+  return {
+    kanbanDensity: source.kanbanDensity === 'compact' ? 'compact' : DEFAULT_UI_PREFERENCES.kanbanDensity,
+    ...(typeof source.sidebarCollapsed === 'boolean' ? { sidebarCollapsed: source.sidebarCollapsed } : {}),
+    ...(source.sidebarGroups ? { sidebarGroups: source.sidebarGroups } : {}),
   };
 }
 
@@ -119,6 +133,7 @@ async function ensurePreferencesRow(tenantId: number, userId: number) {
       quietModeStart: '22:00',
       quietModeEnd: '07:00',
       channels: DEFAULT_CHANNELS,
+      uiPreferences: DEFAULT_UI_PREFERENCES,
       alertTypesMuted: [],
     })
     .returning();
@@ -141,6 +156,7 @@ export type ProactiveUserPreferences = {
   quietModeStart: string;
   quietModeEnd: string;
   channels: UserChannelsConfig;
+  uiPreferences: UserUiPreferences;
   alertTypesMuted: ProactiveAlertType[];
   updatedAt: string;
 };
@@ -157,6 +173,7 @@ function toPreferencesModel(row: typeof userPreferencesTable.$inferSelect): Proa
     quietModeStart: normalizeTime(row.quietModeStart),
     quietModeEnd: normalizeTime(row.quietModeEnd),
     channels: normalizeChannels(row.channels),
+    uiPreferences: normalizeUiPreferences(row.uiPreferences),
     alertTypesMuted: ensureAlertTypeArray(row.alertTypesMuted),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -201,6 +218,7 @@ export async function updateUserPreferences(
       quietModeStart: input.quietModeStart ?? normalizeTime(existing.quietModeStart),
       quietModeEnd: input.quietModeEnd ?? normalizeTime(existing.quietModeEnd),
       channels: nextChannels,
+      uiPreferences: normalizeUiPreferences(existing.uiPreferences),
       alertTypesMuted: input.alertTypesMuted ?? ensureAlertTypeArray(existing.alertTypesMuted),
       updatedAt: new Date(),
     })
@@ -212,6 +230,34 @@ export async function updateUserPreferences(
   }
 
   return toPreferencesModel(updated);
+}
+
+export async function updateUiPreferences(
+  tenantId: number,
+  userId: number,
+  patch: UserUiPreferences,
+): Promise<UserUiPreferences> {
+  const existing = await ensurePreferencesRow(tenantId, userId);
+  const current = normalizeUiPreferences(existing.uiPreferences);
+  const next = normalizeUiPreferences({ ...current, ...patch });
+
+  const [updated] = await db
+    .update(userPreferencesTable)
+    .set({
+      uiPreferences: next,
+      updatedAt: new Date(),
+    })
+    .where(and(
+      eq(userPreferencesTable.tenantId, tenantId),
+      eq(userPreferencesTable.userId, userId),
+    ))
+    .returning({ uiPreferences: userPreferencesTable.uiPreferences });
+
+  if (!updated) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao atualizar preferencias de interface' });
+  }
+
+  return normalizeUiPreferences(updated.uiPreferences);
 }
 
 export async function muteAlerts(

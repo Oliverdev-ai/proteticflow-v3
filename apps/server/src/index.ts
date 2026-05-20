@@ -8,6 +8,7 @@ import { db } from './db/index.js';
 import { createContext } from './trpc/context.js';
 import { appRouter } from './trpc/router.js';
 import { healthRouter } from './routes/health.js';
+import { jobsExportRouter } from './routes/jobs-export.js';
 import { startCronJobs } from './cron/scheduler.js';
 import * as licensingService from './modules/licensing/service.js';
 import * as fiscalService from './modules/fiscal/service.js';
@@ -65,6 +66,9 @@ app.use(cookieParser());
 
 // Health check (sem auth)
 app.use(healthRouter);
+
+// Exports autenticados via cookie de sessão
+app.use(jobsExportRouter);
 
 // tRPC
 app.use('/trpc/auth.login', authLimiter);

@@ -10,7 +10,6 @@ import {
   Camera,
   Download,
   XCircle,
-  ChevronRight,
   Activity,
   Calendar,
   DollarSign,
@@ -20,7 +19,6 @@ import {
   Zap,
   ShieldCheck,
   CheckCircle2,
-  MoreHorizontal,
   HelpCircle,
   FileCheck,
   Truck,
@@ -49,6 +47,9 @@ import { openPdfFromBase64 } from '../../../lib/pdf-export';
 import { ProofBadge } from '../../../components/jobs/proof-badge';
 import { SuspendDialog } from '../../../components/jobs/suspend-dialog';
 import { ReworkDialog } from '../../../components/jobs/rework-dialog';
+import { TrabalhoTimeline } from '../../../components/trabalhos/trabalho-timeline';
+import { TrabalhoUploadZone } from '../../../components/trabalhos/trabalho-upload-zone';
+import { TrabalhoFileCard } from '../../../components/trabalhos/trabalho-file-card';
 
 const COLOR_CLASS: Record<string, string> = {
   slate: 'bg-muted text-muted-foreground border-border',
@@ -742,87 +743,7 @@ export default function JobDetailPage() {
                 </div>
               </div>
 
-              <div className="space-y-12 relative before:absolute before:left-6 before:top-2 before:bottom-2 before:w-px before:bg-gradient-to-b before:from-primary/60 before:via-border before:to-transparent">
-                {job.logs.map((log, idx) => {
-                  return (
-                    <div
-                      key={log.id}
-                      className="flex gap-10 relative animate-in slide-in-from-left-4 duration-500"
-                      style={{ animationDelay: `${idx * 100}ms` }}
-                    >
-                      <div className="relative z-10">
-                        <div
-                          className={cn(
-                            'w-12 h-12 rounded-2xl border-4 border-card flex items-center justify-center shadow-xl transition-all duration-500',
-                            log.toStatus === job.status
-                              ? 'bg-primary text-white scale-110'
-                              : 'bg-muted-foreground/20 text-white opacity-40 hover:opacity-100',
-                          )}
-                        >
-                          {log.toStatus === job.status ? (
-                            <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping" />
-                          ) : (
-                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-1 -mt-1 bg-muted/20 p-8 rounded-[32px] border border-border/50 hover:border-primary/30 transition-all duration-500 group relative overflow-hidden">
-                        {log.toStatus === job.status && (
-                          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.03] rounded-full blur-2xl -mr-12 -mt-12" />
-                        )}
-
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 relative">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={cn(
-                                  'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-widest',
-                                  log.toStatus === 'cancelled'
-                                    ? 'bg-destructive/10 text-destructive border-destructive/20'
-                                    : 'bg-primary/10 text-primary border-primary/20',
-                                )}
-                              >
-                                {JOB_STATUS_LABELS[log.toStatus as JobStatus] || log.toStatus}
-                              </span>
-                              {log.fromStatus && (
-                                <ChevronRight size={12} className="text-muted-foreground/30" />
-                              )}
-                              {log.fromStatus && (
-                                <span className="text-[9px] font-bold text-muted-foreground opacity-30 uppercase tracking-widest">
-                                  {JOB_STATUS_LABELS[log.fromStatus as JobStatus] || log.fromStatus}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm font-black text-foreground tracking-tight group-hover:text-primary transition-colors mt-2 uppercase">
-                              {log.fromStatus ? `Transição de Estágio` : `Abertura de Protocolo`}
-                            </p>
-                          </div>
-                          <div className="flex flex-col lg:items-end gap-0.5">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                              {new Date(log.createdAt).toLocaleDateString('pt-BR')}
-                            </span>
-                            <Muted className="text-[10px] font-bold uppercase tracking-widest opacity-40">
-                              {new Date(log.createdAt).toLocaleTimeString('pt-BR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </Muted>
-                          </div>
-                        </div>
-
-                        {log.notes && (
-                          <div className="relative p-5 bg-card/60 border border-border/40 rounded-2xl italic text-[11px] text-muted-foreground leading-relaxed shadow-inner">
-                            <span className="absolute -top-3 left-6 px-2 bg-card text-[8px] font-black text-primary uppercase tracking-widest border border-border/40 rounded-full">
-                              Nota de Auditoria
-                            </span>
-                            "{log.notes}"
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <TrabalhoTimeline jobId={jobId} />
             </ScaleIn>
           )}
 
@@ -841,6 +762,10 @@ export default function JobDetailPage() {
                 </div>
               </div>
 
+              <div className="mb-10">
+                <TrabalhoUploadZone jobId={jobId} />
+              </div>
+
               {job.photos.length === 0 ? (
                 <EmptyState
                   icon={Camera}
@@ -850,33 +775,7 @@ export default function JobDetailPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                   {job.photos.map((photo, idx) => (
-                    <div
-                      key={photo.id}
-                      className="group aspect-[4/5] bg-muted/40 rounded-[32px] overflow-hidden border-2 border-border/60 relative cursor-pointer ring-offset-background transition-all hover:ring-8 hover:ring-primary/10 hover:border-primary/40 shadow-xl animate-in zoom-in-95 duration-500"
-                      style={{ animationDelay: `${idx * 100}ms` }}
-                    >
-                      <img
-                        src={photo.url}
-                        alt={photo.description ?? 'Foto Técnica'}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-                        <div className="flex flex-col gap-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                          <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
-                            Evidência Laboratorial
-                          </span>
-                          <span className="text-sm font-black text-white tracking-tight uppercase leading-none">
-                            {photo.description || 'Imagem S/ Descrição'}
-                          </span>
-                          <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-2">
-                            Auditado em {new Date(photo.createdAt).toLocaleDateString('pt-BR')}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-90">
-                        <MoreHorizontal size={20} strokeWidth={3} />
-                      </div>
-                    </div>
+                    <TrabalhoFileCard key={photo.id} photo={photo} index={idx} />
                   ))}
                 </div>
               )}

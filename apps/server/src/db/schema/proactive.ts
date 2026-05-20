@@ -23,6 +23,12 @@ export type UserChannelsConfig = {
   mutedUntilByType?: Record<string, string>;
 };
 
+export type UserUiPreferences = {
+  kanbanDensity?: 'compact' | 'comfortable' | undefined;
+  sidebarCollapsed?: boolean | undefined;
+  sidebarGroups?: Record<string, boolean> | undefined;
+};
+
 export const alertLog = pgTable('alert_log', {
   id: uuid('id').defaultRandom().primaryKey(),
   tenantId: integer('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
@@ -53,6 +59,10 @@ export const userPreferences = pgTable('user_preferences', {
     .$type<UserChannelsConfig>()
     .notNull()
     .default(sql`'{"push":true,"email":true,"whatsapp":false,"in_app":true}'::jsonb`),
+  uiPreferences: jsonb('ui_preferences')
+    .$type<UserUiPreferences>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   alertTypesMuted: text('alert_types_muted').array().notNull().default(sql`ARRAY[]::TEXT[]`),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

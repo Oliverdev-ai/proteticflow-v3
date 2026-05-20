@@ -58,6 +58,7 @@ function createRecipient(overrides?: Partial<Recipient>): Recipient {
         whatsapp: false,
         in_app: true,
       },
+      uiPreferences: { kanbanDensity: 'comfortable' },
       alertTypesMuted: [],
       updatedAt: new Date().toISOString(),
     },
