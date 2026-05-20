@@ -1,21 +1,43 @@
 import { RefreshCw } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
+import { formatBRL } from '../../lib/format';
 import { KpiFinancial } from '../../components/dashboard/kpi-financial';
 import { KpiJobs } from '../../components/dashboard/kpi-jobs';
 import { KpiClients } from '../../components/dashboard/kpi-clients';
 import { KpiInventory } from '../../components/dashboard/kpi-inventory';
 import { KpiEmployees } from '../../components/dashboard/kpi-employees';
-import { RevenueChart } from '../../components/dashboard/revenue-chart';
 import { ServiceDistributionChart } from '../../components/dashboard/service-distribution-chart';
-import { JobsTrendChart } from '../../components/dashboard/jobs-trend-chart';
 import { TodayDeliveriesCard } from '../../components/dashboard/today-deliveries';
 import { RecentJobsTable } from '../../components/dashboard/recent-jobs-table';
 import { PredictionCard } from '../../components/dashboard/prediction-card';
+import { KpiCard } from '../../components/shared/kpi-card';
+import { ChartSkeleton, JobsBarChart, RevenueLineChart } from '../../components/charts';
 import { usePredictions } from '../../hooks/use-predictions';
+
+const MONTH_ABBR: Record<string, string> = {
+  '01': 'Jan',
+  '02': 'Fev',
+  '03': 'Mar',
+  '04': 'Abr',
+  '05': 'Mai',
+  '06': 'Jun',
+  '07': 'Jul',
+  '08': 'Ago',
+  '09': 'Set',
+  '10': 'Out',
+  '11': 'Nov',
+  '12': 'Dez',
+};
+
+function formatPeriod(period: string) {
+  const [, month] = period.split('-');
+  return MONTH_ABBR[month ?? ''] ?? period;
+}
+
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonBox({ className }: { className?: string }) {
-  return <div className={`bg-zinc-800 animate-pulse rounded-xl ${className ?? ''}`} />;
+  return <div className={`bg-muted animate-pulse rounded-2xl ${className ?? ''}`} />;
 }
 
 function DashboardSkeleton() {
@@ -27,32 +49,36 @@ function DashboardSkeleton() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <SkeletonBox key={i} className="h-24" />
+          <KpiCard key={i} label="Carregando" value={0} loading />
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonBox key={i} className="h-24" />
+            <KpiCard key={i} label="Carregando" value={0} loading />
           ))}
         </div>
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <SkeletonBox key={i} className="h-24" />
+              <KpiCard key={i} label="Carregando" value={0} loading />
             ))}
           </div>
           <div className="grid grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <SkeletonBox key={i} className="h-24" />
+              <KpiCard key={i} label="Carregando" value={0} loading />
             ))}
           </div>
         </div>
       </div>
+      <div className="grid grid-cols-2 gap-4">
+        <KpiCard label="Carregando" value={0} loading />
+        <KpiCard label="Carregando" value={0} loading />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <ChartSkeleton />
         <SkeletonBox className="h-64" />
-        <SkeletonBox className="h-64" />
-        <SkeletonBox className="h-64" />
+        <ChartSkeleton />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SkeletonBox className="lg:col-span-2 h-56" />
@@ -77,25 +103,36 @@ export default function DashboardPage() {
   if (!data) {
     return (
       <div className="p-6">
-        <p className="text-zinc-400 text-sm">Não foi possível carregar o dashboard.</p>
+        <p className="text-muted-foreground text-sm">Não foi possível carregar o dashboard.</p>
       </div>
     );
   }
+
+  const revenueData = data.charts.monthlyRevenue.map((item) => ({
+    label: formatPeriod(item.period),
+    value: item.totalAmountCents / 100,
+  }));
+
+  const jobsTrendData = data.charts.jobsTrend.map((item) => ({
+    label: formatPeriod(item.period),
+    created: item.created,
+    delivered: item.delivered,
+  }));
 
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-zinc-400 text-sm mt-0.5">Visão geral do laboratório</p>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Visão geral do laboratório</p>
         </div>
         <button
           onClick={async () => {
             await Promise.all([refetch(), predictions.refetch()]);
           }}
           disabled={isFetching || predictions.isFetching}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-foreground bg-card hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw
             size={14}
@@ -122,14 +159,25 @@ export default function DashboardPage() {
 
       {/* 19.08 — Gráficos (BarChart, PieChart, LineChart) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <RevenueChart data={data.charts.monthlyRevenue} />
+        <RevenueLineChart
+          title="Receita Mensal"
+          data={revenueData}
+          valueFormatter={(value) => formatBRL(Number(value) * 100)}
+        />
         <ServiceDistributionChart data={data.charts.serviceDistribution} />
-        <JobsTrendChart data={data.charts.jobsTrend} />
+        <JobsBarChart
+          title="Tendência de Trabalhos"
+          data={jobsTrendData}
+          bars={[
+            { dataKey: 'created', label: 'Criados', variant: 'primary' },
+            { dataKey: 'delivered', label: 'Entregues', variant: 'accent' },
+          ]}
+        />
       </div>
 
       {/* DASHBOARD PREDITIVO (FASE 32) */}
-      <div className="pt-4 pb-2 border-t border-zinc-800/50 mt-8 mb-2">
-        <h2 className="text-xl font-bold tracking-tight text-white mb-4">Análises Preditivas IA</h2>
+      <div className="pt-4 pb-2 border-t border-border mt-8 mb-2">
+        <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Análises Preditivas IA</h2>
         {predictions.isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, index) => (
@@ -137,11 +185,11 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : predictions.error ? (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
+          <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
             Não foi possível carregar as análises preditivas agora.
           </div>
         ) : predictions.cards.length === 0 ? (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
+          <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
             Ainda não há previsões disponíveis para este tenant.
           </div>
         ) : (

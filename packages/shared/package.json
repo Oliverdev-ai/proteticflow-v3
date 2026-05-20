@@ -6,7 +6,9 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./utils/format": "./src/utils/format.ts",
+    "./validation/auth.schema": "./src/validation/auth.schema.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

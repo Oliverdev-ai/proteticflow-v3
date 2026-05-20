@@ -481,6 +481,11 @@ code, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
   color: var(--fg-strong);
 }
 
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 /* ── 7. UTILITÁRIOS SEMÂNTICOS (backward-compat shadcn) ─────── */
 .bg-background       { background-color: rgb(var(--background)); }
 .bg-card             { background-color: rgb(var(--card)); }
