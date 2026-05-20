@@ -135,12 +135,16 @@ function manualChunksByDomain(id: string): string | undefined {
     return 'vendor-dnd';
   }
 
-  if (
-    packageName === 'recharts'
-    || packageName === 'framer-motion'
-    || packageName === 'lucide-react'
-  ) {
-    return 'vendor-ui';
+  if (packageName === 'recharts') {
+    return 'vendor-charts';
+  }
+
+  if (packageName === 'framer-motion') {
+    return 'vendor-motion';
+  }
+
+  if (packageName === 'lucide-react') {
+    return 'vendor-icons';
   }
 
   if (packageName.startsWith('@radix-ui')) {

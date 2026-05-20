@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { loginSchema } from '@proteticflow/shared';
+import { loginSchema } from '@proteticflow/shared/validation/auth.schema';
 import { useAuth } from '../../hooks/use-auth';
 
 function getFriendlyLoginError(err: unknown): string {
@@ -99,7 +99,7 @@ export default function LoginPage() {
           </Link>
           <Link
             to="/register"
-            className="text-[var(--primary)] hover:text-[var(--primary-hover)] font-medium"
+            className="text-[var(--primary)] hover:text-[var(--primary-hover)] font-semibold"
           >
             Criar conta
           </Link>
@@ -108,7 +108,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--fg-on-primary)] font-medium disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+          className="w-full h-11 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--fg-on-primary)] font-semibold disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
         >
           {loading ? 'Entrando...' : 'Entrar'}
         </button>

@@ -1,5 +1,5 @@
 import { Wrench, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { KpiCard } from './kpi-card';
+import { KpiCard } from '../shared/kpi-card';
 import type { JobKpis, SparklineData } from '@proteticflow/shared';
 
 export function KpiJobs({
@@ -13,32 +13,28 @@ export function KpiJobs({
     <div className="grid grid-cols-2 gap-4">
       <KpiCard
         label="Trabalhos Ativos"
-        value={String(data.active)}
+        value={data.active}
         icon={Wrench}
-        sub="Em andamento"
-        variant="default"
-        sparkline={activeSparkline}
+        trend={activeSparkline ? {
+          value: activeSparkline.changePercent,
+          direction: activeSparkline.trend,
+        } : undefined}
       />
       <KpiCard
         label="Atrasados"
-        value={String(data.overdue)}
+        value={data.overdue}
         icon={AlertCircle}
-        sub="Fora do prazo"
-        variant={data.overdue > 0 ? 'danger' : 'default'}
+        trend={data.overdue > 0 ? { value: data.overdue, direction: 'down' } : { value: 0, direction: 'neutral' }}
       />
       <KpiCard
         label="Pendentes"
-        value={String(data.pending)}
+        value={data.pending}
         icon={Clock}
-        sub="Aguardando início"
-        variant="warning"
       />
       <KpiCard
         label="Concluídos"
-        value={String(data.completed)}
+        value={data.completed}
         icon={CheckCircle}
-        sub="Prontos ou entregues"
-        variant="success"
       />
     </div>
   );
