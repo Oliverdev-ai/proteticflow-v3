@@ -18,11 +18,11 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
+import { CurrencyInput } from '../../../components/shared/currency-input';
 import { cn } from '../../../lib/utils';
 
 type ApStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
@@ -65,7 +65,7 @@ function StatusBadge({ status }: { status: ApStatus }) {
   );
 }
 
-const EMPTY_FORM = { description: '', amountCents: '', dueDate: '', supplier: '', notes: '' };
+const EMPTY_FORM = { description: '', amountCents: 0, dueDate: '', supplier: '', notes: '' };
 
 export default function ContasPagarPage() {
   const utils = trpc.useUtils();
@@ -108,10 +108,10 @@ export default function ContasPagarPage() {
   const rows = data?.data ?? [];
 
   const handleCreate = () => {
-    if (!form.description || !form.amountCents || !form.dueDate) return;
+    if (!form.description || form.amountCents <= 0 || !form.dueDate) return;
     createAp.mutate({
       description: form.description,
-      amountCents: parseBRL(form.amountCents),
+      amountCents: form.amountCents,
       dueDate: new Date(form.dueDate).toISOString(),
       supplier: form.supplier || undefined,
       notes: form.notes || undefined,
@@ -352,12 +352,10 @@ export default function ContasPagarPage() {
                 <div>
                   <label className={labelClass}>Valor (R$) *</label>
                   <div className="relative">
-                    <input
-                      type="number"
-                      step="0.01"
+                    <CurrencyInput
                       value={form.amountCents}
-                      onChange={(e) => setForm((f) => ({ ...f, amountCents: e.target.value }))}
-                      placeholder="0.00"
+                      onChange={(amountCents) => setForm((f) => ({ ...f, amountCents }))}
+                      placeholder="R$ 0,00"
                       className={cn(inputClass, 'font-mono font-bold text-lg text-destructive')}
                     />
                     <Landmark
@@ -412,7 +410,7 @@ export default function ContasPagarPage() {
                   onClick={handleCreate}
                   disabled={
                     !form.description.trim() ||
-                    !form.amountCents ||
+                    form.amountCents <= 0 ||
                     !form.dueDate ||
                     createAp.isPending
                   }

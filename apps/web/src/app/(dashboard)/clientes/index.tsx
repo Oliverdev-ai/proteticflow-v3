@@ -1,28 +1,75 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Users,
+  AlertCircle,
+  Eye,
+  EyeOff,
   Plus,
   Search,
   ToggleLeft,
   ToggleRight,
   Trash2,
-  AlertCircle,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
+  Users,
 } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import { usePermissions } from '../../../hooks/use-permissions';
 import { PageTransition } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../../components/shared/typography';
-import { EmptyState } from '../../../components/shared/empty-state';
+import { H1, Muted, Subtitle } from '../../../components/shared/typography';
+import { DataTable, type ColumnDef } from '../../../components/shared/data-table';
+import { formatBRL } from '../../../lib/format';
 import { cn } from '../../../lib/utils';
 
-const PERSON_TYPE_LABEL: Record<'cpf' | 'cnpj', string> = {
-  cpf: 'Pessoa Física',
-  cnpj: 'Pessoa Jurídica',
+type ClientRow = {
+  id: number;
+  name: string;
+  clinic: string | null;
+  phone: string | null;
+  email: string | null;
+  document: string | null;
+  documentType: 'cpf' | 'cnpj' | null;
+  status: 'active' | 'inactive';
+  pendingCents: number;
 };
+
+const DOCUMENT_TYPE_LABEL: Record<'cpf' | 'cnpj', string> = {
+  cpf: 'CPF',
+  cnpj: 'CNPJ',
+};
+
+function onlyDigits(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
+function formatDocument(value: string | null, type: ClientRow['documentType']): string {
+  if (!value) return 'Sem documento';
+  const digits = onlyDigits(value);
+  if (type === 'cpf' && digits.length === 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  }
+  if (type === 'cnpj' && digits.length === 14) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  }
+  return value;
+}
+
+function maskDocument(value: string | null, type: ClientRow['documentType']): string {
+  if (!value) return 'Sem documento';
+  const formatted = formatDocument(value, type);
+  const visible = type === 'cnpj' ? 6 : 4;
+  return `${formatted.slice(0, visible)}${'•'.repeat(Math.max(6, formatted.length - visible))}`;
+}
+
+function DebtBadge({ cents }: { cents: number }) {
+  const tone = cents > 0
+    ? 'border-warning/30 bg-warning/10 text-warning'
+    : 'border-success/25 bg-success/10 text-success';
+
+  return (
+    <span className={cn('inline-flex rounded-full border px-3 py-1 text-xs font-semibold font-tabular', tone)}>
+      {formatBRL(cents)}
+    </span>
+  );
+}
 
 export default function ClientListPage() {
   const navigate = useNavigate();
@@ -30,282 +77,222 @@ export default function ClientListPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive' | undefined>(undefined);
   const [page, setPage] = useState(1);
+  const [density, setDensity] = useState<'compact' | 'comfortable'>('comfortable');
+  const [revealedDocs, setRevealedDocs] = useState<Set<number>>(new Set());
 
-  const { data, isLoading, error, refetch } = trpc.clientes.list.useQuery({
+  const clientsQuery = trpc.clientes.list.useQuery({
     search: search || undefined,
     status,
     page,
     limit: 20,
   });
 
-  const toggleMutation = trpc.clientes.toggleStatus.useMutation({ onSuccess: () => refetch() });
-  const deleteMutation = trpc.clientes.delete.useMutation({ onSuccess: () => refetch() });
+  const toggleMutation = trpc.clientes.toggleStatus.useMutation({
+    onSuccess: () => clientsQuery.refetch(),
+  });
+  const deleteMutation = trpc.clientes.delete.useMutation({
+    onSuccess: () => clientsQuery.refetch(),
+  });
 
   const canDelete = hasAccess('clients.delete');
+  const rows = (clientsQuery.data?.data ?? []) as ClientRow[];
 
-  // ── Loading ────────────────────────────────────────────────────────────────
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Loader2 className="animate-spin text-primary" size={32} />
-        <Muted>Carregando parceiros...</Muted>
-      </div>
-    );
+  function toggleDocument(clientId: number) {
+    setRevealedDocs((current) => {
+      const next = new Set(current);
+      if (next.has(clientId)) next.delete(clientId);
+      else next.add(clientId);
+      return next;
+    });
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4 p-8 bg-destructive/5 rounded-3xl border border-destructive/20">
-        <AlertCircle className="text-destructive font-black" size={32} />
-        <div className="text-center">
-          <p className="text-destructive font-bold text-sm uppercase tracking-widest">
-            {error.message}
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 text-xs font-black text-primary hover:text-primary/80 transition-all uppercase tracking-[0.2em] underline underline-offset-4"
-          >
-            Tentar novamente
-          </button>
+  const columns: ColumnDef<ClientRow>[] = [
+    {
+      header: 'Cliente',
+      cell: (client) => (
+        <Link to={`/clientes/${client.id}`} className="flex flex-col gap-1">
+          <span className="font-semibold text-foreground hover:text-primary">{client.name}</span>
+          <span className="text-xs text-muted-foreground">{client.clinic || 'Atendimento direto'}</span>
+        </Link>
+      ),
+    },
+    {
+      header: 'Documento',
+      cell: (client) => {
+        const isRevealed = revealedDocs.has(client.id);
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-tabular text-xs">
+              {isRevealed
+                ? formatDocument(client.document, client.documentType)
+                : maskDocument(client.document, client.documentType)}
+            </span>
+            {client.documentType ? (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                {DOCUMENT_TYPE_LABEL[client.documentType]}
+              </span>
+            ) : null}
+            {client.document ? (
+              <button
+                type="button"
+                onClick={() => toggleDocument(client.id)}
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={isRevealed ? 'Mascarar documento' : 'Revelar documento'}
+              >
+                {isRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      header: 'Contato',
+      hideOnMobile: true,
+      cell: (client) => (
+        <div className="flex flex-col gap-1 text-xs">
+          <span>{client.phone || 'Sem telefone'}</span>
+          <span className="text-muted-foreground">{client.email || 'Sem e-mail'}</span>
         </div>
+      ),
+    },
+    {
+      header: 'Saldo devedor',
+      numeric: true,
+      cell: (client) => <DebtBadge cents={client.pendingCents} />,
+    },
+    {
+      header: 'Status',
+      cell: (client) => (
+        <span
+          className={cn(
+            'inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase',
+            client.status === 'active'
+              ? 'border-success/25 bg-success/10 text-success'
+              : 'border-border bg-muted text-muted-foreground',
+          )}
+        >
+          {client.status === 'active' ? 'Ativo' : 'Inativo'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      className: 'w-32',
+      cell: (client) => (
+        <div className="flex justify-end gap-1">
+          <button
+            type="button"
+            onClick={() => toggleMutation.mutate({ id: client.id })}
+            className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-primary"
+            aria-label={client.status === 'active' ? 'Inativar cliente' : 'Ativar cliente'}
+          >
+            {client.status === 'active' ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+          </button>
+          {canDelete ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Excluir cliente permanentemente?')) deleteMutation.mutate({ id: client.id });
+              }}
+              className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              aria-label="Excluir cliente"
+            >
+              <Trash2 size={17} />
+            </button>
+          ) : null}
+        </div>
+      ),
+    },
+  ];
+
+  if (clientsQuery.error) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-8">
+        <AlertCircle className="text-destructive" size={32} />
+        <p className="text-sm font-semibold text-destructive">{clientsQuery.error.message}</p>
       </div>
     );
   }
 
   return (
-    <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+    <PageTransition className="mx-auto flex h-full max-w-7xl flex-col gap-8 overflow-auto p-4 md:p-1">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/5">
-            <Users className="text-primary" size={24} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Users size={24} />
           </div>
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-2">
-              <H1>Parceiros</H1>
-              {data?.total !== undefined && (
-                <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
-                  {data.total}
-                </span>
-              )}
-            </div>
-            <Subtitle>Gerencie dentistas, clínicas e laboratórios parceiros</Subtitle>
+          <div>
+            <H1>Clientes</H1>
+            <Subtitle>Carteira comercial, saldo e documentos sensíveis</Subtitle>
           </div>
         </div>
         <button
+          type="button"
           onClick={() => navigate('/clientes/novo')}
-          className="flex items-center gap-2 bg-primary text-primary-foreground text-xs font-black px-6 py-3 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em]"
+          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-xs font-semibold uppercase tracking-wide text-primary-foreground shadow-lg shadow-primary/20"
         >
-          <Plus size={16} strokeWidth={3} /> Cadastrar Parceiro
+          <Plus size={16} />
+          Novo cliente
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 bg-card/50 p-4 rounded-3xl border border-border/50 backdrop-blur-sm">
-        <div className="relative flex-1 min-w-[280px]">
-          <Search
-            size={16}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50"
-          />
+      <div className="flex flex-wrap gap-3 rounded-2xl border border-border bg-card p-4">
+        <label className="relative min-w-[260px] flex-1">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+            onChange={(event) => {
+              setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nome, clínica, CPF/CNPJ..."
-            className="w-full bg-muted border border-border rounded-2xl pl-12 pr-4 py-3 text-foreground placeholder:text-muted-foreground/30 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            placeholder="Buscar por nome, documento ou telefone"
+            className="input-field pl-11"
           />
-        </div>
-        <div className="flex items-center gap-2 bg-muted border border-border rounded-2xl px-4 py-1.5 min-w-[180px]">
-          <div className="p-1.5 bg-background rounded-lg text-muted-foreground">
-            <Users size={14} />
-          </div>
-          <select
-            value={status ?? ''}
-            onChange={(e) => {
-              setStatus((e.target.value as 'active' | 'inactive' | undefined) || undefined);
-              setPage(1);
-            }}
-            className="bg-transparent border-none text-foreground text-[10px] font-black uppercase tracking-widest focus:outline-none flex-1 cursor-pointer"
-          >
-            <option value="">TODOS OS STATUS</option>
-            <option value="active">ATIVOS APENAS</option>
-            <option value="inactive">INATIVOS APENAS</option>
-          </select>
-        </div>
+        </label>
+        <select
+          value={status ?? ''}
+          onChange={(event) => {
+            setStatus((event.target.value as 'active' | 'inactive' | '') || undefined);
+            setPage(1);
+          }}
+          className="input-field w-full sm:w-56"
+        >
+          <option value="">Todos os status</option>
+          <option value="active">Ativos</option>
+          <option value="inactive">Inativos</option>
+        </select>
       </div>
 
-      {/* Body Content */}
-      {data?.data.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title="Nenhum parceiro encontrado"
-          description={
-            search
-              ? 'Ajuste seus filtros de busca para encontrar o que procura.'
-              : 'Comece cadastrando seu primeiro parceiro de trabalho.'
-          }
-        >
+      <DataTable<ClientRow>
+        columns={columns}
+        data={rows}
+        rowKey={(client) => client.id}
+        loading={clientsQuery.isLoading}
+        density={density}
+        onDensityChange={setDensity}
+        emptyMessage="Nenhum cliente encontrado."
+        emptyAction={
           <button
-            onClick={() => (search ? setSearch('') : navigate('/clientes/novo'))}
-            className="flex items-center gap-2 bg-primary text-primary-foreground text-[10px] font-black px-6 py-3 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em]"
+            type="button"
+            onClick={() => navigate('/clientes/novo')}
+            className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
           >
-            {search ? 'Limpar Busca' : 'Novo Parceiro'}
+            Cadastrar cliente
           </button>
-        </EmptyState>
-      ) : (
-        <div className="flex flex-col gap-6">
-          {/* Table Container */}
-          <div className="premium-card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
-                      Nome completo
-                    </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4 hidden md:table-cell">
-                      Clínica / Empresa
-                    </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4 hidden sm:table-cell">
-                      Contato
-                    </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data?.data.map((client, idx) => (
-                    <tr
-                      key={client.id}
-                      className={cn(
-                        'group border-b border-border/50 hover:bg-primary/[0.02] transition-colors',
-                        idx === data.data.length - 1 ? 'border-0' : '',
-                      )}
-                    >
-                      <td className="px-6 py-5">
-                        <Link to={`/clientes/${client.id}`} className="flex flex-col gap-0.5">
-                          <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                            {client.name}
-                          </span>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                              {client.document || 'Sem registro'}
-                            </span>
-                            {client.documentType ? (
-                              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
-                                {PERSON_TYPE_LABEL[client.documentType]}
-                              </span>
-                            ) : null}
-                          </div>
-                        </Link>
-                      </td>
-                      <td className="px-6 py-5 hidden md:table-cell">
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          {client.clinic || 'Direto'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 hidden sm:table-cell text-xs font-bold text-foreground opacity-80">
-                        {client.phone || 'N/A'}
-                      </td>
-                      <td className="px-6 py-5">
-                        <span
-                          className={cn(
-                            'inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border',
-                            client.status === 'active'
-                              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                              : 'bg-muted text-muted-foreground border-border',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'w-1.5 h-1.5 rounded-full animate-pulse',
-                              client.status === 'active' ? 'bg-emerald-500' : 'bg-muted-foreground',
-                            )}
-                          />
-                          {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2 justify-end">
-                          <button
-                            onClick={() => toggleMutation.mutate({ id: client.id })}
-                            className={cn(
-                              'p-2 rounded-xl transition-all border border-transparent hover:border-primary/20',
-                              client.status === 'active'
-                                ? 'text-primary'
-                                : 'text-muted-foreground opacity-50',
-                            )}
-                          >
-                            {client.status === 'active' ? (
-                              <ToggleRight size={20} strokeWidth={2.5} />
-                            ) : (
-                              <ToggleLeft size={20} strokeWidth={2.5} />
-                            )}
-                          </button>
-                          <div className="w-px h-4 bg-border/50 mx-1" />
-                          {canDelete && (
-                            <button
-                              onClick={() => {
-                                if (confirm('Excluir cliente permanentemente?'))
-                                  deleteMutation.mutate({ id: client.id });
-                              }}
-                              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => navigate(`/clientes/${client.id}`)}
-                            className="p-2 text-muted-foreground hover:text-primary transition-all"
-                          >
-                            <ChevronRight size={18} strokeWidth={3} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        }
+        pagination={{
+          page,
+          pageSize: 20,
+          total: clientsQuery.data?.total ?? 0,
+          onChange: setPage,
+        }}
+      />
 
-          {/* Pagination */}
-          {data && data.total > 20 && (
-            <div className="flex items-center justify-between px-2">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                Mostrando{' '}
-                <span className="text-foreground">
-                  {(page - 1) * 20 + 1} – {Math.min(page * 20, data.total)}
-                </span>{' '}
-                de <span className="text-foreground">{data.total}</span>
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all active:scale-95 shadow-sm"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <div className="bg-muted px-4 py-2 rounded-xl border border-border text-xs font-black flex items-center">
-                  PÁGINA {page}
-                </div>
-                <button
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page * 20 >= data.total}
-                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all active:scale-95 shadow-sm"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <Muted className="text-xs">
+        Documentos fiscais ficam mascarados por padrão. Use revelar apenas quando necessário.
+      </Muted>
     </PageTransition>
   );
 }

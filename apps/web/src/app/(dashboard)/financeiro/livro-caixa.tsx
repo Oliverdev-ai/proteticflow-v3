@@ -20,17 +20,17 @@ import {
   FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
+import { CurrencyInput } from '../../../components/shared/currency-input';
 import { cn } from '../../../lib/utils';
 
 function createEmptyForm() {
   return {
     type: 'credit' as 'credit' | 'debit',
-    amountCents: '',
+    amountCents: 0,
     description: '',
     referenceDate: new Date().toISOString().slice(0, 10),
   };
@@ -444,22 +444,20 @@ export default function LivroCaixaPage() {
                   <div>
                     <label className={labelClass}>Montante (R$) *</label>
                     <div className="relative">
-                      <input
-                        type="number"
-                        step="0.01"
+                      <CurrencyInput
                         value={form.amountCents}
-                        onChange={(e) => setForm((f) => ({ ...f, amountCents: e.target.value }))}
-                        placeholder="0.00"
+                        onChange={(amountCents) => setForm((f) => ({ ...f, amountCents }))}
+                        placeholder="R$ 0,00"
                         className={cn(
                           inputClass,
                           'font-mono font-bold text-lg',
-                          form.type === 'debit' ? 'text-destructive' : 'text-emerald-500',
+                          form.type === 'debit' ? 'text-destructive' : 'text-success',
                         )}
                       />
                       <DollarSign
                         className={cn(
                           'absolute right-4 top-1/2 -translate-y-1/2 opacity-30',
-                          form.type === 'debit' ? 'text-destructive' : 'text-emerald-500',
+                          form.type === 'debit' ? 'text-destructive' : 'text-success',
                         )}
                         size={18}
                       />
@@ -494,14 +492,14 @@ export default function LivroCaixaPage() {
                 <button
                   disabled={
                     !form.description ||
-                    !form.amountCents ||
+                    form.amountCents <= 0 ||
                     !form.referenceDate ||
                     createEntry.isPending
                   }
                   onClick={() =>
                     createEntry.mutate({
                       type: form.type,
-                      amountCents: parseBRL(form.amountCents),
+                      amountCents: form.amountCents,
                       description: form.description,
                       referenceDate: new Date(`${form.referenceDate}T12:00:00`).toISOString(),
                     })

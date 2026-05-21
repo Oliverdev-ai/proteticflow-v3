@@ -61,7 +61,9 @@ export async function createAr(tenantId: number, input: CreateArInput) {
   };
   if (input.description !== undefined) arData.description = input.description;
 
-  const [ar] = await db.insert(accountsReceivable).values(arData).returning();
+  const [ar] = await db.transaction(async (tx) => {
+    return tx.insert(accountsReceivable).values(arData).returning();
+  });
   if (!ar) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar conta a receber' });
 
   logger.info({ action: 'financial.ar.create', tenantId, arId: ar.id, jobId: input.jobId, amountCents: input.amountCents }, 'Conta a receber criada');
@@ -102,7 +104,7 @@ export async function listAr(tenantId: number, filters: ListArInput) {
       clientName: clients.name
     })
     .from(accountsReceivable)
-    .leftJoin(clients, eq(accountsReceivable.clientId, clients.id))
+    .leftJoin(clients, and(eq(accountsReceivable.clientId, clients.id), eq(clients.tenantId, tenantId)))
     .where(and(...conditions))
     .orderBy(sql`${accountsReceivable.id} DESC`)
     .limit(filters.limit + 1);
@@ -121,7 +123,7 @@ export async function getAr(tenantId: number, arId: number) {
       clientName: clients.name
     })
     .from(accountsReceivable)
-    .leftJoin(clients, eq(accountsReceivable.clientId, clients.id))
+    .leftJoin(clients, and(eq(accountsReceivable.clientId, clients.id), eq(clients.tenantId, tenantId)))
     .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.id, arId)));
 
   if (!data) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a receber não encontrada' });
@@ -199,15 +201,17 @@ export async function cancelAr(tenantId: number, input: CancelArInput, userId: n
 
   if (ar.status === 'cancelled') return ar;
 
-  const [cancelled] = await db.update(accountsReceivable)
-    .set({
-      status: 'cancelled',
-      cancelReason: input.cancelReason,
-      cancelledBy: userId,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.id, input.id)))
-    .returning();
+  const [cancelled] = await db.transaction(async (tx) => {
+    return tx.update(accountsReceivable)
+      .set({
+        status: 'cancelled',
+        cancelReason: input.cancelReason,
+        cancelledBy: userId,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.id, input.id)))
+      .returning();
+  });
   if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a receber nao encontrada' });
 
   logger.info({ action: 'financial.ar.cancelled', tenantId, arId: ar.id, reason: input.cancelReason }, 'Conta a receber cancelada');
@@ -241,7 +245,9 @@ export async function createAp(tenantId: number, input: CreateApInput, userId: n
   if (input.reference !== undefined) apData.reference = input.reference;
   if (input.notes !== undefined) apData.notes = input.notes;
 
-  const [ap] = await db.insert(accountsPayable).values(apData).returning();
+  const [ap] = await db.transaction(async (tx) => {
+    return tx.insert(accountsPayable).values(apData).returning();
+  });
   if (!ap) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao criar conta a pagar' });
 
   logger.info({ action: 'financial.ap.create', tenantId, apId: ap.id, amountCents: input.amountCents }, 'Conta a pagar criada');
@@ -344,15 +350,17 @@ export async function cancelAp(tenantId: number, input: CancelApInput, userId: n
 
   if (ap.status === 'cancelled') return ap;
 
-  const [cancelled] = await db.update(accountsPayable)
-    .set({
-      status: 'cancelled',
-      cancelReason: input.cancelReason,
-      cancelledBy: userId,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.id, input.id)))
-    .returning();
+  const [cancelled] = await db.transaction(async (tx) => {
+    return tx.update(accountsPayable)
+      .set({
+        status: 'cancelled',
+        cancelReason: input.cancelReason,
+        cancelledBy: userId,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.id, input.id)))
+      .returning();
+  });
   if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a pagar nao encontrada' });
 
   logger.info({ action: 'financial.ap.cancelled', tenantId, apId: ap.id, reason: input.cancelReason }, 'Conta a pagar cancelada');
@@ -389,7 +397,7 @@ export async function generateMonthlyClosing(tenantId: number, input: GenerateCl
       clientName: clients.name
     })
     .from(accountsReceivable)
-    .leftJoin(clients, eq(accountsReceivable.clientId, clients.id))
+    .leftJoin(clients, and(eq(accountsReceivable.clientId, clients.id), eq(clients.tenantId, tenantId)))
     .where(and(...arConditions));
 
   let totalAmountCents = 0;
@@ -423,19 +431,21 @@ export async function generateMonthlyClosing(tenantId: number, input: GenerateCl
 
   const breakdownJson = JSON.stringify(Array.from(clientMap.entries()).map(([id, data]) => ({ clientId: id, ...data })));
 
-  const [closing] = await db.insert(financialClosings).values({
-    tenantId,
-    clientId: input.clientId || null,
-    period: input.period,
-    totalJobs: totalJobsUnique.size,
-    totalAmountCents,
-    paidAmountCents,
-    pendingAmountCents,
-    status: pendingAmountCents === 0 && totalAmountCents > 0 ? 'paid' : (totalAmountCents > 0 ? 'closed' : 'open'),
-    breakdownJson,
-    closedBy: userId,
-    closedAt: new Date(),
-  }).returning();
+  const [closing] = await db.transaction(async (tx) => {
+    return tx.insert(financialClosings).values({
+      tenantId,
+      clientId: input.clientId || null,
+      period: input.period,
+      totalJobs: totalJobsUnique.size,
+      totalAmountCents,
+      paidAmountCents,
+      pendingAmountCents,
+      status: pendingAmountCents === 0 && totalAmountCents > 0 ? 'paid' : (totalAmountCents > 0 ? 'closed' : 'open'),
+      breakdownJson,
+      closedBy: userId,
+      closedAt: new Date(),
+    }).returning();
+  });
   if (!closing) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao gerar fechamento' });
 
   logger.info({ action: 'financial.closing.generate', tenantId, period: input.period, totalAmountCents }, 'Fechamento gerado');
@@ -498,15 +508,17 @@ export async function listCashbook(tenantId: number, filters: ListCashbookInput)
 }
 
 export async function createManualCashbookEntry(tenantId: number, input: CreateCashbookEntryInput, userId: number) {
-  const [entry] = await db.insert(cashbookEntries).values({
-    tenantId,
-    type: input.type,
-    amountCents: input.amountCents,
-    description: input.description,
-    category: input.category || 'manual',
-    referenceDate: new Date(input.referenceDate),
-    createdBy: userId,
-  }).returning();
+  const [entry] = await db.transaction(async (tx) => {
+    return tx.insert(cashbookEntries).values({
+      tenantId,
+      type: input.type,
+      amountCents: input.amountCents,
+      description: input.description,
+      category: input.category || 'manual',
+      referenceDate: new Date(input.referenceDate),
+      createdBy: userId,
+    }).returning();
+  });
   
   logger.info({ action: 'financial.cashbook.manual_entry', tenantId, type: input.type, amountCents: input.amountCents }, 'Entrada manual no livro caixa cadastrada');
   return entry;

@@ -1,7 +1,8 @@
-import { eq, and, isNull, ilike, or, sql, count } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, sql, count, inArray, desc } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { clients } from '../../db/schema/clients.js';
 import { jobs } from '../../db/schema/jobs.js';
+import { accountsReceivable } from '../../db/schema/financials.js';
 import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import { checkLimit, decrementCounter, incrementCounter } from '../licensing/service.js';
@@ -97,7 +98,34 @@ export async function listClients(tenantId: number, filters: ListClientsInput) {
     db.select({ count: count() }).from(clients).where(whereClause),
   ]);
 
-  return { data, total: totalResult[0]?.count ?? 0 };
+  const clientIds = data.map((client) => client.id);
+  const pendingByClient = new Map<number, number>();
+  if (clientIds.length > 0) {
+    const pendingRows = await db
+      .select({
+        clientId: accountsReceivable.clientId,
+        pendingCents: sql<number>`COALESCE(SUM(${accountsReceivable.amountCents}), 0)`,
+      })
+      .from(accountsReceivable)
+      .where(and(
+        eq(accountsReceivable.tenantId, tenantId),
+        inArray(accountsReceivable.clientId, clientIds),
+        inArray(accountsReceivable.status, ['pending', 'overdue']),
+      ))
+      .groupBy(accountsReceivable.clientId);
+
+    for (const row of pendingRows) {
+      pendingByClient.set(row.clientId, Number(row.pendingCents ?? 0));
+    }
+  }
+
+  return {
+    data: data.map((client) => ({
+      ...client,
+      pendingCents: pendingByClient.get(client.id) ?? 0,
+    })),
+    total: totalResult[0]?.count ?? 0,
+  };
 }
 
 export async function getClient(tenantId: number, clientId: number) {
@@ -222,10 +250,45 @@ export async function getClientExtract(tenantId: number, clientId: number) {
     // Tabela pode não existir ainda — Fase 6
   }
 
-  // accounts_receivable — implementada na Fase 8
-  const pendingCents = 0;
+  const [pendingRow, paidRow] = await Promise.all([
+    db
+      .select({ value: sql<number>`COALESCE(SUM(${accountsReceivable.amountCents}), 0)` })
+      .from(accountsReceivable)
+      .where(and(
+        eq(accountsReceivable.tenantId, tenantId),
+        eq(accountsReceivable.clientId, clientId),
+        inArray(accountsReceivable.status, ['pending', 'overdue']),
+      )),
+    db
+      .select({ value: sql<number>`COALESCE(SUM(${accountsReceivable.amountCents}), 0)` })
+      .from(accountsReceivable)
+      .where(and(
+        eq(accountsReceivable.tenantId, tenantId),
+        eq(accountsReceivable.clientId, clientId),
+        eq(accountsReceivable.status, 'paid'),
+      )),
+  ]);
 
-  return { client, totalJobs, totalRevenueCents, pendingCents };
+  const lastJobs = await db
+    .select({
+      id: jobs.id,
+      code: jobs.code,
+      status: jobs.status,
+      deadline: jobs.deadline,
+      totalCents: jobs.totalCents,
+      patientName: jobs.patientName,
+      prothesisType: jobs.prothesisType,
+      createdAt: jobs.createdAt,
+    })
+    .from(jobs)
+    .where(and(eq(jobs.tenantId, tenantId), eq(jobs.clientId, clientId), isNull(jobs.deletedAt)))
+    .orderBy(desc(jobs.createdAt))
+    .limit(5);
+
+  const pendingCents = Number(pendingRow[0]?.value ?? 0);
+  const paidCents = Number(paidRow[0]?.value ?? 0);
+
+  return { client, totalJobs, totalRevenueCents, pendingCents, paidCents, lastJobs };
 }
 
 export async function lookupCep(cep: string) {

@@ -542,7 +542,7 @@ export default function ClientEditPage() {
       {/* Tab: Extrato (Stat Cards) */}
       {tab === 'extrato' && (
         <ScaleIn className="flex flex-col gap-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
               {
                 label: 'Volume Total de OS',
@@ -556,16 +556,24 @@ export default function ClientEditPage() {
                 label: 'Faturamento Bruto',
                 value: extract?.totalRevenueCents ?? 0,
                 icon: Wallet,
-                color: 'text-emerald-500',
-                bg: 'bg-emerald-500/10',
+                color: 'text-success',
+                bg: 'bg-success/10',
+                isBRL: true,
+              },
+              {
+                label: 'Recebido',
+                value: extract?.paidCents ?? 0,
+                icon: CheckCircle2,
+                color: 'text-primary',
+                bg: 'bg-primary/10',
                 isBRL: true,
               },
               {
                 label: 'Saldo Pendente',
                 value: extract?.pendingCents ?? 0,
                 icon: Calendar,
-                color: 'text-orange-500',
-                bg: 'bg-orange-500/10',
+                color: 'text-warning',
+                bg: 'bg-warning/10',
                 isBRL: true,
               },
             ].map((card) => (
@@ -593,17 +601,74 @@ export default function ClientEditPage() {
               </div>
             ))}
           </div>
-          <div className="p-8 bg-card/30 rounded-[40px] border border-border/50 text-center flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground opacity-40">
-              <ReceiptText size={24} />
+
+          <div className="premium-card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border bg-muted/30 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <ReceiptText size={18} className="text-primary" />
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+                    Últimos trabalhos
+                  </p>
+                  <Muted className="text-[10px] uppercase tracking-widest">
+                    Histórico operacional recente deste cliente
+                  </Muted>
+                </div>
+              </div>
             </div>
-            <div className="max-w-md">
-              <p className="text-sm font-bold text-foreground mb-1">Informações Adicionais</p>
-              <Muted className="text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                Os dados detalhados de faturamento por item e extrato financeiro completo estarão
-                disponíveis após a ativação total dos módulos de Produção e Financeiro.
-              </Muted>
-            </div>
+            {(extract?.lastJobs ?? []).length === 0 ? (
+              <div className="p-10 text-center">
+                <Muted>Nenhum trabalho recente para este cliente.</Muted>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-max divide-y divide-border text-sm">
+                  <thead className="bg-muted/40">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        OS
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Paciente / serviço
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Valor
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(extract?.lastJobs ?? []).map((job) => (
+                      <tr key={job.id} className="hover:bg-muted/30">
+                        <td className="px-6 py-4 font-semibold text-primary">
+                          {job.code}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-semibold text-foreground">
+                              {job.patientName || 'Paciente não informado'}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {job.prothesisType || 'Sem tipo de prótese'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold uppercase text-muted-foreground">
+                            {job.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right font-tabular font-semibold text-foreground">
+                          {formatBRL(job.totalCents)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </ScaleIn>
       )}
