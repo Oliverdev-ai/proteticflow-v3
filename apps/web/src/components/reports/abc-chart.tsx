@@ -44,15 +44,15 @@ function formatAxisValue(value: number | string, mode: AbcChartMode): string {
 export function AbcChart({ items, mode }: AbcChartProps) {
   if (items.length === 0) {
     return (
-      <div className="premium-card rounded-2xl border-dashed p-10 text-center text-sm text-muted-foreground">
+      <div className="premium-card rounded-lg border-dashed p-10 text-center text-sm text-muted-foreground">
         Sem dados suficientes para gerar o grafico de Pareto no periodo selecionado.
       </div>
     );
   }
 
   return (
-    <div className="premium-card rounded-2xl p-4 md:p-6">
-      <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">Grafico Pareto (Curva ABC)</h3>
+    <div className="premium-card rounded-lg p-4 md:p-6">
+      <h3 className="mb-4 text-sm font-semibold uppercase tracking-normal text-foreground">Grafico Pareto (Curva ABC)</h3>
 
       <div className="h-[430px] w-full">
         <ResponsiveContainer width="100%" height="100%">

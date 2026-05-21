@@ -51,7 +51,7 @@ export function ExportButtons({ reportId, startDate, endDate, disabled = false }
       <button
         onClick={() => handleExport('csv')}
         disabled={disabled || loading !== null}
-        className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-semibold uppercase tracking-normal text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
       >
         <FileSpreadsheet size={14} />
         {loading === 'csv' ? 'Exportando CSV...' : 'Exportar CSV'}
@@ -59,7 +59,7 @@ export function ExportButtons({ reportId, startDate, endDate, disabled = false }
       <button
         onClick={() => handleExport('pdf')}
         disabled={disabled || loading !== null}
-        className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-semibold uppercase tracking-normal text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
       >
         <Download size={14} />
         {loading === 'pdf' ? 'Exportando PDF...' : 'Exportar PDF'}

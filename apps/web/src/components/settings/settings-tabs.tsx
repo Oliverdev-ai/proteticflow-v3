@@ -61,15 +61,15 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
           collapsed ? 'w-20' : 'w-full lg:w-72',
         )}
       >
-        <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-[32px] p-3 flex flex-col gap-1 shadow-2xl shadow-black/10 overflow-hidden sticky top-24">
+        <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-lg p-3 flex flex-col gap-1 shadow-md shadow-black/10 overflow-hidden sticky top-24">
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:flex items-center justify-center w-full h-10 rounded-2xl hover:bg-muted/50 text-muted-foreground transition-all mb-4 group"
+            className="hidden lg:flex items-center justify-center w-full h-10 rounded-lg hover:bg-muted/50 text-muted-foreground transition-all mb-4 group"
           >
             {collapsed ? (
               <ChevronRight size={18} />
             ) : (
-              <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-[8px] font-semibold uppercase tracking-normal">
                 <ChevronLeft size={14} /> Recolher Painel
               </div>
             )}
@@ -82,10 +82,10 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 relative group overflow-hidden outline-none',
-                  'text-[10px] font-black uppercase tracking-[0.15em]',
+                  'flex items-center gap-4 px-4 py-3.5 rounded-lg transition-all duration-300 relative group overflow-hidden outline-none',
+                  'text-[10px] font-semibold uppercase tracking-[0.15em]',
                   activeTab === tab.id
-                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02] z-10'
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-sm scale-[1.02] z-10'
                     : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                 )}
               >
@@ -108,12 +108,12 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
           {!collapsed && (
             <div className="mt-8 p-6 bg-muted/20 border-t border-border/30 flex flex-col gap-4 animate-in fade-in duration-1000">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center shadow-inner">
+                <div className="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center shadow-inner">
                   <Activity size={14} strokeWidth={3} />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Cluster Status</span>
-                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Ativo</span>
+                  <span className="text-[8px] font-semibold uppercase tracking-normal text-muted-foreground">Cluster Status</span>
+                  <span className="text-[10px] font-semibold text-success uppercase tracking-normal">Ativo</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -121,8 +121,8 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
                   <Settings2 size={14} strokeWidth={3} />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Versão</span>
-                  <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">3.0.0-rc</span>
+                  <span className="text-[8px] font-semibold uppercase tracking-normal text-muted-foreground">Versão</span>
+                  <span className="text-[10px] font-semibold text-orange-500 uppercase tracking-normal">3.0.0-rc</span>
                 </div>
               </div>
             </div>
@@ -133,12 +133,12 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
       <div className="flex-1 min-w-0">
         <PageTransition key={selectedTab.id}>
           <div className="flex flex-col gap-2 mb-10 ml-4 lg:ml-0">
-            <h2 className="text-3xl font-black text-foreground uppercase tracking-tight overflow-hidden leading-tight">
+            <h2 className="text-3xl font-semibold text-foreground uppercase tracking-tight overflow-hidden leading-tight">
               {selectedTab.label}
             </h2>
             <div className="flex items-center gap-4">
               <div className="h-1 w-12 bg-primary rounded-full shadow-glow-primary" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 italic">
+              <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground/40 italic">
                 Módulo de Configuração de Malha
               </span>
             </div>

@@ -3,6 +3,7 @@ import { trpc } from '../../../lib/trpc';
 import { NfseEmitForm } from '../../../components/fiscal/nfse-emit-form';
 import { NfseBatchModal } from '../../../components/fiscal/nfse-batch-modal';
 import { NfseList } from '../../../components/fiscal/nfse-list';
+import { PageTitle, H2 } from '../../../components/shared/typography';
 
 function toIso(date: string, endOfDay: boolean): string | undefined {
   if (!date) return undefined;
@@ -78,15 +79,14 @@ export default function NotasFiscaisPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Fiscal - Notas Fiscais</h1>
-        <p className="text-sm text-zinc-400">Emissao, acompanhamento e cancelamento de NFS-e.</p>
-      </div>
+      <PageTitle subtitle="Emissão, acompanhamento e cancelamento de NFS-e.">
+        Fiscal - Notas Fiscais
+      </PageTitle>
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
-        <h2 className="text-lg font-semibold text-white">Filtros</h2>
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        <H2>Filtros</H2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <label className="text-sm text-zinc-300">
+          <label className="text-sm text-muted-foreground">
             Status
             <select
               value={status}
@@ -102,7 +102,7 @@ export default function NotasFiscaisPage() {
             </select>
           </label>
 
-          <label className="text-sm text-zinc-300">
+          <label className="text-sm text-muted-foreground">
             Cliente
             <select
               value={clientId ?? ''}
@@ -120,7 +120,7 @@ export default function NotasFiscaisPage() {
             </select>
           </label>
 
-          <label className="text-sm text-zinc-300">
+          <label className="text-sm text-muted-foreground">
             De
             <input
               type="date"
@@ -130,7 +130,7 @@ export default function NotasFiscaisPage() {
             />
           </label>
 
-          <label className="text-sm text-zinc-300">
+          <label className="text-sm text-muted-foreground">
             Ate
             <input
               type="date"

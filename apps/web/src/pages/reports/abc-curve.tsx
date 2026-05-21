@@ -1,10 +1,21 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, BarChart3, Download, FileSpreadsheet, Layers3, TrendingUp } from 'lucide-react';
+import {
+  AlertCircle,
+  BarChart3,
+  Download,
+  FileSpreadsheet,
+  Layers3,
+  TrendingUp,
+} from 'lucide-react';
 import { trpc } from '../../lib/trpc';
 import { PageTransition } from '../../components/shared/page-transition';
-import { H1, Subtitle } from '../../components/shared/typography';
+import { PageTitle, Subtitle } from '../../components/shared/typography';
 import { AbcChart } from '../../components/reports/abc-chart';
-import { AbcFilters, type AbcCurveType, type AbcFiltersState } from '../../components/reports/abc-filters';
+import {
+  AbcFilters,
+  type AbcCurveType,
+  type AbcFiltersState,
+} from '../../components/reports/abc-filters';
 import { AbcTable } from '../../components/reports/abc-table';
 import { downloadBase64Artifact } from '../../lib/pdf-export';
 
@@ -94,26 +105,32 @@ export default function AbcCurvePage() {
     <PageTransition className="mx-auto flex h-full max-w-7xl flex-col gap-8 overflow-auto p-4 pb-16 md:p-1">
       <div className="flex flex-wrap items-center justify-between gap-6">
         <div className="space-y-1">
-          <H1 className="tracking-tight">Curva ABC</H1>
+          <PageTitle>Curva ABC</PageTitle>
           <Subtitle>
-            Analise de Pareto para identificar os itens que concentram o maior impacto operacional e financeiro.
+            Analise de Pareto para identificar os itens que concentram o maior impacto operacional e
+            financeiro.
           </Subtitle>
         </div>
 
-        <div className="inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-black uppercase tracking-widest text-primary">
+        <div className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-semibold uppercase tracking-normal text-primary">
           <TrendingUp size={14} />
           {TYPE_LABEL[submittedFilters.type]}
         </div>
       </div>
 
-      <AbcFilters value={filters} onChange={setFilters} onGenerate={handleGenerate} isLoading={abcQuery.isFetching} />
+      <AbcFilters
+        value={filters}
+        onChange={setFilters}
+        onGenerate={handleGenerate}
+        isLoading={abcQuery.isFetching}
+      />
 
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
           onClick={() => handleExport('csv')}
           disabled={!abcQuery.data || exporting !== null}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-semibold uppercase tracking-normal text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
         >
           <FileSpreadsheet size={14} />
           {exporting === 'csv' ? 'Exportando CSV...' : 'Exportar CSV'}
@@ -122,7 +139,7 @@ export default function AbcCurvePage() {
           type="button"
           onClick={() => handleExport('pdf')}
           disabled={!abcQuery.data || exporting !== null}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-2.5 text-xs font-semibold uppercase tracking-normal text-foreground transition-all hover:border-primary/40 hover:text-primary disabled:opacity-60"
         >
           <Download size={14} />
           {exporting === 'pdf' ? 'Exportando PDF...' : 'Exportar PDF'}
@@ -144,29 +161,42 @@ export default function AbcCurvePage() {
       {abcQuery.data && (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total analisado</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{formatTotal(abcQuery.data.totalValue, mode)}</p>
-            </div>
-
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Classe A</p>
-              <p className="mt-2 text-lg font-black text-primary">
-                {abcQuery.data.summary.a.count} itens ({abcQuery.data.summary.a.percentage.toFixed(2)}%)
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
+                Total analisado
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">
+                {formatTotal(abcQuery.data.totalValue, mode)}
               </p>
             </div>
 
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Classe B</p>
-              <p className="mt-2 text-lg font-black text-amber-600">
-                {abcQuery.data.summary.b.count} itens ({abcQuery.data.summary.b.percentage.toFixed(2)}%)
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
+                Classe A
+              </p>
+              <p className="mt-2 text-lg font-semibold text-primary">
+                {abcQuery.data.summary.a.count} itens (
+                {abcQuery.data.summary.a.percentage.toFixed(2)}%)
               </p>
             </div>
 
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Classe C</p>
-              <p className="mt-2 text-lg font-black text-muted-foreground">
-                {abcQuery.data.summary.c.count} itens ({abcQuery.data.summary.c.percentage.toFixed(2)}%)
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
+                Classe B
+              </p>
+              <p className="mt-2 text-lg font-semibold text-amber-600">
+                {abcQuery.data.summary.b.count} itens (
+                {abcQuery.data.summary.b.percentage.toFixed(2)}%)
+              </p>
+            </div>
+
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
+                Classe C
+              </p>
+              <p className="mt-2 text-lg font-semibold text-muted-foreground">
+                {abcQuery.data.summary.c.count} itens (
+                {abcQuery.data.summary.c.percentage.toFixed(2)}%)
               </p>
             </div>
           </div>
@@ -180,8 +210,8 @@ export default function AbcCurvePage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-muted/20 p-5 text-xs text-muted-foreground">
-            <div className="mb-2 inline-flex items-center gap-2 font-black uppercase tracking-widest text-foreground">
+          <div className="rounded-lg border border-border bg-muted/20 p-5 text-xs text-muted-foreground">
+            <div className="mb-2 inline-flex items-center gap-2 font-semibold uppercase tracking-normal text-foreground">
               <Layers3 size={14} />
               Regra de classificacao
             </div>
@@ -191,13 +221,13 @@ export default function AbcCurvePage() {
       )}
 
       {abcQuery.isLoading && (
-        <div className="premium-card rounded-2xl border-dashed p-12 text-center text-sm text-muted-foreground">
+        <div className="premium-card rounded-lg border-dashed p-12 text-center text-sm text-muted-foreground">
           Gerando Curva ABC...
         </div>
       )}
 
       {!abcQuery.isLoading && abcQuery.data && abcQuery.data.items.length === 0 && (
-        <div className="premium-card rounded-2xl border-dashed p-12 text-center text-sm text-muted-foreground">
+        <div className="premium-card rounded-lg border-dashed p-12 text-center text-sm text-muted-foreground">
           <div className="mb-2 inline-flex items-center gap-2 font-bold text-foreground">
             <BarChart3 size={16} />
             Sem dados para o periodo selecionado
@@ -207,7 +237,7 @@ export default function AbcCurvePage() {
       )}
 
       {!validationError && !abcQuery.error && !abcQuery.data && !abcQuery.isLoading && (
-        <div className="premium-card rounded-2xl border-dashed p-12 text-center text-sm text-muted-foreground">
+        <div className="premium-card rounded-lg border-dashed p-12 text-center text-sm text-muted-foreground">
           <div className="mb-2 inline-flex items-center gap-2 font-bold text-foreground">
             <AlertCircle size={16} />
             Pronto para gerar
@@ -218,4 +248,3 @@ export default function AbcCurvePage() {
     </PageTransition>
   );
 }
-

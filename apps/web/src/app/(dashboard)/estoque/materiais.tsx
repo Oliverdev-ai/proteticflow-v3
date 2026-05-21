@@ -17,7 +17,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Large, Muted } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Large, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
@@ -63,7 +63,7 @@ export default function MaterialsPage() {
   const inputClass =
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
   const labelClass =
-    'block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1';
+    'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
@@ -72,19 +72,19 @@ export default function MaterialsPage() {
         <div className="flex items-center gap-6">
           <Link
             to="/estoque"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all  shadow-sm"
           >
             <ChevronLeft size={20} strokeWidth={3} />
           </Link>
           <div className="flex flex-col gap-0.5">
-            <H1 className="tracking-tight">Catálogo de Materiais</H1>
+            <PageTitle className="tracking-tight">Catálogo de Materiais</PageTitle>
             <Subtitle>Gestão técnica de insumos e ponto de pedido</Subtitle>
           </div>
         </div>
 
         <button
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
+          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
         >
           <PackagePlus size={16} strokeWidth={3} /> Registrar Material
         </button>
@@ -108,9 +108,9 @@ export default function MaterialsPage() {
         <button
           onClick={() => setBelowMin((b) => !b)}
           className={cn(
-            'flex items-center gap-3 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 border',
+            'flex items-center gap-3 px-5 py-3 rounded-lg text-[10px] font-semibold uppercase tracking-normal transition-all  border',
             belowMin
-              ? 'bg-destructive/10 text-destructive border-destructive/20 shadow-lg shadow-destructive/5'
+              ? 'bg-destructive/10 text-destructive border-destructive/20 shadow-lg shadow-sm'
               : 'bg-card/50 text-muted-foreground border-border/50 hover:border-primary/30',
           )}
         >
@@ -124,7 +124,7 @@ export default function MaterialsPage() {
         {isLoading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-4">
             <Database className="animate-pulse text-primary/20" size={48} />
-            <Muted className="animate-pulse font-black uppercase tracking-[0.2em]">
+            <Muted className="animate-pulse font-semibold uppercase tracking-normal">
               Sincronizando inventário...
             </Muted>
           </div>
@@ -133,19 +133,19 @@ export default function MaterialsPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Insumo / Material
                   </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     SKU / Identificador
                   </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Unidade
                   </th>
-                  <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Nível de Estoque
                   </th>
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Estoque Mín.
                   </th>
                   <th className="px-6 py-4 text-right">Ações</th>
@@ -165,7 +165,7 @@ export default function MaterialsPage() {
                             setSearch('');
                             setBelowMin(false);
                           }}
-                          className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                          className="text-[10px] font-semibold uppercase tracking-normal text-primary hover:underline"
                         >
                           Limpar filtros
                         </button>
@@ -195,14 +195,14 @@ export default function MaterialsPage() {
                             <div className="flex flex-col gap-0.5">
                               <p
                                 className={cn(
-                                  'text-sm font-black tracking-tight',
+                                  'text-sm font-semibold tracking-tight',
                                   isLow ? 'text-destructive' : 'text-foreground',
                                 )}
                               >
                                 {mat.name}
                               </p>
                               {isLow && (
-                                <span className="text-[9px] font-black uppercase tracking-widest text-destructive/60 animate-pulse">
+                                <span className="text-[9px] font-semibold uppercase tracking-normal text-destructive/60 animate-pulse">
                                   Reposição Urgente
                                 </span>
                               )}
@@ -210,12 +210,12 @@ export default function MaterialsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-5 whitespace-nowrap">
-                          <span className="text-xs font-bold text-muted-foreground px-3 py-1 bg-muted/50 rounded-lg border border-border/50 uppercase tracking-widest">
+                          <span className="text-xs font-bold text-muted-foreground px-3 py-1 bg-muted/50 rounded-lg border border-border/50 uppercase tracking-normal">
                             {mat.code ?? 'SEM CÓDIGO'}
                           </span>
                         </td>
                         <td className="px-6 py-5">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
+                          <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground opacity-60">
                             {mat.unit}
                           </span>
                         </td>
@@ -223,7 +223,7 @@ export default function MaterialsPage() {
                           <div className="flex flex-col items-center gap-2">
                             <Large
                               className={cn(
-                                'font-black tracking-tighter text-lg leading-none',
+                                'font-semibold tracking-tighter text-lg leading-none',
                                 isLow ? 'text-destructive' : 'text-foreground',
                               )}
                             >
@@ -233,7 +233,7 @@ export default function MaterialsPage() {
                               <div
                                 className={cn(
                                   'h-full transition-all',
-                                  isLow ? 'bg-destructive' : 'bg-emerald-500',
+                                  isLow ? 'bg-destructive' : 'bg-success',
                                 )}
                                 style={{ width: `${Math.min(100, (stock / (min || 1)) * 50)}%` }}
                               />
@@ -246,7 +246,7 @@ export default function MaterialsPage() {
                         <td className="px-6 py-5 text-right whitespace-nowrap">
                           <Link
                             to={`/estoque/material/${mat.id}`}
-                            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/5 px-4 py-2 rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all ml-auto"
+                            className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-normal text-primary bg-primary/5 px-4 py-2 rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all ml-auto"
                           >
                             Detalhes <ChevronRight size={14} strokeWidth={3} />
                           </Link>
@@ -263,21 +263,21 @@ export default function MaterialsPage() {
         {/* Pagination Modern Controls */}
         {(data?.total ?? 0) > 20 && (
           <div className="flex items-center justify-between mt-8 bg-card/30 backdrop-blur-sm p-4 rounded-[28px] border border-border/50 shadow-sm">
-            <Muted className="text-[10px] font-bold uppercase tracking-widest ml-4">
+            <Muted className="text-[10px] font-bold uppercase tracking-normal ml-4">
               Página {page} de {Math.ceil((data?.total ?? 0) / 20)}
             </Muted>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-6 py-3 bg-muted border border-border text-[10px] font-black uppercase tracking-widest rounded-2xl disabled:opacity-30 hover:text-primary transition-all active:scale-95"
+                className="px-6 py-3 bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal rounded-lg disabled:opacity-30 hover:text-primary transition-all "
               >
                 Anterior
               </button>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={materials.length < 20}
-                className="px-6 py-3 bg-muted border border-border text-[10px] font-black uppercase tracking-widest rounded-2xl disabled:opacity-30 hover:text-primary transition-all active:scale-95"
+                className="px-6 py-3 bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal rounded-lg disabled:opacity-30 hover:text-primary transition-all "
               >
                 Próxima
               </button>
@@ -290,18 +290,18 @@ export default function MaterialsPage() {
       {createOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-primary/20 overflow-hidden">
+            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-primary/20 overflow-hidden">
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
               <div className="flex justify-between items-start relative">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <PackagePlus size={24} strokeWidth={2.5} />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <H1 className="text-2xl tracking-tighter">Novo Material</H1>
-                    <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
+                    <PageTitle className="text-2xl tracking-tighter">Novo Material</PageTitle>
+                    <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                       Cadastro técnico de insumo
                     </Muted>
                   </div>
@@ -378,7 +378,7 @@ export default function MaterialsPage() {
                       size={20}
                     />
                   </div>
-                  <Muted className="text-[9px] uppercase font-bold tracking-widest mt-3 leading-relaxed">
+                  <Muted className="text-[9px] uppercase font-bold tracking-normal mt-3 leading-relaxed">
                     O sistema emitirá alertas automáticos quando o saldo real atingir este valor.
                   </Muted>
                 </div>
@@ -418,7 +418,7 @@ export default function MaterialsPage() {
               <div className="flex gap-4 pt-6 mt-4 border-t border-border/50 relative">
                 <button
                   onClick={() => setCreateOpen(false)}
-                  className="flex-1 py-5 rounded-2xl bg-muted border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all active:scale-95"
+                  className="flex-1 py-5 rounded-lg bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all "
                 >
                   Descartar
                 </button>
@@ -434,7 +434,7 @@ export default function MaterialsPage() {
                     })
                   }
                   disabled={!form.name.trim() || createMaterial.isPending}
-                  className="flex-[1.5] py-5 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3"
+                  className="flex-[1.5] py-5 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-sm hover:brightness-110  disabled:opacity-30 transition-all flex items-center justify-center gap-3"
                 >
                   {createMaterial.isPending ? (
                     <Loader2 size={16} className="animate-spin" />

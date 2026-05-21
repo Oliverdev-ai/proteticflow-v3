@@ -51,7 +51,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+      <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
         <h2 className="text-white font-semibold mb-3">Gerar novo token</h2>
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-sm text-zinc-300">
@@ -86,7 +86,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+      <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
         <h2 className="text-white font-semibold mb-3">Tokens do cliente</h2>
         <div className="space-y-3">
           {tokens.map((token) => {
@@ -134,7 +134,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+      <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-5">
         <h2 className="text-white font-semibold mb-3">Destino de email</h2>
         <input
           type="email"

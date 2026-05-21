@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { cn } from '../../../lib/utils';
 
 function SummaryCard({
@@ -38,7 +38,7 @@ function SummaryCard({
   trend?: { value: string; positive: boolean };
 }) {
   const colorMap = {
-    emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    emerald: 'bg-success/10 text-success border-success/20',
     destructive: 'bg-destructive/10 text-destructive border-destructive/20',
     amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
     primary: 'bg-primary/10 text-primary border-primary/20',
@@ -51,7 +51,7 @@ function SummaryCard({
       <div className="flex items-start justify-between relative">
         <div
           className={cn(
-            'p-3 rounded-2xl border shadow-inner transition-all duration-500 group-hover:scale-110',
+            'p-3 rounded-lg border shadow-inner transition-all duration-500 group-hover:scale-110',
             colorMap[color],
           )}
         >
@@ -60,9 +60,9 @@ function SummaryCard({
         {trend && (
           <div
             className={cn(
-              'flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border',
+              'flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-normal border',
               trend.positive
-                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                ? 'bg-success/10 text-success border-success/20'
                 : 'bg-destructive/10 text-destructive border-destructive/20',
             )}
           >
@@ -77,14 +77,14 @@ function SummaryCard({
       </div>
 
       <div className="flex flex-col gap-0.5 relative">
-        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal">
           {label}
         </p>
         <div className="flex items-baseline gap-2">
-          <Large className="text-3xl font-black tracking-tighter leading-tight">{value}</Large>
+          <Large className="text-3xl font-semibold tracking-tighter leading-tight">{value}</Large>
         </div>
         {sub && (
-          <Muted className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+          <Muted className="text-[10px] font-bold uppercase tracking-normal opacity-60">
             {sub}
           </Muted>
         )}
@@ -138,7 +138,7 @@ export default function FinancialDashboard() {
     <PageTransition className="flex flex-col gap-10 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col gap-1">
-        <H1 className="tracking-tight">Gestão Financeira</H1>
+        <PageTitle className="tracking-tight">Gestão Financeira</PageTitle>
         <Subtitle>Painel estratégico de faturamento e fluxo de caixa</Subtitle>
       </div>
 
@@ -180,7 +180,7 @@ export default function FinancialDashboard() {
         <div className="lg:col-span-8 space-y-6">
           <div className="flex items-center gap-4 ml-1">
             <div className="w-1 h-3 bg-primary rounded-full" />
-            <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">
+            <Muted className="text-[10px] font-semibold uppercase tracking-normal">
               Módulos Operacionais
             </Muted>
           </div>
@@ -190,7 +190,7 @@ export default function FinancialDashboard() {
               <Link
                 key={id}
                 to={href}
-                className="premium-card p-8 flex items-center justify-between group hover:border-primary/50 hover:bg-primary/[0.02] transition-all duration-500 hover:-translate-y-1 active:scale-[0.98]"
+                className="premium-card p-8 flex items-center justify-between group hover:border-primary/50 hover:bg-primary/[0.02] transition-all duration-500 hover:-translate-y-1 "
               >
                 <div className="flex items-center gap-6">
                   <div className="w-16 h-16 flex items-center justify-center rounded-[24px] bg-secondary border border-border group-hover:bg-primary/10 group-hover:text-primary transition-all duration-500 shadow-inner group-hover:rotate-6">
@@ -200,10 +200,10 @@ export default function FinancialDashboard() {
                     />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
+                    <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors tracking-tight">
                       {label}
                     </span>
-                    <Muted className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                    <Muted className="text-[10px] font-bold uppercase tracking-normal opacity-60">
                       {desc}
                     </Muted>
                   </div>
@@ -220,7 +220,7 @@ export default function FinancialDashboard() {
         <div className="lg:col-span-4 space-y-6">
           <div className="flex items-center gap-4 ml-1">
             <div className="w-1 h-3 bg-primary rounded-full" />
-            <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">
+            <Muted className="text-[10px] font-semibold uppercase tracking-normal">
               Insights Flash
             </Muted>
           </div>
@@ -232,21 +232,21 @@ export default function FinancialDashboard() {
             <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-[80px] -mr-20 -mt-20 anim-pulse" />
 
             <div className="flex flex-col gap-6 relative">
-              <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
+              <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-sm">
                 <Activity size={24} strokeWidth={2.5} />
               </div>
               <div className="flex flex-col gap-2">
-                <p className="text-xl font-black tracking-tighter leading-tight">
+                <p className="text-xl font-semibold tracking-tighter leading-tight">
                   Saúde Financeira estável
                 </p>
                 <p className="text-xs text-muted-foreground font-medium leading-relaxed">
                   O laboratório apresenta um índice de inadimplência de{' '}
-                  <span className="text-emerald-500 font-bold">2.4%</span> este mês. Continue
+                  <span className="text-success font-bold">2.4%</span> este mês. Continue
                   monitorando os vencimentos em atraso.
                 </p>
               </div>
               <div className="pt-4 border-t border-primary/10">
-                <button className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:brightness-110 transition-all">
+                <button className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-normal text-primary hover:brightness-110 transition-all">
                   Ver Relatório Analítico <ArrowRight size={14} strokeWidth={3} />
                 </button>
               </div>
@@ -261,7 +261,7 @@ export default function FinancialDashboard() {
               <PieChart size={20} />
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                 Dica de Gestão
               </span>
               <span className="text-[11px] font-bold text-foreground">

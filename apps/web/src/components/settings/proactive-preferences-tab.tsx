@@ -79,7 +79,7 @@ export function ProactivePreferencesTab() {
 
   if (preferencesQuery.isLoading || !draft) {
     return (
-      <div className="rounded-[32px] border border-border/50 bg-card/30 p-8 flex items-center gap-3 text-muted-foreground">
+      <div className="rounded-lg border border-border/50 bg-card/30 p-8 flex items-center gap-3 text-muted-foreground">
         <Loader2 className="animate-spin" size={16} />
         <span className="text-sm font-semibold">Carregando preferências proativas...</span>
       </div>
@@ -111,11 +111,11 @@ export function ProactivePreferencesTab() {
   };
 
   return (
-    <div className="rounded-[32px] border border-border/50 bg-card/30 p-8 space-y-8">
+    <div className="rounded-lg border border-border/50 bg-card/30 p-8 space-y-8">
       <div className="flex items-center gap-3">
         <Bell size={18} className="text-primary" />
         <div>
-          <h3 className="text-lg font-black uppercase tracking-wide text-foreground">Preferências Proativas</h3>
+          <h3 className="text-lg font-semibold uppercase tracking-normal text-foreground">Preferências Proativas</h3>
           <p className="text-xs text-muted-foreground">
             Configure briefing diário, quiet hours e canais de entrega do motor proativo.
           </p>
@@ -123,7 +123,7 @@ export function ProactivePreferencesTab() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="rounded-2xl border border-border/60 bg-background/40 p-4 flex items-center justify-between">
+        <label className="rounded-lg border border-border/60 bg-background/40 p-4 flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">Briefing diário</span>
           <input
             type="checkbox"
@@ -136,8 +136,8 @@ export function ProactivePreferencesTab() {
           />
         </label>
 
-        <label className="rounded-2xl border border-border/60 bg-background/40 p-4 flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Horário do briefing</span>
+        <label className="rounded-lg border border-border/60 bg-background/40 p-4 flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Horário do briefing</span>
           <input
             type="time"
             value={draft.briefingTime}
@@ -151,8 +151,8 @@ export function ProactivePreferencesTab() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="rounded-2xl border border-border/60 bg-background/40 p-4 flex flex-col gap-2">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <label className="rounded-lg border border-border/60 bg-background/40 p-4 flex flex-col gap-2">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             <Clock3 size={14} />
             Quiet hours (início)
           </span>
@@ -167,8 +167,8 @@ export function ProactivePreferencesTab() {
           />
         </label>
 
-        <label className="rounded-2xl border border-border/60 bg-background/40 p-4 flex flex-col gap-2">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <label className="rounded-lg border border-border/60 bg-background/40 p-4 flex flex-col gap-2">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             <Clock3 size={14} />
             Quiet hours (fim)
           </span>
@@ -184,8 +184,8 @@ export function ProactivePreferencesTab() {
         </label>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-background/40 p-4 space-y-4">
-        <h4 className="text-sm font-black uppercase tracking-wide text-foreground">Canais</h4>
+      <div className="rounded-lg border border-border/60 bg-background/40 p-4 space-y-4">
+        <h4 className="text-sm font-semibold uppercase tracking-normal text-foreground">Canais</h4>
         <div className="grid gap-3 md:grid-cols-2">
           {CHANNEL_OPTIONS.map((channelOption) => (
             <label key={channelOption.key} className="flex items-center justify-between rounded-xl border border-border/50 px-3 py-2">
@@ -207,8 +207,8 @@ export function ProactivePreferencesTab() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-background/40 p-4 space-y-4">
-        <h4 className="text-sm font-black uppercase tracking-wide text-foreground">Silenciar alertas</h4>
+      <div className="rounded-lg border border-border/60 bg-background/40 p-4 space-y-4">
+        <h4 className="text-sm font-semibold uppercase tracking-normal text-foreground">Silenciar alertas</h4>
         <div className="grid gap-3 md:grid-cols-2">
           {ALERT_TYPES.map(([alertType, label]) => (
             <label key={alertType} className="flex items-center gap-3 rounded-xl border border-border/50 px-3 py-2">
@@ -229,7 +229,7 @@ export function ProactivePreferencesTab() {
           type="button"
           disabled={updateMutation.isPending || !isDirty}
           onClick={() => void save()}
-          className="inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-5 py-2 text-sm font-semibold text-sky-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-5 py-2 text-sm font-semibold text-sky-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {updateMutation.isPending ? 'Salvando...' : 'Salvar preferências'}

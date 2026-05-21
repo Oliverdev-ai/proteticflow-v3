@@ -170,7 +170,7 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-300">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-300">
           Carregando dados do simulador...
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-2xl border border-red-800 bg-red-900/20 p-6 text-sm text-red-300">
+        <div className="rounded-lg border border-red-800 bg-red-900/20 p-6 text-sm text-red-300">
           Falha ao carregar dados iniciais: {bootstrapError.message}
         </div>
       </div>
@@ -192,7 +192,7 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
           <p className="text-sm text-zinc-300">
             Cadastre ao menos um cliente para gerar simulações e PDF.
           </p>
@@ -211,7 +211,7 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
           <p className="text-sm text-zinc-300">
             Nenhuma tabela de preço ativa. Crie uma tabela antes de simular.
           </p>
@@ -252,7 +252,7 @@ export default function SimulatorPage() {
 
       <ScenarioPanel preview={preview} onPreview={handlePreview} />
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
         <h2 className="text-lg font-semibold text-white">Selecionar tabelas para comparar</h2>
         <div className="flex flex-wrap gap-2">
           {tables.map((table) => {
@@ -284,7 +284,7 @@ export default function SimulatorPage() {
           onSelect={setSelectedSimulationId}
         />
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
           <h2 className="text-lg font-semibold text-white">Ações</h2>
           <div className="space-y-2">
             <label className="text-sm text-zinc-300">

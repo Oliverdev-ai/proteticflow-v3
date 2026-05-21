@@ -1,5 +1,5 @@
 import { Package, PackageX } from 'lucide-react';
-import { KpiCard } from './kpi-card';
+import { KpiCard } from '../shared/kpi-card';
 import type { InventoryKpis } from '@proteticflow/shared';
 
 export function KpiInventory({ data }: { data: InventoryKpis }) {
@@ -7,17 +7,14 @@ export function KpiInventory({ data }: { data: InventoryKpis }) {
     <div className="grid grid-cols-2 gap-4">
       <KpiCard
         label="Itens em Estoque"
-        value={String(data.totalItems)}
+        value={data.totalItems}
         icon={Package}
-        sub="Materiais cadastrados"
-        variant="default"
       />
       <KpiCard
         label="Abaixo do Mínimo"
-        value={String(data.belowMinimum)}
+        value={data.belowMinimum}
         icon={PackageX}
-        sub="Precisam de reposição"
-        variant={data.belowMinimum > 0 ? 'warning' : 'default'}
+        trend={data.belowMinimum > 0 ? { direction: 'down' } : undefined}
       />
     </div>
   );

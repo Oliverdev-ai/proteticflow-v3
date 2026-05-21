@@ -56,7 +56,7 @@ export default function SupportSuggestionsPage() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+      <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
         <h2 className="text-sm font-semibold text-white">Nova sugestao</h2>
         <input
           value={title}
@@ -107,7 +107,7 @@ export default function SupportSuggestionsPage() {
         </button>
       </section>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+      <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
         <h2 className="text-sm font-semibold text-white">Sugestoes enviadas</h2>
 
         {suggestionsQuery.isLoading && <p className="text-sm text-zinc-400">Carregando sugestoes...</p>}
@@ -124,7 +124,7 @@ export default function SupportSuggestionsPage() {
               <article key={suggestion.id} className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold text-white">{suggestion.title}</h3>
-                  <span className="text-[10px] uppercase tracking-widest text-zinc-400">
+                  <span className="text-[10px] uppercase tracking-normal text-zinc-400">
                     {STATUS_LABEL[suggestion.status]}
                   </span>
                 </div>

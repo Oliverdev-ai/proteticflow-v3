@@ -29,11 +29,11 @@ export function FlowAiTab() {
   }
 
   return (
-    <div className="rounded-[32px] border border-border/50 bg-card/30 p-8 space-y-6">
+    <div className="rounded-lg border border-border/50 bg-card/30 p-8 space-y-6">
       <div className="flex items-center gap-3">
         <Mic size={18} className="text-sky-400" />
         <div>
-          <h3 className="text-lg font-black uppercase tracking-wide text-foreground">Flow IA por voz</h3>
+          <h3 className="text-lg font-semibold uppercase tracking-normal text-foreground">Flow IA por voz</h3>
           <p className="text-xs text-muted-foreground">
             Controle resposta audivel do assistente em todas as telas do dashboard.
           </p>
@@ -41,7 +41,7 @@ export function FlowAiTab() {
       </div>
 
       <div className="space-y-5">
-        <label className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/40 px-4 py-3">
+        <label className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-4 py-3">
           <span className="text-sm font-semibold text-foreground">Ativar resposta por voz</span>
           <input
             type="checkbox"
@@ -52,8 +52,8 @@ export function FlowAiTab() {
         </label>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2 rounded-2xl border border-border/60 bg-background/40 p-4">
-            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <label className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-4">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
               <Volume2 size={14} />
               Timbre
             </span>
@@ -67,8 +67,8 @@ export function FlowAiTab() {
             </select>
           </label>
 
-          <label className="space-y-2 rounded-2xl border border-border/60 bg-background/40 p-4">
-            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <label className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-4">
+            <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
               <SlidersHorizontal size={14} />
               Velocidade ({voiceSpeed.toFixed(2)}x)
             </span>
@@ -86,12 +86,12 @@ export function FlowAiTab() {
       </div>
 
       <div className="flex items-center justify-end gap-3">
-        {saved ? <span className="text-xs text-emerald-500">Preferencias salvas.</span> : null}
+        {saved ? <span className="text-xs text-success">Preferencias salvas.</span> : null}
         <button
           type="button"
           onClick={() => void handleSave()}
           disabled={updateProfile.isPending}
-          className="rounded-2xl bg-sky-500 px-5 py-2 text-sm font-semibold text-sky-950 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-sky-500 px-5 py-2 text-sm font-semibold text-sky-950 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {updateProfile.isPending ? 'Salvando...' : 'Salvar preferencias'}
         </button>

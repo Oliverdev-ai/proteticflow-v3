@@ -18,9 +18,9 @@ export function FlowTranscriptPreview({
   const shouldReview = confidence !== undefined && confidence < 0.8;
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 space-y-3">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs uppercase tracking-wider text-zinc-500">Transcricao por voz</p>
+        <p className="text-xs uppercase tracking-normal text-zinc-500">Transcricao por voz</p>
         {shouldReview ? (
           <span className="rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-200">
             Revise a transcricao

@@ -12,6 +12,7 @@ export type ProactiveRecipient = {
   name: string;
   email: string | null;
   phone: string | null;
+  whatsappOptIn: boolean;
   plan: PlanTier;
   preferences: ProactiveUserPreferences;
 };
@@ -60,6 +61,7 @@ export async function listBriefingRecipients(now: Date = new Date()): Promise<Pr
       name: row.name,
       email: row.email,
       phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
+      whatsappOptIn: row.whatsappOptIn,
       plan: row.plan,
       preferences,
     });
@@ -103,6 +105,7 @@ export async function getRecipient(
     name: row.name,
     email: row.email,
     phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
+    whatsappOptIn: row.whatsappOptIn,
     plan: row.plan,
     preferences: await getUserPreferences(tenantId, userId),
   };
@@ -140,6 +143,7 @@ export async function listActiveTenantRecipients(tenantId: number): Promise<Proa
       name: row.name,
       email: row.email,
       phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
+      whatsappOptIn: row.whatsappOptIn,
       preferences: await getUserPreferences(row.tenantId, row.userId),
     });
   }

@@ -54,7 +54,7 @@ export default function EmployeeCreatePage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Informações Pessoais */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
             <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
               <User size={16} className="text-primary" /> Informações Pessoais
             </h2>
@@ -119,7 +119,7 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Endereço */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
             <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
               <MapPin size={16} className="text-primary" /> Endereço
             </h2>
@@ -166,7 +166,7 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Vínculo e Cargo */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
             <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
               <Briefcase size={16} className="text-primary" /> Vínculo Empregatício
             </h2>
@@ -226,7 +226,7 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Remuneração e Comissão */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
             <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
               <CreditCard size={16} className="text-primary" /> Remuneração
             </h2>
@@ -291,7 +291,7 @@ export default function EmployeeCreatePage() {
           <button
             type="submit"
             disabled={isSubmitting || createMutation.isPending}
-            className="flex-[2] py-3 rounded-xl bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+            className="flex-[2] py-3 rounded-xl bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-sm"
           >
             {createMutation.isPending ? (
               <>

@@ -71,6 +71,7 @@ const envSchema = z.object({
   FOCUS_NFE_TOKEN: optionalText(),
   FOCUS_NFE_SANDBOX: optionalText(),
   SENTRY_DSN: optionalUrl(),
+  METRICS_TOKEN: optionalText(),
   BACKUP_S3_BUCKET: optionalText(),
 });
 

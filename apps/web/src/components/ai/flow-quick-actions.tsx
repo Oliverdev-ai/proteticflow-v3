@@ -12,8 +12,8 @@ const QUICK_ACTIONS = [
 
 export function FlowQuickActions({ disabled, onAction }: FlowQuickActionsProps) {
   return (
-    <div className="rounded-2xl border border-sky-900/40 bg-zinc-900 p-4">
-      <p className="text-xs uppercase tracking-wider text-zinc-500 mb-3">Acoes rapidas Flow</p>
+    <div className="rounded-lg border border-sky-900/40 bg-zinc-900 p-4">
+      <p className="text-xs uppercase tracking-normal text-zinc-500 mb-3">Acoes rapidas Flow</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {QUICK_ACTIONS.map((action) => (
           <button

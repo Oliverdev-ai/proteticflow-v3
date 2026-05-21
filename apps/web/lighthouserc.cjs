@@ -3,8 +3,9 @@ module.exports = {
     collect: {
       // Usa o build estático (dist/) servido pelo próprio LHCI
       staticDistDir: './dist',
-      // Audita a landing (/) e o login (/login)
-      url: ['http://localhost/index.html'],
+      isSinglePageApplication: true,
+      // Audita a rota pública real em vez de depender do redirect de /index.html
+      url: ['http://localhost/login'],
       numberOfRuns: 3,
       settings: {
         preset: 'desktop',

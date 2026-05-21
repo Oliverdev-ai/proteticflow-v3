@@ -24,7 +24,7 @@ export function UsageBanner() {
 
   return (
     <>
-      <div className={`w-full px-4 py-2 text-center text-xs font-black uppercase tracking-widest ${
+      <div className={`w-full px-4 py-2 text-center text-xs font-semibold uppercase tracking-normal ${
         isTrialExpired ? 'bg-red-500 text-white' : 'bg-amber-400 text-black'
       }`}>
         {isTrialExpired

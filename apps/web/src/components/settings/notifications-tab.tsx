@@ -128,29 +128,29 @@ export function NotificationsTab() {
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Table Section */}
-      <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] overflow-hidden group/notif shadow-xl shadow-black/5">
+      <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg overflow-hidden group/notif shadow-xl shadow-black/5">
         <div className="p-8 border-b border-border/50 bg-card/30 flex flex-wrap items-center justify-between gap-6">
            <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
                  <BellRing size={20} strokeWidth={2.5} />
               </div>
               <div className="flex flex-col gap-0.5">
-                 <Large className="tracking-tight text-lg font-black uppercase">Matriz de Conectividade</Large>
-                 <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Configure os canais de recebimento por gatilho operacional</Muted>
+                 <Large className="tracking-tight text-lg font-semibold uppercase">Matriz de Conectividade</Large>
+                 <Muted className="text-[10px] font-semibold uppercase tracking-normal opacity-40">Configure os canais de recebimento por gatilho operacional</Muted>
               </div>
            </div>
 
            <div className="flex items-center gap-4">
               <button
                 onClick={handlePushSubscribe}
-                className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
+                className="flex items-center gap-2.5 px-6 py-3 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-sm hover:scale-105 transition-all "
               >
                  <Smartphone size={14} strokeWidth={3} /> Ativar Push (PWA)
               </button>
               <button
                 onClick={() => testDispatchMutation.mutate({ message: 'Auditória de conectividade V3' })}
                 disabled={testDispatchMutation.isPending}
-                className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-muted border border-border text-foreground hover:bg-muted/80 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                className="flex items-center gap-2.5 px-6 py-3 rounded-lg bg-muted border border-border text-foreground hover:bg-muted/80 text-[10px] font-semibold uppercase tracking-normal transition-all "
               >
                  {testDispatchMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} strokeWidth={3} />}
                  Disparo de Teste
@@ -162,16 +162,16 @@ export function NotificationsTab() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border bg-muted/20">
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Evento Operacional</th>
-                <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6 flex items-center justify-center gap-2">
+                <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">Evento Operacional</th>
+                <th className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-6 flex items-center justify-center gap-2">
                    <Activity size={12} className="text-primary/40" /> In-App
                 </th>
-                <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">
+                <th className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-6">
                    <div className="flex items-center justify-center gap-2">
                       <Smartphone size={12} className="text-primary/40" /> Push Native
                    </div>
                 </th>
-                <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">
+                <th className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-6">
                    <div className="flex items-center justify-center gap-2">
                       <Mail size={12} className="text-primary/40" /> E-mail
                    </div>
@@ -184,7 +184,7 @@ export function NotificationsTab() {
                   <td className="px-10 py-6">
                      <div className="flex items-center gap-4">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover/row:bg-primary transition-colors" />
-                        <span className="text-sm font-black text-foreground tracking-tight group-hover/row:text-primary transition-colors">
+                        <span className="text-sm font-semibold text-foreground tracking-tight group-hover/row:text-primary transition-colors">
                            {NOTIFICATION_EVENT_LABELS[pref.eventKey] || pref.eventKey}
                         </span>
                      </div>
@@ -219,7 +219,7 @@ export function NotificationsTab() {
         <div className="p-8 bg-muted/30 border-t border-border flex items-start gap-4">
            <Info size={18} className="text-primary mt-0.5 shrink-0" />
            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Sincronização de Canais</span>
+              <span className="text-[10px] font-semibold text-primary uppercase tracking-normal">Sincronização de Canais</span>
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight leading-relaxed opacity-60">
                  As notificações PWA requerem que o aplicativo esteja instalado ou adicionado à tela inicial no iOS/Android. O disparo de e-mail é processado por filas assíncronas para garantir entrega imediata.
               </p>
@@ -233,27 +233,27 @@ export function NotificationsTab() {
       {/* Persistence State Feedback */}
       <div className="fixed bottom-10 right-10 z-[100] flex flex-col gap-3">
          {updatePreferenceMutation.isPending && (
-            <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
+            <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-right-4">
                <Loader2 size={16} className="animate-spin text-primary" />
-               <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronizando Preferências...</span>
+               <span className="text-[10px] font-semibold text-primary uppercase tracking-normal">Sincronizando Preferências...</span>
             </div>
          )}
          {prefsFeedback?.kind === 'success' && (
-            <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-2xl">
-               <CheckCircle2 size={16} className="text-emerald-500" />
-               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{prefsFeedback.message}</span>
+            <div className="bg-success/10 backdrop-blur-md border border-success/20 px-6 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-md">
+               <CheckCircle2 size={16} className="text-success" />
+               <span className="text-[10px] font-semibold text-success uppercase tracking-normal">{prefsFeedback.message}</span>
             </div>
          )}
          {prefsFeedback?.kind === 'error' && (
-            <div className="bg-destructive/10 backdrop-blur-md border border-destructive/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-2xl">
+            <div className="bg-destructive/10 backdrop-blur-md border border-destructive/20 px-6 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-md">
                <Info size={16} className="text-destructive" />
-               <span className="text-[10px] font-black text-destructive uppercase tracking-widest">{prefsFeedback.message}</span>
+               <span className="text-[10px] font-semibold text-destructive uppercase tracking-normal">{prefsFeedback.message}</span>
             </div>
          )}
          {testDispatchMutation.isSuccess && (
-            <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 px-6 py-3 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-2xl">
-               <CheckCircle2 size={16} className="text-emerald-500" />
-               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Disparo de Teste Efetuado</span>
+            <div className="bg-success/10 backdrop-blur-md border border-success/20 px-6 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-500 shadow-md">
+               <CheckCircle2 size={16} className="text-success" />
+               <span className="text-[10px] font-semibold text-success uppercase tracking-normal">Disparo de Teste Efetuado</span>
             </div>
          )}
       </div>

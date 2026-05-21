@@ -10,8 +10,8 @@ export function PlansTab() {
             <CreditCard size={18} strokeWidth={3} />
          </div>
          <div className="flex flex-col gap-0.5">
-            <Large className="tracking-tight text-lg font-black uppercase">Núcleo de Faturamento</Large>
-            <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Métricas de consumo e gestão de assinatura</Muted>
+            <Large className="tracking-tight text-lg font-semibold uppercase">Núcleo de Faturamento</Large>
+            <Muted className="text-[10px] font-semibold uppercase tracking-normal opacity-40">Métricas de consumo e gestão de assinatura</Muted>
          </div>
       </div>
       

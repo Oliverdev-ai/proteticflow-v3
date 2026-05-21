@@ -5,7 +5,7 @@ import { trpc } from '../../lib/trpc';
 import { ExportButtons } from '../../components/reports/export-buttons';
 import { PeriodFilter, type PeriodFilterState } from '../../components/reports/period-filter';
 import { PageTransition } from '../../components/shared/page-transition';
-import { H1, Subtitle } from '../../components/shared/typography';
+import { PageTitle, Subtitle } from '../../components/shared/typography';
 
 function toIsoRange(date: string, mode: 'start' | 'end'): string {
   return new Date(`${date}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();
@@ -71,11 +71,16 @@ export default function FiscalRevenuePage() {
   return (
     <PageTransition className="mx-auto flex h-full max-w-7xl flex-col gap-8 overflow-auto p-4 pb-16 md:p-1">
       <div className="space-y-1">
-        <H1>Faturamento por Periodo</H1>
+        <PageTitle>Faturamento por período</PageTitle>
         <Subtitle>Visao fiscal da receita por mes, dentista e tipo de servico.</Subtitle>
       </div>
 
-      <PeriodFilter value={filters} onChange={setFilters} onApply={handleApply} isLoading={query.isFetching} />
+      <PeriodFilter
+        value={filters}
+        onChange={setFilters}
+        onApply={handleApply}
+        isLoading={query.isFetching}
+      />
       <ExportButtons
         reportId="fiscal-revenue"
         startDate={submittedFilters.startDate}
@@ -98,27 +103,44 @@ export default function FiscalRevenuePage() {
       {query.data && (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Receita bruta</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{formatCurrency(query.data.totalCents)}</p>
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
+                Receita bruta
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">
+                {formatCurrency(query.data.totalCents)}
+              </p>
             </div>
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dentistas</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{query.data.byClient.length}</p>
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
+                Dentistas
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">
+                {query.data.byClient.length}
+              </p>
             </div>
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipos de servico</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{query.data.byServiceType.length}</p>
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
+                Tipos de servico
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">
+                {query.data.byServiceType.length}
+              </p>
             </div>
           </div>
 
-          <div className="premium-card rounded-2xl p-4 md:p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">Faturamento mensal</h3>
+          <div className="premium-card rounded-lg p-4 md:p-6">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-normal text-foreground">
+              Faturamento mensal
+            </h3>
             <div className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }}
+                  />
                   <YAxis
                     tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }}
                     tickFormatter={(value) => formatCurrency(Number(value))}
@@ -131,8 +153,8 @@ export default function FiscalRevenuePage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <div className="premium-card overflow-hidden rounded-2xl">
-              <div className="border-b border-border px-4 py-3 text-xs font-black uppercase tracking-widest text-foreground">
+            <div className="premium-card overflow-hidden rounded-lg">
+              <div className="border-b border-border px-4 py-3 text-xs font-semibold uppercase tracking-normal text-foreground">
                 Por dentista
               </div>
               <table className="w-full text-sm">
@@ -147,16 +169,20 @@ export default function FiscalRevenuePage() {
                   {query.data.byClient.map((item) => (
                     <tr key={item.key}>
                       <td className="px-4 py-2 font-semibold text-foreground">{item.label}</td>
-                      <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.totalCents)}</td>
-                      <td className="px-4 py-2 text-right text-muted-foreground">{formatPercent(item.percentage)}%</td>
+                      <td className="px-4 py-2 text-right text-foreground">
+                        {formatCurrency(item.totalCents)}
+                      </td>
+                      <td className="px-4 py-2 text-right text-muted-foreground">
+                        {formatPercent(item.percentage)}%
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <div className="premium-card overflow-hidden rounded-2xl">
-              <div className="border-b border-border px-4 py-3 text-xs font-black uppercase tracking-widest text-foreground">
+            <div className="premium-card overflow-hidden rounded-lg">
+              <div className="border-b border-border px-4 py-3 text-xs font-semibold uppercase tracking-normal text-foreground">
                 Por tipo de servico
               </div>
               <table className="w-full text-sm">
@@ -171,8 +197,12 @@ export default function FiscalRevenuePage() {
                   {query.data.byServiceType.map((item) => (
                     <tr key={item.key}>
                       <td className="px-4 py-2 font-semibold text-foreground">{item.label}</td>
-                      <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.totalCents)}</td>
-                      <td className="px-4 py-2 text-right text-muted-foreground">{formatPercent(item.percentage)}%</td>
+                      <td className="px-4 py-2 text-right text-foreground">
+                        {formatCurrency(item.totalCents)}
+                      </td>
+                      <td className="px-4 py-2 text-right text-muted-foreground">
+                        {formatPercent(item.percentage)}%
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -183,7 +213,7 @@ export default function FiscalRevenuePage() {
       )}
 
       {!query.isLoading && query.data && query.data.byMonth.length === 0 && (
-        <div className="premium-card rounded-2xl border-dashed p-12 text-center text-sm text-muted-foreground">
+        <div className="premium-card rounded-lg border-dashed p-12 text-center text-sm text-muted-foreground">
           <div className="mb-2 inline-flex items-center gap-2 font-bold text-foreground">
             <BarChart3 size={16} />
             Sem faturamento no periodo

@@ -157,7 +157,7 @@ export default function EmployeeEditPage() {
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
               employee.isActive
-                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                ? 'bg-success/10 text-success border border-success/20'
                 : 'bg-red-500/10 text-red-500 border border-red-500/20'
             }`}
           >
@@ -204,7 +204,7 @@ export default function EmployeeEditPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Form / Details */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+            <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
                   <User size={16} className="text-primary" /> Dados Principais
@@ -254,7 +254,7 @@ export default function EmployeeEditPage() {
               </div>
             </section>
 
-            <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+            <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
               <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
                 <Briefcase size={16} className="text-primary" /> Contrato e Função
               </h2>
@@ -322,13 +322,13 @@ export default function EmployeeEditPage() {
             </section>
           </form>
 
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
                 <BarChart3 size={16} className="text-primary" /> Desempenho e Ponto
               </h2>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase tracking-widest text-zinc-500">
+                <span className="text-[10px] uppercase tracking-normal text-zinc-500">
                   {String(currentMonth).padStart(2, '0')}/{currentYear}
                 </span>
                 <select
@@ -433,7 +433,7 @@ export default function EmployeeEditPage() {
               </div>
             )}
 
-            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-zinc-900 border-b border-zinc-800">
                   <tr className="text-left text-zinc-400">
@@ -478,7 +478,7 @@ export default function EmployeeEditPage() {
           </section>
 
           {/* Assignments / Production */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
             <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
               <History size={16} className="text-primary" /> Histórico de Produção Recente
             </h2>
@@ -527,7 +527,7 @@ export default function EmployeeEditPage() {
 
         {/* Skills sidebar */}
         <div className="space-y-6">
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
                 <Award size={16} className="text-primary" /> Habilidades
@@ -604,11 +604,11 @@ export default function EmployeeEditPage() {
             </div>
           </section>
 
-          <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
             <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
               <History size={16} className="text-primary" /> Metadados
             </h2>
-            <div className="space-y-2 text-[10px] text-zinc-500 uppercase tracking-widest">
+            <div className="space-y-2 text-[10px] text-zinc-500 uppercase tracking-normal">
               <div>Criado em: {new Date(employee.createdAt).toLocaleString('pt-BR')}</div>
               <div>Última alt: {new Date(employee.updatedAt).toLocaleString('pt-BR')}</div>
               {employee.dismissalDate && (

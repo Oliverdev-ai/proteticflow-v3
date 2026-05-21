@@ -15,7 +15,7 @@ import {
 import { trpc } from '../../../lib/trpc';
 import { usePermissions } from '../../../hooks/use-permissions';
 import { PageTransition } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
@@ -55,15 +55,15 @@ export default function ClientListPage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4 p-8 bg-destructive/5 rounded-3xl border border-destructive/20">
-        <AlertCircle className="text-destructive font-black" size={32} />
+      <div className="flex flex-col items-center justify-center h-64 gap-4 p-8 bg-destructive/5 rounded-lg border border-destructive/20">
+        <AlertCircle className="text-destructive font-semibold" size={32} />
         <div className="text-center">
-          <p className="text-destructive font-bold text-sm uppercase tracking-widest">
+          <p className="text-destructive font-bold text-sm uppercase tracking-normal">
             {error.message}
           </p>
           <button
             onClick={() => refetch()}
-            className="mt-4 text-xs font-black text-primary hover:text-primary/80 transition-all uppercase tracking-[0.2em] underline underline-offset-4"
+            className="mt-4 text-xs font-semibold text-primary hover:text-primary/80 transition-all uppercase tracking-normal underline underline-offset-4"
           >
             Tentar novamente
           </button>
@@ -77,14 +77,14 @@ export default function ClientListPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/5">
+          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center shadow-lg shadow-primary/5">
             <Users className="text-primary" size={24} />
           </div>
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
-              <H1>Parceiros</H1>
+              <PageTitle>Parceiros</PageTitle>
               {data?.total !== undefined && (
-                <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
+                <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
                   {data.total}
                 </span>
               )}
@@ -94,14 +94,14 @@ export default function ClientListPage() {
         </div>
         <button
           onClick={() => navigate('/clientes/novo')}
-          className="flex items-center gap-2 bg-primary text-primary-foreground text-xs font-black px-6 py-3 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em]"
+          className="flex items-center gap-2 bg-primary text-primary-foreground text-xs font-semibold px-6 py-3 rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110  uppercase tracking-normal"
         >
           <Plus size={16} strokeWidth={3} /> Cadastrar Parceiro
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 bg-card/50 p-4 rounded-3xl border border-border/50 backdrop-blur-sm">
+      <div className="flex flex-wrap gap-4 bg-card/50 p-4 rounded-lg border border-border/50 backdrop-blur-sm">
         <div className="relative flex-1 min-w-[280px]">
           <Search
             size={16}
@@ -114,10 +114,10 @@ export default function ClientListPage() {
               setPage(1);
             }}
             placeholder="Buscar por nome, clínica, CPF/CNPJ..."
-            className="w-full bg-muted border border-border rounded-2xl pl-12 pr-4 py-3 text-foreground placeholder:text-muted-foreground/30 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            className="w-full bg-muted border border-border rounded-lg pl-12 pr-4 py-3 text-foreground placeholder:text-muted-foreground/30 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
           />
         </div>
-        <div className="flex items-center gap-2 bg-muted border border-border rounded-2xl px-4 py-1.5 min-w-[180px]">
+        <div className="flex items-center gap-2 bg-muted border border-border rounded-lg px-4 py-1.5 min-w-[180px]">
           <div className="p-1.5 bg-background rounded-lg text-muted-foreground">
             <Users size={14} />
           </div>
@@ -127,7 +127,7 @@ export default function ClientListPage() {
               setStatus((e.target.value as 'active' | 'inactive' | undefined) || undefined);
               setPage(1);
             }}
-            className="bg-transparent border-none text-foreground text-[10px] font-black uppercase tracking-widest focus:outline-none flex-1 cursor-pointer"
+            className="bg-transparent border-none text-foreground text-[10px] font-semibold uppercase tracking-normal focus:outline-none flex-1 cursor-pointer"
           >
             <option value="">TODOS OS STATUS</option>
             <option value="active">ATIVOS APENAS</option>
@@ -149,7 +149,7 @@ export default function ClientListPage() {
         >
           <button
             onClick={() => (search ? setSearch('') : navigate('/clientes/novo'))}
-            className="flex items-center gap-2 bg-primary text-primary-foreground text-[10px] font-black px-6 py-3 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em]"
+            className="flex items-center gap-2 bg-primary text-primary-foreground text-[10px] font-semibold px-6 py-3 rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110  uppercase tracking-normal"
           >
             {search ? 'Limpar Busca' : 'Novo Parceiro'}
           </button>
@@ -162,16 +162,16 @@ export default function ClientListPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                       Nome completo
                     </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4 hidden md:table-cell">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4 hidden md:table-cell">
                       Clínica / Empresa
                     </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4 hidden sm:table-cell">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4 hidden sm:table-cell">
                       Contato
                     </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                       Status
                     </th>
                     <th className="px-6 py-4 text-right">Ações</th>
@@ -192,11 +192,11 @@ export default function ClientListPage() {
                             {client.name}
                           </span>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-normal">
                               {client.document || 'Sem registro'}
                             </span>
                             {client.documentType ? (
-                              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
+                              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal text-primary">
                                 {PERSON_TYPE_LABEL[client.documentType]}
                               </span>
                             ) : null}
@@ -214,16 +214,16 @@ export default function ClientListPage() {
                       <td className="px-6 py-5">
                         <span
                           className={cn(
-                            'inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border',
+                            'inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-normal px-3 py-1 rounded-full border',
                             client.status === 'active'
-                              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                              ? 'bg-success/10 text-success border-success/20'
                               : 'bg-muted text-muted-foreground border-border',
                           )}
                         >
                           <span
                             className={cn(
                               'w-1.5 h-1.5 rounded-full animate-pulse',
-                              client.status === 'active' ? 'bg-emerald-500' : 'bg-muted-foreground',
+                              client.status === 'active' ? 'bg-success' : 'bg-muted-foreground',
                             )}
                           />
                           {client.status === 'active' ? 'Ativo' : 'Inativo'}
@@ -276,7 +276,7 @@ export default function ClientListPage() {
           {/* Pagination */}
           {data && data.total > 20 && (
             <div className="flex items-center justify-between px-2">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal">
                 Mostrando{' '}
                 <span className="text-foreground">
                   {(page - 1) * 20 + 1} – {Math.min(page * 20, data.total)}
@@ -287,17 +287,17 @@ export default function ClientListPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all active:scale-95 shadow-sm"
+                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all  shadow-sm"
                 >
                   <ChevronLeft size={18} />
                 </button>
-                <div className="bg-muted px-4 py-2 rounded-xl border border-border text-xs font-black flex items-center">
+                <div className="bg-muted px-4 py-2 rounded-xl border border-border text-xs font-semibold flex items-center">
                   PÁGINA {page}
                 </div>
                 <button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={page * 20 >= data.total}
-                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all active:scale-95 shadow-sm"
+                  className="p-2 bg-card border border-border rounded-xl text-muted-foreground disabled:opacity-30 hover:text-primary transition-all  shadow-sm"
                 >
                   <ChevronRight size={18} />
                 </button>

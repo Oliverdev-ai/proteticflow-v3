@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 type Props = { url: string; color?: string };
 
-export function StlViewer({ url, color = '#a78bfa' }: Props) {
+export function StlViewer({ url, color = '#a78bfa' }: Props) { // design-tokens-ok — THREE.js recebe hex; caller pode injetar via prop
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export function StlViewer({ url, color = '#a78bfa' }: Props) {
 
     // Cenário e câmera
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#171717');
+    scene.background = new THREE.Color('#171717'); // design-tokens-ok — THREE.Color API exige hex literal
 
     const camera = new THREE.PerspectiveCamera(45, currentMount.clientWidth / currentMount.clientHeight, 1, 1000);
     camera.position.set(0, 0, 150);
@@ -94,5 +94,5 @@ export function StlViewer({ url, color = '#a78bfa' }: Props) {
     };
   }, [url, color]);
 
-  return <div ref={mountRef} className="w-full h-full min-h-[300px] rounded-2xl overflow-hidden cursor-move border border-zinc-800" />;
+  return <div ref={mountRef} className="w-full h-full min-h-[300px] rounded-lg overflow-hidden cursor-move border border-zinc-800" />;
 }

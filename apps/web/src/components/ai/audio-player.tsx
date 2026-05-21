@@ -206,7 +206,7 @@ export function AudioPlayer({ audioChunks, autoPlay = true, onEnded }: AudioPlay
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] uppercase tracking-wider text-zinc-400">Resposta por voz</p>
+          <p className="text-[11px] uppercase tracking-normal text-zinc-400">Resposta por voz</p>
           <p className="text-xs text-zinc-300">
             {isPlaying
               ? `Tocando trecho ${activeIndex !== null ? activeIndex + 1 : 1}/${audioChunks.length}`

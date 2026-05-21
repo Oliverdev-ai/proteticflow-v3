@@ -1,144 +1,559 @@
 @import "tailwindcss";
+@import "./styles/fonts.css";
 
+/* ============================================================
+ * ProteticFlow Design System v1.3.0 — Tokens
+ * Industrial Editorial Premium · light-default · amber + teal
+ * Substitui completamente paleta sky-500/zinc-950 do CLAUDE.md §3.5
+ * ============================================================ */
+
+/* ── 1. PRIMITIVOS ─────────────────────────────────────────── */
 :root {
-  --background: 248 250 252;        /* slate-50 */
-  --foreground: 15 23 42;           /* slate-900 */
-  --card: 255 255 255;              /* white */
-  --card-foreground: 15 23 42;
-  --popover: 255 255 255;
-  --popover-foreground: 15 23 42;
-  --primary: 14 165 233;            /* sky-500 */
-  --primary-foreground: 255 255 255;
-  --secondary: 241 245 249;         /* slate-100 */
-  --secondary-foreground: 15 23 42;
-  --muted: 241 245 249;
-  --muted-foreground: 100 116 139;  /* slate-500 */
-  --accent: 241 245 249;            /* slate-100 */
-  --accent-foreground: 15 23 42;
-  --destructive: 239 68 68;
-  --destructive-foreground: 255 255 255;
-  --warning: 245 158 11;
-  --success: 34 197 94;
-  --border: 226 232 240;            /* slate-200 */
-  --input: 226 232 240;
-  --ring: 14 165 233;               /* sky-500 */
-  --radius: 0.875rem;               /* 14px - modern smooth rounded */
-  color-scheme: light;
+  /* Brand */
+  --amber-50:  #FEF6EC;
+  --amber-100: #FDE7CB;
+  --amber-200: #FBCB94;
+  --amber-300: #F8AC5C;
+  --amber-400: #F38F33;
+  --amber-500: #E97316;
+  --amber-600: #C45A0E;
+  --amber-700: #99450C;
+  --amber-800: #6F320A;
+  --amber-900: #4A2107;
+
+  --teal-50:   #ECF7F5;
+  --teal-100:  #CFEAE6;
+  --teal-200:  #9BD2CB;
+  --teal-300:  #5FB6AC;
+  --teal-400:  #2E9B8E;
+  --teal-500:  #14857A;
+  --teal-600:  #0F766E;
+  --teal-700:  #0B5C56;
+  --teal-800:  #08423E;
+  --teal-900:  #052724;
+
+  /* Neutrals (warm) */
+  --cream-50:  #FDFBF8;
+  --cream-100: #FAF7F2;
+  --cream-200: #F2EDE4;
+  --cream-300: #E8DFD0;
+
+  --stone-50:  #F7F5F1;
+  --stone-100: #EFEBE3;
+  --stone-200: #E2DCD0;
+  --stone-300: #C8C0B1;
+  --stone-400: #98907F;
+  --stone-500: #6E6757;
+  --stone-600: #4F4A3E;
+  --stone-700: #38342B;
+  --stone-800: #23211B;
+  --stone-900: #15140F;
+
+  /* Dark surfaces */
+  --ink-900:   #0F1419;
+  --ink-800:   #161C23;
+  --ink-700:   #1F262E;
+  --ink-600:   #2A323B;
+
+  /* Sidebar navy — persistente nos dois temas */
+  --navy-900:  #0B1220;
+  --navy-800:  #111A2C;
+  --navy-700:  #1A2538;
+  --navy-600:  #243047;
+  --navy-fg:   #E6ECF5;
+  --navy-fg-muted: #8794AE;
+
+  /* Semantic raw */
+  --green-500: #1F9D5F;
+  --green-600: #167B4A;
+  --red-500:   #D9483F;
+  --red-600:   #B23A33;
+  --amber-warn:#D97706;
+  --blue-500:  #2563EB;
+
+  /* Tipografia */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', 'Times New Roman', serif;
+  --font-sans:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  /* Escalas tipográficas */
+  --fs-12: 0.75rem;   --lh-12: 1rem;
+  --fs-13: 0.8125rem; --lh-13: 1.125rem;
+  --fs-14: 0.875rem;  --lh-14: 1.25rem;
+  --fs-16: 1rem;      --lh-16: 1.5rem;
+  --fs-18: 1.125rem;  --lh-18: 1.625rem;
+  --fs-22: 1.375rem;  --lh-22: 1.875rem;
+  --fs-28: 1.75rem;   --lh-28: 2.125rem;
+  --fs-36: 2.25rem;   --lh-36: 2.5rem;
+  --fs-48: 3rem;      --lh-48: 3.25rem;
+  --fs-64: 4rem;      --lh-64: 4.25rem;
+
+  --tracking-tight:  -0.022em;
+  --tracking-normal:  0;
+  --tracking-wide:    0.04em;
+  --tracking-caps:    0.08em;
+
+  /* Espaçamento 8-pt */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  40px;
+  --space-8:  48px;
+  --space-9:  64px;
+  --space-10: 80px;
+  --space-11: 96px;
+  --space-12:128px;
+
+  /* Radii */
+  --radius-xs:  4px;
+  --radius-sm:  6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --ease-out-expressive: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-fast:        cubic-bezier(0.4, 0, 1, 1);
+  --ease-standard:       cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-instant: 80ms;
+  --dur-fast:   120ms;
+  --dur-base:   180ms;
+  --dur-slow:   240ms;
+  --dur-route:  360ms;
+
+  /* Layout shell */
+  --shell-sidebar:            240px;
+  --shell-sidebar-collapsed:   64px;
+  --shell-header:              56px;
+  --content-max:             1440px;
+  --kanban-col:               304px;
 }
 
-.dark {
-  --background: 9 9 11;              /* zinc-950 */
-  --foreground: 248 250 252;
-  --card: 24 24 27;                   /* zinc-900 */
-  --card-foreground: 248 250 252;
-  --popover: 39 39 42;
-  --popover-foreground: 248 250 252;
-  --primary: 56 189 248;           /* sky-400 */
-  --primary-foreground: 9 9 11;
-  --secondary: 15 23 42;
-  --secondary-foreground: 248 250 252;
-  --muted: 15 23 42;
-  --muted-foreground: 148 163 184;
-  --accent: 30 41 59;
-  --accent-foreground: 250 250 250;
-  --destructive: 248 113 113;
+/* ── 2. SEMÂNTICO — tema light (default) ───────────────────── */
+:root,
+[data-theme="light"] {
+  --bg:               var(--cream-100);
+  --bg-elevated:      #FFFFFF;
+  --bg-subtle:        var(--cream-200);
+  --bg-muted:         var(--stone-50);
+  --bg-inverse:       var(--ink-900);
+
+  --fg:               var(--stone-900);
+  --fg-strong:        #0A0A07;
+  --fg-muted:         var(--stone-600);
+  --fg-subtle:        var(--stone-400);
+  --fg-inverse:       var(--cream-50);
+  --fg-on-primary:    #FFFFFF;
+  --fg-on-accent:     #FFFFFF;
+
+  --primary:          var(--amber-500);
+  --primary-hover:    var(--amber-600);
+  --primary-press:    var(--amber-700);
+  --primary-soft:     var(--amber-50);
+
+  --accent:           var(--teal-600);
+  --accent-hover:     var(--teal-700);
+  --accent-soft:      var(--teal-50);
+
+  --success:          var(--green-600);
+  --success-soft:     #E6F4EC;
+  --warning:          var(--amber-warn);
+  --warning-soft:     #FDF1DA;
+  --destructive:      var(--red-600);
+  --destructive-soft: #FBEAE8;
+  --info:             var(--blue-500);
+  --info-soft:        #E6EEFE;
+
+  --border:           #E5DFD3;
+  --border-strong:    #C8C0B1;
+  --border-focus:     var(--amber-500);
+
+  --ring:             var(--amber-500);
+  --shell-sidebar-bg: var(--navy-900);
+  --shell-sidebar-fg: var(--navy-fg);
+  --shell-sidebar-fg-muted: var(--navy-fg-muted);
+  --shell-sidebar-active: var(--amber-500);
+
+  --shadow-xs: 0 1px 0 0 rgb(15 20 25 / 0.04);
+  --shadow-sm: 0 1px 2px -1px rgb(15 20 25 / 0.06), 0 1px 1px rgb(15 20 25 / 0.04);
+  --shadow-md: 0 6px 16px -6px rgb(15 20 25 / 0.10), 0 2px 4px -2px rgb(15 20 25 / 0.04);
+  --shadow-lg: 0 24px 48px -12px rgb(15 20 25 / 0.18), 0 4px 8px -4px rgb(15 20 25 / 0.06);
+  --shadow-focus: 0 0 0 2px var(--cream-100), 0 0 0 4px rgb(233 115 22 / 0.55);
+
+  color-scheme: light;
+
+  /* ── Bridge shadcn/ui (RGB triplets para backward-compat) ── */
+  --background:          250 247 242;   /* cream-100 */
+  --foreground:          21 20 15;      /* stone-900 */
+  --card:                255 255 255;
+  --card-foreground:     21 20 15;
+  --popover:             255 255 255;
+  --popover-foreground:  21 20 15;
+  --primary-rgb:         233 115 22;    /* amber-500 */
+  --primary-foreground:  255 255 255;
+  --secondary:           242 237 228;   /* cream-200 */
+  --secondary-foreground:21 20 15;
+  --muted:               247 245 241;   /* stone-50 */
+  --muted-foreground:    79 74 62;      /* stone-600 */
+  --accent-rgb:          236 247 245;   /* teal-50 */
+  --accent-foreground:   15 118 110;    /* teal-600 */
+  --destructive-rgb:     178 58 51;     /* red-600 */
   --destructive-foreground: 255 255 255;
-  --warning: 251 191 36;
-  --success: 74 222 128;
-  --border: 30 41 59;
-  --input: 30 41 59;
-  --ring: 56 189 248;
+  --border-rgb:          229 223 211;
+  --input:               229 223 211;
+  --ring-rgb:            233 115 22;
+  --radius:              0.625rem;      /* radius-md = 10px */
+}
+
+/* ── 3. SEMÂNTICO — tema dark ───────────────────────────────── */
+[data-theme="dark"],
+.dark {
+  --bg:               var(--ink-900);
+  --bg-elevated:      var(--ink-800);
+  --bg-subtle:        var(--ink-700);
+  --bg-muted:         var(--ink-600);
+  --bg-inverse:       var(--cream-100);
+
+  --fg:               #ECEEF1;
+  --fg-strong:        #FFFFFF;
+  --fg-muted:         #97A0AB;
+  --fg-subtle:        #5C6672;
+  --fg-inverse:       var(--stone-900);
+  --fg-on-primary:    #1A0F05;
+  --fg-on-accent:     #04201D;
+
+  --primary:          var(--amber-400);
+  --primary-hover:    var(--amber-300);
+  --primary-press:    var(--amber-500);
+  --primary-soft:     rgb(233 115 22 / 0.12);
+
+  --accent:           var(--teal-400);
+  --accent-hover:     var(--teal-300);
+  --accent-soft:      rgb(46 155 142 / 0.14);
+
+  --success:          #3FB37A;
+  --success-soft:     rgb(31 157 95 / 0.14);
+  --warning:          #F0A93B;
+  --warning-soft:     rgb(217 119 6 / 0.16);
+  --destructive:      #E5685F;
+  --destructive-soft: rgb(217 72 63 / 0.16);
+  --info:             #5E8CFC;
+  --info-soft:        rgb(37 99 235 / 0.16);
+
+  --border:           #232B35;
+  --border-strong:    #303A47;
+  --border-focus:     var(--amber-400);
+
+  --ring:             var(--amber-400);
+  --shell-sidebar-bg: var(--navy-900);
+  --shell-sidebar-fg: var(--navy-fg);
+  --shell-sidebar-fg-muted: var(--navy-fg-muted);
+  --shell-sidebar-active: var(--amber-400);
+
+  --shadow-xs: 0 1px 0 0 rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 0.5), 0 1px 1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 6px 16px -6px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 24px 48px -12px rgb(0 0 0 / 0.7);
+  --shadow-focus: 0 0 0 2px var(--ink-900), 0 0 0 4px rgb(243 143 51 / 0.65);
+
   color-scheme: dark;
+
+  /* ── Bridge shadcn/ui ── */
+  --background:          15 20 25;      /* ink-900 */
+  --foreground:          236 238 241;
+  --card:                22 28 35;      /* ink-800 */
+  --card-foreground:     236 238 241;
+  --popover:             31 38 46;      /* ink-700 */
+  --popover-foreground:  236 238 241;
+  --primary-rgb:         243 143 51;    /* amber-400 */
+  --primary-foreground:  26 15 5;
+  --secondary:           31 38 46;
+  --secondary-foreground:236 238 241;
+  --muted:               42 50 59;      /* ink-600 */
+  --muted-foreground:    151 160 171;
+  --accent-rgb:          42 50 59;
+  --accent-foreground:   63 179 122;
+  --destructive-rgb:     229 104 95;
+  --destructive-foreground: 255 255 255;
+  --border-rgb:          35 43 53;
+  --input:               35 43 53;
+  --ring-rgb:            243 143 51;
+  --radius:              0.625rem;
+}
+
+/* ── 4. TAILWIND 4 — @theme ────────────────────────────────── */
+@theme {
+  /* Cores semânticas → classes Tailwind (bg-primary, text-fg, etc.) */
+  --color-primary:       #E97316;
+  --color-primary-hover: #C45A0E;
+  --color-accent:        #0F766E;
+  --color-accent-hover:  #0B5C56;
+  --color-bg:            #FAF7F2;
+  --color-bg-elevated:   #FFFFFF;
+  --color-bg-subtle:     #F2EDE4;
+  --color-bg-muted:      #F7F5F1;
+  --color-fg:            #15140F;
+  --color-fg-strong:     #0A0A07;
+  --color-fg-muted:      #4F4A3E;
+  --color-fg-subtle:     #98907F;
+  --color-border:        #E5DFD3;
+  --color-ring:          #E97316;
+  --color-destructive:   #B23A33;
+  --color-warning:       #D97706;
+  --color-success:       #167B4A;
+  --color-sidebar:       #0B1220;
+
+  /* Escala amber */
+  --color-amber-50:  #FEF6EC;
+  --color-amber-100: #FDE7CB;
+  --color-amber-200: #FBCB94;
+  --color-amber-300: #F8AC5C;
+  --color-amber-400: #F38F33;
+  --color-amber-500: #E97316;
+  --color-amber-600: #C45A0E;
+  --color-amber-700: #99450C;
+
+  /* Escala teal */
+  --color-teal-50:  #ECF7F5;
+  --color-teal-100: #CFEAE6;
+  --color-teal-200: #9BD2CB;
+  --color-teal-300: #5FB6AC;
+  --color-teal-400: #2E9B8E;
+  --color-teal-500: #14857A;
+  --color-teal-600: #0F766E;
+  --color-teal-700: #0B5C56;
+
+  /* Escala cream */
+  --color-cream-50:  #FDFBF8;
+  --color-cream-100: #FAF7F2;
+  --color-cream-200: #F2EDE4;
+  --color-cream-300: #E8DFD0;
+
+  /* Navy sidebar */
+  --color-navy-900: #0B1220;
+  --color-navy-800: #111A2C;
+  --color-navy-700: #1A2538;
+
+  /* Tipografia */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', 'Times New Roman', serif;
+  --font-sans:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  /* Radii */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+  --radius-pill: 999px;
+
+  /* Duração de animação */
+  --duration-instant: 80ms;
+  --duration-fast:   120ms;
+  --duration-base:   180ms;
+  --duration-slow:   240ms;
+  --duration-route:  360ms;
+}
+
+/* ── 5. BASE ────────────────────────────────────────────────── */
+html, body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: var(--lh-14);
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
 }
 
 * {
-  border-color: rgb(var(--border));
+  border-color: var(--border);
+  box-sizing: border-box;
 }
 
-body {
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
-  font-family: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-36);
+  line-height: var(--lh-36);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-strong);
+  margin: 0;
+}
+h2 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-22);
+  line-height: var(--lh-22);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-strong);
+  margin: 0;
+}
+h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-18);
+  line-height: var(--lh-18);
+  color: var(--fg-strong);
+  margin: 0;
+}
+p { margin: 0; text-wrap: pretty; }
+code, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
+
+/* ── 6. CLASSES TIPOGRÁFICAS ────────────────────────────────── */
+.t-display-xl {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-64);
+  line-height: var(--lh-64);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-strong);
+  text-wrap: balance;
+}
+.t-display-lg {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-48);
+  line-height: var(--lh-48);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-strong);
+  text-wrap: balance;
+}
+.t-display-md {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-36);
+  line-height: var(--lh-36);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-strong);
+  font-variant-numeric: tabular-nums;
+}
+.t-display-sm {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-28);
+  line-height: var(--lh-28);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-strong);
+}
+.t-h1 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-22);
+  line-height: var(--lh-22);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg-strong);
+}
+.t-h2 { font-family: var(--font-sans); font-weight: 600; font-size: var(--fs-18); line-height: var(--lh-18); color: var(--fg-strong); }
+.t-h3 { font-family: var(--font-sans); font-weight: 600; font-size: var(--fs-16); line-height: var(--lh-16); color: var(--fg-strong); }
+.t-body { font-family: var(--font-sans); font-weight: 400; font-size: var(--fs-14); line-height: var(--lh-14); color: var(--fg); text-wrap: pretty; }
+.t-body-lg { font-family: var(--font-sans); font-weight: 400; font-size: var(--fs-16); line-height: var(--lh-16); color: var(--fg); }
+.t-small { font-family: var(--font-sans); font-weight: 400; font-size: var(--fs-13); line-height: var(--lh-13); color: var(--fg-muted); }
+.t-micro { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-12); line-height: var(--lh-12); color: var(--fg-muted); }
+.t-overline {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--fs-12);
+  line-height: 1;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.t-mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-13);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.t-money {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--fg-strong);
 }
 
-/* Auth background sempre dark no padrão Manus */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── 7. UTILITÁRIOS SEMÂNTICOS (backward-compat shadcn) ─────── */
+.bg-background       { background-color: rgb(var(--background)); }
+.bg-card             { background-color: rgb(var(--card)); }
+.bg-secondary        { background-color: rgb(var(--secondary)); }
+.bg-primary          { background-color: var(--primary); }
+.bg-muted            { background-color: rgb(var(--muted)); }
+.text-foreground     { color: rgb(var(--foreground)); }
+.text-muted-foreground { color: rgb(var(--muted-foreground)); }
+.text-primary        { color: var(--primary); }
+.border-border       { border-color: var(--border); }
+.border-input        { border-color: rgb(var(--input)); }
+.ring-ring           { --tw-ring-color: var(--ring); }
+
+/* ── 8. COMPONENTES BASE ────────────────────────────────────── */
+.input-field {
+  width: 100%;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 0.75rem;
+  font-size: var(--fs-14);
+  font-family: var(--font-sans);
+  color: var(--fg);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+              box-shadow var(--dur-fast) var(--ease-standard);
+}
+.input-field::placeholder { color: var(--fg-subtle); }
+.input-field:focus-visible {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.premium-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background-color: var(--bg-elevated);
+  color: var(--fg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--dur-base) var(--ease-standard);
+}
+.premium-card:hover { box-shadow: var(--shadow-md); }
+
+/* ── 9. AUTH BACKGROUND ─────────────────────────────────────── */
 .auth-bg {
-  background-color: #09090b;
-  background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.035) 1px, transparent 0);
+  background-color: var(--navy-900);
+  background-image: radial-gradient(circle at 1px 1px, rgb(250 247 242 / 0.04) 1px, transparent 0);
   background-size: 24px 24px;
 }
 
-/* Utilities semânticas */
-.bg-background { background-color: rgb(var(--background)); }
-.bg-card { background-color: rgb(var(--card)); }
-.bg-secondary { background-color: rgb(var(--secondary)); }
-.bg-primary { background-color: rgb(var(--primary)); }
-.text-foreground { color: rgb(var(--foreground)); }
-.text-muted-foreground { color: rgb(var(--muted-foreground)); }
-.text-primary { color: rgb(var(--primary)); }
-.border-border { border-color: rgb(var(--border)); }
-
-.input-field {
-  width: 100%;
-  background-color: rgb(var(--card) / 0.85);
-  border: 1px solid rgb(var(--border));
-  border-radius: 0.75rem;
-  padding: 0.625rem 2.75rem 0.625rem 2.5rem;
-  font-size: 0.875rem;
-  color: rgb(var(--foreground));
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.input-field::placeholder {
-  color: rgb(var(--muted-foreground));
-}
-
-.input-field:focus-visible {
-  border-color: rgb(var(--ring));
-  box-shadow: 0 0 0 3px rgb(var(--ring) / 0.15);
-}
-
-/* Premium Layout Utilities */
-.premium-card {
-  border-radius: var(--radius);
-  border: 1px solid rgb(var(--border));
-  background-color: rgb(var(--card));
-  color: rgb(var(--card-foreground));
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
-  transition: all 200ms;
-  background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.05), transparent);
-}
-
-.dark .premium-card {
-  background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.02), transparent);
-}
-
-.lilac-gradient {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-}
-
-.bento-grid {
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-}
-
-/* Scrollbar Customization */
-.simplebar-track.simplebar-vertical {
-  width: 8px;
-  background: transparent;
-}
-
+/* ── 10. SCROLLBAR ──────────────────────────────────────────── */
+.simplebar-track.simplebar-vertical { width: 8px; background: transparent; }
 .simplebar-scrollbar:before {
-  background: rgb(var(--muted-foreground) / 0.3);
+  background: var(--fg-subtle);
   border-radius: 4px;
+  opacity: 0.4;
 }
 
-.dark .simplebar-scrollbar:before {
-  background: rgb(var(--muted-foreground) / 0.2);
+/* ── 11. KEYFRAMES ──────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-
+/* ── 12. REDUCED MOTION ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

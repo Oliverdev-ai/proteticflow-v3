@@ -16,7 +16,7 @@ export function TemplateEditor({ templates, busy, onSave, onDelete }: TemplateEd
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
         <h2 className="text-sm font-semibold text-white">Novo template</h2>
         <input value={intent} onChange={(event) => setIntent(event.target.value)} placeholder="Intent (ex: status_query)" className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100" />
         <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Título interno" className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100" />
@@ -39,7 +39,7 @@ export function TemplateEditor({ templates, busy, onSave, onDelete }: TemplateEd
         </button>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
         <h3 className="text-sm font-semibold text-white">Templates cadastrados</h3>
         {templates.length === 0 ? <p className="text-xs text-zinc-500">Nenhum template cadastrado.</p> : null}
         {templates.map((template) => (

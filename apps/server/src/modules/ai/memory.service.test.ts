@@ -6,6 +6,7 @@ import { aiMemory } from '../../db/schema/ai-memory.js';
 import { tenantMembers, tenants } from '../../db/schema/tenants.js';
 import { users } from '../../db/schema/users.js';
 import {
+  DEFAULT_MEMORY_TTL_DAYS,
   MAX_MEMORY_KEYS,
   clearAllMemory,
   countMemoryKeys,
@@ -84,6 +85,47 @@ describe('memory.service', () => {
     expect(Number(row?.count ?? 0)).toBe(1);
   }, 20_000);
 
+  it('setMemory aplica TTL default para memoria do assistente', async () => {
+    const user = await createTestUser('memory-ttl@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Memory TTL');
+    const before = Date.now();
+
+    await setMemory(tenant.id, user.id, 'assistant_note', 'lembrar retorno', 'assistant');
+
+    const [row] = await db
+      .select({ expiresAt: aiMemory.expiresAt })
+      .from(aiMemory)
+      .where(and(
+        eq(aiMemory.tenantId, tenant.id),
+        eq(aiMemory.userId, user.id),
+        eq(aiMemory.key, 'assistant_note'),
+      ))
+      .limit(1);
+
+    const minExpiry = before + (DEFAULT_MEMORY_TTL_DAYS - 1) * 86_400_000;
+    expect(row?.expiresAt).toBeInstanceOf(Date);
+    expect(row?.expiresAt?.getTime()).toBeGreaterThan(minExpiry);
+  }, 20_000);
+
+  it('setMemory permite memoria explicita do usuario sem TTL', async () => {
+    const user = await createTestUser('memory-user-explicit@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Memory User Explicit');
+
+    await setMemory(tenant.id, user.id, 'preferred_lab', 'Ortolab', 'user_explicit');
+
+    const [row] = await db
+      .select({ expiresAt: aiMemory.expiresAt })
+      .from(aiMemory)
+      .where(and(
+        eq(aiMemory.tenantId, tenant.id),
+        eq(aiMemory.userId, user.id),
+        eq(aiMemory.key, 'preferred_lab'),
+      ))
+      .limit(1);
+
+    expect(row?.expiresAt).toBeNull();
+  }, 20_000);
+
   it('clearAllMemory filtra por tenantId e userId', async () => {
     const userA = await createTestUser('memory-tenant-a@test.com');
     const tenantA = await createTestTenant(userA.id, 'Lab A');
@@ -112,5 +154,23 @@ describe('memory.service', () => {
 
     const count = await countMemoryKeys(tenant.id, user.id);
     expect(count).toBe(MAX_MEMORY_KEYS);
+  }, 20_000);
+
+  it('setMemory enforca MAX_MEMORY_KEYS removendo memoria assistente mais antiga', async () => {
+    const user = await createTestUser('memory-cap@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Memory Cap');
+
+    for (let idx = 0; idx < MAX_MEMORY_KEYS; idx += 1) {
+      await setMemory(tenant.id, user.id, `k_${idx}`, `v_${idx}`, 'assistant');
+    }
+
+    await setMemory(tenant.id, user.id, 'k_new', 'v_new', 'assistant');
+
+    const count = await countMemoryKeys(tenant.id, user.id);
+    const memory = await getMemory(tenant.id, user.id);
+
+    expect(count).toBe(MAX_MEMORY_KEYS);
+    expect(memory.k_0).toBeUndefined();
+    expect(memory.k_new).toBe('v_new');
   }, 20_000);
 });

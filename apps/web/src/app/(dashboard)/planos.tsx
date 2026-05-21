@@ -119,7 +119,7 @@ export default function PlanosPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {usageCards.map((item) => (
           <div key={item.label} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-            <p className="text-xs uppercase tracking-wider text-zinc-500">{item.label}</p>
+            <p className="text-xs uppercase tracking-normal text-zinc-500">{item.label}</p>
             <p className="mt-2 text-xl font-semibold text-white">
               {item.current}
               <span className="text-sm text-zinc-400">

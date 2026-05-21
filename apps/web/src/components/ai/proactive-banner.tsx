@@ -56,10 +56,10 @@ export function ProactiveBanner({ context, onAction }: ProactiveBannerProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-cyan-700/40 bg-cyan-900/20 p-4 space-y-3">
+    <div className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-cyan-300">Sugestões proativas</p>
+          <p className="text-xs uppercase tracking-normal text-cyan-300">Sugestões proativas</p>
           <p className="text-sm text-cyan-100">O Flow IA detectou pontos de atenção no laboratório.</p>
         </div>
         <button

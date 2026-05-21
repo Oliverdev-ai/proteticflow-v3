@@ -13,7 +13,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle } from '../../../components/shared/typography';
+import { PageTitle, Subtitle } from '../../../components/shared/typography';
 import { cn } from '../../../lib/utils';
 
 function SummaryCard({
@@ -34,7 +34,7 @@ function SummaryCard({
   const colorMap = {
     primary: 'bg-primary/10 text-primary border-primary/20',
     red: 'bg-destructive/10 text-destructive border-destructive/20',
-    emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    emerald: 'bg-success/10 text-success border-success/20',
     orange: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   };
 
@@ -42,24 +42,24 @@ function SummaryCard({
     <div
       className={cn(
         'premium-card p-6 flex flex-col gap-6 group hover:border-primary/30 transition-all',
-        accent && color === 'red' && 'border-destructive/40 shadow-lg shadow-destructive/5',
+        accent && color === 'red' && 'border-destructive/40 shadow-lg shadow-sm',
       )}
     >
       <div
         className={cn(
-          'w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner',
+          'w-12 h-12 rounded-lg flex items-center justify-center shadow-inner',
           colorMap[color],
         )}
       >
         <Icon size={24} strokeWidth={2.5} />
       </div>
       <div className="space-y-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary transition-colors">
+        <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground group-hover:text-primary transition-colors">
           {label}
         </p>
         <p
           className={cn(
-            'text-3xl font-black tracking-tighter',
+            'text-3xl font-semibold tracking-tighter',
             accent && color === 'red' ? 'text-destructive' : 'text-foreground',
           )}
         >
@@ -73,7 +73,7 @@ function SummaryCard({
                 accent ? 'bg-destructive animate-pulse' : 'bg-muted-foreground/30',
               )}
             />
-            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
+            <p className="text-[9px] font-bold uppercase tracking-normal text-muted-foreground/60">
               {sub}
             </p>
           </div>
@@ -97,8 +97,8 @@ const QUICK_LINKS = [
     href: '/estoque/fornecedores',
     desc: 'Base de dados e contatos comerciais',
     icon: TrendingUp,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-500/10',
+    color: 'text-success',
+    bg: 'bg-success/10',
   },
   {
     label: 'Ordens de Compra',
@@ -122,11 +122,11 @@ export default function InventoryDashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
+          <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
             <Package size={28} strokeWidth={2.5} />
           </div>
           <div className="flex flex-col gap-0.5">
-            <H1 className="tracking-tight">Estoque & Materiais</H1>
+            <PageTitle className="tracking-tight">Estoque & Materiais</PageTitle>
             <Subtitle>Controle inteligente de insumos e cadeia de suprimentos</Subtitle>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function InventoryDashboard() {
         <div className="flex items-center gap-3">
           <Link
             to="/estoque/materiais"
-            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
+            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
           >
             <PackageCheck size={16} strokeWidth={3} /> Gerenciar Materiais
           </Link>
@@ -142,7 +142,7 @@ export default function InventoryDashboard() {
       </div>
 
       {error && (
-        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-2xl text-destructive text-xs font-bold flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs font-bold flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
           <AlertTriangle size={18} />
           Erro na conexão: {error.message}
         </div>
@@ -151,7 +151,7 @@ export default function InventoryDashboard() {
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-40 bg-muted/50 rounded-[32px] border border-border/50" />
+            <div key={i} className="h-40 bg-muted/50 rounded-lg border border-border/50" />
           ))}
         </div>
       ) : (
@@ -191,7 +191,7 @@ export default function InventoryDashboard() {
       <div className="space-y-6">
         <div className="flex items-center gap-3 px-2">
           <History size={18} className="text-primary" />
-          <h2 className="text-xs font-black uppercase tracking-[0.3em] text-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-normal text-foreground">
             Operações Rápidas
           </h2>
         </div>
@@ -206,7 +206,7 @@ export default function InventoryDashboard() {
               <div className="flex items-center justify-between">
                 <div
                   className={cn(
-                    'w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner transition-all group-hover:scale-110 group-hover:rotate-3',
+                    'w-14 h-14 rounded-lg flex items-center justify-center shadow-inner transition-all group-hover:scale-110 group-hover:rotate-3',
                     bg,
                     color,
                   )}
@@ -219,10 +219,10 @@ export default function InventoryDashboard() {
               </div>
 
               <div className="space-y-1">
-                <p className="text-sm font-black text-foreground tracking-tight group-hover:text-primary transition-colors">
+                <p className="text-sm font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
                   {label}
                 </p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed opacity-60">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-normal leading-relaxed opacity-60">
                   {desc}
                 </p>
               </div>
@@ -241,7 +241,7 @@ export default function InventoryDashboard() {
             <Settings2 size={32} />
           </div>
           <div className="max-w-md space-y-2">
-            <p className="text-sm font-black uppercase tracking-widest text-primary">
+            <p className="text-sm font-semibold uppercase tracking-normal text-primary">
               Estoque Vazio
             </p>
             <Subtitle>
@@ -251,7 +251,7 @@ export default function InventoryDashboard() {
           </div>
           <Link
             to="/estoque/materiais"
-            className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:underline underline-offset-4"
+            className="mt-2 text-[10px] font-semibold uppercase tracking-normal text-primary hover:underline underline-offset-4"
           >
             Configurar agora
           </Link>

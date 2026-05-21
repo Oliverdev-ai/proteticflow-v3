@@ -104,7 +104,7 @@ export default function CommissionsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-800">
         <div className="space-y-1.5">
           <label className="text-[10px] uppercase font-bold text-zinc-500 ml-1">Funcionário</label>
           <select
@@ -147,26 +147,26 @@ export default function CommissionsPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-zinc-800 bg-zinc-950/50">
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                 Técnico
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                 OS / Trabalho
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                 Tarefa
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                 Vl. Total
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                 Comissão (%)
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider text-right">
+              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal text-right">
                 A Receber
               </th>
             </tr>

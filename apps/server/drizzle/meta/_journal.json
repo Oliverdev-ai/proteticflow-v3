@@ -239,6 +239,20 @@
                         "when":  1777248000000,
                         "tag":  "0034_phase7_memory_quiet_lgpd",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  34,
+                        "version":  "7",
+                        "when":  1777334400000,
+                        "tag":  "0035_user_prefs_theme",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  35,
+                        "version":  "7",
+                        "when":  1777420800000,
+                        "tag":  "0036_ci_schema_drift_backfill",
+                        "breakpoints":  true
                     }
                 ]
 }

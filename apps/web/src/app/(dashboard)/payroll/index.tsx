@@ -38,7 +38,7 @@ export default function PayrollIndex() {
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 bg-primary hover:bg-primary text-white px-4 py-2.5 rounded-xl font-semibold transition-colors shadow-lg shadow-primary/20"
+          className="flex items-center gap-2 bg-primary hover:bg-primary text-white px-4 py-2.5 rounded-xl font-semibold transition-colors shadow-lg shadow-sm"
         >
           <Plus size={18} />
           Novo Período
@@ -46,7 +46,7 @@ export default function PayrollIndex() {
       </div>
 
       {isCreating && (
-        <div className="bg-zinc-900 border border-primary/30 rounded-2xl p-5 space-y-4 animate-in fade-in slide-in-from-top-4">
+        <div className="bg-zinc-900 border border-primary/30 rounded-lg p-5 space-y-4 animate-in fade-in slide-in-from-top-4">
           <h2 className="text-sm font-semibold text-white">Abrir Novo Período</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -104,7 +104,7 @@ export default function PayrollIndex() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : periods?.length === 0 ? (
-          <div className="col-span-2 py-20 text-center bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-800">
+          <div className="col-span-2 py-20 text-center bg-zinc-900/50 rounded-lg border border-dashed border-zinc-800">
             <Calendar size={48} className="text-zinc-800 mx-auto mb-4" />
             <p className="text-zinc-400 font-medium">Nenhum período de folha encontrado.</p>
             <p className="text-zinc-600 text-sm">
@@ -116,10 +116,10 @@ export default function PayrollIndex() {
             <div
               key={period.id}
               onClick={() => navigate(`/payroll/${period.id}`)}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 cursor-pointer hover:border-primary/50 hover:bg-zinc-800/50 transition-all group relative overflow-hidden"
+              className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 cursor-pointer hover:border-primary/50 hover:bg-zinc-800/50 transition-all group relative overflow-hidden"
             >
               <div
-                className={`absolute top-0 right-0 w-1.5 h-full ${period.status === 'closed' ? 'bg-emerald-500' : 'bg-orange-500'}`}
+                className={`absolute top-0 right-0 w-1.5 h-full ${period.status === 'closed' ? 'bg-success' : 'bg-orange-500'}`}
               />
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
@@ -134,9 +134,9 @@ export default function PayrollIndex() {
                   </div>
                 </div>
                 <div
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-normal border ${
                     period.status === 'closed'
-                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      ? 'bg-success/10 text-success border-success/20'
                       : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
                   }`}
                 >
@@ -147,7 +147,7 @@ export default function PayrollIndex() {
 
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <div>
-                  <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter">
+                  <p className="text-[10px] text-zinc-500 uppercase font-semibold tracking-tighter">
                     Total Bruto
                   </p>
                   <p className="text-sm font-bold text-zinc-200">
@@ -155,7 +155,7 @@ export default function PayrollIndex() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter">
+                  <p className="text-[10px] text-zinc-500 uppercase font-semibold tracking-tighter">
                     Total Líquido
                   </p>
                   <p className="text-sm font-bold text-emerald-400">

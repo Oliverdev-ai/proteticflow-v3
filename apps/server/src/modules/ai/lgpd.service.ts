@@ -7,7 +7,6 @@ import { alertLog } from '../../db/schema/proactive.js';
 import { tenantMembers } from '../../db/schema/tenants.js';
 import { users } from '../../db/schema/users.js';
 import { logger } from '../../logger.js';
-import { clearAllMemory } from './memory.service.js';
 
 type LgpdRequestType = 'export' | 'delete';
 type LgpdRequestStatus = 'pending' | 'processing' | 'completed' | 'failed';
@@ -232,32 +231,40 @@ export async function requestLgpdDelete(tenantId: number, userId: number): Promi
   await updateRequestStatus(tenantId, request.id, 'processing');
 
   try {
-    await clearAllMemory(tenantId, userId);
-    await db
-      .delete(aiCommandRuns)
-      .where(and(
-        eq(aiCommandRuns.tenantId, tenantId),
-        eq(aiCommandRuns.userId, userId),
-      ));
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(aiMemory)
+        .where(and(
+          eq(aiMemory.tenantId, tenantId),
+          eq(aiMemory.userId, userId),
+        ));
 
-    await db
-      .update(users)
-      .set({
-        name: `Usuario anonimizado ${userId}`,
-        email: `anon+${userId}@proteticflow.local`,
-        phone: null,
-        phoneE164: null,
-        phoneVerified: false,
-        whatsappOptIn: false,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(users.id, userId),
-        eq(tenantMembers.userId, users.id),
-        eq(tenantMembers.userId, userId),
-        eq(tenantMembers.tenantId, tenantId),
-      ))
-      .from(tenantMembers);
+      await tx
+        .delete(aiCommandRuns)
+        .where(and(
+          eq(aiCommandRuns.tenantId, tenantId),
+          eq(aiCommandRuns.userId, userId),
+        ));
+
+      await tx
+        .update(users)
+        .set({
+          name: `Usuario anonimizado ${userId}`,
+          email: `anon+${userId}@proteticflow.local`,
+          phone: null,
+          phoneE164: null,
+          phoneVerified: false,
+          whatsappOptIn: false,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(users.id, userId),
+          eq(tenantMembers.userId, users.id),
+          eq(tenantMembers.userId, userId),
+          eq(tenantMembers.tenantId, tenantId),
+        ))
+        .from(tenantMembers);
+    });
 
     await updateRequestStatus(tenantId, request.id, 'completed', {
       completedAt: new Date(),

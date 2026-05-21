@@ -1,7 +1,6 @@
 import { TrendingUp, AlertTriangle, DollarSign, Activity } from 'lucide-react';
-import { KpiCard } from './kpi-card';
+import { KpiCard } from '../shared/kpi-card';
 import type { FinancialKpis, SparklineData } from '@proteticflow/shared';
-import { formatBRL } from '../../lib/format';
 
 export function KpiFinancial({
   data,
@@ -12,9 +11,9 @@ export function KpiFinancial({
 }) {
   if (!data) {
     return (
-      <div className="col-span-full rounded-xl border border-dashed border-zinc-700 p-6 text-center text-zinc-500 text-sm">
+      <div className="col-span-full rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground text-sm">
         Dados financeiros disponíveis a partir do plano Starter.{' '}
-        <a href="/planos" className="text-sky-400 hover:underline">Fazer upgrade</a>
+        <a href="/planos" className="text-primary hover:underline">Fazer upgrade</a>
       </div>
     );
   }
@@ -23,32 +22,34 @@ export function KpiFinancial({
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <KpiCard
         label="A Receber"
-        value={formatBRL(data.pendingArCents)}
+        value={data.pendingArCents}
+        format="currency"
         icon={TrendingUp}
-        sub="Pendente de recebimento"
-        variant="success"
       />
       <KpiCard
         label="Vencidos"
-        value={formatBRL(data.overdueArCents)}
+        value={data.overdueArCents}
+        format="currency"
         icon={AlertTriangle}
-        sub="Contas em atraso"
-        variant={data.overdueArCents > 0 ? 'danger' : 'default'}
+        trend={data.overdueArCents > 0 ? { direction: 'down' } : undefined}
       />
       <KpiCard
         label="Receita do Mês"
-        value={formatBRL(data.monthRevenueCents)}
+        value={data.monthRevenueCents}
+        format="currency"
         icon={DollarSign}
-        sub="Recebido este mês"
-        variant="success"
-        sparkline={revenueSparkline}
+        trend={revenueSparkline ? {
+          value: revenueSparkline.changePercent,
+          direction: revenueSparkline.trend,
+          format: 'percent',
+        } : undefined}
       />
       <KpiCard
         label="Fluxo de Caixa"
-        value={formatBRL(data.cashFlowCents)}
+        value={data.cashFlowCents}
+        format="currency"
         icon={Activity}
-        sub="Entradas − Saídas"
-        variant={data.cashFlowCents >= 0 ? 'default' : 'warning'}
+        trend={data.cashFlowCents < 0 ? { direction: 'down' } : undefined}
       />
     </div>
   );

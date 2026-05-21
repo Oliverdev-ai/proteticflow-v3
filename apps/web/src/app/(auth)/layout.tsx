@@ -18,7 +18,7 @@ export default function AuthLayout() {
           <span className="text-zinc-100 text-xl font-semibold tracking-tight">ProteticFlow</span>
         </div>
 
-        <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl shadow-2xl p-8">
+        <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-lg shadow-md p-8">
           <Outlet />
         </div>
 

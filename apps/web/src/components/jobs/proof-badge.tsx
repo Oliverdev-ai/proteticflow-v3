@@ -20,7 +20,7 @@ export function ProofBadge({ className, proofDueDate, proofReturnedAt }: ProofBa
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest',
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal',
         isOverdue
           ? 'border-destructive/40 bg-destructive/10 text-destructive'
           : 'border-sky-500/40 bg-sky-500/10 text-sky-600',

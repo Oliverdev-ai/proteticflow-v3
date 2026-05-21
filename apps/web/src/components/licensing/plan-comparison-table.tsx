@@ -78,7 +78,7 @@ export function PlanComparisonTable({ currentPlan, onSelectPlan, loadingPlan }: 
                   <td className="px-4 py-3 text-zinc-300">{limits.features.api ? 'Sim' : 'Nao'}</td>
                   <td className="px-4 py-3 text-right">
                     {isCurrent ? (
-                      <span className="inline-flex rounded-md bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                      <span className="inline-flex rounded-md bg-success/20 px-2.5 py-1 text-xs font-semibold text-emerald-300">
                         Em uso
                       </span>
                     ) : canCheckout && (plan === 'starter' || plan === 'pro' || plan === 'enterprise') ? (

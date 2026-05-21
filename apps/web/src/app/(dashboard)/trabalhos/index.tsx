@@ -19,7 +19,7 @@ import {
 import { trpc } from '../../../lib/trpc';
 import { JOB_STATUS_LABELS, JOB_STATUS_COLORS, type JobStatus } from '@proteticflow/shared';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 import { formatBRL } from '../../../lib/format';
@@ -28,8 +28,8 @@ const COLOR_MAP: Record<string, string> = {
   slate: 'bg-muted text-muted-foreground border-border',
   blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-  green: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+  emerald: 'bg-success/10 text-success border-success/20',
+  green: 'bg-success/10 text-success border-success/20',
   red: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
@@ -38,7 +38,7 @@ function StatusBadge({ status }: { status: JobStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-widest',
+        'inline-flex items-center text-[9px] px-3 py-1 rounded-full border font-semibold uppercase tracking-normal',
         COLOR_MAP[color],
       )}
     >
@@ -59,7 +59,7 @@ function DeadlineCell({ deadline, status }: { deadline: string; status: JobStatu
     <div className="flex flex-col items-end gap-1">
       <div
         className={cn(
-          'flex items-center gap-1.5 text-xs font-black tracking-tight transition-colors',
+          'flex items-center gap-1.5 text-xs font-semibold tracking-tight transition-colors',
           isOverdue ? 'text-destructive' : isSoon ? 'text-amber-500' : 'text-foreground',
         )}
       >
@@ -70,7 +70,7 @@ function DeadlineCell({ deadline, status }: { deadline: string; status: JobStatu
         )}
         {d.toLocaleDateString('pt-BR')}
       </div>
-      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">
+      <span className="text-[9px] font-bold uppercase tracking-normal text-muted-foreground opacity-60">
         {isOverdue ? 'Atrasado' : isSoon ? 'Vence em breve' : 'Prazo final'}
       </span>
     </div>
@@ -102,14 +102,14 @@ export default function JobListPage() {
       {/* Header Area */}
       <div className="flex flex-wrap items-center justify-between gap-6">
         <div className="flex flex-col gap-1">
-          <H1 className="tracking-tight">Ordens de Serviço</H1>
+          <PageTitle className="tracking-tight">Ordens de Serviço</PageTitle>
           <Subtitle>Gestão e rastreamento de produção em tempo real</Subtitle>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/trabalhos/novo')}
-            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
+            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
           >
             <Plus size={16} strokeWidth={3} /> Abrir Nova OS
           </button>
@@ -117,7 +117,7 @@ export default function JobListPage() {
       </div>
 
       {/* Modern Filter Bar */}
-      <div className="flex flex-wrap items-center gap-4 bg-card/30 backdrop-blur-sm p-4 rounded-[32px] border border-border shadow-sm">
+      <div className="flex flex-wrap items-center gap-4 bg-card/30 backdrop-blur-sm p-4 rounded-lg border border-border shadow-sm">
         <div className="relative flex-1 min-w-[320px] group">
           <Search
             size={18}
@@ -130,7 +130,7 @@ export default function JobListPage() {
               setCursor(undefined);
             }}
             placeholder="Pesquisar por Código, Paciente ou Clínica..."
-            className="w-full bg-muted border border-border rounded-2xl pl-14 pr-6 py-4 text-sm font-semibold text-foreground placeholder:text-muted-foreground/30 transition-all focus:ring-4 focus:ring-primary/5 focus:border-primary/50 outline-none shadow-inner"
+            className="w-full bg-muted border border-border rounded-lg pl-14 pr-6 py-4 text-sm font-semibold text-foreground placeholder:text-muted-foreground/30 transition-all focus:ring-4 focus:ring-primary/5 focus:border-primary/50 outline-none shadow-inner"
           />
           {search && (
             <button
@@ -155,7 +155,7 @@ export default function JobListPage() {
                 setStatus(e.target.value as JobStatus | '');
                 setCursor(undefined);
               }}
-              className="bg-card border border-border rounded-2xl pl-10 pr-10 py-4 text-[10px] font-black uppercase tracking-widest text-foreground focus:ring-4 focus:ring-primary/5 focus:border-primary/50 outline-none shadow-sm cursor-pointer appearance-none min-w-[200px]"
+              className="bg-card border border-border rounded-lg pl-10 pr-10 py-4 text-[10px] font-semibold uppercase tracking-normal text-foreground focus:ring-4 focus:ring-primary/5 focus:border-primary/50 outline-none shadow-sm cursor-pointer appearance-none min-w-[200px]"
             >
               {STATUS_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -171,7 +171,7 @@ export default function JobListPage() {
               setCursor(undefined);
             }}
             className={cn(
-              'flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all text-[10px] font-black uppercase tracking-widest active:scale-95 shadow-sm',
+              'flex items-center gap-3 px-6 py-4 rounded-lg border transition-all text-[10px] font-semibold uppercase tracking-normal  shadow-sm',
               overdue
                 ? 'bg-destructive text-destructive-foreground border-destructive shadow-lg shadow-destructive/20'
                 : 'bg-card border-border text-muted-foreground hover:border-primary/50 hover:bg-muted',
@@ -194,7 +194,7 @@ export default function JobListPage() {
                 size={24}
               />
             </div>
-            <Muted className="font-black uppercase tracking-[0.3em] animate-pulse">
+            <Muted className="font-semibold uppercase tracking-normal animate-pulse">
               Sincronizando Ordens de Serviço...
             </Muted>
           </div>
@@ -204,7 +204,7 @@ export default function JobListPage() {
               <AlertCircle size={32} strokeWidth={2.5} />
             </div>
             <div className="text-center space-y-2">
-              <Large className="text-destructive font-black tracking-tight">
+              <Large className="text-destructive font-semibold tracking-tight">
                 Erro ao recuperar dados
               </Large>
               <Muted className="max-w-xs">{error.message}</Muted>
@@ -218,7 +218,7 @@ export default function JobListPage() {
           >
             <button
               onClick={() => navigate('/trabalhos/novo')}
-              className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+              className="text-[10px] font-semibold uppercase tracking-normal text-primary hover:underline"
             >
               Gerar OS Manual
             </button>
@@ -229,22 +229,22 @@ export default function JobListPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                       # Identificador
                     </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5 hidden md:table-cell">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5 hidden md:table-cell">
                       Mandatário (Cliente)
                     </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5 hidden sm:table-cell">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5 hidden sm:table-cell">
                       Paciente Final
                     </th>
-                    <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                    <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                       Status do Workflow
                     </th>
-                    <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5 hidden md:table-cell">
+                    <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5 hidden md:table-cell">
                       Valoração
                     </th>
-                    <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                    <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                       DeadLine
                     </th>
                     <th className="px-8 py-5 w-12" />
@@ -261,7 +261,7 @@ export default function JobListPage() {
                           <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/10 shadow-inner group-hover:scale-110 transition-transform">
                             <Hash size={16} strokeWidth={3} />
                           </div>
-                          <span className="text-sm font-black text-foreground tracking-tighter group-hover:text-primary transition-colors">
+                          <span className="text-sm font-semibold text-foreground tracking-tighter group-hover:text-primary transition-colors">
                             {job.code}
                           </span>
                         </div>
@@ -269,14 +269,14 @@ export default function JobListPage() {
                       <td className="px-8 py-6 hidden md:table-cell">
                         <div className="flex items-center gap-3">
                           <Building2 size={16} className="text-muted-foreground/30" />
-                          <span className="text-xs font-black text-foreground tracking-tight uppercase">
+                          <span className="text-xs font-semibold text-foreground tracking-tight uppercase">
                             {job.clientName}
                           </span>
                         </div>
                       </td>
                       <td className="px-8 py-6 hidden sm:table-cell">
                         <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-black text-muted-foreground border border-border">
+                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground border border-border">
                             {job.patientName?.charAt(0) || 'P'}
                           </div>
                           <span className="text-sm font-bold text-muted-foreground tracking-tight">
@@ -289,12 +289,12 @@ export default function JobListPage() {
                       </td>
                       <td className="px-8 py-6 text-right hidden md:table-cell">
                         <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-sm font-black text-foreground tabular-nums tracking-tighter">
+                          <span className="text-sm font-semibold text-foreground tabular-nums tracking-tighter">
                             {formatBRL(job.totalCents)}
                           </span>
                           <div className="flex items-center gap-1 opacity-40">
                             <DollarSign size={10} className="text-muted-foreground" />
-                            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                            <span className="text-[9px] font-bold uppercase tracking-normal text-muted-foreground">
                               Líquido
                             </span>
                           </div>
@@ -324,7 +324,7 @@ export default function JobListPage() {
               <div className="p-8 border-t border-border bg-muted/20 text-center">
                 <button
                   onClick={() => setCursor(data.nextCursor)}
-                  className="px-8 py-4 bg-muted border border-border rounded-2xl text-[10px] font-black text-muted-foreground hover:text-foreground hover:bg-muted/80 uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-3 mx-auto"
+                  className="px-8 py-4 bg-muted border border-border rounded-lg text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/80 uppercase tracking-normal transition-all  flex items-center justify-center gap-3 mx-auto"
                 >
                   Carregar fluxo adicional <Plus size={14} strokeWidth={3} />
                 </button>
