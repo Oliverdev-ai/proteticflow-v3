@@ -11,6 +11,7 @@ import { TodayDeliveriesCard } from '../../components/dashboard/today-deliveries
 import { RecentJobsTable } from '../../components/dashboard/recent-jobs-table';
 import { PredictionCard } from '../../components/dashboard/prediction-card';
 import { KpiCard } from '../../components/shared/kpi-card';
+import { PageTitle } from '../../components/shared/typography';
 import { ChartSkeleton, JobsBarChart, RevenueLineChart } from '../../components/charts';
 import { usePredictions } from '../../hooks/use-predictions';
 
@@ -124,7 +125,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <PageTitle>Dashboard</PageTitle>
           <p className="text-muted-foreground text-sm mt-0.5">Visão geral do laboratório</p>
         </div>
         <button
@@ -177,7 +178,9 @@ export default function DashboardPage() {
 
       {/* DASHBOARD PREDITIVO (FASE 32) */}
       <div className="pt-4 pb-2 border-t border-border mt-8 mb-2">
-        <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Análises Preditivas IA</h2>
+        <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">
+          Análises Preditivas IA
+        </h2>
         {predictions.isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, index) => (

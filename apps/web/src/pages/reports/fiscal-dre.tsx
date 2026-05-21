@@ -1,11 +1,20 @@
 import { useMemo, useState } from 'react';
 import { FileText } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { trpc } from '../../lib/trpc';
 import { ExportButtons } from '../../components/reports/export-buttons';
 import { PeriodFilter, type PeriodFilterState } from '../../components/reports/period-filter';
 import { PageTransition } from '../../components/shared/page-transition';
-import { H1, Subtitle } from '../../components/shared/typography';
+import { PageTitle, Subtitle } from '../../components/shared/typography';
 
 function toIsoRange(date: string, mode: 'start' | 'end'): string {
   return new Date(`${date}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();
@@ -65,11 +74,16 @@ export default function FiscalDrePage() {
   return (
     <PageTransition className="mx-auto flex h-full max-w-7xl flex-col gap-8 overflow-auto p-4 pb-16 md:p-1">
       <div className="space-y-1">
-        <H1>DRE Simplificado</H1>
+        <PageTitle>DRE simplificado</PageTitle>
         <Subtitle>Receitas, despesas e resultado liquido no periodo selecionado.</Subtitle>
       </div>
 
-      <PeriodFilter value={filters} onChange={setFilters} onApply={handleApply} isLoading={query.isFetching} />
+      <PeriodFilter
+        value={filters}
+        onChange={setFilters}
+        onApply={handleApply}
+        isLoading={query.isFetching}
+      />
       <ExportButtons
         reportId="fiscal-dre"
         startDate={submittedFilters.startDate}
@@ -93,36 +107,61 @@ export default function FiscalDrePage() {
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Receita bruta</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{formatCurrency(query.data.grossRevenueCents)}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Receita bruta
+              </p>
+              <p className="mt-2 text-2xl font-black text-foreground">
+                {formatCurrency(query.data.grossRevenueCents)}
+              </p>
             </div>
             <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Despesas</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Despesas
+              </p>
               <p className="mt-2 text-2xl font-black text-foreground">
                 {formatCurrency(query.data.operatingExpensesCents)}
               </p>
             </div>
             <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Resultado liquido</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{formatCurrency(query.data.netResultCents)}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Resultado liquido
+              </p>
+              <p className="mt-2 text-2xl font-black text-foreground">
+                {formatCurrency(query.data.netResultCents)}
+              </p>
             </div>
           </div>
 
           <div className="premium-card rounded-2xl p-4 md:p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">Receita x despesas</h3>
+            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">
+              Receita x despesas
+            </h3>
             <div className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }}
+                  />
                   <YAxis
                     tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }}
                     tickFormatter={(value) => formatCurrency(Number(value))}
                   />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="receita" name="Receita" fill="rgb(var(--primary))" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="despesas" name="Despesas" fill="rgb(var(--warning))" radius={[6, 6, 0, 0]} />
+                  <Bar
+                    dataKey="receita"
+                    name="Receita"
+                    fill="rgb(var(--primary))"
+                    radius={[6, 6, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="despesas"
+                    name="Despesas"
+                    fill="rgb(var(--warning))"
+                    radius={[6, 6, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -147,13 +186,21 @@ export default function FiscalDrePage() {
                 {query.data.byMonth.map((item) => (
                   <tr key={item.month}>
                     <td className="px-4 py-2 font-semibold text-foreground">{item.monthLabel}</td>
-                    <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.grossRevenueCents)}</td>
+                    <td className="px-4 py-2 text-right text-foreground">
+                      {formatCurrency(item.grossRevenueCents)}
+                    </td>
                     <td className="px-4 py-2 text-right text-foreground">
                       {formatCurrency(item.operatingExpensesCents)}
                     </td>
-                    <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.operatingResultCents)}</td>
-                    <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.taxesCents)}</td>
-                    <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.netResultCents)}</td>
+                    <td className="px-4 py-2 text-right text-foreground">
+                      {formatCurrency(item.operatingResultCents)}
+                    </td>
+                    <td className="px-4 py-2 text-right text-foreground">
+                      {formatCurrency(item.taxesCents)}
+                    </td>
+                    <td className="px-4 py-2 text-right text-foreground">
+                      {formatCurrency(item.netResultCents)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -5,7 +5,7 @@ import { trpc } from '../../lib/trpc';
 import { ExportButtons } from '../../components/reports/export-buttons';
 import { PeriodFilter, type PeriodFilterState } from '../../components/reports/period-filter';
 import { PageTransition } from '../../components/shared/page-transition';
-import { H1, Subtitle } from '../../components/shared/typography';
+import { PageTitle, Subtitle } from '../../components/shared/typography';
 
 function toIsoRange(date: string, mode: 'start' | 'end'): string {
   return new Date(`${date}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();
@@ -71,11 +71,16 @@ export default function FiscalExpensesPage() {
   return (
     <PageTransition className="mx-auto flex h-full max-w-7xl flex-col gap-8 overflow-auto p-4 pb-16 md:p-1">
       <div className="space-y-1">
-        <H1>Despesas por Periodo</H1>
+        <PageTitle>Despesas por período</PageTitle>
         <Subtitle>Despesas liquidadas por mes, fornecedor e categoria.</Subtitle>
       </div>
 
-      <PeriodFilter value={filters} onChange={setFilters} onApply={handleApply} isLoading={query.isFetching} />
+      <PeriodFilter
+        value={filters}
+        onChange={setFilters}
+        onApply={handleApply}
+        isLoading={query.isFetching}
+      />
       <ExportButtons
         reportId="fiscal-expenses"
         startDate={submittedFilters.startDate}
@@ -99,26 +104,43 @@ export default function FiscalExpensesPage() {
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Despesas pagas</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{formatCurrency(query.data.totalCents)}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Despesas pagas
+              </p>
+              <p className="mt-2 text-2xl font-black text-foreground">
+                {formatCurrency(query.data.totalCents)}
+              </p>
             </div>
             <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fornecedores</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{query.data.bySupplier.length}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Fornecedores
+              </p>
+              <p className="mt-2 text-2xl font-black text-foreground">
+                {query.data.bySupplier.length}
+              </p>
             </div>
             <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Categorias</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{query.data.byCategory.length}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Categorias
+              </p>
+              <p className="mt-2 text-2xl font-black text-foreground">
+                {query.data.byCategory.length}
+              </p>
             </div>
           </div>
 
           <div className="premium-card rounded-2xl p-4 md:p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">Despesas mensais</h3>
+            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">
+              Despesas mensais
+            </h3>
             <div className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }}
+                  />
                   <YAxis
                     tick={{ fill: 'rgb(var(--muted-foreground))', fontSize: 11 }}
                     tickFormatter={(value) => formatCurrency(Number(value))}
@@ -147,8 +169,12 @@ export default function FiscalExpensesPage() {
                   {query.data.bySupplier.map((item) => (
                     <tr key={item.key}>
                       <td className="px-4 py-2 font-semibold text-foreground">{item.label}</td>
-                      <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.totalCents)}</td>
-                      <td className="px-4 py-2 text-right text-muted-foreground">{formatPercent(item.percentage)}%</td>
+                      <td className="px-4 py-2 text-right text-foreground">
+                        {formatCurrency(item.totalCents)}
+                      </td>
+                      <td className="px-4 py-2 text-right text-muted-foreground">
+                        {formatPercent(item.percentage)}%
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -171,8 +197,12 @@ export default function FiscalExpensesPage() {
                   {query.data.byCategory.map((item) => (
                     <tr key={item.key}>
                       <td className="px-4 py-2 font-semibold text-foreground">{item.label}</td>
-                      <td className="px-4 py-2 text-right text-foreground">{formatCurrency(item.totalCents)}</td>
-                      <td className="px-4 py-2 text-right text-muted-foreground">{formatPercent(item.percentage)}%</td>
+                      <td className="px-4 py-2 text-right text-foreground">
+                        {formatCurrency(item.totalCents)}
+                      </td>
+                      <td className="px-4 py-2 text-right text-muted-foreground">
+                        {formatPercent(item.percentage)}%
+                      </td>
                     </tr>
                   ))}
                 </tbody>

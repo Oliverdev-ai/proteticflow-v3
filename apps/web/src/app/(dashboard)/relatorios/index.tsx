@@ -16,7 +16,7 @@ import { ReportActions } from '../../../components/reports/report-actions';
 import { ReportPreviewTable } from '../../../components/reports/report-preview-table';
 import { ReportChart } from '../../../components/reports/report-chart';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { downloadBase64Artifact } from '../../../lib/pdf-export';
 
 function toIsoRange(date: string, mode: 'start' | 'end') {
@@ -105,7 +105,7 @@ export default function ReportsHubPage() {
       {/* Header Area */}
       <ScaleIn className="flex flex-wrap items-center justify-between gap-6">
         <div className="flex flex-col gap-1">
-          <H1 className="tracking-tight">Inteligência de BI</H1>
+          <PageTitle>Inteligência de BI</PageTitle>
           <Subtitle>Hub consolidado para auditoria, performance e exportação de dados</Subtitle>
         </div>
 
