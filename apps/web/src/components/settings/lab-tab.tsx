@@ -19,8 +19,8 @@ export function LabTab() {
               <Activity size={18} strokeWidth={3} />
            </div>
            <div className="flex flex-col gap-0.5">
-              <Large className="tracking-tight text-lg font-black uppercase">Infraestrutura Local</Large>
-              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Endpoints técnicos e periféricos da rede</Muted>
+              <Large className="tracking-tight text-lg font-semibold uppercase">Infraestrutura Local</Large>
+              <Muted className="text-[10px] font-semibold uppercase tracking-normal opacity-40">Endpoints técnicos e periféricos da rede</Muted>
            </div>
         </div>
         

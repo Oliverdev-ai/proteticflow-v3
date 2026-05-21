@@ -12,7 +12,7 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending: { label: 'Pendente', color: 'bg-muted text-muted-foreground' },
   in_progress: { label: 'Em andamento', color: 'bg-blue-500/20 text-blue-400' },
   quality_check: { label: 'Qualidade', color: 'bg-yellow-500/20 text-yellow-500' },
-  ready: { label: 'Pronto', color: 'bg-emerald-500/20 text-emerald-400' },
+  ready: { label: 'Pronto', color: 'bg-success/20 text-emerald-400' },
   delivered: { label: 'Entregue', color: 'bg-primary/20 text-primary' },
   cancelled: { label: 'Cancelado', color: 'bg-destructive/20 text-destructive' },
 };
@@ -30,11 +30,11 @@ export function RecentJobsTable({ jobs }: { jobs: RecentJob[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left">
-                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Código</th>
-                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Cliente</th>
-                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Status</th>
-                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider">Prazo</th>
-                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-wider text-right">Valor</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-normal">Código</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-normal">Cliente</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-normal">Status</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-normal">Prazo</th>
+                <th className="px-5 py-3 text-xs text-muted-foreground font-semibold uppercase tracking-normal text-right">Valor</th>
               </tr>
             </thead>
             <tbody>

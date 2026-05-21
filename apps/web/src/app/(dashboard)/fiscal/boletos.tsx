@@ -125,7 +125,7 @@ export default function BoletosPage() {
         <p className="text-sm text-zinc-400">Geração, consulta e cancelamento de boletos.</p>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-4">
         <h2 className="text-lg font-semibold text-white">Filtros</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="text-sm text-zinc-300">
@@ -185,7 +185,7 @@ export default function BoletosPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
           <h2 className="text-lg font-semibold text-white">Gerar por AR</h2>
           <label className="text-sm text-zinc-300 block">
             ID da conta a receber
@@ -208,7 +208,7 @@ export default function BoletosPage() {
           {boletoError && <p className="text-sm text-red-400 mt-2">Erro: {boletoError}</p>}
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
           <h2 className="text-lg font-semibold text-white">Gerar boleto manual</h2>
           <div className="grid md:grid-cols-2 gap-3">
             <label className="text-sm text-zinc-300">

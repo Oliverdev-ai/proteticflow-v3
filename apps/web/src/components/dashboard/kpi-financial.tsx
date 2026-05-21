@@ -11,7 +11,7 @@ export function KpiFinancial({
 }) {
   if (!data) {
     return (
-      <div className="col-span-full rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground text-sm">
+      <div className="col-span-full rounded-lg border border-dashed border-border p-6 text-center text-muted-foreground text-sm">
         Dados financeiros disponíveis a partir do plano Starter.{' '}
         <a href="/planos" className="text-primary hover:underline">Fazer upgrade</a>
       </div>

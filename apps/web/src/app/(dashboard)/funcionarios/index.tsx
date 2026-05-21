@@ -23,14 +23,14 @@ export default function FuncionariosIndex() {
         </div>
         <button
           onClick={() => navigate('/funcionarios/novo')}
-          className="flex items-center gap-2 bg-primary hover:bg-primary text-white px-4 py-2.5 rounded-xl font-semibold transition-colors shadow-lg shadow-primary/20"
+          className="flex items-center gap-2 bg-primary hover:bg-primary text-white px-4 py-2.5 rounded-xl font-semibold transition-colors shadow-lg shadow-sm"
         >
           <Plus size={18} />
           Novo Funcionário
         </button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-center bg-zinc-900/50 p-2 rounded-2xl border border-zinc-800">
+      <div className="flex flex-col md:flex-row gap-4 items-center bg-zinc-900/50 p-2 rounded-lg border border-zinc-800">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
@@ -53,27 +53,27 @@ export default function FuncionariosIndex() {
         </button>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-950/50">
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Funcionário
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Tipo / Contrato
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Salário Base
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Comissão (%)
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Status
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider w-10"></th>
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal w-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
@@ -139,9 +139,9 @@ export default function FuncionariosIndex() {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-normal ${
                           emp.isActive
-                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                            ? 'bg-success/10 text-success border border-success/20'
                             : 'bg-zinc-700/50 text-zinc-500 border border-zinc-700'
                         }`}
                       >

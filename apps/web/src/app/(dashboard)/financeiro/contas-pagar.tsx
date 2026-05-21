@@ -21,7 +21,7 @@ import { Link } from 'react-router-dom';
 import { parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
@@ -35,7 +35,7 @@ const STATUS_MAP: Record<ApStatus, { label: string; cls: string; icon: LucideIco
   },
   paid: {
     label: 'Pago',
-    cls: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    cls: 'bg-success/10 text-success border-success/20',
     icon: CheckCircle2,
   },
   overdue: {
@@ -55,7 +55,7 @@ function StatusBadge({ status }: { status: ApStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-widest',
+        'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-semibold uppercase tracking-normal',
         cls,
       )}
     >
@@ -121,7 +121,7 @@ export default function ContasPagarPage() {
   const inputClass =
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
   const labelClass =
-    'block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1';
+    'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
@@ -130,19 +130,19 @@ export default function ContasPagarPage() {
         <div className="flex items-center gap-6">
           <Link
             to="/financeiro"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all  shadow-sm"
           >
             <ChevronLeft size={20} strokeWidth={3} />
           </Link>
           <div className="flex flex-col gap-0.5">
-            <H1 className="tracking-tight">Contas a Pagar</H1>
+            <PageTitle className="tracking-tight">Contas a Pagar</PageTitle>
             <Subtitle>Gestão de obrigações, despesas fixas e variáveis</Subtitle>
           </div>
         </div>
 
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
+          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
         >
           <Plus size={16} strokeWidth={3} /> Registrar Despesa
         </button>
@@ -155,9 +155,9 @@ export default function ContasPagarPage() {
             key={String(s.value)}
             onClick={() => setStatusFilter(s.value)}
             className={cn(
-              'text-[10px] px-6 py-3 rounded-2xl font-black uppercase tracking-widest transition-all duration-300 active:scale-95',
+              'text-[10px] px-6 py-3 rounded-lg font-semibold uppercase tracking-normal transition-all duration-300 ',
               statusFilter === s.value
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                ? 'bg-primary text-primary-foreground shadow-lg shadow-sm'
                 : 'bg-transparent text-muted-foreground hover:bg-muted',
             )}
           >
@@ -173,19 +173,19 @@ export default function ContasPagarPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4 truncate">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4 truncate">
                     Descrição da Conta
                   </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Favorecido / Fornecedor
                   </th>
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Valor Nominal
                   </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Vencimento
                   </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                     Status
                   </th>
                   <th className="px-6 py-4 text-right">Ações</th>
@@ -197,7 +197,7 @@ export default function ContasPagarPage() {
                     <td colSpan={6} className="py-24 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <Loader2 className="animate-spin text-primary/40" size={48} />
-                        <Muted className="animate-pulse font-black uppercase tracking-[0.2em]">
+                        <Muted className="animate-pulse font-semibold uppercase tracking-normal">
                           Sincronizando contas do passivo...
                         </Muted>
                       </div>
@@ -220,12 +220,12 @@ export default function ContasPagarPage() {
                     <tr key={ap.id} className="group hover:bg-primary/[0.02] transition-colors">
                       <td className="px-6 py-5">
                         <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-black tracking-widest text-muted-foreground/60 uppercase">
+                          <span className="text-[10px] font-semibold tracking-normal text-muted-foreground/60 uppercase">
                             Doc #{ap.id}
                           </span>
                           <div className="flex items-center gap-2">
                             <FileText size={14} className="text-destructive/40" />
-                            <span className="text-sm font-black text-foreground tracking-tight">
+                            <span className="text-sm font-semibold text-foreground tracking-tight">
                               {ap.description}
                             </span>
                           </div>
@@ -233,16 +233,16 @@ export default function ContasPagarPage() {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-black text-[10px] border border-border shadow-inner">
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold text-[10px] border border-border shadow-inner">
                             <Building2 size={14} className="opacity-40" />
                           </div>
-                          <span className="text-xs font-bold text-muted-foreground tracking-wider uppercase">
+                          <span className="text-xs font-bold text-muted-foreground tracking-normal uppercase">
                             {ap.supplier ?? 'Sem Fornecedor'}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right">
-                        <Large className="text-destructive font-black tracking-tighter text-lg leading-none">
+                        <Large className="text-destructive font-semibold tracking-tighter text-lg leading-none">
                           {formatBRL(ap.amountCents)}
                         </Large>
                       </td>
@@ -264,13 +264,13 @@ export default function ContasPagarPage() {
                                   markPaid.mutate({ id: ap.id, paymentMethod: 'Transferência' })
                                 }
                                 disabled={markPaid.isPending}
-                                className="h-10 flex items-center gap-2 px-4 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+                                className="h-10 flex items-center gap-2 px-4 bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 rounded-xl text-[10px] font-semibold uppercase tracking-normal transition-all  shadow-sm"
                               >
                                 <CheckCircle2 size={14} strokeWidth={3} /> Quitar
                               </button>
                               <button
                                 onClick={() => setCancelId(ap.id)}
-                                className="h-10 w-10 flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 rounded-xl transition-all active:scale-95 shadow-sm"
+                                className="h-10 w-10 flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 rounded-xl transition-all  shadow-sm"
                                 title="Anular despesa"
                               >
                                 <Ban size={16} strokeWidth={3} />
@@ -292,18 +292,18 @@ export default function ContasPagarPage() {
       {showCreate && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-primary/20 overflow-hidden">
+            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-primary/20 overflow-hidden">
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
               <div className="flex justify-between items-start relative">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <Plus size={24} strokeWidth={3} />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <H1 className="text-2xl tracking-tighter">Nova Conta a Pagar</H1>
-                    <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
+                    <PageTitle className="text-2xl tracking-tighter">Nova Conta a Pagar</PageTitle>
+                    <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                       Registrar compromisso financeiro
                     </Muted>
                   </div>
@@ -404,7 +404,7 @@ export default function ContasPagarPage() {
               <div className="flex gap-4 pt-6 mt-4 border-t border-border/50 relative">
                 <button
                   onClick={() => setShowCreate(false)}
-                  className="flex-1 py-5 rounded-2xl bg-muted border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all active:scale-95"
+                  className="flex-1 py-5 rounded-lg bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all "
                 >
                   Descartar
                 </button>
@@ -416,7 +416,7 @@ export default function ContasPagarPage() {
                     !form.dueDate ||
                     createAp.isPending
                   }
-                  className="flex-[1.5] py-5 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3"
+                  className="flex-[1.5] py-5 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-sm hover:brightness-110  disabled:opacity-30 transition-all flex items-center justify-center gap-3"
                 >
                   {createAp.isPending ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -436,18 +436,18 @@ export default function ContasPagarPage() {
       {cancelId !== null && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-destructive/20 overflow-hidden">
+            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-destructive/20 overflow-hidden">
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
               <div className="flex justify-between items-start relative">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive shadow-inner">
+                  <div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive shadow-inner">
                     <Ban size={24} strokeWidth={3} />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <H1 className="text-2xl tracking-tighter">Anular Despesa</H1>
-                    <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
+                    <PageTitle className="text-2xl tracking-tighter">Anular Despesa</PageTitle>
+                    <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                       Exclusão de compromisso financeiro
                     </Muted>
                   </div>
@@ -461,13 +461,13 @@ export default function ContasPagarPage() {
               </div>
 
               <div className="flex flex-col gap-4 relative">
-                <div className="p-4 bg-muted/50 rounded-2xl border border-border text-xs text-muted-foreground leading-relaxed italic">
+                <div className="p-4 bg-muted/50 rounded-lg border border-border text-xs text-muted-foreground leading-relaxed italic">
                   "Esta conta a pagar será marcada como cancelada. O compromisso será retirado dos
                   fluxos de faturamento mas permanecerá no log para auditoria reversa."
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal ml-1">
                     Justificativa do Cancelamento *
                   </label>
                   <textarea
@@ -475,7 +475,7 @@ export default function ContasPagarPage() {
                     onChange={(e) => setCancelReason(e.target.value)}
                     placeholder="Descreva o motivo da anulação..."
                     rows={4}
-                    className="w-full bg-muted border border-border rounded-2xl px-6 py-5 text-sm font-semibold text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive/40 transition-all resize-none shadow-inner"
+                    className="w-full bg-muted border border-border rounded-lg px-6 py-5 text-sm font-semibold text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive/40 transition-all resize-none shadow-inner"
                   />
                 </div>
               </div>
@@ -483,14 +483,14 @@ export default function ContasPagarPage() {
               <div className="flex gap-4 pt-6 border-t border-border/50 relative">
                 <button
                   onClick={() => setCancelId(null)}
-                  className="flex-1 py-5 rounded-2xl bg-muted border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-all active:scale-95"
+                  className="flex-1 py-5 rounded-lg bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal text-muted-foreground hover:text-foreground transition-all "
                 >
                   Voltar
                 </button>
                 <button
                   disabled={!cancelReason.trim() || cancelAp.isPending}
                   onClick={() => cancelAp.mutate({ id: cancelId, cancelReason })}
-                  className="flex-[1.5] py-5 rounded-2xl bg-destructive text-destructive-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-destructive/20 transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+                  className="flex-[1.5] py-5 rounded-lg bg-destructive text-destructive-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-destructive/20 transition-all hover:brightness-110  disabled:opacity-50"
                 >
                   {cancelAp.isPending ? (
                     <Loader2 size={16} className="animate-spin" />

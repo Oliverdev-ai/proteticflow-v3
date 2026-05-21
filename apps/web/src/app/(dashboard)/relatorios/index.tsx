@@ -16,7 +16,7 @@ import { ReportActions } from '../../../components/reports/report-actions';
 import { ReportPreviewTable } from '../../../components/reports/report-preview-table';
 import { ReportChart } from '../../../components/reports/report-chart';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { PageTitle, Muted, Large } from '../../../components/shared/typography';
 import { downloadBase64Artifact } from '../../../lib/pdf-export';
 
 function toIsoRange(date: string, mode: 'start' | 'end') {
@@ -103,26 +103,28 @@ export default function ReportsHubPage() {
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-7xl mx-auto pb-16">
       {/* Header Area */}
-      <ScaleIn className="flex flex-wrap items-center justify-between gap-6">
-        <div className="flex flex-col gap-1">
-          <PageTitle>Inteligência de BI</PageTitle>
-          <Subtitle>Hub consolidado para auditoria, performance e exportação de dados</Subtitle>
-        </div>
-
-        <div className="flex items-center gap-4 px-6 py-4 bg-primary/[0.03] border border-primary/20 rounded-3xl shadow-inner">
-          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
-            <Database size={20} strokeWidth={2.5} />
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-              Status do Vault
-            </span>
-            <span className="text-xs font-black text-foreground uppercase tracking-tight flex items-center gap-1.5 leading-none">
-              Sincronizado
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </span>
-          </div>
-        </div>
+      <ScaleIn>
+        <PageTitle
+          subtitle="Hub consolidado para auditoria, performance e exportação de dados"
+          actions={
+            <div className="flex items-center gap-4 px-6 py-4 bg-primary/[0.03] border border-primary/20 rounded-lg shadow-inner">
+              <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-sm">
+                <Database size={20} strokeWidth={2.5} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-semibold uppercase tracking-normal text-primary">
+                  Status do Vault
+                </span>
+                <span className="text-xs font-semibold text-foreground uppercase tracking-tight flex items-center gap-1.5 leading-none">
+                  Sincronizado
+                  <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                </span>
+              </div>
+            </div>
+          }
+        >
+          Inteligência de BI
+        </PageTitle>
       </ScaleIn>
 
       {/* Global Filter Bar */}
@@ -133,11 +135,11 @@ export default function ReportsHubPage() {
       {/* Error & Loading States */}
       {definitionsQuery.error && (
         <ScaleIn className="premium-card p-8 border-destructive/20 bg-destructive/[0.02] flex items-center gap-4">
-          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-inner border border-destructive/20">
+          <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive shadow-inner border border-destructive/20">
             <AlertCircle size={24} strokeWidth={2.5} />
           </div>
           <div className="flex flex-col gap-0.5">
-            <Large className="text-destructive font-black tracking-tight">
+            <Large className="text-destructive font-semibold tracking-tight">
               Falha crítica nas definições
             </Large>
             <Muted>Erro técnico: {definitionsQuery.error.message}</Muted>
@@ -154,7 +156,7 @@ export default function ReportsHubPage() {
               size={24}
             />
           </div>
-          <Muted className="font-black uppercase tracking-[0.3em] animate-pulse">
+          <Muted className="font-semibold uppercase tracking-normal animate-pulse">
             Compilando glossário de métricas...
           </Muted>
         </ScaleIn>
@@ -207,14 +209,14 @@ export default function ReportsHubPage() {
                   delay={0.4}
                   className="premium-card p-24 flex flex-col items-center justify-center text-center opacity-40 border-dashed border-2 bg-muted/20"
                 >
-                  <div className="w-20 h-20 flex items-center justify-center rounded-[32px] bg-muted border border-border text-muted-foreground/30 ring-8 ring-muted/10 mb-6">
+                  <div className="w-20 h-20 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground/30 ring-8 ring-muted/10 mb-6">
                     <PieChart size={32} strokeWidth={2.5} />
                   </div>
                   <div className="text-center space-y-2">
-                    <p className="text-sm font-black text-foreground uppercase tracking-widest leading-none">
+                    <p className="text-sm font-semibold text-foreground uppercase tracking-normal leading-none">
                       Análise Visual Pendente
                     </p>
-                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest max-w-xs opacity-60">
+                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-normal max-w-xs opacity-60">
                       Selecione um protoclo e acione o preview para carregar a visão consolidada.
                     </p>
                   </div>
@@ -225,17 +227,17 @@ export default function ReportsHubPage() {
             {/* Feedback Messages */}
             <div className="relative">
               {sendByEmailMutation.isSuccess && (
-                <ScaleIn className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-xl shadow-emerald-500/5 animate-bounce">
-                  <CheckCircle2 className="text-emerald-500" size={18} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
+                <ScaleIn className="p-5 bg-success/10 border border-success/20 rounded-lg flex items-center gap-3 shadow-xl shadow-sm animate-bounce">
+                  <CheckCircle2 className="text-success" size={18} strokeWidth={3} />
+                  <span className="text-[10px] font-semibold uppercase tracking-normal text-success">
                     Relatório enviado com sucesso para {email}
                   </span>
                 </ScaleIn>
               )}
               {sendByEmailMutation.error && (
-                <ScaleIn className="p-5 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center gap-3 shadow-xl shadow-destructive/5">
+                <ScaleIn className="p-5 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3 shadow-xl shadow-sm">
                   <AlertCircle className="text-destructive" size={18} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-destructive">
+                  <span className="text-[10px] font-semibold uppercase tracking-normal text-destructive">
                     Falha crítica no envio: {sendByEmailMutation.error.message}
                   </span>
                 </ScaleIn>
@@ -249,13 +251,13 @@ export default function ReportsHubPage() {
       {!definitionsQuery.isLoading && (
         <ScaleIn
           delay={0.6}
-          className="bg-muted/30 border border-border/50 rounded-[32px] p-8 flex items-start gap-6"
+          className="bg-muted/30 border border-border/50 rounded-lg p-8 flex items-start gap-6"
         >
-          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0">
+          <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
             <Info size={24} strokeWidth={2.5} />
           </div>
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-black text-foreground uppercase tracking-tight leading-none">
+            <span className="text-xs font-semibold text-foreground uppercase tracking-tight leading-none">
               Protocolo de Segurança e Dados
             </span>
             <p className="text-[11px] text-muted-foreground leading-relaxed uppercase tracking-tight font-bold opacity-60">

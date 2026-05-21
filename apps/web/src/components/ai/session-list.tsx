@@ -18,7 +18,7 @@ export function SessionList({
   onArchive,
 }: SessionListProps) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white">Sessões</h2>
         <button

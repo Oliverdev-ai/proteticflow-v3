@@ -47,10 +47,10 @@ const STATUS_THEMES: Record<
     iconBg: 'bg-muted/20',
   },
   delivered: {
-    border: 'border-emerald-500/30',
-    bg: 'bg-emerald-500/5',
+    border: 'border-success/30',
+    bg: 'bg-success/5',
     text: 'text-emerald-400',
-    iconBg: 'bg-emerald-500/20',
+    iconBg: 'bg-success/20',
   },
   cancelled: {
     border: 'border-destructive/30',
@@ -96,7 +96,7 @@ export default function KanbanTvPage() {
             size={32}
           />
         </div>
-        <p className="text-xl font-black uppercase tracking-[0.3em] text-foreground animate-pulse">
+        <p className="text-xl font-semibold uppercase tracking-normal text-foreground animate-pulse">
           Iniciando Monitor de Produção
         </p>
       </div>
@@ -106,9 +106,9 @@ export default function KanbanTvPage() {
   if (boardQuery.error) {
     return (
       <div className="h-screen w-screen bg-background flex flex-col items-center justify-center gap-4">
-        <div className="p-6 bg-destructive/10 rounded-3xl border border-destructive/20 text-destructive flex flex-col items-center gap-4">
+        <div className="p-6 bg-destructive/10 rounded-lg border border-destructive/20 text-destructive flex flex-col items-center gap-4">
           <Layers3 size={48} />
-          <p className="text-2xl font-black uppercase tracking-widest">
+          <p className="text-2xl font-semibold uppercase tracking-normal">
             {boardQuery.error.message}
           </p>
         </div>
@@ -126,7 +126,7 @@ export default function KanbanTvPage() {
       {/* Header Premium */}
       <header className="flex items-center justify-between pb-8 border-b border-border/50">
         <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-primary/20 border border-primary/30 rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/20 overflow-hidden">
+          <div className="w-20 h-20 bg-primary/20 border border-primary/30 rounded-lg flex items-center justify-center shadow-md shadow-sm overflow-hidden">
             {tenantLogoUrl ? (
               <img src={tenantLogoUrl} alt="Logo do laboratório" className="h-full w-full object-contain p-2" />
             ) : (
@@ -135,16 +135,16 @@ export default function KanbanTvPage() {
           </div>
           <div>
             {tenantLogoUrl ? (
-              <h1 className="text-5xl font-black tracking-tighter text-white">Monitor do Laborat�rio</h1>
+              <h1 className="text-5xl font-semibold tracking-tighter text-white">Monitor do Laborat�rio</h1>
             ) : (
-              <h1 className="text-5xl font-black tracking-tighter text-white">
+              <h1 className="text-5xl font-semibold tracking-tighter text-white">
                 Protetic<span className="text-primary">Flow</span>
               </h1>
             )}
             <p className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground opacity-60">
               Monitor de Chão de Fábrica
             </p>
-            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-normal text-primary/80">
               Powered by ProteticFlow
             </p>
           </div>
@@ -160,12 +160,12 @@ export default function KanbanTvPage() {
                   boardQuery.isFetching ? 'animate-spin text-primary' : 'opacity-40',
                 )}
               />
-              <span className="text-xs font-black uppercase tracking-widest">Auto-Refresh 30s</span>
+              <span className="text-xs font-semibold uppercase tracking-normal">Auto-Refresh 30s</span>
             </div>
           </div>
-          <div className="flex items-center gap-4 px-8 py-4 bg-muted/20 border border-border/50 rounded-3xl shadow-inner group">
+          <div className="flex items-center gap-4 px-8 py-4 bg-muted/20 border border-border/50 rounded-lg shadow-inner group">
             <Clock size={32} className="text-primary group-hover:scale-110 transition-transform" />
-            <div className="text-5xl font-black tracking-tighter text-white tabular-nums">
+            <div className="text-5xl font-semibold tracking-tighter text-white tabular-nums">
               {currentTime.toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -185,7 +185,7 @@ export default function KanbanTvPage() {
           return (
             <div
               key={status}
-              className="flex-1 flex flex-col bg-muted/5 rounded-[40px] border border-border/30 overflow-hidden backdrop-blur-sm shadow-2xl"
+              className="flex-1 flex flex-col bg-muted/5 rounded-[40px] border border-border/30 overflow-hidden backdrop-blur-sm shadow-md"
             >
               <div
                 className={cn(
@@ -193,12 +193,12 @@ export default function KanbanTvPage() {
                   theme.bg,
                 )}
               >
-                <h2 className={cn('text-2xl font-black uppercase tracking-[0.2em]', theme.text)}>
+                <h2 className={cn('text-2xl font-semibold uppercase tracking-normal', theme.text)}>
                   {JOB_STATUS_LABELS[status]}
                 </h2>
                 <div
                   className={cn(
-                    'text-2xl font-black px-4 py-1 rounded-2xl border',
+                    'text-2xl font-semibold px-4 py-1 rounded-lg border',
                     theme.border,
                     theme.text,
                     'bg-background/50 shadow-sm',
@@ -213,7 +213,7 @@ export default function KanbanTvPage() {
                   <div
                     key={job.id}
                     className={cn(
-                      'p-6 rounded-[32px] border-2 shadow-xl flex flex-col gap-3 transition-all animate-in fade-in slide-in-from-right-8',
+                      'p-6 rounded-lg border-2 shadow-xl flex flex-col gap-3 transition-all animate-in fade-in slide-in-from-right-8',
                       theme.border,
                       theme.bg,
                       idx === 0
@@ -222,12 +222,12 @@ export default function KanbanTvPage() {
                     )}
                   >
                     <div className="flex items-start justify-between">
-                      <span className="text-3xl font-black tracking-tighter text-white">
+                      <span className="text-3xl font-semibold tracking-tighter text-white">
                         #{job.code}
                       </span>
                       <div
                         className={cn(
-                          'px-4 py-1 rounded-xl text-sm font-black uppercase tracking-widest',
+                          'px-4 py-1 rounded-xl text-sm font-semibold uppercase tracking-normal',
                           theme.iconBg,
                           theme.text,
                         )}
@@ -243,7 +243,7 @@ export default function KanbanTvPage() {
                         {job.patientName || 'PACIENTE GERAL'}
                       </p>
                       {job.firstItemName && (
-                        <p className="text-lg text-muted-foreground font-semibold uppercase tracking-widest leading-none truncate opacity-60">
+                        <p className="text-lg text-muted-foreground font-semibold uppercase tracking-normal leading-none truncate opacity-60">
                           {job.firstItemName}
                         </p>
                       )}
@@ -252,7 +252,7 @@ export default function KanbanTvPage() {
                     <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock size={16} />
-                        <span className="text-base font-bold uppercase tracking-widest">
+                        <span className="text-base font-bold uppercase tracking-normal">
                           {new Date(job.createdAt).toLocaleDateString('pt-BR', {
                             day: '2-digit',
                             month: 'short',
@@ -262,7 +262,7 @@ export default function KanbanTvPage() {
                       {job.deadline && (
                         <div
                           className={cn(
-                            'px-4 py-2 rounded-2xl font-black text-lg shadow-sm border',
+                            'px-4 py-2 rounded-lg font-semibold text-lg shadow-sm border',
                             new Date(job.deadline) < new Date()
                               ? 'bg-destructive/20 text-destructive border-destructive/20'
                               : 'bg-primary/20 text-primary border-primary/20',
@@ -282,7 +282,7 @@ export default function KanbanTvPage() {
                 {colJobs.length === 0 && (
                   <div className="flex-1 flex flex-col items-center justify-center opacity-20 gap-4">
                     <Monitor size={64} className="text-muted-foreground" />
-                    <p className="text-sm font-black uppercase tracking-[0.3em]">
+                    <p className="text-sm font-semibold uppercase tracking-normal">
                       Nenhum item nesta fila
                     </p>
                   </div>
@@ -295,10 +295,10 @@ export default function KanbanTvPage() {
 
       <footer className="pt-8 flex items-center justify-between text-muted-foreground">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-bold uppercase tracking-widest">Sistema Operacional</span>
+          <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+          <span className="text-xs font-bold uppercase tracking-normal">Sistema Operacional</span>
         </div>
-        <div className="text-xs font-black uppercase tracking-[0.2em] opacity-40">
+        <div className="text-xs font-semibold uppercase tracking-normal opacity-40">
           Pressione{' '}
           <span className="text-primary px-2 py-1 bg-primary/10 border border-primary/20 rounded-md mx-1">
             ESC

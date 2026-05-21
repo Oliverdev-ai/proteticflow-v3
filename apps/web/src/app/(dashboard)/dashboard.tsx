@@ -11,7 +11,7 @@ import { TodayDeliveriesCard } from '../../components/dashboard/today-deliveries
 import { RecentJobsTable } from '../../components/dashboard/recent-jobs-table';
 import { PredictionCard } from '../../components/dashboard/prediction-card';
 import { KpiCard } from '../../components/shared/kpi-card';
-import { PageTitle } from '../../components/shared/typography';
+import { PageTitle, H2 } from '../../components/shared/typography';
 import { ChartSkeleton, JobsBarChart, RevenueLineChart } from '../../components/charts';
 import { usePredictions } from '../../hooks/use-predictions';
 
@@ -38,7 +38,7 @@ function formatPeriod(period: string) {
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonBox({ className }: { className?: string }) {
-  return <div className={`bg-muted animate-pulse rounded-2xl ${className ?? ''}`} />;
+  return <div className={`bg-muted animate-pulse rounded-lg ${className ?? ''}`} />;
 }
 
 function DashboardSkeleton() {
@@ -124,23 +124,26 @@ export default function DashboardPage() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <PageTitle>Dashboard</PageTitle>
-          <p className="text-muted-foreground text-sm mt-0.5">Visão geral do laboratório</p>
-        </div>
-        <button
-          onClick={async () => {
-            await Promise.all([refetch(), predictions.refetch()]);
-          }}
-          disabled={isFetching || predictions.isFetching}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-foreground bg-card hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50"
+        <PageTitle
+          subtitle="Visão geral do laboratório"
+          actions={
+            <button
+              onClick={async () => {
+                await Promise.all([refetch(), predictions.refetch()]);
+              }}
+              disabled={isFetching || predictions.isFetching}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-foreground bg-card hover:bg-muted border border-border rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw
+                size={14}
+                className={isFetching || predictions.isFetching ? 'animate-spin' : ''}
+              />
+              Atualizar
+            </button>
+          }
         >
-          <RefreshCw
-            size={14}
-            className={isFetching || predictions.isFetching ? 'animate-spin' : ''}
-          />
-          Atualizar
-        </button>
+          Dashboard
+        </PageTitle>
       </div>
 
       {/* 19.01 — KPIs financeiros */}
@@ -178,9 +181,7 @@ export default function DashboardPage() {
 
       {/* DASHBOARD PREDITIVO (FASE 32) */}
       <div className="pt-4 pb-2 border-t border-border mt-8 mb-2">
-        <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">
-          Análises Preditivas IA
-        </h2>
+        <H2 className="mb-4">Análises Preditivas IA</H2>
         {predictions.isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, index) => (
@@ -188,11 +189,11 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : predictions.error ? (
-          <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
             Não foi possível carregar as análises preditivas agora.
           </div>
         ) : predictions.cards.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
             Ainda não há previsões disponíveis para este tenant.
           </div>
         ) : (

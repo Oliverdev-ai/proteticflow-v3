@@ -42,7 +42,7 @@ import {
 } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 import { openPdfFromBase64 } from '../../../lib/pdf-export';
@@ -54,8 +54,8 @@ const COLOR_CLASS: Record<string, string> = {
   slate: 'bg-muted text-muted-foreground border-border',
   blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-  green: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+  emerald: 'bg-success/10 text-success border-success/20',
+  green: 'bg-success/10 text-success border-success/20',
   red: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
@@ -182,7 +182,7 @@ export default function JobDetailPage() {
             size={24}
           />
         </div>
-        <Muted className="font-black uppercase tracking-[0.3em] animate-pulse">
+        <Muted className="font-semibold uppercase tracking-normal animate-pulse">
           Recuperando OS...
         </Muted>
       </div>
@@ -191,18 +191,18 @@ export default function JobDetailPage() {
   if (error || !job)
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] gap-6">
-        <div className="w-16 h-16 rounded-3xl bg-destructive/10 flex items-center justify-center text-destructive border border-destructive/20">
+        <div className="w-16 h-16 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive border border-destructive/20">
           <AlertCircle size={32} strokeWidth={2.5} />
         </div>
         <div className="text-center">
-          <Large className="text-destructive font-black tracking-tight">
+          <Large className="text-destructive font-semibold tracking-tight">
             {error?.message ?? 'Serviço não catalogado'}
           </Large>
           <Muted className="mt-1">Não foi possível localizar este registro no sistema.</Muted>
         </div>
         <button
           onClick={() => navigate('/trabalhos')}
-          className="flex items-center gap-3 text-[10px] font-black text-primary hover:text-primary/80 transition-all uppercase tracking-[0.2em] bg-primary/10 px-6 py-3 rounded-2xl"
+          className="flex items-center gap-3 text-[10px] font-semibold text-primary hover:text-primary/80 transition-all uppercase tracking-normal bg-primary/10 px-6 py-3 rounded-lg"
         >
           <ArrowLeft size={16} strokeWidth={3} /> Retornar à Listagem
         </button>
@@ -229,16 +229,16 @@ export default function JobDetailPage() {
         <div className="flex items-center gap-6">
           <Link
             to="/trabalhos"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all  shadow-sm"
           >
             <ArrowLeft size={20} strokeWidth={3} />
           </Link>
           <div className="flex flex-col gap-0.5">
             <div className="flex flex-wrap items-center gap-2">
-              <H1 className="tracking-tighter text-3xl">{job.code}</H1>
+              <PageTitle className="tracking-tighter text-3xl">{job.code}</PageTitle>
               <span
                 className={cn(
-                  'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-widest leading-none',
+                  'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-semibold uppercase tracking-normal leading-none',
                   COLOR_CLASS[statusColor],
                 )}
               >
@@ -246,7 +246,7 @@ export default function JobDetailPage() {
                 {JOB_STATUS_LABELS[job.status as JobStatus] ?? job.status}
               </span>
               {job.isUrgent ? (
-                <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-destructive">
+                <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-[9px] font-semibold uppercase tracking-normal text-destructive">
                   URGENTE
                 </span>
               ) : null}
@@ -254,19 +254,19 @@ export default function JobDetailPage() {
                 <ProofBadge proofDueDate={job.proofDueDate} proofReturnedAt={job.proofReturnedAt} />
               ) : null}
               {job.jobSubType === 'rework' || job.status === 'rework_in_progress' ? (
-                <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-500">
+                <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[9px] font-semibold uppercase tracking-normal text-amber-500">
                   REMOLDAGEM
                 </span>
               ) : null}
               {job.status === 'suspended' ? (
-                <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-500">
+                <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[9px] font-semibold uppercase tracking-normal text-amber-500">
                   SUSPENSA
                 </span>
               ) : null}
             </div>
             <Subtitle className="flex items-center gap-2">
               Emitida em {new Date(job.createdAt).toLocaleDateString('pt-BR')} por{' '}
-              <span className="text-foreground font-black uppercase text-[10px] tracking-widest">
+              <span className="text-foreground font-semibold uppercase text-[10px] tracking-normal">
                 Sistema V3
               </span>
             </Subtitle>
@@ -276,7 +276,7 @@ export default function JobDetailPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handlePdf}
-            className="flex h-12 items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground transition-all shadow-sm hover:bg-muted hover:text-foreground active:scale-95"
+            className="flex h-12 items-center gap-3 rounded-lg border border-border bg-muted/50 px-4 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground transition-all shadow-sm hover:bg-muted hover:text-foreground "
           >
             <Download size={18} strokeWidth={3} /> Download OS
           </button>
@@ -286,7 +286,7 @@ export default function JobDetailPage() {
             onClick={handleToggleUrgent}
             disabled={toggleUrgentMutation.isPending}
             className={cn(
-              'flex h-12 items-center gap-2 rounded-2xl border px-4 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95',
+              'flex h-12 items-center gap-2 rounded-lg border px-4 text-[10px] font-semibold uppercase tracking-normal transition-all ',
               job.isUrgent
                 ? 'border-destructive/40 bg-destructive/10 text-destructive hover:brightness-110'
                 : 'border-border bg-card text-muted-foreground hover:border-destructive/30 hover:text-destructive',
@@ -301,7 +301,7 @@ export default function JobDetailPage() {
               type="button"
               onClick={() => returnProofMutation.mutate({ jobId })}
               disabled={returnProofMutation.isPending || !canManageProof}
-              className="flex h-12 items-center gap-2 rounded-2xl border border-sky-500/40 bg-sky-500/10 px-4 text-[10px] font-black uppercase tracking-widest text-sky-600 transition-all hover:brightness-110 disabled:opacity-40"
+              className="flex h-12 items-center gap-2 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 text-[10px] font-semibold uppercase tracking-normal text-sky-600 transition-all hover:brightness-110 disabled:opacity-40"
             >
               {returnProofMutation.isPending ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -311,19 +311,19 @@ export default function JobDetailPage() {
               Retorno da Prova
             </button>
           ) : (
-            <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-2 py-2">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-2 py-2">
               <input
                 type="date"
                 value={proofDueDateInput}
                 disabled={!canManageProof}
                 onChange={(event) => setProofDueDateInput(event.target.value)}
-                className="rounded-xl border border-border bg-muted px-3 py-2 text-[10px] font-black uppercase tracking-wider text-foreground outline-none focus:border-primary/40"
+                className="rounded-xl border border-border bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-normal text-foreground outline-none focus:border-primary/40"
               />
               <button
                 type="button"
                 disabled={!proofDueDateInput || markProofMutation.isPending || !canManageProof}
                 onClick={handleMarkProof}
-                className="flex h-8 items-center gap-1 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 text-[9px] font-black uppercase tracking-widest text-sky-600 transition-all hover:brightness-110 disabled:opacity-40"
+                className="flex h-8 items-center gap-1 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 text-[9px] font-semibold uppercase tracking-normal text-sky-600 transition-all hover:brightness-110 disabled:opacity-40"
               >
                 {markProofMutation.isPending ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -338,7 +338,7 @@ export default function JobDetailPage() {
               type="button"
               onClick={() => unsuspendMutation.mutate({ jobId })}
               disabled={unsuspendMutation.isPending}
-              className="flex h-12 items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 text-[10px] font-black uppercase tracking-widest text-emerald-500 transition-all hover:brightness-110 disabled:opacity-40"
+              className="flex h-12 items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 text-[10px] font-semibold uppercase tracking-normal text-success transition-all hover:brightness-110 disabled:opacity-40"
             >
               {unsuspendMutation.isPending ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -351,7 +351,7 @@ export default function JobDetailPage() {
             <button
               type="button"
               onClick={() => setShowSuspend(true)}
-              className="flex h-12 items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 text-[10px] font-black uppercase tracking-widest text-amber-500 transition-all hover:brightness-110"
+              className="flex h-12 items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 text-[10px] font-semibold uppercase tracking-normal text-amber-500 transition-all hover:brightness-110"
             >
               <PauseCircle size={14} />
               Suspender
@@ -362,7 +362,7 @@ export default function JobDetailPage() {
             type="button"
             onClick={() => setShowRework(true)}
             disabled={createReworkMutation.isPending || isFinal || isPaused}
-            className="flex h-12 items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 text-[10px] font-black uppercase tracking-widest text-amber-500 transition-all hover:brightness-110 disabled:opacity-40"
+            className="flex h-12 items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 text-[10px] font-semibold uppercase tracking-normal text-amber-500 transition-all hover:brightness-110 disabled:opacity-40"
           >
             {createReworkMutation.isPending ? (
               <Loader2 size={14} className="animate-spin" />
@@ -378,7 +378,7 @@ export default function JobDetailPage() {
                 <button
                   disabled={changeStatus.isPending}
                   onClick={handleAdvance}
-                  className="flex h-12 items-center gap-3 rounded-2xl bg-primary px-5 text-[10px] font-black uppercase tracking-widest text-primary-foreground shadow-xl shadow-primary/20 transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+                  className="flex h-12 items-center gap-3 rounded-lg bg-primary px-5 text-[10px] font-semibold uppercase tracking-normal text-primary-foreground shadow-xl shadow-sm transition-all hover:brightness-110  disabled:opacity-50"
                 >
                   {changeStatus.isPending ? (
                     <Loader2 size={18} className="animate-spin" />
@@ -390,7 +390,7 @@ export default function JobDetailPage() {
               )}
               <button
                 onClick={() => setShowCancel(true)}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/10 text-destructive shadow-sm transition-all hover:bg-destructive hover:text-white active:scale-95"
+                className="flex h-12 w-12 items-center justify-center rounded-lg border border-destructive/20 bg-destructive/10 text-destructive shadow-sm transition-all hover:bg-destructive hover:text-white "
               >
                 <Ban size={20} strokeWidth={3} />
               </button>
@@ -401,7 +401,7 @@ export default function JobDetailPage() {
 
       {/* Workflow Bento Progress */}
       {!isFinal && (
-        <ScaleIn className="bg-card/30 backdrop-blur-sm p-6 rounded-[32px] border border-border">
+        <ScaleIn className="bg-card/30 backdrop-blur-sm p-6 rounded-lg border border-border">
           <div className="relative flex items-center justify-between gap-2 max-w-4xl mx-auto">
             {STATUS_FLOW.map((s, i) => {
               const Icon = STATUS_ICONS[s];
@@ -411,9 +411,9 @@ export default function JobDetailPage() {
                 <div key={s} className="flex flex-col items-center gap-3 flex-1 relative z-10">
                   <div
                     className={cn(
-                      'w-12 h-12 rounded-[20px] flex items-center justify-center text-sm font-black transition-all duration-700 shadow-lg',
+                      'w-12 h-12 rounded-[20px] flex items-center justify-center text-sm font-semibold transition-all duration-700 shadow-lg',
                       isPast
-                        ? 'bg-emerald-500 text-white shadow-emerald-500/10'
+                        ? 'bg-success text-white shadow-emerald-500/10'
                         : isCurrent
                           ? 'bg-primary text-primary-foreground shadow-primary/30 scale-110 ring-4 ring-primary/10'
                           : 'bg-muted/40 text-muted-foreground border border-border opacity-30 grayscale',
@@ -428,11 +428,11 @@ export default function JobDetailPage() {
                   <div className="hidden lg:flex flex-col items-center">
                     <span
                       className={cn(
-                        'text-[9px] font-black uppercase tracking-widest text-center transition-all duration-700',
+                        'text-[9px] font-semibold uppercase tracking-normal text-center transition-all duration-700',
                         isCurrent
                           ? 'text-primary'
                           : isPast
-                            ? 'text-emerald-500'
+                            ? 'text-success'
                             : 'text-muted-foreground opacity-30',
                       )}
                     >
@@ -444,7 +444,7 @@ export default function JobDetailPage() {
                     <div
                       className={cn(
                         'absolute left-[calc(50%+24px)] right-[calc(-50%+24px)] top-6 h-0.5 rounded-full transition-all duration-1000',
-                        isPast ? 'bg-emerald-500/50' : 'bg-muted/50',
+                        isPast ? 'bg-success/50' : 'bg-muted/50',
                       )}
                     />
                   )}
@@ -479,11 +479,11 @@ export default function JobDetailPage() {
                       : 'text-muted-foreground opacity-60 group-hover:text-primary transition-colors',
                   )}
                 />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t.label}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-normal">{t.label}</span>
               </div>
               <span
                 className={cn(
-                  'text-[8px] font-bold uppercase tracking-widest ml-7 transition-opacity',
+                  'text-[8px] font-bold uppercase tracking-normal ml-7 transition-opacity',
                   tab === t.id ? 'opacity-60' : 'opacity-30',
                 )}
               >
@@ -552,7 +552,7 @@ export default function JobDetailPage() {
                     label: 'Valor Consolidado',
                     value: formatBRL(job.totalCents),
                     icon: DollarSign,
-                    color: 'text-emerald-500',
+                    color: 'text-success',
                   },
                   {
                     label: 'Número da Remessa',
@@ -566,7 +566,7 @@ export default function JobDetailPage() {
                       <div key={label} className="group/item flex flex-col gap-3">
                         <div className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary/30 group-hover/item:bg-primary transition-colors" />
-                          <Muted className="text-[10px] font-black uppercase tracking-[0.2em] group-hover/item:text-primary transition-colors">
+                          <Muted className="text-[10px] font-semibold uppercase tracking-normal group-hover/item:text-primary transition-colors">
                             {label}
                           </Muted>
                         </div>
@@ -580,7 +580,7 @@ export default function JobDetailPage() {
                             <Icon size={18} strokeWidth={2.5} />
                           </div>
                           <span
-                            className={cn('text-lg font-black tracking-tight leading-none', color)}
+                            className={cn('text-lg font-semibold tracking-tight leading-none', color)}
                           >
                             {value}
                           </span>
@@ -593,11 +593,11 @@ export default function JobDetailPage() {
               <div className="flex flex-col gap-4 pt-10 border-t border-border/50 relative">
                 <div className="flex items-center gap-3">
                   <FileText size={16} className="text-primary" />
-                  <Muted className="text-[10px] font-black uppercase tracking-widest">
+                  <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                     Instruções Laboratoriais e Memorandos
                   </Muted>
                 </div>
-                <div className="bg-muted/30 p-8 rounded-[32px] border border-border/50 relative group/memo overflow-hidden">
+                <div className="bg-muted/30 p-8 rounded-lg border border-border/50 relative group/memo overflow-hidden">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.03] rounded-full blur-2xl -mr-8 -mt-8" />
                   <p className="text-sm font-semibold text-foreground leading-relaxed whitespace-pre-wrap relative italic opacity-80 group-hover/memo:opacity-100 transition-opacity">
                     {job.instructions ||
@@ -607,14 +607,14 @@ export default function JobDetailPage() {
               </div>
 
               {job.cancelReason && (
-                <div className="p-8 bg-destructive/[0.03] border-2 border-destructive/20 rounded-[32px] flex flex-col gap-4 animate-in slide-in-from-bottom-4">
+                <div className="p-8 bg-destructive/[0.03] border-2 border-destructive/20 rounded-lg flex flex-col gap-4 animate-in slide-in-from-bottom-4">
                   <div className="flex items-center gap-3 text-destructive">
                     <Ban size={20} strokeWidth={3} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">
+                    <span className="text-[10px] font-semibold uppercase tracking-normal">
                       Motivo da Interrupção (Cancelamento)
                     </span>
                   </div>
-                  <p className="text-sm font-black text-destructive tracking-tight leading-tight pl-8">
+                  <p className="text-sm font-semibold text-destructive tracking-tight leading-tight pl-8">
                     {job.cancelReason}
                   </p>
                 </div>
@@ -629,19 +629,19 @@ export default function JobDetailPage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
+                      <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">
                         Especificação Técnica
                       </th>
-                      <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
+                      <th className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">
                         Volume
                       </th>
-                      <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
+                      <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">
                         Valor Unitário
                       </th>
-                      <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
+                      <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">
                         Var. %
                       </th>
-                      <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">
+                      <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">
                         Cálculo Líquido
                       </th>
                     </tr>
@@ -657,25 +657,25 @@ export default function JobDetailPage() {
                             <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-muted border border-border shadow-inner text-muted-foreground">
                               <Package size={18} />
                             </div>
-                            <span className="text-sm font-black text-foreground uppercase tracking-tight group-hover:text-primary transition-colors">
+                            <span className="text-sm font-semibold text-foreground uppercase tracking-tight group-hover:text-primary transition-colors">
                               {item.serviceNameSnapshot}
                             </span>
                           </div>
                         </td>
                         <td className="px-10 py-8 text-center">
-                          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 border border-border text-xs font-black tabular-nums">
+                          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-muted/50 border border-border text-xs font-semibold tabular-nums">
                             {item.quantity}
                           </div>
                         </td>
-                        <td className="px-10 py-8 text-right font-black text-muted-foreground tabular-nums">
+                        <td className="px-10 py-8 text-right font-semibold text-muted-foreground tabular-nums">
                           {formatBRL(item.unitPriceCents)}
                         </td>
                         <td className="px-10 py-8 text-right">
                           <span
                             className={cn(
-                              'text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border shadow-inner',
+                              'text-[9px] px-3 py-1 rounded-full font-semibold uppercase tracking-normal border shadow-inner',
                               Number(item.adjustmentPercent) > 0
-                                ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
+                                ? 'text-success bg-success/10 border-success/20'
                                 : Number(item.adjustmentPercent) < 0
                                   ? 'text-destructive bg-destructive/10 border-destructive/20'
                                   : 'text-muted-foreground bg-muted border-border',
@@ -687,10 +687,10 @@ export default function JobDetailPage() {
                         </td>
                         <td className="px-10 py-8 text-right">
                           <div className="flex flex-col items-end gap-0.5">
-                            <span className="text-lg font-black text-primary tabular-nums tracking-tighter group-hover:scale-105 transition-transform origin-right">
+                            <span className="text-lg font-semibold text-primary tabular-nums tracking-tighter group-hover:scale-105 transition-transform origin-right">
                               {formatBRL(item.totalCents)}
                             </span>
-                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] opacity-40">
+                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-normal opacity-40">
                               Subtotal Compilado
                             </span>
                           </div>
@@ -702,7 +702,7 @@ export default function JobDetailPage() {
                     <tr>
                       <td colSpan={4} className="px-10 py-10 text-right">
                         <div className="flex flex-col items-end gap-1">
-                          <Muted className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                          <Muted className="text-[10px] font-semibold uppercase tracking-normal text-primary">
                             Valor Consolidado da Remessa
                           </Muted>
                           <span className="text-xs font-bold text-muted-foreground opacity-60 italic">
@@ -712,10 +712,10 @@ export default function JobDetailPage() {
                       </td>
                       <td className="px-10 py-10 text-right">
                         <div className="flex flex-col items-end gap-1">
-                          <span className="text-4xl font-black text-primary tracking-tighter tabular-nums leading-none mb-1">
+                          <span className="text-4xl font-semibold text-primary tracking-tighter tabular-nums leading-none mb-1">
                             {formatBRL(job.totalCents)}
                           </span>
-                          <div className="flex items-center gap-2 px-3 py-1 bg-primary text-white rounded-full text-[9px] font-black uppercase tracking-widest leading-none">
+                          <div className="flex items-center gap-2 px-3 py-1 bg-primary text-white rounded-full text-[9px] font-semibold uppercase tracking-normal leading-none">
                             <ShieldCheck size={10} strokeWidth={3} /> Auditado
                           </div>
                         </div>
@@ -731,12 +731,12 @@ export default function JobDetailPage() {
           {tab === 'timeline' && (
             <ScaleIn className="premium-card p-12">
               <div className="flex items-center gap-4 mb-14 border-b border-border/50 pb-6">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/10 shadow-inner">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/10 shadow-inner">
                   <Activity size={24} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <Large className="tracking-tight">Rastreabilidade Operacional</Large>
-                  <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
+                  <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                     Fluxo de controle e auditoria de status
                   </Muted>
                 </div>
@@ -753,7 +753,7 @@ export default function JobDetailPage() {
                       <div className="relative z-10">
                         <div
                           className={cn(
-                            'w-12 h-12 rounded-2xl border-4 border-card flex items-center justify-center shadow-xl transition-all duration-500',
+                            'w-12 h-12 rounded-lg border-4 border-card flex items-center justify-center shadow-xl transition-all duration-500',
                             log.toStatus === job.status
                               ? 'bg-primary text-white scale-110'
                               : 'bg-muted-foreground/20 text-white opacity-40 hover:opacity-100',
@@ -766,7 +766,7 @@ export default function JobDetailPage() {
                           )}
                         </div>
                       </div>
-                      <div className="flex-1 -mt-1 bg-muted/20 p-8 rounded-[32px] border border-border/50 hover:border-primary/30 transition-all duration-500 group relative overflow-hidden">
+                      <div className="flex-1 -mt-1 bg-muted/20 p-8 rounded-lg border border-border/50 hover:border-primary/30 transition-all duration-500 group relative overflow-hidden">
                         {log.toStatus === job.status && (
                           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.03] rounded-full blur-2xl -mr-12 -mt-12" />
                         )}
@@ -776,7 +776,7 @@ export default function JobDetailPage() {
                             <div className="flex items-center gap-3">
                               <span
                                 className={cn(
-                                  'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-widest',
+                                  'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-semibold uppercase tracking-normal',
                                   log.toStatus === 'cancelled'
                                     ? 'bg-destructive/10 text-destructive border-destructive/20'
                                     : 'bg-primary/10 text-primary border-primary/20',
@@ -788,20 +788,20 @@ export default function JobDetailPage() {
                                 <ChevronRight size={12} className="text-muted-foreground/30" />
                               )}
                               {log.fromStatus && (
-                                <span className="text-[9px] font-bold text-muted-foreground opacity-30 uppercase tracking-widest">
+                                <span className="text-[9px] font-bold text-muted-foreground opacity-30 uppercase tracking-normal">
                                   {JOB_STATUS_LABELS[log.fromStatus as JobStatus] || log.fromStatus}
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm font-black text-foreground tracking-tight group-hover:text-primary transition-colors mt-2 uppercase">
+                            <p className="text-sm font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors mt-2 uppercase">
                               {log.fromStatus ? `Transição de Estágio` : `Abertura de Protocolo`}
                             </p>
                           </div>
                           <div className="flex flex-col lg:items-end gap-0.5">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal">
                               {new Date(log.createdAt).toLocaleDateString('pt-BR')}
                             </span>
-                            <Muted className="text-[10px] font-bold uppercase tracking-widest opacity-40">
+                            <Muted className="text-[10px] font-bold uppercase tracking-normal opacity-40">
                               {new Date(log.createdAt).toLocaleTimeString('pt-BR', {
                                 hour: '2-digit',
                                 minute: '2-digit',
@@ -811,8 +811,8 @@ export default function JobDetailPage() {
                         </div>
 
                         {log.notes && (
-                          <div className="relative p-5 bg-card/60 border border-border/40 rounded-2xl italic text-[11px] text-muted-foreground leading-relaxed shadow-inner">
-                            <span className="absolute -top-3 left-6 px-2 bg-card text-[8px] font-black text-primary uppercase tracking-widest border border-border/40 rounded-full">
+                          <div className="relative p-5 bg-card/60 border border-border/40 rounded-lg italic text-[11px] text-muted-foreground leading-relaxed shadow-inner">
+                            <span className="absolute -top-3 left-6 px-2 bg-card text-[8px] font-semibold text-primary uppercase tracking-normal border border-border/40 rounded-full">
                               Nota de Auditoria
                             </span>
                             "{log.notes}"
@@ -830,12 +830,12 @@ export default function JobDetailPage() {
           {tab === 'fotos' && (
             <ScaleIn className="premium-card p-12">
               <div className="flex items-center gap-4 mb-14 border-b border-border/50 pb-6">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/10 shadow-inner">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/10 shadow-inner">
                   <Camera size={24} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <Large className="tracking-tight">Repositório Visual Técnico</Large>
-                  <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
+                  <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                     Capturas de produção e acabamento final
                   </Muted>
                 </div>
@@ -852,7 +852,7 @@ export default function JobDetailPage() {
                   {job.photos.map((photo, idx) => (
                     <div
                       key={photo.id}
-                      className="group aspect-[4/5] bg-muted/40 rounded-[32px] overflow-hidden border-2 border-border/60 relative cursor-pointer ring-offset-background transition-all hover:ring-8 hover:ring-primary/10 hover:border-primary/40 shadow-xl animate-in zoom-in-95 duration-500"
+                      className="group aspect-[4/5] bg-muted/40 rounded-lg overflow-hidden border-2 border-border/60 relative cursor-pointer ring-offset-background transition-all hover:ring-8 hover:ring-primary/10 hover:border-primary/40 shadow-xl animate-in zoom-in-95 duration-500"
                       style={{ animationDelay: `${idx * 100}ms` }}
                     >
                       <img
@@ -862,13 +862,13 @@ export default function JobDetailPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
                         <div className="flex flex-col gap-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                          <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
+                          <span className="text-[10px] font-semibold text-primary uppercase tracking-normal mb-1">
                             Evidência Laboratorial
                           </span>
-                          <span className="text-sm font-black text-white tracking-tight uppercase leading-none">
+                          <span className="text-sm font-semibold text-white tracking-tight uppercase leading-none">
                             {photo.description || 'Imagem S/ Descrição'}
                           </span>
-                          <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-2">
+                          <span className="text-[9px] font-bold text-white/40 uppercase tracking-normal mt-2">
                             Auditado em {new Date(photo.createdAt).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
@@ -889,18 +889,18 @@ export default function JobDetailPage() {
       {showCancel && (
         <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-[200] p-4 animate-in fade-in duration-500">
           <ScaleIn className="w-full max-w-lg">
-            <div className="premium-card p-12 flex flex-col gap-10 relative shadow-2xl border-destructive/20 overflow-hidden bg-white dark:bg-[#0a0a0b]">
+            <div className="premium-card p-12 flex flex-col gap-10 relative shadow-md border-destructive/20 overflow-hidden bg-white dark:bg-[#0a0a0b]">
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-48 h-48 bg-destructive/[0.03] rounded-full blur-[60px] -mr-20 -mt-20" />
 
               <div className="flex justify-between items-start relative px-1">
                 <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center text-destructive shadow-inner border border-destructive/10">
+                  <div className="w-14 h-14 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive shadow-inner border border-destructive/10">
                     <Ban size={28} strokeWidth={3} />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <H1 className="text-2xl tracking-tighter text-destructive">Interromper OS</H1>
-                    <Muted className="text-[10px] font-black uppercase tracking-[0.2em] text-destructive/60">
+                    <PageTitle className="text-2xl tracking-tighter text-destructive">Interromper OS</PageTitle>
+                    <Muted className="text-[10px] font-semibold uppercase tracking-normal text-destructive/60">
                       Protocolo de Cancelamento Crítico
                     </Muted>
                   </div>
@@ -925,7 +925,7 @@ export default function JobDetailPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 mb-1">
+                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal ml-1 mb-1">
                     Justificativa da Interrupção *
                   </label>
                   <textarea
@@ -942,14 +942,14 @@ export default function JobDetailPage() {
               <div className="flex gap-4 pt-6 border-t border-border/50 relative">
                 <button
                   onClick={() => setShowCancel(false)}
-                  className="flex-1 py-5 rounded-2xl bg-muted border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-all active:scale-95"
+                  className="flex-1 py-5 rounded-lg bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal text-muted-foreground hover:text-foreground transition-all "
                 >
                   Retroceder
                 </button>
                 <button
                   disabled={!cancelReason.trim() || changeStatus.isPending}
                   onClick={handleCancel}
-                  className="flex-[1.8] py-5 rounded-2xl bg-destructive text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-destructive/20 hover:brightness-110 active:scale-[0.98] disabled:opacity-30 transition-all flex items-center justify-center gap-3"
+                  className="flex-[1.8] py-5 rounded-lg bg-destructive text-white text-[10px] font-semibold uppercase tracking-normal shadow-xl shadow-destructive/20 hover:brightness-110  disabled:opacity-30 transition-all flex items-center justify-center gap-3"
                 >
                   {changeStatus.isPending ? (
                     <Loader2 size={16} className="animate-spin" />

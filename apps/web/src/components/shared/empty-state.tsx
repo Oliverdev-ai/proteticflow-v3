@@ -24,7 +24,7 @@ export function EmptyState({
         className
       )}
     >
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-6 ring-8 ring-primary/5">
+      <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary/10 text-primary mb-6 ring-8 ring-primary/5">
         <Icon className="h-8 w-8" />
       </div>
       
@@ -51,7 +51,7 @@ export function EmptyTable({
   ...props
 }: Partial<EmptyStateProps>) {
   return (
-    <div className="w-full flex justify-center py-20 border-2 border-dashed border-border/50 rounded-2xl bg-card/30 backdrop-blur-sm">
+    <div className="w-full flex justify-center py-20 border-2 border-dashed border-border/50 rounded-lg bg-card/30 backdrop-blur-sm">
       <EmptyState title={title} description={description} {...props} />
     </div>
   );

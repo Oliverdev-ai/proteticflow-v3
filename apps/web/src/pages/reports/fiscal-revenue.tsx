@@ -103,34 +103,34 @@ export default function FiscalRevenuePage() {
       {query.data && (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                 Receita bruta
               </p>
-              <p className="mt-2 text-2xl font-black text-foreground">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {formatCurrency(query.data.totalCents)}
               </p>
             </div>
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                 Dentistas
               </p>
-              <p className="mt-2 text-2xl font-black text-foreground">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {query.data.byClient.length}
               </p>
             </div>
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                 Tipos de servico
               </p>
-              <p className="mt-2 text-2xl font-black text-foreground">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {query.data.byServiceType.length}
               </p>
             </div>
           </div>
 
-          <div className="premium-card rounded-2xl p-4 md:p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">
+          <div className="premium-card rounded-lg p-4 md:p-6">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-normal text-foreground">
               Faturamento mensal
             </h3>
             <div className="h-[320px] w-full">
@@ -153,8 +153,8 @@ export default function FiscalRevenuePage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <div className="premium-card overflow-hidden rounded-2xl">
-              <div className="border-b border-border px-4 py-3 text-xs font-black uppercase tracking-widest text-foreground">
+            <div className="premium-card overflow-hidden rounded-lg">
+              <div className="border-b border-border px-4 py-3 text-xs font-semibold uppercase tracking-normal text-foreground">
                 Por dentista
               </div>
               <table className="w-full text-sm">
@@ -181,8 +181,8 @@ export default function FiscalRevenuePage() {
               </table>
             </div>
 
-            <div className="premium-card overflow-hidden rounded-2xl">
-              <div className="border-b border-border px-4 py-3 text-xs font-black uppercase tracking-widest text-foreground">
+            <div className="premium-card overflow-hidden rounded-lg">
+              <div className="border-b border-border px-4 py-3 text-xs font-semibold uppercase tracking-normal text-foreground">
                 Por tipo de servico
               </div>
               <table className="w-full text-sm">
@@ -213,7 +213,7 @@ export default function FiscalRevenuePage() {
       )}
 
       {!query.isLoading && query.data && query.data.byMonth.length === 0 && (
-        <div className="premium-card rounded-2xl border-dashed p-12 text-center text-sm text-muted-foreground">
+        <div className="premium-card rounded-lg border-dashed p-12 text-center text-sm text-muted-foreground">
           <div className="mb-2 inline-flex items-center gap-2 font-bold text-foreground">
             <BarChart3 size={16} />
             Sem faturamento no periodo

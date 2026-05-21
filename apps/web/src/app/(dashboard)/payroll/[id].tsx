@@ -107,9 +107,9 @@ export default function PayrollDetailPage() {
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-normal ${
                   period.status === 'closed'
-                    ? 'bg-emerald-500/10 text-emerald-500'
+                    ? 'bg-success/10 text-success'
                     : 'bg-orange-500/10 text-orange-500'
                 }`}
               >
@@ -144,7 +144,7 @@ export default function PayrollDetailPage() {
                     closeMutation.mutate({ periodId });
                 }}
                 disabled={closeMutation.isPending}
-                className="flex items-center gap-2 bg-primary hover:bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-primary/20"
+                className="flex items-center gap-2 bg-primary hover:bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-sm"
               >
                 {closeMutation.isPending ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -183,7 +183,7 @@ export default function PayrollDetailPage() {
       ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-lg">
           <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Total Bruto</p>
           <p className="text-2xl font-bold text-white">
             R${' '}
@@ -192,7 +192,7 @@ export default function PayrollDetailPage() {
             })}
           </p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-lg">
           <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Total Descontos</p>
           <p className="text-2xl font-bold text-red-400">
             R${' '}
@@ -201,7 +201,7 @@ export default function PayrollDetailPage() {
             })}
           </p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl ring-1 ring-emerald-500/20">
+        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-lg ring-1 ring-emerald-500/20">
           <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Total Líquido</p>
           <p className="text-2xl font-bold text-emerald-400">
             R${' '}
@@ -212,27 +212,27 @@ export default function PayrollDetailPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-950/50">
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Funcionário
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Salário + Comissões
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Bônus
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Descontos
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
                   Líquido
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-wider w-[120px]"></th>
+                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal w-[120px]"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
@@ -285,7 +285,7 @@ export default function PayrollDetailPage() {
                           onChange={(e) => setBonusValue(Number(e.target.value))}
                         />
                       ) : (
-                        <div className="text-xs text-emerald-500 font-medium">
+                        <div className="text-xs text-success font-medium">
                           + R$ {(0).toLocaleString('pt-BR')}
                         </div>
                       )}
@@ -317,7 +317,7 @@ export default function PayrollDetailPage() {
                         (editingEntryId === entry.id ? (
                           <button
                             onClick={() => handleUpdate(entry.id)}
-                            className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500/20"
+                            className="p-2 bg-success/10 text-success rounded-lg hover:bg-success/20"
                           >
                             <CheckCircle2 size={16} />
                           </button>

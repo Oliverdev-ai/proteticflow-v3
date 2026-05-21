@@ -56,7 +56,7 @@ export default function PricingTablesPage() {
       {/* Quick create modal */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm space-y-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm space-y-4">
             <h2 className="text-white font-semibold">Nova Tabela de Preços</h2>
             <input
               value={newName}
@@ -118,7 +118,7 @@ export default function PricingTablesPage() {
             <button
               key={table.id}
               onClick={() => navigate(`/precos/${table.id}`)}
-              className="bg-zinc-900 border border-zinc-800 hover:border-primary/50 rounded-2xl p-5 text-left transition-colors group"
+              className="bg-zinc-900 border border-zinc-800 hover:border-primary/50 rounded-lg p-5 text-left transition-colors group"
             >
               <div className="flex items-start justify-between mb-3">
                 <span className="text-white font-semibold text-sm group-hover:text-primary transition-colors">

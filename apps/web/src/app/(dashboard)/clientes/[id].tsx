@@ -26,7 +26,7 @@ import {
   Percent,
 } from 'lucide-react';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
 import { cn } from '../../../lib/utils';
 
 type ClientEditFormInput = z.input<typeof updateClientSchema>;
@@ -64,16 +64,16 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
 
   return (
     <ScaleIn className="flex flex-col gap-6">
-      <div className="flex justify-between items-center bg-card/50 p-6 rounded-[32px] border border-border/50 backdrop-blur-sm shadow-sm">
+      <div className="flex justify-between items-center bg-card/50 p-6 rounded-lg border border-border/50 backdrop-blur-sm shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
             <Hash size={20} />
           </div>
           <div>
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+            <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
               Blocos Físicos (Talonários)
             </h2>
-            <Muted className="text-[10px] uppercase font-bold tracking-widest">
+            <Muted className="text-[10px] uppercase font-bold tracking-normal">
               Controle de numeração física por parceiro
             </Muted>
           </div>
@@ -81,10 +81,10 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
         <button
           onClick={() => setIsAdding(!isAdding)}
           className={cn(
-            'flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-5 py-3 rounded-2xl transition-all active:scale-95',
+            'flex items-center gap-2 text-[10px] font-semibold uppercase tracking-normal px-5 py-3 rounded-lg transition-all ',
             isAdding
               ? 'bg-muted text-foreground'
-              : 'bg-primary text-primary-foreground shadow-lg shadow-primary/20',
+              : 'bg-primary text-primary-foreground shadow-lg shadow-sm',
           )}
         >
           {isAdding ? (
@@ -100,9 +100,9 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
       </div>
 
       {isAdding && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-primary/5 rounded-[32px] border-2 border-primary/20 animate-in fade-in slide-in-from-top-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-primary/5 rounded-lg border-2 border-primary/20 animate-in fade-in slide-in-from-top-4">
           <div className="md:col-span-1">
-            <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1 text-primary">
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1 text-primary">
               Início
             </label>
             <input
@@ -115,7 +115,7 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1 text-primary">
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1 text-primary">
               Fim
             </label>
             <input
@@ -128,7 +128,7 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1">
+            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1">
               Rótulo (Opcional)
             </label>
             <input
@@ -149,7 +149,7 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
                   label,
                 })
               }
-              className="w-full h-[46px] text-[10px] font-black uppercase tracking-widest bg-primary text-primary-foreground rounded-xl disabled:opacity-30 hover:brightness-110 shadow-lg shadow-primary/20 active:scale-95 transition-all"
+              className="w-full h-[46px] text-[10px] font-semibold uppercase tracking-normal bg-primary text-primary-foreground rounded-xl disabled:opacity-30 hover:brightness-110 shadow-lg shadow-sm  transition-all"
             >
               {createBlock.isPending ? (
                 <Loader2 size={16} className="animate-spin mx-auto" />
@@ -166,10 +166,10 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                   Série / Intervalo
                 </th>
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
+                <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-6 py-4">
                   Rótulo Identificador
                 </th>
                 <th className="px-6 py-4 text-right">Controle</th>
@@ -179,14 +179,14 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
               {blocks.map((b) => (
                 <tr key={b.id} className="group hover:bg-primary/[0.02] transition-colors">
                   <td className="px-6 py-5">
-                    <span className="text-sm font-black tracking-tighter text-foreground font-mono">
+                    <span className="text-sm font-semibold tracking-tighter text-foreground font-mono">
                       {b.startNumber.toString().padStart(5, '0')}{' '}
                       <span className="mx-2 text-muted-foreground opacity-30">→</span>{' '}
                       {b.endNumber.toString().padStart(5, '0')}
                     </span>
                   </td>
                   <td className="px-6 py-5">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest bg-muted/50 px-2 py-1 rounded-lg">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-normal bg-muted/50 px-2 py-1 rounded-lg">
                       {b.label || 'Sem rótulo'}
                     </span>
                   </td>
@@ -210,7 +210,7 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
       ) : (
         <div className="p-20 text-center bg-muted/10 border-2 border-dashed border-border/50 rounded-[40px] flex flex-col items-center gap-4">
           <Hash size={48} className="text-muted-foreground opacity-20" />
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground opacity-40">
+          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground opacity-40">
             Nenhum bloco registrado para este parceiro
           </p>
         </div>
@@ -280,7 +280,7 @@ export default function ClientEditPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-primary" size={42} />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground animate-pulse">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-muted-foreground animate-pulse">
           Sincronizando dados...
         </p>
       </div>
@@ -289,16 +289,16 @@ export default function ClientEditPage() {
   if (error || !client)
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-6 p-8">
-        <div className="w-20 h-20 bg-destructive/10 rounded-[32px] flex items-center justify-center text-destructive">
+        <div className="w-20 h-20 bg-destructive/10 rounded-lg flex items-center justify-center text-destructive">
           <AlertCircle size={40} />
         </div>
         <div className="text-center space-y-2">
-          <H1 className="text-destructive font-black uppercase tracking-tight">Ocorreu um erro</H1>
+          <PageTitle className="text-destructive font-semibold uppercase tracking-tight">Ocorreu um erro</PageTitle>
           <Subtitle>{error?.message ?? 'Este parceiro não foi encontrado em nossa base.'}</Subtitle>
         </div>
         <button
           onClick={() => navigate('/clientes')}
-          className="px-8 py-4 bg-muted border border-border rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-all active:scale-95"
+          className="px-8 py-4 bg-muted border border-border rounded-lg text-[10px] font-semibold uppercase tracking-normal hover:text-primary transition-all "
         >
           Voltar à listagem
         </button>
@@ -308,7 +308,7 @@ export default function ClientEditPage() {
   const inputClass =
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
   const labelClass =
-    'block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1';
+    'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-5xl mx-auto pb-12">
@@ -317,25 +317,25 @@ export default function ClientEditPage() {
         <div className="flex items-center gap-6">
           <button
             onClick={() => navigate('/clientes')}
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary transition-all active:scale-95"
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary transition-all "
           >
             <ArrowLeft size={20} strokeWidth={3} />
           </button>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <H1 className="tracking-tight">{client.name}</H1>
+              <PageTitle className="tracking-tight">{client.name}</PageTitle>
               <span
                 className={cn(
-                  'text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest border',
+                  'text-[10px] px-3 py-1 rounded-full font-semibold uppercase tracking-normal border',
                   client.status === 'active'
-                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                    ? 'bg-success/10 text-success border-success/20'
                     : 'bg-muted text-muted-foreground border-border',
                 )}
               >
                 {client.status === 'active' ? 'ATIVO' : 'INATIVO'}
               </span>
             </div>
-            <Subtitle className="uppercase tracking-widest text-[10px] font-bold opacity-60">
+            <Subtitle className="uppercase tracking-normal text-[10px] font-bold opacity-60">
               ID: #{clientId.toString().padStart(4, '0')}
             </Subtitle>
           </div>
@@ -343,7 +343,7 @@ export default function ClientEditPage() {
 
         <button
           onClick={() => navigate(`/clientes/${clientId}/portal`)}
-          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] px-6 py-4 bg-primary/10 text-primary border border-primary/20 rounded-[20px] shadow-sm hover:bg-primary hover:text-primary-foreground transition-all active:scale-95"
+          className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-normal px-6 py-4 bg-primary/10 text-primary border border-primary/20 rounded-[20px] shadow-sm hover:bg-primary hover:text-primary-foreground transition-all "
         >
           <Link2 size={14} strokeWidth={3} /> Portal do Parceiro{' '}
           <ExternalLink size={12} className="opacity-50 ml-1" />
@@ -357,9 +357,9 @@ export default function ClientEditPage() {
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              'flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3.5 rounded-[22px] transition-all',
+              'flex items-center gap-2.5 text-[10px] font-semibold uppercase tracking-normal px-8 py-3.5 rounded-[22px] transition-all',
               tab === t
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                ? 'bg-primary text-primary-foreground shadow-lg shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
             )}
           >
@@ -389,10 +389,10 @@ export default function ClientEditPage() {
                     <User size={20} />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+                    <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
                       Identificação
                     </h2>
-                    <Muted className="text-[10px] uppercase font-bold tracking-widest">
+                    <Muted className="text-[10px] uppercase font-bold tracking-normal">
                       Informações de cadastro
                     </Muted>
                   </div>
@@ -428,10 +428,10 @@ export default function ClientEditPage() {
                     <Percent size={20} />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+                    <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
                       Preferências
                     </h2>
-                    <Muted className="text-[10px] uppercase font-bold tracking-widest">
+                    <Muted className="text-[10px] uppercase font-bold tracking-normal">
                       Regras de negócio e técnicas
                     </Muted>
                   </div>
@@ -466,7 +466,7 @@ export default function ClientEditPage() {
                         step="0.01"
                         className={cn(inputClass, 'pr-12')}
                       />
-                      <div className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-background border border-border rounded-lg text-xs font-black text-primary">
+                      <div className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-background border border-border rounded-lg text-xs font-semibold text-primary">
                         %
                       </div>
                     </div>
@@ -487,19 +487,19 @@ export default function ClientEditPage() {
             <div className="md:col-span-4 flex flex-col gap-6">
               <div className="premium-card p-6 flex flex-col gap-6 sticky top-8">
                 <div className="text-center space-y-2 pb-6 border-b border-border/50">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                  <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                     Ações de Cadastro
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   {updateMutation.isError && (
-                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-[10px] font-black uppercase tracking-widest text-center">
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-[10px] font-semibold uppercase tracking-normal text-center">
                       {updateMutation.error.message}
                     </div>
                   )}
                   {updateMutation.isSuccess && (
-                    <div className="flex items-center justify-center gap-2 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-500 text-[10px] font-black uppercase tracking-widest text-center">
+                    <div className="flex items-center justify-center gap-2 p-4 bg-success/10 border border-success/20 rounded-xl text-success text-[10px] font-semibold uppercase tracking-normal text-center">
                       <CheckCircle2 size={14} /> Dados Atualizados
                     </div>
                   )}
@@ -507,7 +507,7 @@ export default function ClientEditPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting || updateMutation.isPending}
-                    className="w-full bg-primary text-primary-foreground text-xs font-black px-6 py-4 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+                    className="w-full bg-primary text-primary-foreground text-xs font-semibold px-6 py-4 rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110  uppercase tracking-normal flex items-center justify-center gap-2"
                   >
                     {updateMutation.isPending ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -519,7 +519,7 @@ export default function ClientEditPage() {
                   </button>
 
                   <div className="p-4 bg-muted/30 rounded-[28px] border border-border/30 text-center space-y-1 mt-4">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal">
                       Última Atualização
                     </p>
                     <p className="text-xs font-bold text-foreground opacity-60">
@@ -556,8 +556,8 @@ export default function ClientEditPage() {
                 label: 'Faturamento Bruto',
                 value: extract?.totalRevenueCents ?? 0,
                 icon: Wallet,
-                color: 'text-emerald-500',
-                bg: 'bg-emerald-500/10',
+                color: 'text-success',
+                bg: 'bg-success/10',
                 isBRL: true,
               },
               {
@@ -575,7 +575,7 @@ export default function ClientEditPage() {
               >
                 <div
                   className={cn(
-                    'w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner',
+                    'w-14 h-14 rounded-lg flex items-center justify-center shadow-inner',
                     card.bg,
                     card.color,
                   )}
@@ -583,10 +583,10 @@ export default function ClientEditPage() {
                   <card.icon size={28} strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-primary transition-colors">
+                  <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground group-hover:text-primary transition-colors">
                     {card.label}
                   </p>
-                  <p className="text-4xl font-black text-foreground tracking-tighter">
+                  <p className="text-4xl font-semibold text-foreground tracking-tighter">
                     {card.isBRL ? formatBRL(card.value as number) : card.value}
                   </p>
                 </div>
@@ -599,7 +599,7 @@ export default function ClientEditPage() {
             </div>
             <div className="max-w-md">
               <p className="text-sm font-bold text-foreground mb-1">Informações Adicionais</p>
-              <Muted className="text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+              <Muted className="text-[10px] font-bold uppercase tracking-normal leading-relaxed">
                 Os dados detalhados de faturamento por item e extrato financeiro completo estarão
                 disponíveis após a ativação total dos módulos de Produção e Financeiro.
               </Muted>

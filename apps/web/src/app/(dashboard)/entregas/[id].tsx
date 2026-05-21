@@ -111,7 +111,7 @@ export default function DeliveryDetailPage() {
                   </div>
                   <div>
                     <p className="text-white font-medium">{clientName ?? '-'}</p>
-                    <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-500">
+                    <p className="mt-0.5 text-[10px] uppercase tracking-normal text-zinc-500">
                       {item.stopType === 'pickup' ? 'Coleta' : 'Entrega'}
                     </p>
                     {clientAddress && (

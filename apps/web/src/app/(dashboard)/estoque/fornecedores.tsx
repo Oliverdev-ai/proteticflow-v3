@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
@@ -48,7 +48,7 @@ export default function SuppliersPage() {
   const inputClass =
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
   const labelClass =
-    'block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1';
+    'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-5xl mx-auto pb-12">
@@ -57,19 +57,19 @@ export default function SuppliersPage() {
         <div className="flex items-center gap-6">
           <Link
             to="/estoque"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all  shadow-sm"
           >
             <ChevronLeft size={20} strokeWidth={3} />
           </Link>
           <div className="flex flex-col gap-0.5">
-            <H1 className="tracking-tight">Fornecedores</H1>
+            <PageTitle className="tracking-tight">Fornecedores</PageTitle>
             <Subtitle>Gerenciamento da base de suprimentos e parcerias</Subtitle>
           </div>
         </div>
 
         <button
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
+          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
         >
           <Plus size={16} strokeWidth={3} /> Novo Fornecedor
         </button>
@@ -94,7 +94,7 @@ export default function SuppliersPage() {
         {isLoading ? (
           <div className="p-20 flex flex-col items-center justify-center gap-4">
             <Users className="animate-pulse text-primary/20" size={48} />
-            <Muted className="animate-pulse font-black uppercase tracking-[0.2em]">
+            <Muted className="animate-pulse font-semibold uppercase tracking-normal">
               Buscando parceiros comerciais...
             </Muted>
           </div>
@@ -107,7 +107,7 @@ export default function SuppliersPage() {
             >
               <button
                 onClick={() => setSearch('')}
-                className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                className="text-[10px] font-semibold uppercase tracking-normal text-primary hover:underline"
               >
                 Limpar busca
               </button>
@@ -125,15 +125,15 @@ export default function SuppliersPage() {
               <div className="flex items-center gap-5">
                 <div
                   className={cn(
-                    'w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner',
+                    'w-12 h-12 rounded-lg flex items-center justify-center shadow-inner',
                     s.isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
                   )}
                 >
                   <Building2 size={24} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm font-black text-foreground tracking-tight">{s.name}</p>
-                  <div className="flex flex-wrap gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <p className="text-sm font-semibold text-foreground tracking-tight">{s.name}</p>
+                  <div className="flex flex-wrap gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-normal">
                     {s.cnpj && (
                       <span className="flex items-center gap-1.5">
                         <FileText size={12} className="opacity-40" /> {s.cnpj}
@@ -155,11 +155,11 @@ export default function SuppliersPage() {
 
               <div className="flex items-center gap-6">
                 {s.isActive ? (
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full">
+                  <span className="text-[9px] font-semibold uppercase tracking-normal px-3 py-1 bg-success/10 text-success border border-success/20 rounded-full">
                     Ativo
                   </span>
                 ) : (
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 bg-muted text-muted-foreground border border-border rounded-full">
+                  <span className="text-[9px] font-semibold uppercase tracking-normal px-3 py-1 bg-muted text-muted-foreground border border-border rounded-full">
                     Inativo
                   </span>
                 )}
@@ -167,7 +167,7 @@ export default function SuppliersPage() {
                 <button
                   onClick={() => toggleSupplier.mutate({ id: s.id })}
                   className={cn(
-                    'w-12 h-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 border',
+                    'w-12 h-12 flex items-center justify-center rounded-lg transition-all active:scale-90 border',
                     s.isActive
                       ? 'bg-primary/5 text-primary border-primary/20 hover:bg-primary hover:text-primary-foreground'
                       : 'bg-muted text-muted-foreground border-border hover:border-primary/40',
@@ -190,18 +190,18 @@ export default function SuppliersPage() {
       {createOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-primary/20 overflow-hidden">
+            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-primary/20 overflow-hidden">
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
               <div className="flex justify-between items-start relative">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <Plus size={24} strokeWidth={3} />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <H1 className="text-2xl tracking-tighter">Novo Fornecedor</H1>
-                    <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
+                    <PageTitle className="text-2xl tracking-tighter">Novo Fornecedor</PageTitle>
+                    <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                       Cadastro de parceiro comercial
                     </Muted>
                   </div>
@@ -300,7 +300,7 @@ export default function SuppliersPage() {
               <div className="flex gap-4 pt-6 mt-4 border-t border-border/50 relative">
                 <button
                   onClick={() => setCreateOpen(false)}
-                  className="flex-1 py-5 rounded-2xl bg-muted border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all active:scale-95"
+                  className="flex-1 py-5 rounded-lg bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all "
                 >
                   Descartar
                 </button>
@@ -315,7 +315,7 @@ export default function SuppliersPage() {
                     })
                   }
                   disabled={!form.name.trim() || createSupplier.isPending}
-                  className="flex-[1.5] py-5 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3"
+                  className="flex-[1.5] py-5 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-sm hover:brightness-110  disabled:opacity-30 transition-all flex items-center justify-center gap-3"
                 >
                   {createSupplier.isPending ? (
                     <Loader2 size={16} className="animate-spin" />

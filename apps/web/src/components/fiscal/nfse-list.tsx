@@ -18,7 +18,7 @@ const STATUS_LABELS: Record<Nfse['status'], string> = {
 const STATUS_CLASSNAMES: Record<Nfse['status'], string> = {
   draft: 'bg-zinc-500/15 text-zinc-300 border border-zinc-500/30',
   pending: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
-  issued: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+  issued: 'bg-success/15 text-emerald-300 border border-success/30',
   cancelled: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',
   error: 'bg-red-500/15 text-red-300 border border-red-500/30',
 };
@@ -26,14 +26,14 @@ const STATUS_CLASSNAMES: Record<Nfse['status'], string> = {
 export function NfseList({ notas, isBusy = false, onSync, onCancel }: NfseListProps) {
   if (notas.length === 0) {
     return (
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 text-sm text-zinc-400">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 text-sm text-zinc-400">
         Nenhuma nota fiscal encontrada para os filtros atuais.
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-zinc-950/70 border-b border-zinc-800 text-xs uppercase text-zinc-500">
           <tr>

@@ -87,7 +87,7 @@ function UserMenu({
             {name ?? '—'}
           </span>
           {planLabel && (
-            <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--primary)]">
+            <span className="text-[9px] font-bold uppercase tracking-normal text-[var(--primary)]">
               {planLabel}
             </span>
           )}
@@ -119,7 +119,7 @@ function UserMenu({
             <CreditCard size={14} className="text-muted-foreground" />
             Plano
             {planLabel && (
-              <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-[var(--primary)]">
+              <span className="ml-auto text-[9px] font-bold uppercase tracking-normal text-[var(--primary)]">
                 {planLabel}
               </span>
             )}

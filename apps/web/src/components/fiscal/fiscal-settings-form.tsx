@@ -71,20 +71,20 @@ export function FiscalSettingsForm() {
     await upsertMutation.mutateAsync(payload);
   }
 
-  const inputClass = "w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/30";
-  const labelClass = "text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-1.5";
+  const inputClass = "w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-sm font-semibold text-foreground focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/30";
+  const labelClass = "text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1 flex items-center gap-1.5";
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Dados Fiscais Bento Card */}
-      <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-8 relative overflow-hidden group/fiscal">
+      <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-8 relative overflow-hidden group/fiscal">
         <div className="flex items-center gap-4 relative">
            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
               <Receipt size={18} strokeWidth={3} />
            </div>
            <div className="flex flex-col gap-0.5">
-              <Large className="tracking-tight text-lg font-black uppercase">Parâmetros Tributários</Large>
-              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Configuração de NFS-e e regimes fiscais</Muted>
+              <Large className="tracking-tight text-lg font-semibold uppercase">Parâmetros Tributários</Large>
+              <Muted className="text-[10px] font-semibold uppercase tracking-normal opacity-40">Configuração de NFS-e e regimes fiscais</Muted>
            </div>
         </div>
 
@@ -132,15 +132,15 @@ export function FiscalSettingsForm() {
       {/* Integrações Bento Card */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
          {/* Asaas Card */}
-         <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-6 relative overflow-hidden group/asaas">
+         <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-6 relative overflow-hidden group/asaas">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center shadow-inner">
                      <CreditCard size={18} strokeWidth={3} />
                   </div>
-                  <Large className="text-base font-black uppercase tracking-tight">Asaas Gateway</Large>
+                  <Large className="text-base font-semibold uppercase tracking-tight">Asaas Gateway</Large>
                </div>
-               <div className={cn("px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border", asaasSandbox ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20")}>
+               <div className={cn("px-3 py-1 rounded-full text-[8px] font-semibold uppercase tracking-normal border", asaasSandbox ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-success/10 text-success border-success/20")}>
                   {asaasSandbox ? 'Ambiente de Teste' : 'Produção'}
                </div>
             </div>
@@ -155,21 +155,21 @@ export function FiscalSettingsForm() {
                   <div className="w-10 h-5 bg-muted rounded-full border border-border peer-checked:bg-amber-500/20 peer-checked:border-amber-500/40 relative transition-all shadow-inner">
                      <div className="absolute left-1 top-1 w-3 h-3 bg-muted-foreground rounded-full peer-checked:left-6 peer-checked:bg-amber-500 transition-all" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover/toggle:text-foreground transition-colors">Ativar Modo Sandbox</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground group-hover/toggle:text-foreground transition-colors">Ativar Modo Sandbox</span>
                </label>
             </div>
          </div>
 
          {/* Focus NFe Card */}
-         <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-6 relative overflow-hidden group/focus">
+         <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-6 relative overflow-hidden group/focus">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
                      <Globe size={18} strokeWidth={3} />
                   </div>
-                  <Large className="text-base font-black uppercase tracking-tight">Focus NFe API</Large>
+                  <Large className="text-base font-semibold uppercase tracking-tight">Focus NFe API</Large>
                </div>
-               <div className={cn("px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border", focusSandbox ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20")}>
+               <div className={cn("px-3 py-1 rounded-full text-[8px] font-semibold uppercase tracking-normal border", focusSandbox ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-success/10 text-success border-success/20")}>
                   {focusSandbox ? 'Ambiente de Teste' : 'Produção'}
                </div>
             </div>
@@ -184,7 +184,7 @@ export function FiscalSettingsForm() {
                   <div className="w-10 h-5 bg-muted rounded-full border border-border peer-checked:bg-amber-500/20 peer-checked:border-amber-500/40 relative transition-all shadow-inner">
                      <div className="absolute left-1 top-1 w-3 h-3 bg-muted-foreground rounded-full peer-checked:left-6 peer-checked:bg-amber-500 transition-all" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover/toggle:text-foreground transition-colors">Ativar Modo Sandbox</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground group-hover/toggle:text-foreground transition-colors">Ativar Modo Sandbox</span>
                </label>
             </div>
          </div>
@@ -192,16 +192,16 @@ export function FiscalSettingsForm() {
 
       <div className="flex items-center justify-end gap-4 border-t border-border/50 pt-8 mt-2 relative">
          {upsertMutation.isSuccess && (
-           <div className="flex items-center gap-2 text-emerald-500 animate-in fade-in slide-in-from-right-4">
+           <div className="flex items-center gap-2 text-success animate-in fade-in slide-in-from-right-4">
               <CheckCircle2 size={16} strokeWidth={3} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Configurações Fiscais Efetivadas</span>
+              <span className="text-[10px] font-semibold uppercase tracking-normal">Configurações Fiscais Efetivadas</span>
            </div>
          )}
          <button
            type="button"
            onClick={handleSave}
            disabled={upsertMutation.isPending}
-           className="flex items-center gap-3 bg-primary text-primary-foreground px-10 py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+           className="flex items-center gap-3 bg-primary text-primary-foreground px-10 py-4 rounded-lg shadow-xl shadow-sm transition-all hover:brightness-110  disabled:opacity-30 text-[10px] font-semibold uppercase tracking-normal"
          >
            {upsertMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} strokeWidth={3} />}
            Salvar Parâmetros Fiscais

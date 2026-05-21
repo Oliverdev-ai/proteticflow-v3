@@ -87,7 +87,7 @@ export default function EventCreatePage() {
         </p>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
         <div>
           <label className="block text-xs text-zinc-400 mb-1">Titulo</label>
           <input

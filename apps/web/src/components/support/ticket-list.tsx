@@ -8,7 +8,7 @@ type TicketListProps = {
 
 export function TicketList({ tickets, selectedTicketId, onSelect }: TicketListProps) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-2">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-2">
       <h2 className="text-sm font-semibold text-white">Tickets</h2>
 
       <div className="space-y-2 max-h-[60vh] overflow-y-auto">

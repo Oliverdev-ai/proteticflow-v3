@@ -32,17 +32,17 @@ export function ReportChart({ preview }: ReportChartProps) {
     <div className="premium-card p-10 flex flex-col gap-10 relative overflow-hidden group">
       <div className="flex items-center justify-between border-b border-border/50 pb-8 relative">
          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+            <div className="w-12 h-12 rounded-lg bg-primary text-white flex items-center justify-center shadow-lg shadow-sm">
                <TrendingUp size={24} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col gap-0.5">
                <Large className="tracking-tight">Indicadores de Desempenho</Large>
-               <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">Consolidado de métricas operacionais</Muted>
+               <Muted className="text-[10px] font-semibold uppercase tracking-normal">Consolidado de métricas operacionais</Muted>
             </div>
          </div>
-         <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-2xl border border-border">
+         <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border border-border">
             <BarChart3 size={14} className="text-primary/40" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Snapshot Real-time</span>
+            <span className="text-[9px] font-semibold uppercase tracking-normal text-muted-foreground">Snapshot Real-time</span>
          </div>
       </div>
 
@@ -54,9 +54,9 @@ export function ReportChart({ preview }: ReportChartProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                      <div className="w-1.5 h-1.5 rounded-full bg-primary/20 group-hover/item:bg-primary transition-colors" />
-                     <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover/item:text-foreground transition-colors">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                     <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground group-hover/item:text-foreground transition-colors">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
                   </div>
-                  <span className="text-sm font-black text-foreground tabular-nums group-hover/item:text-primary transition-colors">{typeof value === 'number' && key.toLowerCase().includes('amount') ? `R$ ${value.toLocaleString('pt-BR')}` : value}</span>
+                  <span className="text-sm font-semibold text-foreground tabular-nums group-hover/item:text-primary transition-colors">{typeof value === 'number' && key.toLowerCase().includes('amount') ? `R$ ${value.toLocaleString('pt-BR')}` : value}</span>
                 </div>
                 <div className="h-2 w-full bg-muted shadow-inner rounded-full overflow-hidden border border-border/50">
                    <div 
@@ -69,12 +69,12 @@ export function ReportChart({ preview }: ReportChartProps) {
         })}
       </div>
 
-      <div className="p-6 bg-primary/[0.02] border border-primary/10 rounded-[32px] flex items-center gap-4 mt-4">
+      <div className="p-6 bg-primary/[0.02] border border-primary/10 rounded-lg flex items-center gap-4 mt-4">
          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
             <Info size={18} strokeWidth={2.5} />
          </div>
          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Inteligência de Dados</span>
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-normal">Inteligência de Dados</span>
             <p className="text-[10px] text-muted-foreground leading-relaxed uppercase tracking-tight font-bold opacity-60">
                As métricas acima são calculadas dinamicamente com base nos filtros operacionais aplicados.
             </p>

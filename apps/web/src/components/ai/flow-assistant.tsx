@@ -320,8 +320,8 @@ export function FlowAssistant({
         />
       ) : null}
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
-        <p className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Comando estruturado</p>
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+        <p className="text-xs uppercase tracking-normal text-zinc-500 mb-2">Comando estruturado</p>
         <div className="flex gap-2">
           <input
             id="flow-command-input"
@@ -360,8 +360,8 @@ export function FlowAssistant({
       </div>
 
       {lastResponse ? (
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Pipeline F38</p>
+        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+          <p className="text-xs uppercase tracking-normal text-zinc-500 mb-2">Pipeline F38</p>
           <p className="text-sm text-zinc-100 whitespace-pre-wrap">{lastResponse.message}</p>
 
           {lastResponse.status === 'missing_fields' && lastResponse.missingFields?.length ? (
@@ -414,9 +414,9 @@ export function FlowAssistant({
         />
       ) : null}
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-wider text-zinc-500">Ultimas execucoes</p>
+          <p className="text-xs uppercase tracking-normal text-zinc-500">Ultimas execucoes</p>
           <p className="text-[11px] text-zinc-600">Perfil: {role}</p>
         </div>
         <div className="mt-2 space-y-1">

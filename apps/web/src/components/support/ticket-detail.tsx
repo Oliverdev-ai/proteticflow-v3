@@ -15,14 +15,14 @@ export function TicketDetail({ ticket, messages, busy, onUpdate, onAddMessage }:
 
   if (!ticket) {
     return (
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
         <p className="text-sm text-zinc-500">Selecione um ticket para ver detalhes.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-4">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-lg text-white font-semibold">{ticket.subject}</h3>
         <span className="text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-300">#{ticket.id}</span>

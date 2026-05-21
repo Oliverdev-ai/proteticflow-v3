@@ -48,7 +48,7 @@ export function Hero({
   return (
     <div
       className={cn(
-        'relative rounded-2xl overflow-hidden mb-6',
+        'relative rounded-lg overflow-hidden mb-6',
         'bg-gradient-to-br from-[var(--primary)]/10 via-[var(--bg)] to-[var(--accent)]/8',
         'border border-[var(--border)]',
         className,
@@ -122,7 +122,7 @@ export function HeroSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'rounded-2xl border border-border bg-muted/30 animate-pulse mb-6',
+        'rounded-lg border border-border bg-muted/30 animate-pulse mb-6',
         className,
       )}
       style={{ minHeight: 140 }}

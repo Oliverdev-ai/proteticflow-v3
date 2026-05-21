@@ -31,14 +31,14 @@ function badgeClass(classification: AbcClassification): string {
 export function AbcTable({ items, mode }: AbcTableProps) {
   if (items.length === 0) {
     return (
-      <div className="premium-card rounded-2xl border-dashed p-10 text-center text-sm text-muted-foreground">
+      <div className="premium-card rounded-lg border-dashed p-10 text-center text-sm text-muted-foreground">
         Nenhum dado encontrado para o periodo selecionado.
       </div>
     );
   }
 
   return (
-    <div className="premium-card overflow-hidden rounded-2xl">
+    <div className="premium-card overflow-hidden rounded-lg">
       <table className="w-full text-sm">
         <thead className="bg-muted/30 text-muted-foreground">
           <tr>
@@ -77,7 +77,7 @@ export function AbcTable({ items, mode }: AbcTableProps) {
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span
-                    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-black ${badgeClass(item.classification)}`}
+                    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeClass(item.classification)}`}
                   >
                     {item.classification}
                   </span>

@@ -75,15 +75,15 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
 
   return (
     <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] overflow-hidden group/team shadow-xl shadow-black/5">
+      <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg overflow-hidden group/team shadow-xl shadow-black/5">
         <div className="p-8 border-b border-border/50 bg-card/30 flex flex-wrap items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
               <Users size={20} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col gap-0.5">
-              <Large className="tracking-tight text-lg font-black uppercase">Terminais Operacionais</Large>
-              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Gestao de identidades e vinculacao de dispositivos</Muted>
+              <Large className="tracking-tight text-lg font-semibold uppercase">Terminais Operacionais</Large>
+              <Muted className="text-[10px] font-semibold uppercase tracking-normal opacity-40">Gestao de identidades e vinculacao de dispositivos</Muted>
             </div>
           </div>
 
@@ -94,14 +94,14 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
               setInviteError(null);
               setShowInvite(true);
             }}
-            className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95 disabled:opacity-30"
+            className="flex items-center gap-2.5 px-6 py-3 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-sm hover:scale-105 transition-all  disabled:opacity-30"
           >
             <UserPlus size={14} strokeWidth={3} /> Convidar Membro
           </button>
         </div>
 
         {inviteFeedback ? (
-          <p className="px-8 pb-3 pt-3 text-xs font-semibold text-emerald-500">{inviteFeedback}</p>
+          <p className="px-8 pb-3 pt-3 text-xs font-semibold text-success">{inviteFeedback}</p>
         ) : null}
         {inviteError ? (
           <p className="px-8 pb-3 pt-3 text-xs font-semibold text-red-400">Erro: {inviteError}</p>
@@ -111,11 +111,11 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border bg-muted/20">
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Membro / Terminal</th>
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">Credencial</th>
-                <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-6">Privilegio</th>
+                <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">Membro / Terminal</th>
+                <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-6">Credencial</th>
+                <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-6">Privilegio</th>
                 {showRoleActions && (
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-10 py-6">Acoes</th>
+                  <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-10 py-6">Acoes</th>
                 )}
               </tr>
             </thead>
@@ -123,7 +123,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
               {users.length === 0 ? (
                 <tr>
                   <td colSpan={showRoleActions ? 4 : 3} className="px-10 py-12 text-center">
-                    <span className="text-sm font-black text-muted-foreground uppercase tracking-widest">
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-normal">
                       Nenhum usuario
                     </span>
                   </td>
@@ -133,13 +133,13 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
                   <tr key={userItem.id} className="group/row hover:bg-primary/[0.01] transition-all duration-300">
                     <td className="px-10 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-muted border border-border/50 flex items-center justify-center group-hover/row:border-primary/40 transition-all shadow-inner text-xs font-black text-muted-foreground">
+                        <div className="w-12 h-12 rounded-lg bg-muted border border-border/50 flex items-center justify-center group-hover/row:border-primary/40 transition-all shadow-inner text-xs font-semibold text-muted-foreground">
                           {getInitials(userItem.name)}
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-black text-foreground tracking-tight group-hover/row:text-primary transition-colors">{userItem.name}</span>
+                          <span className="text-sm font-semibold text-foreground tracking-tight group-hover/row:text-primary transition-colors">{userItem.name}</span>
                           <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1.5 opacity-60">
-                            <Activity size={10} className="text-emerald-500" /> Online
+                            <Activity size={10} className="text-success" /> Online
                           </span>
                         </div>
                       </div>
@@ -147,13 +147,13 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2 group-hover/row:translate-x-1 transition-transform">
                         <Mail size={12} className="text-primary/40" />
-                        <span className="text-xs font-black text-muted-foreground/80">{userItem.email}</span>
+                        <span className="text-xs font-semibold text-muted-foreground/80">{userItem.email}</span>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <div
                         className={cn(
-                          'inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border',
+                          'inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-normal border',
                           userItem.role === ROLES.SUPERADMIN
                             ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
                             : userItem.role === ROLES.GERENTE
@@ -172,7 +172,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
                             type="button"
                             onClick={() => handleUpdateRole(userItem.id, userItem.role)}
                             disabled={updateRole.isPending}
-                            className="px-6 py-2.5 rounded-xl bg-muted border border-border text-[9px] font-black uppercase tracking-widest hover:bg-muted-foreground hover:text-white transition-all active:scale-95 disabled:opacity-30"
+                            className="px-6 py-2.5 rounded-xl bg-muted border border-border text-[9px] font-semibold uppercase tracking-normal hover:bg-muted-foreground hover:text-white transition-all  disabled:opacity-30"
                           >
                             Alterar Nivel
                           </button>
@@ -187,7 +187,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
         </div>
 
         <div className="p-8 bg-muted/10 border-t border-border/50">
-          <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest leading-relaxed opacity-40 max-w-2xl">
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-normal leading-relaxed opacity-40 max-w-2xl">
             * Superadmins possuem acesso total a malha fiscal e financeira. O rodizio de privilegios nao altera o ultimo superadmin ativo.
           </p>
         </div>
@@ -197,9 +197,9 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
 
       {showInvite && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-8 shadow-md">
             <div className="flex flex-col gap-6">
-              <h2 className="text-sm font-black uppercase tracking-widest">Convidar Membro</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-normal">Convidar Membro</h2>
               <input
                 type="email"
                 placeholder="email@laboratorio.com"
@@ -220,7 +220,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
                 <button
                   type="button"
                   onClick={() => setShowInvite(false)}
-                  className="flex-1 rounded-xl border border-border py-3 text-sm font-black uppercase tracking-widest"
+                  className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold uppercase tracking-normal"
                 >
                   Cancelar
                 </button>
@@ -228,7 +228,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
                   type="button"
                   disabled={!inviteEmail.trim() || inviteMutation.isPending}
                   onClick={handleInvite}
-                  className="flex-1 rounded-xl bg-primary py-3 text-sm font-black uppercase tracking-widest text-primary-foreground disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold uppercase tracking-normal text-primary-foreground disabled:opacity-50"
                 >
                   {inviteMutation.isPending ? 'Enviando...' : 'Enviar Convite'}
                 </button>

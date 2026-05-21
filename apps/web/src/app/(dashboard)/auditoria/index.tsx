@@ -251,7 +251,7 @@ function UsageCard({
 }) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-1">
-      <p className="text-xs uppercase tracking-wide text-zinc-500">{label}</p>
+      <p className="text-xs uppercase tracking-normal text-zinc-500">{label}</p>
       {typeof used === 'number' ? (
         <p className="text-lg font-semibold text-white">
           {used}

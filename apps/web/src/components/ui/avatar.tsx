@@ -44,7 +44,7 @@ export function Avatar({ src, alt, name, size = 'md', online, className, ...prop
             'w-full h-full rounded-full flex items-center justify-center',
             'bg-[var(--navy-700)] text-[var(--navy-fg)]',
             s.text,
-            'font-[var(--font-sans)] tracking-[var(--tracking-wide)] select-none',
+            'font-[var(--font-sans)] tracking-[var(--tracking-normal)] select-none',
           )}
           aria-label={name ?? 'Avatar'}
         >

@@ -8,19 +8,39 @@ interface TypographyProps {
 }
 
 type PageTitleProps = Omit<TypographyProps, 'as'> & {
+  subtitle?: React.ReactNode;
+  actions?: React.ReactNode;
   as?: 'h1' | 'h2';
 };
 
-export function PageTitle({ children, className, as: Component = 'h1' }: PageTitleProps) {
+const pageTitleClass =
+  'font-[var(--font-display)] text-[length:var(--fs-36)] leading-[var(--lh-36)] font-normal tracking-[var(--tracking-tight)] text-fg-strong text-balance sm:text-[length:var(--fs-48)] sm:leading-[var(--lh-48)]';
+
+export function PageTitle({
+  children,
+  subtitle,
+  actions,
+  className,
+  as: Component = 'h1',
+}: PageTitleProps) {
+  const hasLayoutContent = subtitle !== undefined || actions !== undefined;
+
+  if (!hasLayoutContent) {
+    return <Component className={cn(pageTitleClass, className)}>{children}</Component>;
+  }
+
   return (
-    <Component
-      className={cn(
-        'font-[var(--font-display)] text-[length:var(--fs-36)] leading-[var(--lh-36)] font-normal tracking-[var(--tracking-tight)] text-fg-strong text-balance sm:text-[length:var(--fs-48)] sm:leading-[var(--lh-48)]',
-        className,
-      )}
+    <header
+      className={cn('flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between', className)}
     >
-      {children}
-    </Component>
+      <div className="min-w-0">
+        <Component className={pageTitleClass}>{children}</Component>
+        {subtitle !== undefined ? (
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        ) : null}
+      </div>
+      {actions !== undefined ? <div className="shrink-0">{actions}</div> : null}
+    </header>
   );
 }
 

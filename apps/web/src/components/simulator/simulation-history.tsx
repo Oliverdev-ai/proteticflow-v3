@@ -15,7 +15,7 @@ type SimulationHistoryProps = {
 
 export function SimulationHistory({ items, selectedId, onSelect }: SimulationHistoryProps) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
       <h2 className="text-lg font-semibold text-white">Historico</h2>
       <div className="space-y-2 max-h-72 overflow-auto pr-1">
         {items.map((item) => (

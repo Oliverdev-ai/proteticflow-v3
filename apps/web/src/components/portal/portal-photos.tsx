@@ -7,7 +7,7 @@ type PortalPhotosProps = {
 
 export function PortalPhotos({ jobs, photosByJob }: PortalPhotosProps) {
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-5">
+    <section className="rounded-lg border border-zinc-200 bg-white p-5">
       <h2 className="text-lg font-semibold text-zinc-900 mb-4">Fotos publicas</h2>
       <div className="space-y-5">
         {jobs.map((job) => {

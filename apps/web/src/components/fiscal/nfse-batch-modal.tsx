@@ -23,7 +23,7 @@ export function NfseBatchModal({ closings, isBusy = false, onEmitBatch }: NfseBa
   );
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
       <h2 className="text-lg font-semibold text-white">Emissao em lote por fechamento</h2>
       <p className="text-sm text-zinc-400">Emite 1 NFS-e por cliente para o fechamento selecionado.</p>
 

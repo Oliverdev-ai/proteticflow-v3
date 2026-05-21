@@ -62,14 +62,14 @@ export function LogoUpload() {
   };
 
   return (
-    <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-8 relative overflow-hidden group/logo">
+    <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-8 relative overflow-hidden group/logo">
        <div className="flex items-center gap-4 relative">
           <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
              <CloudUpload size={18} strokeWidth={3} />
           </div>
           <div className="flex flex-col gap-0.5">
-             <Large className="tracking-tight text-lg font-black uppercase">Simbolismo Digital</Large>
-             <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Gestão do Logotipo oficial da organização</Muted>
+             <Large className="tracking-tight text-lg font-semibold uppercase">Simbolismo Digital</Large>
+             <Muted className="text-[10px] font-semibold uppercase tracking-normal opacity-40">Gestão do Logotipo oficial da organização</Muted>
           </div>
        </div>
 
@@ -77,7 +77,7 @@ export function LogoUpload() {
           {/* Preview Section */}
           <div className="relative group/preview">
              <div className={cn(
-               "w-48 h-48 rounded-[40px] border-4 border-card shadow-2xl flex items-center justify-center overflow-hidden transition-all duration-700 bg-muted/20 relative",
+               "w-48 h-48 rounded-[40px] border-4 border-card shadow-md flex items-center justify-center overflow-hidden transition-all duration-700 bg-muted/20 relative",
                currentLogo ? "ring-8 ring-primary/5" : "border-dashed border-border/60"
              )}>
                 {currentLogo ? (
@@ -85,7 +85,7 @@ export function LogoUpload() {
                 ) : (
                   <div className="flex flex-col items-center gap-3 opacity-20">
                      <ImageIcon size={40} strokeWidth={1.5} />
-                     <span className="text-[10px] font-black uppercase tracking-widest">Aguardando</span>
+                     <span className="text-[10px] font-semibold uppercase tracking-normal">Aguardando</span>
                   </div>
                 )}
                 
@@ -109,14 +109,14 @@ export function LogoUpload() {
           {/* Upload Controls */}
           <div className="flex-1 flex flex-col gap-6">
              <div className="space-y-2">
-                <p className="text-sm font-black text-foreground tracking-tight uppercase leading-none">Configurar Nova Identidade</p>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-60">Recomendamos arquivos PNG ou WebP com fundo transparente.</p>
+                <p className="text-sm font-semibold text-foreground tracking-tight uppercase leading-none">Configurar Nova Identidade</p>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-normal opacity-60">Recomendamos arquivos PNG ou WebP com fundo transparente.</p>
              </div>
 
              <div className="flex flex-wrap gap-4">
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-3 bg-primary text-primary-foreground px-8 py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+                  className="flex items-center gap-3 bg-primary text-primary-foreground px-8 py-4 rounded-lg shadow-xl shadow-sm transition-all hover:brightness-110  disabled:opacity-30 text-[10px] font-semibold uppercase tracking-normal"
                 >
                    <Upload size={16} strokeWidth={3} /> {currentLogo ? 'Substituir Logo' : 'Enviar Arquivo'}
                 </button>
@@ -135,14 +135,14 @@ export function LogoUpload() {
                 {error && (
                   <div className="flex items-center gap-3 text-destructive animate-in slide-in-from-left-4">
                      <AlertCircle size={14} strokeWidth={3} />
-                     <span className="text-[9px] font-black uppercase tracking-widest">{error}</span>
+                     <span className="text-[9px] font-semibold uppercase tracking-normal">{error}</span>
                   </div>
                 )}
                 
                 {uploadLogo.isSuccess && (
-                  <div className="flex items-center gap-3 text-emerald-500 animate-in slide-in-from-left-4">
+                  <div className="flex items-center gap-3 text-success animate-in slide-in-from-left-4">
                      <CheckCircle2 size={14} strokeWidth={3} />
-                     <span className="text-[9px] font-black uppercase tracking-widest">Sincronismo Concluído</span>
+                     <span className="text-[9px] font-semibold uppercase tracking-normal">Sincronismo Concluído</span>
                   </div>
                 )}
              </div>
@@ -150,8 +150,8 @@ export function LogoUpload() {
        </div>
 
        {/* Security/Access info */}
-       <div className="p-5 bg-muted/20 border border-border rounded-2xl flex items-start gap-4">
-          <Muted className="text-[10px] font-black tracking-tight leading-relaxed uppercase opacity-60">
+       <div className="p-5 bg-muted/20 border border-border rounded-lg flex items-start gap-4">
+          <Muted className="text-[10px] font-semibold tracking-tight leading-relaxed uppercase opacity-60">
              A imagem do logotipo será utilizada em todas as ordens de serviço (PDF), relatórios de faturamento e comunicações oficiais enviadas por e-mail aos dentistas.
           </Muted>
        </div>

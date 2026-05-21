@@ -106,34 +106,34 @@ export default function FiscalDrePage() {
       {query.data && (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                 Receita bruta
               </p>
-              <p className="mt-2 text-2xl font-black text-foreground">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {formatCurrency(query.data.grossRevenueCents)}
               </p>
             </div>
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                 Despesas
               </p>
-              <p className="mt-2 text-2xl font-black text-foreground">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {formatCurrency(query.data.operatingExpensesCents)}
               </p>
             </div>
-            <div className="premium-card rounded-2xl p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="premium-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                 Resultado liquido
               </p>
-              <p className="mt-2 text-2xl font-black text-foreground">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {formatCurrency(query.data.netResultCents)}
               </p>
             </div>
           </div>
 
-          <div className="premium-card rounded-2xl p-4 md:p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-foreground">
+          <div className="premium-card rounded-lg p-4 md:p-6">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-normal text-foreground">
               Receita x despesas
             </h3>
             <div className="h-[320px] w-full">
@@ -167,8 +167,8 @@ export default function FiscalDrePage() {
             </div>
           </div>
 
-          <div className="premium-card overflow-hidden rounded-2xl">
-            <div className="border-b border-border px-4 py-3 text-xs font-black uppercase tracking-widest text-foreground">
+          <div className="premium-card overflow-hidden rounded-lg">
+            <div className="border-b border-border px-4 py-3 text-xs font-semibold uppercase tracking-normal text-foreground">
               DRE mensal
             </div>
             <table className="w-full text-sm">
@@ -207,14 +207,14 @@ export default function FiscalDrePage() {
             </table>
           </div>
 
-          <div className="rounded-2xl border border-border bg-muted/20 p-5 text-xs text-muted-foreground">
+          <div className="rounded-lg border border-border bg-muted/20 p-5 text-xs text-muted-foreground">
             Taxa de imposto aplicada: {query.data.taxRatePercent.toFixed(2)}%
           </div>
         </>
       )}
 
       {!query.isLoading && query.data && query.data.byMonth.length === 0 && (
-        <div className="premium-card rounded-2xl border-dashed p-12 text-center text-sm text-muted-foreground">
+        <div className="premium-card rounded-lg border-dashed p-12 text-center text-sm text-muted-foreground">
           <div className="mb-2 inline-flex items-center gap-2 font-bold text-foreground">
             <FileText size={16} />
             Sem dados para DRE no periodo

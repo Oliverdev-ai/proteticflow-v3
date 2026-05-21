@@ -199,7 +199,7 @@ export default function ScanListPage() {
         </div>
       )}
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
         {activeTab === 'all' ? (
           <table className="w-full text-sm">
             <thead className="bg-zinc-850 border-b border-zinc-800">

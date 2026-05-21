@@ -28,11 +28,11 @@ export function ReportPreviewTable({ preview }: ReportPreviewTableProps) {
                <Table size={18} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col gap-0.5">
-               <Large className="tracking-tight text-sm font-black uppercase">Matriz de Dados Tabular</Large>
-               <Muted className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 italic">Amostra técnica do processamento</Muted>
+               <Large className="tracking-tight text-sm font-semibold uppercase">Matriz de Dados Tabular</Large>
+               <Muted className="text-[10px] font-bold uppercase tracking-normal opacity-40 italic">Amostra técnica do processamento</Muted>
             </div>
          </div>
-         <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-1.5 animate-in fade-in slide-in-from-right-4">
+         <div className="px-4 py-1.5 rounded-full bg-success/10 border border-success/20 text-[9px] font-semibold uppercase tracking-normal text-success flex items-center gap-1.5 animate-in fade-in slide-in-from-right-4">
             <Activity size={10} strokeWidth={3} /> {preview.rows.length} Entradas Identificadas
          </div>
       </div>
@@ -42,7 +42,7 @@ export function ReportPreviewTable({ preview }: ReportPreviewTableProps) {
           <thead>
             <tr className="border-b border-border bg-muted/30">
               {preview.columns.map((column) => (
-                <th key={column} className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5 whitespace-nowrap">
+                <th key={column} className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5 whitespace-nowrap">
                   {column.replace(/([A-Z])/g, ' $1').trim()}
                 </th>
               ))}
@@ -52,7 +52,7 @@ export function ReportPreviewTable({ preview }: ReportPreviewTableProps) {
             {preview.rows.map((row, index) => (
               <tr key={index} className="group/row hover:bg-primary/[0.01] transition-all">
                 {preview.columns.map((column) => (
-                  <td key={column} className="px-8 py-5 text-sm font-black text-foreground tracking-tight whitespace-nowrap tabular-nums group-hover/row:text-primary transition-colors">
+                  <td key={column} className="px-8 py-5 text-sm font-semibold text-foreground tracking-tight whitespace-nowrap tabular-nums group-hover/row:text-primary transition-colors">
                     {String(row[column] ?? '—')}
                   </td>
                 ))}
@@ -64,7 +64,7 @@ export function ReportPreviewTable({ preview }: ReportPreviewTableProps) {
 
       <div className="p-6 bg-muted/30 border-t border-border flex items-center gap-3">
          <Info size={14} className="text-primary/40" />
-         <span className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">O preview exibe apenas uma amostra limitada para performance. Utilize a exportação para o conjunto completo.</span>
+         <span className="text-[9px] font-semibold uppercase tracking-normal text-muted-foreground">O preview exibe apenas uma amostra limitada para performance. Utilize a exportação para o conjunto completo.</span>
       </div>
     </div>
   );

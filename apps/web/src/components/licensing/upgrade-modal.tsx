@@ -30,7 +30,7 @@ export function UpgradeModal({ open, targetPlan, isLoading, onClose, onConfirm }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl">
+      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-md">
         <h3 className="text-lg font-semibold text-white">{copy.title}</h3>
         <p className="mt-2 text-sm text-zinc-400">{copy.subtitle}</p>
 

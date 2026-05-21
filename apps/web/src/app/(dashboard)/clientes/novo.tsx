@@ -17,7 +17,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { PageTransition } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
 import { cn } from '../../../lib/utils';
 
 type ClientFormInput = z.input<typeof createClientSchema>;
@@ -88,7 +88,7 @@ export default function ClientCreatePage() {
   const inputClass =
     'w-full bg-muted border border-border rounded-xl px-4 py-2 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
   const labelClass =
-    'block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1';
+    'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-4xl mx-auto pb-12">
@@ -96,12 +96,12 @@ export default function ClientCreatePage() {
       <div className="flex items-center gap-6">
         <button
           onClick={() => navigate('/clientes')}
-          className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+          className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all  shadow-sm"
         >
           <ArrowLeft size={20} strokeWidth={3} />
         </button>
         <div className="flex flex-col gap-0.5">
-          <H1>Novo Parceiro</H1>
+          <PageTitle>Novo Parceiro</PageTitle>
           <Subtitle>Cadastre um novo dentista ou laboratório na sua rede</Subtitle>
         </div>
       </div>
@@ -116,10 +116,10 @@ export default function ClientCreatePage() {
                 <Building2 size={20} />
               </div>
               <div>
-                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+                <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
                   Identificação
                 </h2>
-                <Muted className="text-[10px] uppercase font-bold tracking-widest">
+                <Muted className="text-[10px] uppercase font-bold tracking-normal">
                   Nome e dados de identificação
                 </Muted>
               </div>
@@ -140,7 +140,7 @@ export default function ClientCreatePage() {
                   />
                 </div>
                 {errors.name && (
-                  <p className="text-destructive text-[10px] font-black uppercase tracking-widest mt-2 ml-1">
+                  <p className="text-destructive text-[10px] font-semibold uppercase tracking-normal mt-2 ml-1">
                     {errors.name.message}
                   </p>
                 )}
@@ -229,10 +229,10 @@ export default function ClientCreatePage() {
                 <MapPin size={20} />
               </div>
               <div>
-                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+                <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
                   Localização
                 </h2>
-                <Muted className="text-[10px] uppercase font-bold tracking-widest">
+                <Muted className="text-[10px] uppercase font-bold tracking-normal">
                   Endereço de coleta e entrega
                 </Muted>
               </div>
@@ -248,7 +248,7 @@ export default function ClientCreatePage() {
                 </label>
                 <input {...register('zipCode')} placeholder="00000-000" className={inputClass} />
                 {lookupQuery.error && (
-                  <p className="text-orange-500 text-[10px] font-black uppercase tracking-widest mt-2 animate-pulse">
+                  <p className="text-orange-500 text-[10px] font-semibold uppercase tracking-normal mt-2 animate-pulse">
                     Endereço não encontrado
                   </p>
                 )}
@@ -304,10 +304,10 @@ export default function ClientCreatePage() {
                 <Percent size={20} />
               </div>
               <div>
-                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-foreground">
+                <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
                   Comercial
                 </h2>
-                <Muted className="text-[10px] uppercase font-bold tracking-widest">
+                <Muted className="text-[10px] uppercase font-bold tracking-normal">
                   Tabelas e ajustes
                 </Muted>
               </div>
@@ -325,11 +325,11 @@ export default function ClientCreatePage() {
                     max="100"
                     className={cn(inputClass, 'pr-12')}
                   />
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-background border border-border rounded-lg text-xs font-black text-primary">
+                  <div className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-background border border-border rounded-lg text-xs font-semibold text-primary">
                     %
                   </div>
                 </div>
-                <Muted className="text-[9px] uppercase tracking-widest mt-2 leading-relaxed">
+                <Muted className="text-[9px] uppercase tracking-normal mt-2 leading-relaxed">
                   Valores negativos aplicam desconto. <br />
                   Ex: -10 = 10% OFF automático.
                 </Muted>
@@ -348,7 +348,7 @@ export default function ClientCreatePage() {
 
             <div className="pt-6 flex flex-col gap-3 border-t border-border/50">
               {createMutation.error && (
-                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-[10px] font-black uppercase tracking-widest text-center">
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-[10px] font-semibold uppercase tracking-normal text-center">
                   {createMutation.error.message}
                 </div>
               )}
@@ -356,7 +356,7 @@ export default function ClientCreatePage() {
               <button
                 type="submit"
                 disabled={isSubmitting || createMutation.isPending}
-                className="w-full bg-primary text-primary-foreground text-xs font-black px-6 py-4 rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+                className="w-full bg-primary text-primary-foreground text-xs font-semibold px-6 py-4 rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110  uppercase tracking-normal flex items-center justify-center gap-2"
               >
                 {createMutation.isPending ? (
                   <>
@@ -372,7 +372,7 @@ export default function ClientCreatePage() {
               <button
                 type="button"
                 onClick={() => navigate('/clientes')}
-                className="w-full py-4 rounded-2xl bg-muted border border-border text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em] hover:bg-muted/80 transition-all"
+                className="w-full py-4 rounded-lg bg-muted border border-border text-muted-foreground text-[10px] font-semibold uppercase tracking-normal hover:bg-muted/80 transition-all"
               >
                 Cancelar Operação
               </button>
@@ -380,12 +380,12 @@ export default function ClientCreatePage() {
           </section>
 
           {/* Social Proof Placeholder card */}
-          <div className="bg-primary/5 rounded-[32px] border border-primary/20 p-6 flex flex-col items-center gap-4 text-center">
+          <div className="bg-primary/5 rounded-lg border border-primary/20 p-6 flex flex-col items-center gap-4 text-center">
             <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
               <Share2 size={24} />
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-black uppercase tracking-widest text-primary">
+              <p className="text-xs font-semibold uppercase tracking-normal text-primary">
                 Convite Digital
               </p>
               <p className="text-[10px] text-muted-foreground font-medium">

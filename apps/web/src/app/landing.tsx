@@ -103,7 +103,7 @@ export default function LandingPage() {
           <Stethoscope size={14} />
           SaaS para laboratórios de prótese
         </div>
-        <h1 className="text-4xl md:text-6xl font-black leading-tight tracking-tight">
+        <h1 className="text-4xl md:text-6xl font-semibold leading-tight tracking-tight">
           ProteticFlow
           <span className="block text-primary">
             Gestão inteligente para laboratórios de prótese
@@ -138,7 +138,7 @@ export default function LandingPage() {
           {features.map((feature) => (
             <article
               key={feature.title}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5"
+              className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-5"
             >
               <feature.icon className="text-primary mb-4" size={20} />
               <h3 className="font-semibold text-white">{feature.title}</h3>
@@ -151,15 +151,15 @@ export default function LandingPage() {
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
           <h2 className="text-2xl md:text-3xl font-bold">Planos para cada estágio de operação</h2>
-          <span className="text-xs uppercase tracking-widest text-primary">PRD 1.5</span>
+          <span className="text-xs uppercase tracking-normal text-primary">PRD 1.5</span>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {plans.map((plan) => (
             <article
               key={plan.name}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col"
+              className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 flex flex-col"
             >
-              <p className="text-xs text-primary uppercase tracking-wide">{plan.highlight}</p>
+              <p className="text-xs text-primary uppercase tracking-normal">{plan.highlight}</p>
               <h3 className="text-xl font-bold mt-2">{plan.name}</h3>
               <div className="mt-4 mb-5">
                 <span className="text-2xl font-extrabold">{plan.price}</span>
@@ -190,7 +190,7 @@ export default function LandingPage() {
           {testimonials.map((item) => (
             <article
               key={item.author}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5"
+              className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-5"
             >
               <p className="text-zinc-200 leading-relaxed">&ldquo;{item.quote}&rdquo;</p>
               <p className="mt-6 text-sm font-semibold">{item.author}</p>
@@ -201,8 +201,8 @@ export default function LandingPage() {
       </section>
 
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="rounded-3xl border border-primary/30 bg-gradient-to-r from-primary/20 to-emerald-500/10 p-8 md:p-10">
-          <h2 className="text-2xl md:text-4xl font-black">
+        <div className="rounded-lg border border-primary/30 bg-gradient-to-r from-primary/20 to-emerald-500/10 p-8 md:p-10">
+          <h2 className="text-2xl md:text-4xl font-semibold">
             Pronto para transformar seu laboratório?
           </h2>
           <p className="text-zinc-200 mt-3 max-w-2xl">

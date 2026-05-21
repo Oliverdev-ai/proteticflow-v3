@@ -18,7 +18,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
@@ -35,7 +35,7 @@ const STATUS_MAP: Record<string, { label: string; cls: string; icon: LucideIcon 
   },
   paid: {
     label: 'Liquidado',
-    cls: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    cls: 'bg-success/10 text-success border-success/20',
     icon: CheckCircle2,
   },
 };
@@ -53,7 +53,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-black uppercase tracking-widest',
+        'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-semibold uppercase tracking-normal',
         cls,
       )}
     >
@@ -89,19 +89,19 @@ export default function FechamentoPage() {
         <div className="flex items-center gap-6">
           <Link
             to="/financeiro"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all  shadow-sm"
           >
             <ChevronLeft size={20} strokeWidth={3} />
           </Link>
           <div className="flex flex-col gap-0.5">
-            <H1 className="tracking-tight">Fechamentos Mensais</H1>
+            <PageTitle className="tracking-tight">Fechamentos Mensais</PageTitle>
             <Subtitle>Apuração consolidada de receitas e performance operacional</Subtitle>
           </div>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
+          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
         >
           <Plus size={16} strokeWidth={3} /> Gerar Fechamento
         </button>
@@ -114,22 +114,22 @@ export default function FechamentoPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                     Período Fiscal
                   </th>
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                  <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                     Volatilidade (OS)
                   </th>
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                  <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                     Faturamento Bruto
                   </th>
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                  <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                     Liquidez (Pago)
                   </th>
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                  <th className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                     Inadimplência (AR)
                   </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-8 py-5">
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-normal px-8 py-5">
                     Status
                   </th>
                 </tr>
@@ -140,7 +140,7 @@ export default function FechamentoPage() {
                     <td colSpan={6} className="py-24 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <Loader2 className="animate-spin text-primary/30" size={48} />
-                        <Muted className="animate-pulse font-black uppercase tracking-[0.2em]">
+                        <Muted className="animate-pulse font-semibold uppercase tracking-normal">
                           Consolidando faturas mensais...
                         </Muted>
                       </div>
@@ -163,14 +163,14 @@ export default function FechamentoPage() {
                     <tr key={c.id} className="group hover:bg-primary/[0.01] transition-colors">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/10 font-black text-[10px] shadow-inner">
+                          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/10 font-semibold text-[10px] shadow-inner">
                             {c.period.split('-')[1]}
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-black text-foreground uppercase tracking-tight">
+                            <span className="text-sm font-semibold text-foreground uppercase tracking-tight">
                               {c.period}
                             </span>
-                            <Muted className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                            <Muted className="text-[10px] font-bold uppercase tracking-normal opacity-60">
                               Competência
                             </Muted>
                           </div>
@@ -178,31 +178,31 @@ export default function FechamentoPage() {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex flex-col items-end gap-1">
-                          <span className="text-sm font-black text-foreground tabular-nums">
+                          <span className="text-sm font-semibold text-foreground tabular-nums">
                             {c.totalJobs}
                           </span>
-                          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-normal">
                             Trabalhos OS
                           </span>
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-sm font-black text-foreground tabular-nums tracking-tighter">
+                          <span className="text-sm font-semibold text-foreground tabular-nums tracking-tighter">
                             {formatBRL(c.totalAmountCents)}
                           </span>
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <div className="flex flex-col items-end gap-0.5 text-emerald-500">
-                          <span className="text-sm font-black tabular-nums tracking-tighter">
+                        <div className="flex flex-col items-end gap-0.5 text-success">
+                          <span className="text-sm font-semibold tabular-nums tracking-tighter">
                             {formatBRL(c.paidAmountCents)}
                           </span>
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex flex-col items-end gap-0.5 text-amber-500">
-                          <span className="text-sm font-black tabular-nums tracking-tighter">
+                          <span className="text-sm font-semibold tabular-nums tracking-tighter">
                             {formatBRL(c.pendingAmountCents)}
                           </span>
                         </div>
@@ -223,18 +223,18 @@ export default function FechamentoPage() {
       {showModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-lg">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-primary/20 overflow-hidden">
+            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-primary/20 overflow-hidden">
               {/* Accent decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
 
               <div className="flex justify-between items-start relative">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <FileText size={24} strokeWidth={3} />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <H1 className="text-2xl tracking-tighter">Gerar Fechamento</H1>
-                    <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
+                    <PageTitle className="text-2xl tracking-tighter">Gerar Fechamento</PageTitle>
+                    <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                       Processamento de faturamento consolidado
                     </Muted>
                   </div>
@@ -248,10 +248,10 @@ export default function FechamentoPage() {
               </div>
 
               <div className="flex flex-col gap-6 relative">
-                <div className="p-5 bg-muted/50 rounded-2xl border border-border text-xs text-muted-foreground leading-relaxed">
+                <div className="p-5 bg-muted/50 rounded-lg border border-border text-xs text-muted-foreground leading-relaxed">
                   <div className="flex items-center gap-2 mb-2 text-primary">
                     <Activity size={14} strokeWidth={3} />
-                    <span className="font-black uppercase tracking-widest text-[9px]">
+                    <span className="font-semibold uppercase tracking-normal text-[9px]">
                       Automação Inteligente
                     </span>
                   </div>
@@ -261,7 +261,7 @@ export default function FechamentoPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal ml-1">
                     Mês de Referência *
                   </label>
                   <div className="relative">
@@ -269,7 +269,7 @@ export default function FechamentoPage() {
                       type="month"
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="w-full bg-muted border border-border rounded-2xl px-6 py-5 text-sm font-black text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all shadow-inner uppercase tracking-tighter"
+                      className="w-full bg-muted border border-border rounded-lg px-6 py-5 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all shadow-inner uppercase tracking-tighter"
                     />
                     <Calendar
                       className="absolute right-6 top-1/2 -translate-y-1/2 text-muted-foreground/30 opacity-50"
@@ -282,14 +282,14 @@ export default function FechamentoPage() {
               <div className="flex gap-4 pt-6 border-t border-border/50 relative">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 py-5 rounded-2xl bg-muted border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-all active:scale-95"
+                  className="flex-1 py-5 rounded-lg bg-muted border border-border text-[10px] font-semibold uppercase tracking-normal text-muted-foreground hover:text-foreground transition-all "
                 >
                   Descartar
                 </button>
                 <button
                   onClick={() => generate.mutate({ period })}
                   disabled={generate.isPending}
-                  className="flex-[1.5] py-5 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 transition-all hover:brightness-110 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                  className="flex-[1.5] py-5 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-sm transition-all hover:brightness-110  disabled:opacity-50 flex items-center justify-center gap-3"
                 >
                   {generate.isPending ? (
                     <Loader2 size={16} className="animate-spin" />

@@ -49,7 +49,7 @@ export function JobsBarChart({
   if (loading) return <ChartSkeleton />;
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <div className="rounded-lg border border-border bg-card p-5">
       <h3 className="mb-6 text-sm font-semibold text-foreground">{title}</h3>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>

@@ -84,7 +84,7 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full min-w-max divide-y divide-border text-sm">
           <thead className="bg-muted/40">
             <tr>
@@ -92,7 +92,7 @@ export function DataTable<T>({
                 <th
                   key={column.id ?? String(index)}
                   className={cn(
-                    'px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide',
+                    'px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-normal',
                     column.numeric && 'text-right font-tabular',
                     (column.hideOnMobile || index >= 7) && 'hidden md:table-cell',
                     column.headerClassName,
@@ -110,7 +110,7 @@ export function DataTable<T>({
               <tr>
                 <td colSpan={columns.length} className="px-4 py-12">
                   <div className="flex flex-col items-center justify-center text-center">
-                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                       <Inbox size={24} aria-hidden="true" />
                     </div>
                     <p className="text-sm font-medium text-foreground">{emptyMessage}</p>

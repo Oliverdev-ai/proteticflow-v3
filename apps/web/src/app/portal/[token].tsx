@@ -31,7 +31,7 @@ export default function PublicPortalPage() {
     <div className="min-h-screen bg-zinc-100 py-8 px-4">
       <div className="max-w-5xl mx-auto space-y-6">
         {query.isLoading ? (
-          <section className="rounded-2xl border border-zinc-200 bg-white p-8 text-center text-zinc-600">
+          <section className="rounded-lg border border-zinc-200 bg-white p-8 text-center text-zinc-600">
             Carregando portal...
           </section>
         ) : null}
@@ -56,7 +56,7 @@ export default function PublicPortalPage() {
               <PortalEmpty />
             )}
 
-            <section className="rounded-2xl border border-zinc-200 bg-white p-5 space-y-4">
+            <section className="rounded-lg border border-zinc-200 bg-white p-5 space-y-4">
               <div>
                 <h2 className="text-lg font-semibold text-zinc-900">💬 Falar com suporte</h2>
                 <p className="text-sm text-zinc-600">

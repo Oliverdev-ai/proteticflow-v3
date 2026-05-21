@@ -183,7 +183,7 @@ export default function PricingTableDetailPage() {
 
       {/* Import result */}
       {importResult && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-2">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-2">
           <p className="text-sm text-white font-medium">Resultado do import</p>
           <p className="text-xs text-green-400">
             {importResult.created} criados · {importResult.updated} atualizados
@@ -232,7 +232,7 @@ export default function PricingTableDetailPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-800">
@@ -298,7 +298,7 @@ export default function PricingTableDetailPage() {
       {/* Bulk modal */}
       {showBulk && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm space-y-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm space-y-4">
             <h2 className="text-white font-semibold">Reajuste em lote</h2>
             <p className="text-zinc-400 text-xs">
               Aplicado a todos os itens ativos desta tabela. Use valores negativos para desconto.
@@ -345,7 +345,7 @@ export default function PricingTableDetailPage() {
       {/* Add item modal */}
       {showAddItem && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm space-y-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm space-y-4">
             <h2 className="text-white font-semibold">Novo Item</h2>
             {['name', 'code', 'category', 'priceCents', 'estimatedDays'].map((f) => (
               <div key={f}>
