@@ -140,6 +140,7 @@ export type ProactiveUserPreferences = {
   quietModeEnabled: boolean;
   quietModeStart: string;
   quietModeEnd: string;
+  sidebarCollapsed: boolean;
   channels: UserChannelsConfig;
   alertTypesMuted: ProactiveAlertType[];
   updatedAt: string;
@@ -156,6 +157,7 @@ function toPreferencesModel(row: typeof userPreferencesTable.$inferSelect): Proa
     quietModeEnabled: row.quietModeEnabled,
     quietModeStart: normalizeTime(row.quietModeStart),
     quietModeEnd: normalizeTime(row.quietModeEnd),
+    sidebarCollapsed: row.sidebarCollapsed,
     channels: normalizeChannels(row.channels),
     alertTypesMuted: ensureAlertTypeArray(row.alertTypesMuted),
     updatedAt: row.updatedAt.toISOString(),
@@ -200,6 +202,7 @@ export async function updateUserPreferences(
       quietModeEnabled: input.quietModeEnabled ?? existing.quietModeEnabled,
       quietModeStart: input.quietModeStart ?? normalizeTime(existing.quietModeStart),
       quietModeEnd: input.quietModeEnd ?? normalizeTime(existing.quietModeEnd),
+      sidebarCollapsed: input.sidebarCollapsed ?? existing.sidebarCollapsed,
       channels: nextChannels,
       alertTypesMuted: input.alertTypesMuted ?? ensureAlertTypeArray(existing.alertTypesMuted),
       updatedAt: new Date(),

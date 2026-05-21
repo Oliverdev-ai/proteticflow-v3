@@ -1,270 +1,343 @@
 import { useMemo, useState } from 'react';
-import type { ReportType, ReportPreviewResult } from '@proteticflow/shared';
+import { useSearchParams } from 'react-router-dom';
 import {
-  Loader2,
-  AlertCircle,
-  TrendingUp,
-  PieChart,
-  Info,
-  Database,
-  CheckCircle2,
+  BarChart3,
+  Download,
+  Package,
+  Receipt,
+  TrendingDown,
+  Users,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
-import { ReportList } from '../../../components/reports/report-list';
-import { ReportFilters, type ReportFiltersState } from '../../../components/reports/report-filters';
-import { ReportActions } from '../../../components/reports/report-actions';
-import { ReportPreviewTable } from '../../../components/reports/report-preview-table';
-import { ReportChart } from '../../../components/reports/report-chart';
+import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
-import { downloadBase64Artifact } from '../../../lib/pdf-export';
+import { H1, Subtitle } from '../../../components/shared/typography';
+import { KpiCard } from '../../../components/shared/kpi-card';
+import { DataTable, type ColumnDef } from '../../../components/shared/data-table';
+import { JobsBarChart, RevenueLineChart } from '../../../components/charts';
+import { cn } from '../../../lib/utils';
 
-function toIsoRange(date: string, mode: 'start' | 'end') {
-  return new Date(`${date}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();
+type ReportTab = 'production' | 'financial' | 'clients' | 'inventory';
+
+type ClientRankingRow = {
+  clientId: number;
+  clientName: string;
+  clinic: string | null;
+  status: 'active' | 'inactive';
+  totalJobs: number;
+  totalRevenueCents: number;
+  paidCents: number;
+  pendingCents: number;
+  periodTotalCents: number;
+  onTimePercent: number;
+};
+
+type TopClientRow = {
+  clientId: number;
+  clientName: string;
+  totalPaidCents: number;
+  count: number;
+};
+
+type InventoryStatus = 'critical' | 'low' | 'ok';
+
+type InventoryRow = {
+  materialId: number;
+  materialName: string;
+  code: string | null;
+  unit: string;
+  currentStock: number;
+  minStock: number;
+  maxStock: number | null;
+  averageCostCents: number;
+  status: InventoryStatus;
+  isActive: boolean;
+};
+
+const REPORT_TABS: Array<{ id: ReportTab; label: string; icon: LucideIcon }> = [
+  { id: 'production', label: 'Produção', icon: BarChart3 },
+  { id: 'financial', label: 'Financeiro', icon: Receipt },
+  { id: 'clients', label: 'Clientes', icon: Users },
+  { id: 'inventory', label: 'Estoque', icon: Package },
+];
+
+const TAB_SET = new Set<ReportTab>(REPORT_TABS.map((tab) => tab.id));
+
+function toInputDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function toIsoRange(value: string, mode: 'start' | 'end') {
+  return new Date(`${value}T${mode === 'start' ? '00:00:00' : '23:59:59'}`).toISOString();
+}
+
+function getInitialRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  return {
+    dateFrom: toInputDate(start),
+    dateTo: toInputDate(now),
+  };
+}
+
+function shortMonth(value: string) {
+  const [year = '2026', month = '1'] = value.split('-');
+  return new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(
+    new Date(Number(year), Number(month) - 1, 1),
+  );
+}
+
+function ExportButton({ href }: { href: string }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-xs font-semibold text-foreground hover:bg-muted/40"
+    >
+      <Download size={15} aria-hidden="true" />
+      CSV
+    </a>
+  );
+}
+
+function StatusBadge({ status }: { status: InventoryStatus }) {
+  const label = status === 'critical' ? 'CRÍTICO' : status === 'low' ? 'ABAIXO' : 'OK';
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide',
+        status === 'critical' && 'border-destructive/30 bg-destructive/10 text-destructive',
+        status === 'low' && 'border-warning/30 bg-warning/10 text-warning',
+        status === 'ok' && 'border-success/30 bg-success/10 text-success',
+      )}
+    >
+      {label}
+    </span>
+  );
 }
 
 export default function ReportsHubPage() {
-  const today = new Date();
-  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const range = useMemo(getInitialRange, []);
+  const [dateFrom, setDateFrom] = useState(range.dateFrom);
+  const [dateTo, setDateTo] = useState(range.dateTo);
+  const [clientPage, setClientPage] = useState(1);
 
-  const [selectedType, setSelectedType] = useState<ReportType | null>(null);
-  const [email, setEmail] = useState('');
-  const [preview, setPreview] = useState<ReportPreviewResult | null>(null);
-  const [filters, setFilters] = useState<ReportFiltersState>({
-    dateFrom: start.toISOString().slice(0, 10),
-    dateTo: today.toISOString().slice(0, 10),
-    includeCharts: true,
-    includeBreakdownByClient: true,
-    groupBy: 'month',
-  });
+  const tabParam = searchParams.get('tab');
+  const activeTab: ReportTab = TAB_SET.has(tabParam as ReportTab) ? (tabParam as ReportTab) : 'production';
 
-  const definitionsQuery = trpc.reports.listDefinitions.useQuery();
-  const utils = trpc.useUtils();
-  const sendByEmailMutation = trpc.reports.sendByEmail.useMutation();
-
-  const selectedDefinition = useMemo(
-    () => definitionsQuery.data?.find((item) => item.type === selectedType) ?? null,
-    [definitionsQuery.data, selectedType],
-  );
-
-  const requestFilters = useMemo(
+  const filters = useMemo(
     () => ({
-      dateFrom: toIsoRange(filters.dateFrom, 'start'),
-      dateTo: toIsoRange(filters.dateTo, 'end'),
-      includeCharts: filters.includeCharts,
-      includeBreakdownByClient: filters.includeBreakdownByClient,
-      groupBy: filters.groupBy,
+      dateFrom: toIsoRange(dateFrom, 'start'),
+      dateTo: toIsoRange(dateTo, 'end'),
     }),
-    [filters],
+    [dateFrom, dateTo],
   );
 
-  async function handlePreview() {
-    if (!selectedType) return;
-    const result = await utils.reports.preview.fetch({
-      type: selectedType,
-      filters: requestFilters,
-    });
-    setPreview(result);
-  }
+  const exportHref = `/api/reports/export.csv?type=${activeTab}&dateFrom=${encodeURIComponent(filters.dateFrom)}&dateTo=${encodeURIComponent(filters.dateTo)}`;
 
-  async function handlePdf() {
-    if (!selectedType) return;
-    const artifact = await utils.reports.generatePdf.fetch({
-      type: selectedType,
-      filters: requestFilters,
-    });
-    downloadBase64Artifact(artifact);
-  }
+  const productionQuery = trpc.reports.productionDashboard.useQuery(filters);
+  const financialQuery = trpc.reports.financialDashboard.useQuery(filters);
+  const clientRankingQuery = trpc.reports.clientRanking.useQuery({
+    ...filters,
+    page: clientPage,
+    pageSize: 10,
+  });
+  const inventoryQuery = trpc.reports.inventoryDashboard.useQuery(filters);
 
-  async function handleCsv() {
-    if (!selectedType) return;
-    const artifact = await utils.reports.exportCsv.fetch({
-      type: selectedType,
-      filters: requestFilters,
-    });
-    downloadBase64Artifact(artifact);
-  }
+  const topClientColumns: ColumnDef<TopClientRow>[] = [
+    { header: 'Cliente', accessor: 'clientName' },
+    { header: 'Títulos', accessor: 'count', numeric: true },
+    {
+      header: 'Recebido',
+      numeric: true,
+      cell: (row) => formatBRL(row.totalPaidCents),
+    },
+  ];
 
-  async function handleSendEmail() {
-    if (!selectedType || !email) return;
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) return;
+  const clientColumns: ColumnDef<ClientRankingRow>[] = [
+    { header: 'Cliente', accessor: 'clientName' },
+    { header: 'Clínica', accessor: (row) => row.clinic ?? '-', hideOnMobile: true },
+    { header: 'Jobs', accessor: 'totalJobs', numeric: true },
+    {
+      header: 'Receita',
+      numeric: true,
+      cell: (row) => formatBRL(row.periodTotalCents),
+    },
+    {
+      header: 'Recebido',
+      numeric: true,
+      cell: (row) => formatBRL(row.paidCents),
+    },
+    {
+      header: 'Pendente',
+      numeric: true,
+      cell: (row) => formatBRL(row.pendingCents),
+      hideOnMobile: true,
+    },
+    {
+      header: 'Pontualidade',
+      numeric: true,
+      cell: (row) => `${row.onTimePercent}%`,
+      hideOnMobile: true,
+    },
+  ];
 
-    setEmail(normalizedEmail);
-    await sendByEmailMutation.mutateAsync({
-      type: selectedType,
-      filters: requestFilters,
-      to: normalizedEmail,
-      sendCsv: true,
-      sendPdf: true,
-    });
-  }
+  const inventoryColumns: ColumnDef<InventoryRow>[] = [
+    { header: 'Material', accessor: 'materialName' },
+    { header: 'Código', accessor: (row) => row.code ?? '-', hideOnMobile: true },
+    {
+      header: 'Status',
+      cell: (row) => <StatusBadge status={row.status} />,
+    },
+    { header: 'Atual', accessor: 'currentStock', numeric: true },
+    { header: 'Mínimo', accessor: 'minStock', numeric: true },
+    {
+      header: 'Máximo',
+      numeric: true,
+      cell: (row) => row.maxStock ?? '-',
+      hideOnMobile: true,
+    },
+    { header: 'Un.', accessor: 'unit', hideOnMobile: true },
+  ];
 
   return (
-    <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-7xl mx-auto pb-16">
-      {/* Header Area */}
-      <ScaleIn className="flex flex-wrap items-center justify-between gap-6">
-        <div className="flex flex-col gap-1">
-          <H1 className="tracking-tight">Inteligência de BI</H1>
-          <Subtitle>Hub consolidado para auditoria, performance e exportação de dados</Subtitle>
+    <PageTransition className="mx-auto flex h-full max-w-7xl flex-col gap-6 overflow-auto p-4 pb-16 md:p-1">
+      <ScaleIn className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <H1>Relatórios</H1>
+          <Subtitle>Produção, financeiro, clientes e estoque com dados reais do tenant.</Subtitle>
         </div>
-
-        <div className="flex items-center gap-4 px-6 py-4 bg-primary/[0.03] border border-primary/20 rounded-3xl shadow-inner">
-          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
-            <Database size={20} strokeWidth={2.5} />
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-              Status do Vault
-            </span>
-            <span className="text-xs font-black text-foreground uppercase tracking-tight flex items-center gap-1.5 leading-none">
-              Sincronizado
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </span>
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(event) => {
+              setClientPage(1);
+              setDateFrom(event.target.value);
+            }}
+            className="input-field h-10 w-[150px]"
+          />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(event) => {
+              setClientPage(1);
+              setDateTo(event.target.value);
+            }}
+            className="input-field h-10 w-[150px]"
+          />
+          <ExportButton href={exportHref} />
         </div>
       </ScaleIn>
 
-      {/* Global Filter Bar */}
-      <ScaleIn delay={0.1}>
-        <ReportFilters value={filters} onChange={setFilters} />
-      </ScaleIn>
+      <div className="flex flex-wrap gap-2 border-b border-border">
+        {REPORT_TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setSearchParams({ tab: tab.id })}
+              className={cn(
+                'inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors',
+                active
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Icon size={16} aria-hidden="true" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Error & Loading States */}
-      {definitionsQuery.error && (
-        <ScaleIn className="premium-card p-8 border-destructive/20 bg-destructive/[0.02] flex items-center gap-4">
-          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-inner border border-destructive/20">
-            <AlertCircle size={24} strokeWidth={2.5} />
+      {activeTab === 'production' && (
+        <div className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-4">
+            <KpiCard label="Trabalhos" value={productionQuery.data?.summary.totalJobs ?? 0} loading={productionQuery.isLoading} icon={BarChart3} />
+            <KpiCard label="Entregues" value={productionQuery.data?.summary.deliveredJobs ?? 0} loading={productionQuery.isLoading} icon={Package} />
+            <KpiCard label="Atrasados" value={productionQuery.data?.summary.overdueJobs ?? 0} loading={productionQuery.isLoading} icon={TrendingDown} />
+            <KpiCard label="Valor em OS" value={productionQuery.data?.summary.totalRevenueCents ?? 0} format="currency" loading={productionQuery.isLoading} icon={Receipt} />
           </div>
-          <div className="flex flex-col gap-0.5">
-            <Large className="text-destructive font-black tracking-tight">
-              Falha crítica nas definições
-            </Large>
-            <Muted>Erro técnico: {definitionsQuery.error.message}</Muted>
-          </div>
-        </ScaleIn>
+          <JobsBarChart
+            title="Trabalhos por status"
+            data={productionQuery.data?.statusBuckets ?? []}
+            loading={productionQuery.isLoading}
+          />
+        </div>
       )}
 
-      {definitionsQuery.isLoading && (
-        <ScaleIn className="premium-card p-24 flex flex-col items-center justify-center gap-6">
-          <div className="relative">
-            <Loader2 className="animate-spin text-primary/30" size={64} strokeWidth={1.5} />
-            <TrendingUp
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary"
-              size={24}
+      {activeTab === 'financial' && (
+        <div className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-4">
+            <KpiCard label="Receitas" value={financialQuery.data?.summary.totalCreditsCents ?? 0} format="currency" loading={financialQuery.isLoading} icon={Receipt} />
+            <KpiCard label="Despesas" value={financialQuery.data?.summary.totalDebitsCents ?? 0} format="currency" loading={financialQuery.isLoading} icon={TrendingDown} />
+            <KpiCard label="Resultado" value={financialQuery.data?.summary.netCents ?? 0} format="currency" loading={financialQuery.isLoading} icon={BarChart3} />
+            <KpiCard label="A receber" value={financialQuery.data?.summary.pendingCreditsCents ?? 0} format="currency" loading={financialQuery.isLoading} icon={Users} />
+          </div>
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <RevenueLineChart
+              title="Fluxo de caixa"
+              data={(financialQuery.data?.cashFlow ?? []).map((row) => ({
+                label: shortMonth(row.label),
+                value: row.value,
+                comparison: row.comparison,
+              }))}
+              loading={financialQuery.isLoading}
+              valueFormatter={(value) => formatBRL(Number(value))}
+            />
+            <DataTable
+              columns={topClientColumns}
+              data={financialQuery.data?.topClients ?? []}
+              rowKey={(row) => row.clientId}
+              loading={financialQuery.isLoading}
+              emptyMessage="Sem recebimentos pagos no período."
+              emptyAction={<ExportButton href={exportHref} />}
+              density="compact"
             />
           </div>
-          <Muted className="font-black uppercase tracking-[0.3em] animate-pulse">
-            Compilando glossário de métricas...
-          </Muted>
-        </ScaleIn>
-      )}
-
-      {/* Main Analysis Hub */}
-      {!definitionsQuery.isLoading && !definitionsQuery.error && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Sidebar: Report Selection */}
-          <div className="lg:col-span-4 sticky top-0">
-            <ScaleIn delay={0.2}>
-              <ReportList
-                reports={definitionsQuery.data ?? []}
-                selectedType={selectedType}
-                onSelect={setSelectedType}
-              />
-            </ScaleIn>
-          </div>
-
-          {/* Main Area: Actions & Visualization */}
-          <div className="lg:col-span-8 flex flex-col gap-8">
-            <ScaleIn delay={0.3}>
-              <ReportActions
-                disabled={!selectedType || !selectedDefinition?.enabled}
-                email={email}
-                onEmailChange={setEmail}
-                onPreview={handlePreview}
-                onGeneratePdf={handlePdf}
-                onExportCsv={handleCsv}
-                onSendByEmail={handleSendEmail}
-                isSending={sendByEmailMutation.isPending}
-              />
-            </ScaleIn>
-
-            {/* Dynamic Content: Charts & Tables */}
-            <div className="flex flex-col gap-8">
-              {preview ? (
-                <>
-                  {filters.includeCharts && (
-                    <ScaleIn delay={0.4} key={`chart-${selectedType}`}>
-                      <ReportChart preview={preview} />
-                    </ScaleIn>
-                  )}
-                  <ScaleIn delay={0.5} key={`table-${selectedType}`}>
-                    <ReportPreviewTable preview={preview} />
-                  </ScaleIn>
-                </>
-              ) : (
-                <ScaleIn
-                  delay={0.4}
-                  className="premium-card p-24 flex flex-col items-center justify-center text-center opacity-40 border-dashed border-2 bg-muted/20"
-                >
-                  <div className="w-20 h-20 flex items-center justify-center rounded-[32px] bg-muted border border-border text-muted-foreground/30 ring-8 ring-muted/10 mb-6">
-                    <PieChart size={32} strokeWidth={2.5} />
-                  </div>
-                  <div className="text-center space-y-2">
-                    <p className="text-sm font-black text-foreground uppercase tracking-widest leading-none">
-                      Análise Visual Pendente
-                    </p>
-                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest max-w-xs opacity-60">
-                      Selecione um protoclo e acione o preview para carregar a visão consolidada.
-                    </p>
-                  </div>
-                </ScaleIn>
-              )}
-            </div>
-
-            {/* Feedback Messages */}
-            <div className="relative">
-              {sendByEmailMutation.isSuccess && (
-                <ScaleIn className="p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-xl shadow-emerald-500/5 animate-bounce">
-                  <CheckCircle2 className="text-emerald-500" size={18} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">
-                    Relatório enviado com sucesso para {email}
-                  </span>
-                </ScaleIn>
-              )}
-              {sendByEmailMutation.error && (
-                <ScaleIn className="p-5 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center gap-3 shadow-xl shadow-destructive/5">
-                  <AlertCircle className="text-destructive" size={18} strokeWidth={3} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-destructive">
-                    Falha crítica no envio: {sendByEmailMutation.error.message}
-                  </span>
-                </ScaleIn>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
-      {/* Footer Info */}
-      {!definitionsQuery.isLoading && (
-        <ScaleIn
-          delay={0.6}
-          className="bg-muted/30 border border-border/50 rounded-[32px] p-8 flex items-start gap-6"
-        >
-          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0">
-            <Info size={24} strokeWidth={2.5} />
+      {activeTab === 'clients' && (
+        <DataTable
+          columns={clientColumns}
+          data={clientRankingQuery.data?.data ?? []}
+          rowKey={(row) => row.clientId}
+          loading={clientRankingQuery.isLoading}
+          emptyMessage="Nenhum cliente com movimentação no período."
+          emptyAction={<ExportButton href={exportHref} />}
+          density="comfortable"
+          pagination={{
+            page: clientRankingQuery.data?.page ?? clientPage,
+            pageSize: clientRankingQuery.data?.pageSize ?? 10,
+            total: clientRankingQuery.data?.total ?? 0,
+            onChange: setClientPage,
+          }}
+        />
+      )}
+
+      {activeTab === 'inventory' && (
+        <div className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-4">
+            <KpiCard label="Materiais" value={inventoryQuery.data?.summary.totalMaterials ?? 0} loading={inventoryQuery.isLoading} icon={Package} />
+            <KpiCard label="Crítico" value={inventoryQuery.data?.summary.criticalCount ?? 0} loading={inventoryQuery.isLoading} icon={TrendingDown} />
+            <KpiCard label="Abaixo" value={inventoryQuery.data?.summary.lowCount ?? 0} loading={inventoryQuery.isLoading} icon={Receipt} />
+            <KpiCard label="OK" value={inventoryQuery.data?.summary.okCount ?? 0} loading={inventoryQuery.isLoading} icon={BarChart3} />
           </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-black text-foreground uppercase tracking-tight leading-none">
-              Protocolo de Segurança e Dados
-            </span>
-            <p className="text-[11px] text-muted-foreground leading-relaxed uppercase tracking-tight font-bold opacity-60">
-              Todos os relatórios gerados respeitam o isolamento de tenant e criptografia em repouso
-              do ProteticFlow V3. Exportações em CSV seguem o padrão UTF-8 para compatibilidade
-              máxima com Excel e Google Sheets.
-            </p>
-          </div>
-        </ScaleIn>
+          <DataTable
+            columns={inventoryColumns}
+            data={inventoryQuery.data?.materials ?? []}
+            rowKey={(row) => row.materialId}
+            loading={inventoryQuery.isLoading}
+            emptyMessage="Nenhum material cadastrado."
+            emptyAction={<ExportButton href={exportHref} />}
+            density="compact"
+          />
+        </div>
       )}
     </PageTransition>
   );

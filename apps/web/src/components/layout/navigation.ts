@@ -31,6 +31,8 @@ export type NavItem = {
   module: string;
   icon: LucideIcon;
   keywords?: string[];
+  disabled?: boolean;
+  disabledReason?: string;
 };
 
 export type NavGroup = {
@@ -61,6 +63,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Agenda',     href: '/agenda',    module: 'agenda',     icon: Calendar,   keywords: ['eventos'] },
       { label: 'Entregas',   href: '/entregas',  module: 'deliveries', icon: Truck,      keywords: ['roteiro'] },
       { label: 'Scans 3D',   href: '/scans',     module: 'scans',      icon: Scan,       keywords: ['stl', 'xml'] },
+      { label: 'Qualidade',  href: '/qualidade', module: 'jobs',       icon: Shield,     disabled: true, disabledReason: 'Em breve' },
     ],
   },
   {
@@ -71,6 +74,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Clientes',         href: '/clientes',  module: 'clients',   icon: Users,         keywords: ['clinicas', 'dentistas'] },
       { label: 'Tabela de Preços', href: '/precos',    module: 'pricing',   icon: FileSpreadsheet, keywords: ['preco', 'tabela'] },
       { label: 'Simulador',        href: '/simulador', module: 'simulator', icon: Calculator },
+      { label: 'Portal',           href: '/portal-clientes', module: 'clients', icon: CreditCard, disabled: true, disabledReason: 'Em breve' },
     ],
   },
   {
@@ -80,9 +84,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Contas',      href: '/financeiro',             module: 'financial', icon: DollarSign,   keywords: ['receber', 'pagar', 'fluxo'] },
       { label: 'Fiscal',      href: '/fiscal/boletos',         module: 'fiscal',    icon: Receipt,      keywords: ['boleto', 'nfse'] },
-      { label: 'Faturamento', href: '/relatorios/faturamento', module: 'reports',   icon: BarChart3,    keywords: ['fiscal', 'receita'] },
-      { label: 'DRE',         href: '/relatorios/dre',         module: 'reports',   icon: TrendingDown, keywords: ['resultado'] },
-      { label: 'Curva ABC',   href: '/relatorios/curva-abc',   module: 'reports',   icon: BarChart3,    keywords: ['pareto'] },
+      { label: 'Conciliação', href: '/conciliacao',            module: 'financial', icon: Banknote,     disabled: true, disabledReason: 'Em breve' },
     ],
   },
   {
@@ -93,6 +95,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Funcionários',       href: '/funcionarios', module: 'employees',   icon: UserCog,  keywords: ['equipe'] },
       { label: 'Folha de Pagamento', href: '/payroll',      module: 'payroll',     icon: Banknote, keywords: ['holerite'] },
       { label: 'Comissões',          href: '/comissoes',    module: 'commissions', icon: Coins },
+      { label: 'Escalas',            href: '/escalas',      module: 'employees',   icon: Calendar, disabled: true, disabledReason: 'Em breve' },
     ],
   },
   {
@@ -100,8 +103,10 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Relatórios',
     icon: BarChart3,
     items: [
-      { label: 'Relatórios', href: '/relatorios',          module: 'reports', icon: BarChart3,  keywords: ['pdf'] },
-      { label: 'Despesas',   href: '/relatorios/despesas', module: 'reports', icon: TrendingDown, keywords: ['custos'] },
+      { label: 'Produção',   href: '/relatorios?tab=production', module: 'reports', icon: BarChart3, keywords: ['jobs', 'producao'] },
+      { label: 'Financeiro', href: '/relatorios?tab=financial',  module: 'reports', icon: TrendingDown, keywords: ['receita', 'custos'] },
+      { label: 'Clientes',   href: '/relatorios?tab=clients',    module: 'reports', icon: Users, keywords: ['ranking'] },
+      { label: 'Estoque',    href: '/relatorios?tab=inventory',  module: 'reports', icon: Package, keywords: ['materiais'] },
     ],
   },
   {
@@ -111,6 +116,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Materiais', href: '/estoque',  module: 'inventory', icon: Package,      keywords: ['materiais'] },
       { label: 'Compras',   href: '/compras',  module: 'inventory', icon: ShoppingCart, keywords: ['fornecedor', 'pedido', 'oc'] },
+      { label: 'Inventário', href: '/inventario', module: 'inventory', icon: FileSpreadsheet, disabled: true, disabledReason: 'Em breve' },
     ],
   },
   {
@@ -122,6 +128,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Plano',         href: '/planos',          module: 'settings', icon: CreditCard, keywords: ['assinatura'] },
       { label: 'Suporte',       href: '/suporte/tickets', module: 'support',  icon: Headphones, keywords: ['tickets', 'feedback'] },
       { label: 'Auditoria',     href: '/auditoria',       module: 'settings', icon: Shield },
+      { label: 'Integrações',   href: '/integracoes',     module: 'settings', icon: Sparkles, disabled: true, disabledReason: 'Em breve' },
     ],
   },
 ];

@@ -1,4 +1,5 @@
 import { router, reportsAdminProcedure, reportsProcedure } from '../../trpc/trpc.js';
+import { z } from 'zod';
 import {
   reportPreviewSchema,
   reportGeneratePdfSchema,
@@ -30,6 +31,16 @@ type ReportFilters = {
   includeCharts?: boolean;
   includeBreakdownByClient?: boolean;
 };
+
+const reportDashboardFiltersSchema = z.object({
+  dateFrom: z.string().datetime(),
+  dateTo: z.string().datetime(),
+});
+
+const clientRankingFiltersSchema = reportDashboardFiltersSchema.extend({
+  page: z.number().int().positive().default(1),
+  pageSize: z.number().int().positive().max(100).default(10),
+});
 
 function sanitizeFilters(filters: {
   dateFrom: string;
@@ -92,6 +103,22 @@ export const reportsRouter = router({
     .query(({ ctx, input }) =>
       reportsService.exportCsv(ctx.tenantId!, input.type, sanitizeFilters(input.filters), ctx.user!.role),
     ),
+
+  productionDashboard: reportsProcedure
+    .input(reportDashboardFiltersSchema)
+    .query(({ ctx, input }) => reportsService.getProductionDashboard(ctx.tenantId!, input)),
+
+  financialDashboard: reportsProcedure
+    .input(reportDashboardFiltersSchema)
+    .query(({ ctx, input }) => reportsService.getFinancialDashboard(ctx.tenantId!, input)),
+
+  clientRanking: reportsProcedure
+    .input(clientRankingFiltersSchema)
+    .query(({ ctx, input }) => reportsService.getClientRankingDashboard(ctx.tenantId!, input)),
+
+  inventoryDashboard: reportsProcedure
+    .input(reportDashboardFiltersSchema)
+    .query(({ ctx, input }) => reportsService.getInventoryDashboard(ctx.tenantId!, input)),
 
   sendByEmail: reportsAdminProcedure
     .input(reportSendByEmailSchema)

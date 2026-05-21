@@ -49,6 +49,7 @@ export const userPreferences = pgTable('user_preferences', {
   quietModeEnabled: boolean('quiet_mode_enabled').notNull().default(false),
   quietModeStart: text('quiet_mode_start').notNull().default('22:00'),
   quietModeEnd: text('quiet_mode_end').notNull().default('07:00'),
+  sidebarCollapsed: boolean('sidebar_collapsed').notNull().default(false),
   channels: jsonb('channels')
     .$type<UserChannelsConfig>()
     .notNull()

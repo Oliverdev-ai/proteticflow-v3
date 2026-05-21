@@ -46,7 +46,27 @@ function NavItemRow({
   nested?: boolean;
 }) {
   const Icon = item.icon;
-  const isDashboard = item.href === '/';
+  const itemPath = item.href.split('?')[0] ?? item.href;
+  const isDashboard = itemPath === '/';
+
+  if (item.disabled) {
+    return (
+      <div
+        title={item.disabledReason ?? 'Em breve'}
+        className={cn(
+          'group/item relative flex cursor-not-allowed items-center gap-3 rounded-lg text-[13px] font-medium opacity-50',
+          collapsed ? 'justify-center px-0 py-2.5 mx-1' : 'px-3 py-2',
+          nested && !collapsed ? 'pl-8' : '',
+          'text-white/45',
+        )}
+        aria-disabled="true"
+      >
+        <Icon size={collapsed ? 17 : 15} className="shrink-0 text-white/35" />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+        {collapsed && <span className="sr-only">{item.label}</span>}
+      </div>
+    );
+  }
 
   return (
     <NavLink
@@ -114,14 +134,14 @@ function NavGroupSection({
   const [open, setOpen] = useLocalStorage(`${STORAGE_KEY_PREFIX}${group.id}`, true);
   const { pathname } = useLocation();
   const Icon = group.icon;
-  const visibleItems = group.items.filter((item) => hasAccess(item.module));
+  const visibleItems = group.items.filter((item) => item.disabled || hasAccess(item.module));
 
   if (visibleItems.length === 0) return null;
 
-  const isAnyActive = visibleItems.some((item) =>
-    pathname === item.href ||
-    (item.href !== '/' && pathname.startsWith(item.href + '/')),
-  );
+  const isAnyActive = visibleItems.some((item) => {
+    const itemPath = item.href.split('?')[0] ?? item.href;
+    return pathname === itemPath || (itemPath !== '/' && pathname.startsWith(`${itemPath}/`));
+  });
 
   if (collapsed) {
     return (

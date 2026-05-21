@@ -51,6 +51,7 @@ export const updateUserPreferencesSchema = z.object({
   quietModeEnabled: z.boolean().optional(),
   quietModeStart: hhmmSchema.optional(),
   quietModeEnd: hhmmSchema.optional(),
+  sidebarCollapsed: z.boolean().optional(),
   channels: proactiveChannelsSchema.partial().optional(),
   alertTypesMuted: z.array(proactiveAlertTypeSchema).optional(),
 });

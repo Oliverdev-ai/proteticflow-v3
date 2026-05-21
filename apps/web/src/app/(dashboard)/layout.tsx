@@ -13,13 +13,30 @@ import { useLocalStorage } from '../../hooks/use-local-storage';
 
 export function DashboardLayout() {
   const { isAuthenticated, isAuthPending, isAuthResolved, user } = useAuth();
-  const [collapsed, setCollapsed] = useLocalStorage('ptf-sidebar-collapsed', false);
+  const [fallbackCollapsed, setFallbackCollapsed] = useLocalStorage('ptf-sidebar-collapsed', false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const utils = trpc.useUtils();
 
   const { data: currentTenant, isLoading: isTenantLoading } = trpc.tenant.getCurrent.useQuery(
     undefined,
     { enabled: Boolean(user?.activeTenantId) },
   );
+  const { data: userPreferences } = trpc.notification.getUserPreferences.useQuery(undefined, {
+    enabled: Boolean(user?.activeTenantId),
+    staleTime: 5 * 60 * 1000,
+  });
+  const updateUserPreferences = trpc.notification.updateUserPreferences.useMutation({
+    onSuccess: (data) => {
+      utils.notification.getUserPreferences.setData(undefined, data);
+    },
+  });
+
+  const collapsed = userPreferences?.sidebarCollapsed ?? fallbackCollapsed;
+
+  function setSidebarCollapsed(next: boolean) {
+    setFallbackCollapsed(next);
+    updateUserPreferences.mutate({ sidebarCollapsed: next });
+  }
 
   if (!isAuthResolved && isAuthPending) {
     return (
@@ -50,13 +67,13 @@ export function DashboardLayout() {
         collapsed={collapsed}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
+        onToggleCollapse={() => setSidebarCollapsed(!collapsed)}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
         <Header
           onToggleMobileSidebar={() => setMobileOpen(true)}
-          onToggleSidebar={() => setCollapsed((v) => !v)}
+          onToggleSidebar={() => setSidebarCollapsed(!collapsed)}
         />
         <main className="flex-1 overflow-hidden">
           <SimpleBar className="h-full">
