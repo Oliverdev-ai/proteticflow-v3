@@ -1,6 +1,6 @@
 export const copy = {
   loading: {
-    jobs: 'Carregando trabalhos...',
+    jobs: 'Carregando trabalhos…',
     clients: 'Carregando clientes...',
   },
   empty: {

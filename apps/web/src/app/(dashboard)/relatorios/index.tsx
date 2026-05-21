@@ -227,7 +227,7 @@ export default function ReportsHubPage() {
             {/* Feedback Messages */}
             <div className="relative">
               {sendByEmailMutation.isSuccess && (
-                <ScaleIn className="p-5 bg-success/10 border border-success/20 rounded-lg flex items-center gap-3 shadow-xl shadow-sm animate-bounce">
+                <ScaleIn className="p-5 bg-success/10 border border-success/20 rounded-lg flex items-center gap-3 shadow-sm animate-bounce">
                   <CheckCircle2 className="text-success" size={18} strokeWidth={3} />
                   <span className="text-[10px] font-semibold uppercase tracking-normal text-success">
                     Relatório enviado com sucesso para {email}
@@ -235,7 +235,7 @@ export default function ReportsHubPage() {
                 </ScaleIn>
               )}
               {sendByEmailMutation.error && (
-                <ScaleIn className="p-5 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3 shadow-xl shadow-sm">
+                <ScaleIn className="p-5 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3 shadow-sm">
                   <AlertCircle className="text-destructive" size={18} strokeWidth={3} />
                   <span className="text-[10px] font-semibold uppercase tracking-normal text-destructive">
                     Falha crítica no envio: {sendByEmailMutation.error.message}
@@ -260,7 +260,7 @@ export default function ReportsHubPage() {
             <span className="text-xs font-semibold text-foreground uppercase tracking-tight leading-none">
               Protocolo de Segurança e Dados
             </span>
-            <p className="text-[11px] text-muted-foreground leading-relaxed uppercase tracking-tight font-bold opacity-60">
+            <p className="text-[11px] text-muted-foreground leading-relaxed uppercase tracking-tight font-semibold opacity-60">
               Todos os relatórios gerados respeitam o isolamento de tenant e criptografia em repouso
               do ProteticFlow V3. Exportações em CSV seguem o padrão UTF-8 para compatibilidade
               máxima com Excel e Google Sheets.
