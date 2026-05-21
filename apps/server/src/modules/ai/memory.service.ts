@@ -1,8 +1,15 @@
-import { and, eq, gt, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, isNull, ne, or, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { aiMemory } from '../../db/schema/ai-memory.js';
 
 export const MAX_MEMORY_KEYS = 50;
+export const DEFAULT_MEMORY_TTL_DAYS = 365;
+
+function defaultExpiresAt(source: 'assistant' | 'user_explicit', expiresAt?: Date): Date | null {
+  if (expiresAt) return expiresAt;
+  if (source === 'user_explicit') return null;
+  return new Date(Date.now() + DEFAULT_MEMORY_TTL_DAYS * 86_400_000);
+}
 
 export async function getMemory(
   tenantId: number,
@@ -29,26 +36,74 @@ export async function setMemory(
   source: 'assistant' | 'user_explicit' = 'assistant',
   expiresAt?: Date,
 ): Promise<void> {
-  await db
-    .insert(aiMemory)
-    .values({
-      tenantId,
-      userId,
-      key,
-      value,
-      source,
-      expiresAt: expiresAt ?? null,
-      updatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: [aiMemory.tenantId, aiMemory.userId, aiMemory.key],
-      set: {
+  const resolvedExpiresAt = defaultExpiresAt(source, expiresAt);
+  await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: aiMemory.id })
+      .from(aiMemory)
+      .where(and(
+        eq(aiMemory.tenantId, tenantId),
+        eq(aiMemory.userId, userId),
+        eq(aiMemory.key, key),
+      ))
+      .limit(1);
+
+    if (!existing) {
+      const [countRow] = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(aiMemory)
+        .where(and(
+          eq(aiMemory.tenantId, tenantId),
+          eq(aiMemory.userId, userId),
+        ));
+
+      if (Number(countRow?.count ?? 0) >= MAX_MEMORY_KEYS) {
+        const [evictionCandidate] = await tx
+          .select({ id: aiMemory.id })
+          .from(aiMemory)
+          .where(and(
+            eq(aiMemory.tenantId, tenantId),
+            eq(aiMemory.userId, userId),
+            ne(aiMemory.source, 'user_explicit'),
+          ))
+          .orderBy(asc(aiMemory.updatedAt), asc(aiMemory.id))
+          .limit(1);
+
+        if (!evictionCandidate) {
+          throw new Error('Limite de memoria IA atingido');
+        }
+
+        await tx
+          .delete(aiMemory)
+          .where(and(
+            eq(aiMemory.tenantId, tenantId),
+            eq(aiMemory.userId, userId),
+            eq(aiMemory.id, evictionCandidate.id),
+          ));
+      }
+    }
+
+    await tx
+      .insert(aiMemory)
+      .values({
+        tenantId,
+        userId,
+        key,
         value,
         source,
-        expiresAt: expiresAt ?? null,
+        expiresAt: resolvedExpiresAt,
         updatedAt: new Date(),
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: [aiMemory.tenantId, aiMemory.userId, aiMemory.key],
+        set: {
+          value,
+          source,
+          expiresAt: resolvedExpiresAt,
+          updatedAt: new Date(),
+        },
+      });
+  });
 }
 
 export async function deleteMemoryKey(tenantId: number, userId: number, key: string): Promise<void> {

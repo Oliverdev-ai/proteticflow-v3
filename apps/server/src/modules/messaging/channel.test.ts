@@ -42,6 +42,7 @@ function createRecipient(overrides?: Partial<Recipient>): Recipient {
     name: 'Usuário',
     email: 'user@test.com',
     phone: '5511999999999',
+    whatsappOptIn: true,
     preferences: {
       userId: 1,
       tenantId: 1,
@@ -207,6 +208,28 @@ describe('WhatsAppChannel', () => {
     });
 
     await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(true);
+  });
+
+  it('canSend retorna false quando WhatsApp nao tem opt-in explicito', async () => {
+    env.WHATSAPP_PROVIDER = 'blip';
+    env.BLIP_API_TOKEN = 'blip-token-test';
+    env.BLIP_FROM_NUMBER = '5511999990000';
+
+    const channel = new WhatsAppChannel();
+    const recipient = createRecipient({
+      whatsappOptIn: false,
+      preferences: {
+        ...createRecipient().preferences,
+        channels: {
+          push: false,
+          email: false,
+          whatsapp: true,
+          in_app: false,
+        },
+      },
+    });
+
+    await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(false);
   });
 
   it('send com provider=blip chama sendBlipWhatsApp com E.164 normalizado', async () => {

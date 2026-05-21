@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { PlanTier, ProactiveAlertType } from '@proteticflow/shared';
 import { PLAN_LIMITS } from '@proteticflow/shared';
 import { db } from '../../db/index.js';
@@ -30,6 +30,7 @@ export type Recipient = {
   name: string;
   email: string | null;
   phone: string | null;
+  whatsappOptIn: boolean;
   preferences: ProactiveUserPreferences;
 };
 
@@ -208,6 +209,7 @@ export class WhatsAppChannel implements MessageChannel {
   async canSend(ctx: TenantCtx, to: Recipient, msg: OutboundMessage): Promise<boolean> {
     if (!isChannelEnabled(to.preferences, this.name)) return false;
     if (isAlertMuted(to.preferences, msg.alertType)) return false;
+    if (!to.whatsappOptIn) return false;
     if (!to.phone) return false;
 
     if (env.WHATSAPP_PROVIDER !== 'mock') {
@@ -265,18 +267,4 @@ export function createChannelRouter(): ChannelRouter {
     whatsapp: new WhatsAppChannel(),
   };
   return new ChannelRouter(channels);
-}
-
-export async function canSendUrgentFallback(
-  ctx: TenantCtx,
-  to: Recipient,
-): Promise<boolean> {
-  const [notificationCount] = await db
-    .select({ value: sql<number>`count(*)::int` })
-    .from(notifications)
-    .where(and(
-      eq(notifications.tenantId, ctx.tenantId),
-      eq(notifications.userId, to.userId),
-    ));
-  return (notificationCount?.value ?? 0) >= 0;
 }
