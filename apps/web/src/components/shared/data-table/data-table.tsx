@@ -31,7 +31,7 @@ function getWidthStyle<T>(column: Column<T>): { width?: string } {
   return { width: column.width };
 }
 
-export function getNextSort(currentSort: DataTableSort | undefined, columnId: string): DataTableSort {
+function getNextSort(currentSort: DataTableSort | undefined, columnId: string): DataTableSort {
   if (!currentSort || currentSort.id !== columnId) {
     return { id: columnId, dir: 'asc' };
   }
@@ -39,7 +39,7 @@ export function getNextSort(currentSort: DataTableSort | undefined, columnId: st
   return { id: columnId, dir: currentSort.dir === 'asc' ? 'desc' : 'asc' };
 }
 
-export function runRowClickByKey<T>(
+function runRowClickByKey<T>(
   event: Pick<KeyboardEvent<HTMLTableRowElement>, 'key' | 'preventDefault'>,
   row: T,
   onRowClick?: (value: T) => void,

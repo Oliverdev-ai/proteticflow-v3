@@ -1,3 +1,4 @@
+/** @deprecated Migrar para ./data-table. Brief 03-04. */
 import type { ReactNode } from 'react';
 import { Inbox } from 'lucide-react';
 import { cn } from '../../lib/utils';
