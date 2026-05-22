@@ -31,6 +31,7 @@ export function canTransition(from: JobStatus, to: JobStatus): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
+/** @deprecated Use JOB_STATUS_CHIP from ./job-status-chip */
 export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   pending: 'Aguardando',
   in_progress: 'Em Producao',
@@ -42,6 +43,7 @@ export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   cancelled: 'Cancelado',
 };
 
+/** @deprecated Use JOB_STATUS_CHIP from ./job-status-chip */
 export const JOB_STATUS_COLORS: Record<JobStatus, string> = {
   pending: 'slate',
   in_progress: 'blue',
