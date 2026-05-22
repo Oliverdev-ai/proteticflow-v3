@@ -1,4 +1,4 @@
-import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not, desc } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, sql, count, gt, lt, inArray, not, asc, desc } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { jobs, jobItems, jobLogs, jobStages, jobPhotos } from '../../db/schema/jobs.js';
 import { clients } from '../../db/schema/clients.js';
@@ -372,6 +372,10 @@ export async function createJob(tenantId: number, input: CreateJobInput, created
 }
 
 export async function listJobs(tenantId: number, filters: ListJobsInput) {
+  const sortBy = filters.sortBy ?? 'deadline';
+  const sortDir = filters.sortDir ?? 'asc';
+  const isAsc = sortDir === 'asc';
+  const clientSortExpr = sql<string>`COALESCE(${clients.name}, '')`;
   const conditions = [
     eq(jobs.tenantId, tenantId),
     isNull(jobs.deletedAt),
@@ -379,7 +383,6 @@ export async function listJobs(tenantId: number, filters: ListJobsInput) {
 
   if (filters.status) conditions.push(eq(jobs.status, filters.status));
   if (filters.clientId) conditions.push(eq(jobs.clientId, filters.clientId));
-  if (filters.cursor) conditions.push(gt(jobs.id, filters.cursor));
   if (filters.search) {
     const term = `%${filters.search}%`;
     conditions.push(or(ilike(jobs.code, term), ilike(jobs.patientName, term))!);
@@ -389,6 +392,79 @@ export async function listJobs(tenantId: number, filters: ListJobsInput) {
     conditions.push(isNull(jobs.suspendedAt));
     conditions.push(not(inArray(jobs.status, [...NON_ACTIVE_JOB_STATUSES])));
   }
+
+  if (filters.cursor) {
+    const [cursorRow] = await db
+      .select({
+        id: jobs.id,
+        code: jobs.code,
+        totalCents: jobs.totalCents,
+        deadline: jobs.deadline,
+        clientName: clients.name,
+      })
+      .from(jobs)
+      .leftJoin(clients, eq(jobs.clientId, clients.id))
+      .where(and(
+        eq(jobs.tenantId, tenantId),
+        eq(jobs.id, filters.cursor),
+        isNull(jobs.deletedAt),
+      ))
+      .limit(1);
+
+    if (cursorRow) {
+      const idTieBreaker = isAsc ? gt(jobs.id, cursorRow.id) : lt(jobs.id, cursorRow.id);
+
+      switch (sortBy) {
+        case 'code': {
+          const codeCompare = isAsc ? gt(jobs.code, cursorRow.code) : lt(jobs.code, cursorRow.code);
+          conditions.push(or(codeCompare, and(eq(jobs.code, cursorRow.code), idTieBreaker))!);
+          break;
+        }
+        case 'client': {
+          const cursorClientName = cursorRow.clientName ?? '';
+          const clientCompare = isAsc
+            ? sql<boolean>`COALESCE(${clients.name}, '') > ${cursorClientName}`
+            : sql<boolean>`COALESCE(${clients.name}, '') < ${cursorClientName}`;
+          const clientEqual = sql<boolean>`COALESCE(${clients.name}, '') = ${cursorClientName}`;
+          conditions.push(or(clientCompare, and(clientEqual, idTieBreaker))!);
+          break;
+        }
+        case 'value': {
+          const valueCompare = isAsc
+            ? gt(jobs.totalCents, cursorRow.totalCents)
+            : lt(jobs.totalCents, cursorRow.totalCents);
+          conditions.push(or(valueCompare, and(eq(jobs.totalCents, cursorRow.totalCents), idTieBreaker))!);
+          break;
+        }
+        case 'deadline':
+        default: {
+          const deadlineCompare = isAsc
+            ? gt(jobs.deadline, cursorRow.deadline)
+            : lt(jobs.deadline, cursorRow.deadline);
+          conditions.push(or(deadlineCompare, and(eq(jobs.deadline, cursorRow.deadline), idTieBreaker))!);
+          break;
+        }
+      }
+    }
+  }
+
+  let primaryOrder = isAsc ? asc(jobs.deadline) : desc(jobs.deadline);
+  switch (sortBy) {
+    case 'code':
+      primaryOrder = isAsc ? asc(jobs.code) : desc(jobs.code);
+      break;
+    case 'client':
+      primaryOrder = isAsc ? asc(clientSortExpr) : desc(clientSortExpr);
+      break;
+    case 'value':
+      primaryOrder = isAsc ? asc(jobs.totalCents) : desc(jobs.totalCents);
+      break;
+    case 'deadline':
+    default:
+      primaryOrder = isAsc ? asc(jobs.deadline) : desc(jobs.deadline);
+      break;
+  }
+  const tieBreakerOrder = isAsc ? asc(jobs.id) : desc(jobs.id);
 
   const data = await db
     .select({
@@ -405,7 +481,7 @@ export async function listJobs(tenantId: number, filters: ListJobsInput) {
     .from(jobs)
     .leftJoin(clients, eq(jobs.clientId, clients.id))
     .where(and(...conditions))
-    .orderBy(sql`${jobs.id} DESC`)
+    .orderBy(primaryOrder, tieBreakerOrder)
     .limit(filters.limit + 1); // fetch +1 to detect next page
 
   const hasMore = data.length > filters.limit;

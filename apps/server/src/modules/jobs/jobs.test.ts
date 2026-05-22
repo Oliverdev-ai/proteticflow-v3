@@ -160,7 +160,7 @@ describe('Job Service — CRUD', () => {
     const c2 = await createTestClient(t2.id, u2.id);
     await jobService.createJob(t1.id, { clientId: c1.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, u1.id);
     await jobService.createJob(t2.id, { clientId: c2.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, u2.id);
-    const { data } = await jobService.listJobs(t1.id, { limit: 20 });
+    const { data } = await jobService.listJobs(t1.id, { limit: 20, sortBy: 'deadline', sortDir: 'asc' });
     expect(data.every(j => j.clientId === c1.id)).toBe(true);
   });
 
@@ -170,7 +170,12 @@ describe('Job Service — CRUD', () => {
     const client = await createTestClient(tenant.id, user.id);
     const job = await jobService.createJob(tenant.id, { clientId: client.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, user.id);
     await jobService.changeStatus(tenant.id, { jobId: job.id, newStatus: 'in_progress' }, user.id);
-    const { data } = await jobService.listJobs(tenant.id, { status: 'in_progress', limit: 20 });
+    const { data } = await jobService.listJobs(tenant.id, {
+      status: 'in_progress',
+      limit: 20,
+      sortBy: 'deadline',
+      sortDir: 'asc',
+    });
     expect(data.every(j => j.status === 'in_progress')).toBe(true);
   });
 
@@ -182,7 +187,12 @@ describe('Job Service — CRUD', () => {
     await jobService.createJob(tenant.id, { clientId: client.id, deadline: new Date(Date.now() - 86400000).toISOString(), items: [baseItem] }, user.id);
     // OS no prazo
     await jobService.createJob(tenant.id, { clientId: client.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, user.id);
-    const { data } = await jobService.listJobs(tenant.id, { overdue: true, limit: 20 });
+    const { data } = await jobService.listJobs(tenant.id, {
+      overdue: true,
+      limit: 20,
+      sortBy: 'deadline',
+      sortDir: 'asc',
+    });
     expect(data.length).toBeGreaterThan(0);
     for (const j of data) {
       expect(new Date(j.deadline).getTime()).toBeLessThan(Date.now());
@@ -196,10 +206,19 @@ describe('Job Service — CRUD', () => {
     for (let i = 0; i < 5; i++) {
       await jobService.createJob(tenant.id, { clientId: client.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, user.id);
     }
-    const page1 = await jobService.listJobs(tenant.id, { limit: 3 });
+    const page1 = await jobService.listJobs(tenant.id, {
+      limit: 3,
+      sortBy: 'deadline',
+      sortDir: 'asc',
+    });
     expect(page1.data).toHaveLength(3);
     expect(page1.nextCursor).toBeDefined();
-    const page2 = await jobService.listJobs(tenant.id, { limit: 3, cursor: page1.nextCursor! });
+    const page2 = await jobService.listJobs(tenant.id, {
+      limit: 3,
+      cursor: page1.nextCursor!,
+      sortBy: 'deadline',
+      sortDir: 'asc',
+    });
     // 5 total - 3 first page = 2 remaining (cursor is on id, DESC order)
     expect(page2.data.length).toBeGreaterThan(0);
   });
@@ -358,7 +377,7 @@ describe('Job Service — RBAC e Tenant Isolation', () => {
     await createTestClient(t1.id, u1.id);
     const c2 = await createTestClient(t2.id, u2.id);
     await jobService.createJob(t2.id, { clientId: c2.id, deadline: new Date(Date.now() + 86400000).toISOString(), items: [baseItem] }, u2.id);
-    const { data } = await jobService.listJobs(t1.id, { limit: 100 });
+    const { data } = await jobService.listJobs(t1.id, { limit: 100, sortBy: 'deadline', sortDir: 'asc' });
     expect(data.some(j => j.clientId === c2.id)).toBe(false);
   });
 });
