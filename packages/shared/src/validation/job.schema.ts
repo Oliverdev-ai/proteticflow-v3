@@ -88,6 +88,8 @@ export const listJobsSchema = z.object({
   status: z.enum(JOB_STATUS_VALUES).optional(),
   clientId: z.number().int().positive().optional(),
   overdue: z.boolean().optional(),
+  sortBy: z.enum(['code', 'client', 'value', 'deadline']).optional().default('deadline'),
+  sortDir: z.enum(['asc', 'desc']).optional().default('asc'),
   cursor: z.number().int().optional(), // PAD-06: cursor-based pagination
   limit: z.number().int().min(1).max(100).default(20),
 });
