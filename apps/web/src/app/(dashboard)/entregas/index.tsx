@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Calendar, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { DELIVERY_STATUS_CHIP } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { cn } from '../../../lib/utils';
@@ -76,6 +77,7 @@ function createEmptyForm() {
 }
 
 export default function DeliveryListPage() {
+  const navigate = useNavigate();
   const utils = trpc.useUtils();
   const { from, to } = getCurrentWeekRange();
 
@@ -376,9 +378,7 @@ export default function DeliveryListPage() {
         columns={columns}
         rows={rows}
         getKey={(row) => row.id}
-        onRowClick={(row) => {
-          window.location.assign(`/entregas/${row.id}`);
-        }}
+        onRowClick={(row) => navigate(`/entregas/${row.id}`)}
         loading={query.isLoading}
         loadingRows={8}
         empty={{

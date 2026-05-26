@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { formatBRLInput, parseBRL } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { BoletoList } from '../../../components/fiscal/boleto-list';
 import { PageTitle } from '../../../components/shared/typography';
@@ -20,7 +21,7 @@ export default function BoletosPage() {
   const [dateTo, setDateTo] = useState('');
 
   const [manualClientId, setManualClientId] = useState<number | null>(null);
-  const [manualAmount, setManualAmount] = useState('0');
+  const [manualAmount, setManualAmount] = useState(formatBRLInput(0));
   const [manualDueDate, setManualDueDate] = useState(new Date().toISOString().slice(0, 10));
   const [manualDescription, setManualDescription] = useState('');
   const [arIdToGenerate, setArIdToGenerate] = useState('');
@@ -92,8 +93,8 @@ export default function BoletosPage() {
   async function handleGenerateManual(): Promise<void> {
     if (!manualClientId) return;
     setBoletoError(null);
-    const amountValue = Number(manualAmount);
-    if (!Number.isFinite(amountValue) || amountValue <= 0) return;
+    const amountCents = parseBRL(manualAmount);
+    if (amountCents <= 0) return;
 
     const payload: {
       clientId: number;
@@ -102,7 +103,7 @@ export default function BoletosPage() {
       description?: string;
     } = {
       clientId: manualClientId,
-      amountCents: Math.round(amountValue * 100),
+      amountCents,
       dueDate: new Date(`${manualDueDate}T12:00:00`).toISOString(),
     };
 
@@ -232,11 +233,13 @@ export default function BoletosPage() {
             <label className="text-sm text-[var(--fg-muted)]">
               Valor (R$)
               <input
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={manualAmount}
-                onChange={(event) => setManualAmount(event.target.value)}
+                onChange={(event) => {
+                  const cents = parseBRL(event.target.value);
+                  setManualAmount(formatBRLInput(cents));
+                }}
                 className="input-field mt-1 w-full"
               />
             </label>

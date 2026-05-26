@@ -216,6 +216,8 @@ export default function AuditPage() {
               setPage(1);
               setEntityType(value);
             }}
+            searchPlaceholder="Filtro entidade"
+            searchAriaLabel="Filtro entidade"
             filters={(
               <>
                 <input
