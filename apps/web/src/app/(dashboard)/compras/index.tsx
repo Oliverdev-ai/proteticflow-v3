@@ -1,176 +1,209 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { PURCHASE_ORDER_STATUS_CHIP } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import {
-  ShoppingCart,
-  Plus,
-  Clock,
-  CheckCircle,
-  Send,
-  XCircle,
-  ChevronRight,
-  Package,
-} from 'lucide-react';
+import { formatBRL } from '../../../lib/format';
+import { Button } from '../../../components/ui/button';
+import { PageTitle } from '../../../components/shared/typography';
+import { FilterBar } from '../../../components/shared/filter-bar';
+import { DataTable, type Column } from '../../../components/shared/data-table';
+import { StatusChip } from '../../../components/shared/status-chip';
 
-type Status = 'draft' | 'sent' | 'received' | 'cancelled';
+type PurchaseStatus = keyof typeof PURCHASE_ORDER_STATUS_CHIP;
+const PAGE_SIZE = 20;
 
-const STATUS_CONFIG: Record<
-  Status,
-  { label: string; color: string; bg: string; icon: typeof Clock }
-> = {
-  draft: { label: 'Rascunho', color: 'text-muted-foreground', bg: 'bg-muted/60', icon: Clock },
-  sent: { label: 'Confirmada', color: 'text-primary', bg: 'bg-primary/10', icon: Send },
-  received: {
-    label: 'Recebida',
-    color: 'text-accent-foreground',
-    bg: 'bg-accent',
-    icon: CheckCircle,
-  },
-  cancelled: {
-    label: 'Cancelada',
-    color: 'text-destructive',
-    bg: 'bg-destructive/10',
-    icon: XCircle,
-  },
+type PurchaseRow = {
+  id: number;
+  code: string;
+  supplierName: string | null;
+  status: PurchaseStatus;
+  totalCents: number;
+  createdAt: string;
 };
 
-const FILTERS: Array<{ value: Status | ''; label: string }> = [
-  { value: '', label: 'Todas' },
-  { value: 'draft', label: 'Rascunho' },
-  { value: 'sent', label: 'Confirmada' },
-  { value: 'received', label: 'Recebida' },
-  { value: 'cancelled', label: 'Cancelada' },
-];
-
-function fmtBRL(cents: number) {
-  return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+function toPurchaseStatus(value: string): PurchaseStatus {
+  if (value === 'sent' || value === 'received' || value === 'cancelled') {
+    return value;
+  }
+  return 'draft';
 }
 
 export default function PurchasesListPage() {
-  const [statusFilter, setStatusFilter] = useState<Status | ''>('');
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<PurchaseStatus | ''>('');
+  const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = trpc.purchases.list.useQuery({
-    status: (statusFilter || undefined) as Status | undefined,
-    page: 1,
-    limit: 50,
+    status: statusFilter || undefined,
+    page,
+    limit: PAGE_SIZE,
   });
 
-  const purchases = data?.data ?? [];
-  const total = data?.total ?? 0;
+  const rows: PurchaseRow[] = (data?.data ?? []).map(({ po, supplierName }) => ({
+    id: po.id,
+    code: po.code,
+    supplierName: supplierName ?? null,
+    status: toPurchaseStatus(po.status),
+    totalCents: po.totalCents,
+    createdAt: po.createdAt,
+  }));
+
+  const total = Number(data?.total ?? 0);
+  const normalizedSearch = search.trim().toLowerCase();
+  const visibleRows = normalizedSearch
+    ? rows.filter((row) => {
+      const supplier = row.supplierName?.toLowerCase() ?? '';
+      return row.code.toLowerCase().includes(normalizedSearch) || supplier.includes(normalizedSearch);
+    })
+    : rows;
+
+  const columns: Column<PurchaseRow>[] = [
+    {
+      id: 'code',
+      header: 'Pedido',
+      width: '160px',
+      cell: (row) => <span className="t-mono text-[var(--fg)]">{row.code}</span>,
+    },
+    {
+      id: 'supplier',
+      header: 'Fornecedor',
+      width: 'flex',
+      cell: (row) => (
+        <span className="truncate text-sm text-[var(--fg-muted)]">{row.supplierName ?? 'Nao informado'}</span>
+      ),
+    },
+    {
+      id: 'date',
+      header: 'Criado em',
+      width: '130px',
+      hideBelow: 'sm',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{new Date(row.createdAt).toLocaleDateString('pt-BR')}</span>,
+    },
+    {
+      id: 'total',
+      header: 'Total',
+      width: '130px',
+      align: 'right',
+      cell: (row) => <span className="tabular-nums font-medium">{formatBRL(row.totalCents)}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '120px',
+      cell: (row) => {
+        const chip = PURCHASE_ORDER_STATUS_CHIP[row.status];
+        return <StatusChip label={chip.label} variant={chip.variant} />;
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Acoes',
+      width: '96px',
+      align: 'right',
+      cell: (row) => (
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={(event) => {
+            event.stopPropagation();
+            navigate(`/compras/${row.id}`);
+          }}
+        >
+          Abrir
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <ShoppingCart size={22} className="text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Compras</h1>
-            <p className="text-xs text-muted-foreground">
-              {total} {total === 1 ? 'pedido' : 'pedidos'} encontrado{total === 1 ? '' : 's'}
-            </p>
-          </div>
-        </div>
-        <Link
-          to="/compras/novo"
-          id="btn-nova-compra"
-          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm font-medium shadow-md shadow-primary/20 transition-all hover:scale-[1.02]"
-        >
-          <Plus size={16} />
-          Nova Compra
-        </Link>
-      </div>
+    <div className="space-y-4">
+      <PageTitle
+        subtitle="Pedidos de compra vinculados ao estoque e contas a pagar."
+        actions={(
+          <Button type="button" onClick={() => navigate('/compras/novo')}>
+            <Plus className="size-4" aria-hidden="true" />
+            Nova compra
+          </Button>
+        )}
+      >
+        Compras
+      </PageTitle>
 
-      {/* Filtros */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            id={`filter-${f.value || 'all'}`}
-            onClick={() => setStatusFilter(f.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-              statusFilter === f.value
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-card border border-border text-muted-foreground hover:text-foreground'
-            }`}
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        filters={(
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as PurchaseStatus | '');
+              setPage(1);
+            }}
+            className="h-9 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+            aria-label="Filtrar compras por status"
           >
-            {f.label}
-          </button>
-        ))}
-      </div>
+            <option value="">Status: Todos</option>
+            <option value="draft">Rascunho</option>
+            <option value="sent">Enviada</option>
+            <option value="received">Recebida</option>
+            <option value="cancelled">Cancelada</option>
+          </select>
+        )}
+      />
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-          Erro ao carregar compras: {error.message}
-        </div>
-      )}
+      {error ? <p className="t-small text-[var(--destructive)]">Erro ao carregar compras: {error.message}</p> : null}
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
-          ))}
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        rows={visibleRows}
+        getKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/compras/${row.id}`)}
+        loading={isLoading}
+        loadingRows={8}
+        empty={{
+          title: 'Nenhuma compra encontrada',
+          description: search || statusFilter ? 'Ajuste os filtros para continuar.' : 'Registre sua primeira compra.',
+          cta: (
+            <Button type="button" size="sm" onClick={() => navigate('/compras/novo')}>
+              Nova compra
+            </Button>
+          ),
+        }}
+      />
 
-      {/* Empty state */}
-      {!isLoading && !error && purchases.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-border text-center">
-          <Package size={40} className="text-muted-foreground/40 mb-3" />
-          <p className="text-foreground font-medium">Nenhuma compra encontrada</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Clique em <strong>Nova Compra</strong> para começar.
+      {total > PAGE_SIZE ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="t-small text-[var(--fg-muted)]">
+            Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} de {total}
           </p>
-        </div>
-      )}
-
-      {/* Lista */}
-      <div className="space-y-3">
-        {purchases.map(({ po, supplierName }) => {
-          const cfg = STATUS_CONFIG[po.status as Status] ?? STATUS_CONFIG.draft;
-          const StatusIcon = cfg.icon;
-          return (
-            <Link
-              key={po.id}
-              to={`/compras/${po.id}`}
-              id={`purchase-${po.id}`}
-              className="flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-card/80 hover:border-primary/30 transition-all group"
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
             >
-              <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-muted">
-                  <ShoppingCart size={16} className="text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-foreground font-semibold">{po.code}</span>
-                    <span
-                      className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${cfg.bg} ${cfg.color}`}
-                    >
-                      <StatusIcon size={10} />
-                      {cfg.label}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {supplierName ?? 'Fornecedor não informado'} ·
-                    {new Date(po.createdAt).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-foreground font-bold">{fmtBRL(po.totalCents)}</span>
-                <ChevronRight
-                  size={16}
-                  className="text-muted-foreground group-hover:text-primary transition-colors"
-                />
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+              <ChevronLeft className="size-4" aria-hidden="true" />
+            </Button>
+            <span className="t-small rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5">
+              Pagina {page}
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={rows.length < PAGE_SIZE}
+              onClick={() => setPage((prev) => prev + 1)}
+            >
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

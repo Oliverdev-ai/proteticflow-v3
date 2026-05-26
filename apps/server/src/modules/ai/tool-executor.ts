@@ -310,7 +310,9 @@ export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
         overdue: parsed.overdue,
         cursor: parsed.cursor,
         limit: parsed.limit,
-      status: 'pending',
+        sortBy: 'deadline',
+        sortDir: 'asc',
+        status: 'pending',
       });
     },
   },

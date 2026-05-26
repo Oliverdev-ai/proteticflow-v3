@@ -29,15 +29,15 @@ export function SuspendDialog({
 
   return (
     <div className="fixed inset-0 z-[220] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-8 shadow-2xl">
+      <div className="w-full max-w-lg rounded-lg border border-border bg-card p-8 shadow-md">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
               <AlertTriangle size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-black tracking-tight text-foreground">{title}</h2>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+              <p className="text-[10px] font-bold uppercase tracking-normal text-muted-foreground">
                 Motivo obrigatório (mínimo 3 caracteres)
               </p>
             </div>
@@ -58,7 +58,7 @@ export function SuspendDialog({
           onChange={(event) => setReason(event.target.value)}
           placeholder="Ex.: aguardando material do fornecedor"
           className={cn(
-            'w-full resize-none rounded-2xl border bg-muted/50 px-4 py-3 text-sm font-semibold text-foreground outline-none transition-all',
+            'w-full resize-none rounded-lg border bg-muted/50 px-4 py-3 text-sm font-semibold text-foreground outline-none transition-all',
             'border-border placeholder:text-muted-foreground/40 focus:border-primary/40 focus:ring-4 focus:ring-primary/5',
           )}
         />
@@ -67,7 +67,7 @@ export function SuspendDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-2xl border border-border bg-muted px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground transition-all hover:text-foreground"
+            className="flex-1 rounded-lg border border-border bg-muted px-4 py-3 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground transition-all hover:text-foreground"
           >
             Cancelar
           </button>
@@ -75,7 +75,7 @@ export function SuspendDialog({
             type="button"
             disabled={!isValid || isSubmitting}
             onClick={() => void onConfirm(reason.trim())}
-            className="flex flex-[1.5] items-center justify-center gap-2 rounded-2xl bg-destructive px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-destructive-foreground shadow-lg shadow-destructive/20 transition-all hover:brightness-110 disabled:opacity-40"
+            className="flex flex-[1.5] items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-3 text-[10px] font-semibold uppercase tracking-normal text-destructive-foreground shadow-lg shadow-destructive/20 transition-all hover:brightness-110 disabled:opacity-40"
           >
             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
             Confirmar suspensão

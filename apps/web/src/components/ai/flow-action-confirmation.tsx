@@ -76,9 +76,9 @@ export function FlowActionConfirmation({
     : true;
 
   return (
-    <div className="rounded-2xl border border-amber-500/40 bg-zinc-900 p-4 space-y-3">
+    <div className="rounded-lg border border-amber-500/40 bg-zinc-900 p-4 space-y-3">
       <div>
-        <p className="text-xs uppercase tracking-wider text-amber-300">Confirmacao necessaria</p>
+        <p className="text-xs uppercase tracking-normal text-amber-300">Confirmacao necessaria</p>
         <h3 className="text-sm font-semibold text-zinc-100 mt-1">{effectivePreview?.title ?? command}</h3>
         <p className="text-xs text-zinc-400 mt-1">
           {effectivePreview?.summary ?? 'Revise os dados antes de confirmar.'}

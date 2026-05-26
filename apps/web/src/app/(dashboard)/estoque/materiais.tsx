@@ -1,27 +1,29 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { AlertTriangle, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
-import {
-  Search,
-  Plus,
-  AlertTriangle,
-  ChevronLeft,
-  PackagePlus,
-  X,
-  Box,
-  Tag,
-  Ruler,
-  AlertCircle,
-  ChevronRight,
-  Database,
-  Loader2,
-} from 'lucide-react';
-import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Large, Muted } from '../../../components/shared/typography';
-import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
+import { Button } from '../../../components/ui/button';
+import { PageTitle } from '../../../components/shared/typography';
+import { FilterBar } from '../../../components/shared/filter-bar';
+import { DataTable, type Column } from '../../../components/shared/data-table';
+import { StatusChip } from '../../../components/shared/status-chip';
+
+const PAGE_SIZE = 20;
+
+type MaterialRow = {
+  id: number;
+  name: string;
+  code: string | null;
+  unit: string;
+  currentStock: number;
+  minStock: number;
+  isLow: boolean;
+};
 
 export default function MaterialsPage() {
+  const navigate = useNavigate();
+  const utils = trpc.useUtils();
   const [search, setSearch] = useState('');
   const [belowMin, setBelowMin] = useState(false);
   const [page, setPage] = useState(1);
@@ -35,17 +37,16 @@ export default function MaterialsPage() {
     unitCostCents: 0,
   });
 
-  const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.inventory.listMaterials.useQuery({
+  const { data, isLoading, error } = trpc.inventory.listMaterials.useQuery({
     search: search || undefined,
     belowMinimum: belowMin || undefined,
     page,
-    limit: 20,
+    limit: PAGE_SIZE,
   });
 
   const createMaterial = trpc.inventory.createMaterial.useMutation({
-    onSuccess: () => {
-      utils.inventory.listMaterials.invalidate();
+    onSuccess: async () => {
+      await utils.inventory.listMaterials.invalidate();
       setCreateOpen(false);
       setForm({
         name: '',
@@ -58,397 +59,303 @@ export default function MaterialsPage() {
     },
   });
 
-  const materials = data?.data ?? [];
+  const rows: MaterialRow[] = (data?.data ?? []).map((mat) => {
+    const currentStock = Number(mat.currentStock);
+    const minStock = Number(mat.minStock);
+    const isLow = minStock > 0 && currentStock < minStock;
 
-  const inputClass =
-    'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
-  const labelClass =
-    'block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1';
+    return {
+      id: mat.id,
+      name: mat.name,
+      code: mat.code ?? null,
+      unit: mat.unit,
+      currentStock,
+      minStock,
+      isLow,
+    };
+  });
+
+  const total = Number(data?.total ?? 0);
+
+  const columns: Column<MaterialRow>[] = [
+    {
+      id: 'name',
+      header: 'Material',
+      width: 'flex',
+      cell: (row) => (
+        <div className="min-w-0">
+          <span className="block truncate text-sm font-medium">{row.name}</span>
+          {row.isLow ? <span className="t-micro text-[var(--destructive)]">Reposicao urgente</span> : null}
+        </div>
+      ),
+    },
+    {
+      id: 'code',
+      header: 'SKU',
+      width: '160px',
+      hideBelow: 'md',
+      cell: (row) => <span className="t-mono text-[var(--fg-muted)]">{row.code ?? 'SEM CODIGO'}</span>,
+    },
+    {
+      id: 'unit',
+      header: 'Unidade',
+      width: '100px',
+      hideBelow: 'sm',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{row.unit}</span>,
+    },
+    {
+      id: 'stock',
+      header: 'Estoque',
+      width: '110px',
+      align: 'right',
+      cell: (row) => <span className="tabular-nums font-medium">{row.currentStock}</span>,
+    },
+    {
+      id: 'minStock',
+      header: 'Estoque min.',
+      width: '120px',
+      align: 'right',
+      hideBelow: 'sm',
+      cell: (row) => <span className="tabular-nums text-[var(--fg-muted)]">{row.minStock}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Alerta',
+      width: '112px',
+      cell: (row) => (
+        <StatusChip
+          label={row.isLow ? 'Critico' : 'OK'}
+          variant={row.isLow ? 'destructive' : 'neutral'}
+        />
+      ),
+    },
+    {
+      id: 'action',
+      header: 'Acoes',
+      width: '96px',
+      align: 'right',
+      cell: (row) => (
+        <Link
+          to={`/estoque/material/${row.id}`}
+          className="t-small rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg-elevated)] px-2.5 py-1.5 text-[var(--primary)] hover:bg-[var(--bg-muted)]"
+          onClick={(event) => event.stopPropagation()}
+        >
+          Detalhes
+        </Link>
+      ),
+    },
+  ];
 
   return (
-    <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
-      {/* Header Area */}
-      <div className="flex flex-wrap items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-          <Link
-            to="/estoque"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+    <div className="space-y-4">
+      <PageTitle
+        subtitle="Gestao tecnica de insumos e ponto de pedido."
+        actions={(
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="secondary" onClick={() => navigate('/estoque')}>
+              <ChevronLeft className="size-4" aria-hidden="true" />
+              Voltar
+            </Button>
+            <Button type="button" onClick={() => setCreateOpen(true)}>
+              <Plus className="size-4" aria-hidden="true" />
+              Registrar material
+            </Button>
+          </div>
+        )}
+      >
+        Catalogo de materiais
+      </PageTitle>
+
+      <FilterBar
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        actions={(
+          <button
+            type="button"
+            onClick={() => {
+              setBelowMin((prev) => !prev);
+              setPage(1);
+            }}
+            aria-pressed={belowMin}
+            className={cn(
+              'inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]',
+              belowMin
+                ? 'border-[var(--destructive)] bg-[var(--destructive)] text-white'
+                : 'border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg)] hover:bg-[var(--bg-muted)]',
+            )}
           >
-            <ChevronLeft size={20} strokeWidth={3} />
-          </Link>
-          <div className="flex flex-col gap-0.5">
-            <H1 className="tracking-tight">Catálogo de Materiais</H1>
-            <Subtitle>Gestão técnica de insumos e ponto de pedido</Subtitle>
+            <AlertTriangle className="size-4" aria-hidden="true" />
+            Estoque critico
+          </button>
+        )}
+      />
+
+      {error ? (
+        <p className="t-small text-[var(--destructive)]">Erro ao carregar materiais: {error.message}</p>
+      ) : null}
+
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/estoque/material/${row.id}`)}
+        loading={isLoading}
+        loadingRows={8}
+        empty={{
+          title: 'Nenhum material encontrado',
+          description: search || belowMin ? 'Ajuste os filtros para continuar.' : 'Registre seu primeiro material.',
+          cta: (
+            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+              Registrar material
+            </Button>
+          ),
+        }}
+      />
+
+      {total > PAGE_SIZE ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="t-small text-[var(--fg-muted)]">
+            Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} de {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            >
+              <ChevronLeft className="size-4" aria-hidden="true" />
+            </Button>
+            <span className="t-small rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5">
+              Pagina {page}
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={rows.length < PAGE_SIZE}
+              onClick={() => setPage((prev) => prev + 1)}
+            >
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </Button>
           </div>
         </div>
+      ) : null}
 
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95"
-        >
-          <PackagePlus size={16} strokeWidth={3} /> Registrar Material
-        </button>
-      </div>
+      {createOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-lg)]">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-[var(--font-display)] text-2xl text-[var(--fg-strong)]">Novo material</h2>
+              <button
+                type="button"
+                onClick={() => setCreateOpen(false)}
+                className="inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border)] text-[var(--fg-muted)] hover:bg-[var(--bg-muted)]"
+                aria-label="Fechar"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </button>
+            </div>
 
-      {/* Filters & Search Bar */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[300px] relative group">
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Pesquisar por nome, código SKU ou barcode..."
-            className={cn(inputClass, 'pl-12 bg-card/50 backdrop-blur-sm border-border/50')}
-          />
-        </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-1.5 md:col-span-2">
+                <span className="t-small text-[var(--fg-muted)]">Nome*</span>
+                <input
+                  value={form.name}
+                  onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                  placeholder="Ex: Resina Z350 XT A2B"
+                  className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                />
+              </label>
 
-        <button
-          onClick={() => setBelowMin((b) => !b)}
-          className={cn(
-            'flex items-center gap-3 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 border',
-            belowMin
-              ? 'bg-destructive/10 text-destructive border-destructive/20 shadow-lg shadow-destructive/5'
-              : 'bg-card/50 text-muted-foreground border-border/50 hover:border-primary/30',
-          )}
-        >
-          <AlertTriangle size={14} strokeWidth={3} />{' '}
-          {belowMin ? 'Filtrando: Críticos' : 'Estoque Crítico'}
-        </button>
-      </div>
+              <label className="space-y-1.5">
+                <span className="t-small text-[var(--fg-muted)]">SKU</span>
+                <input
+                  value={form.code}
+                  onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
+                  className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                />
+              </label>
 
-      {/* Content Area */}
-      <ScaleIn>
-        {isLoading ? (
-          <div className="p-20 flex flex-col items-center justify-center gap-4">
-            <Database className="animate-pulse text-primary/20" size={48} />
-            <Muted className="animate-pulse font-black uppercase tracking-[0.2em]">
-              Sincronizando inventário...
-            </Muted>
-          </div>
-        ) : (
-          <div className="premium-card overflow-hidden">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
-                    Insumo / Material
-                  </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
-                    SKU / Identificador
-                  </th>
-                  <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
-                    Unidade
-                  </th>
-                  <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
-                    Nível de Estoque
-                  </th>
-                  <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-6 py-4">
-                    Estoque Mín.
-                  </th>
-                  <th className="px-6 py-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {materials.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-20">
-                      <EmptyState
-                        icon={Box}
-                        title="Nenhum material encontrado"
-                        description="Sua busca não retornou resultados ou o catálogo está vazio."
-                      >
-                        <button
-                          onClick={() => {
-                            setSearch('');
-                            setBelowMin(false);
-                          }}
-                          className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
-                        >
-                          Limpar filtros
-                        </button>
-                      </EmptyState>
-                    </td>
-                  </tr>
-                ) : (
-                  materials.map((mat) => {
-                    const stock = Number(mat.currentStock);
-                    const min = Number(mat.minStock);
-                    const isLow = min > 0 && stock < min;
+              <label className="space-y-1.5">
+                <span className="t-small text-[var(--fg-muted)]">Unidade</span>
+                <input
+                  value={form.unit}
+                  onChange={(event) => setForm((prev) => ({ ...prev, unit: event.target.value }))}
+                  className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                />
+              </label>
 
-                    return (
-                      <tr key={mat.id} className="group hover:bg-primary/[0.02] transition-colors">
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-4">
-                            <div
-                              className={cn(
-                                'w-10 h-10 rounded-xl flex items-center justify-center shadow-inner',
-                                isLow
-                                  ? 'bg-destructive/10 text-destructive'
-                                  : 'bg-primary/10 text-primary',
-                              )}
-                            >
-                              <Box size={20} />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                              <p
-                                className={cn(
-                                  'text-sm font-black tracking-tight',
-                                  isLow ? 'text-destructive' : 'text-foreground',
-                                )}
-                              >
-                                {mat.name}
-                              </p>
-                              {isLow && (
-                                <span className="text-[9px] font-black uppercase tracking-widest text-destructive/60 animate-pulse">
-                                  Reposição Urgente
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <span className="text-xs font-bold text-muted-foreground px-3 py-1 bg-muted/50 rounded-lg border border-border/50 uppercase tracking-widest">
-                            {mat.code ?? 'SEM CÓDIGO'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-5">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
-                            {mat.unit}
-                          </span>
-                        </td>
-                        <td className="px-6 py-5 text-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <Large
-                              className={cn(
-                                'font-black tracking-tighter text-lg leading-none',
-                                isLow ? 'text-destructive' : 'text-foreground',
-                              )}
-                            >
-                              {stock}
-                            </Large>
-                            <div className="w-20 h-1 bg-muted rounded-full overflow-hidden">
-                              <div
-                                className={cn(
-                                  'h-full transition-all',
-                                  isLow ? 'bg-destructive' : 'bg-emerald-500',
-                                )}
-                                style={{ width: `${Math.min(100, (stock / (min || 1)) * 50)}%` }}
-                              />
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 text-right font-bold text-muted-foreground">
-                          {min}
-                        </td>
-                        <td className="px-6 py-5 text-right whitespace-nowrap">
-                          <Link
-                            to={`/estoque/material/${mat.id}`}
-                            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/5 px-4 py-2 rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-all ml-auto"
-                          >
-                            Detalhes <ChevronRight size={14} strokeWidth={3} />
-                          </Link>
-                        </td>
-                      </tr>
-                    );
+              <label className="space-y-1.5">
+                <span className="t-small text-[var(--fg-muted)]">Estoque minimo</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.minStock}
+                  onChange={(event) => setForm((prev) => ({ ...prev, minStock: Number(event.target.value) || 0 }))}
+                  className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="t-small text-[var(--fg-muted)]">Quantidade inicial</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.001"
+                  value={form.initialQuantity}
+                  onChange={(event) => setForm((prev) => ({ ...prev, initialQuantity: Number(event.target.value) || 0 }))}
+                  className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                />
+              </label>
+
+              <label className="space-y-1.5 md:col-span-2">
+                <span className="t-small text-[var(--fg-muted)]">Custo unitario (R$)</span>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.unitCostCents === 0 ? '' : (form.unitCostCents / 100).toString()}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    const nextCents = Number.isFinite(value) && value > 0 ? Math.round(value * 100) : 0;
+                    setForm((prev) => ({ ...prev, unitCostCents: nextCents }));
+                  }}
+                  placeholder="0.00"
+                  className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                disabled={!form.name.trim()}
+                loading={createMaterial.isPending}
+                onClick={() =>
+                  createMaterial.mutate({
+                    name: form.name,
+                    code: form.code || undefined,
+                    unit: form.unit,
+                    minStock: form.minStock,
+                    initialQuantity: form.initialQuantity,
+                    unitCostCents: form.unitCostCents,
                   })
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination Modern Controls */}
-        {(data?.total ?? 0) > 20 && (
-          <div className="flex items-center justify-between mt-8 bg-card/30 backdrop-blur-sm p-4 rounded-[28px] border border-border/50 shadow-sm">
-            <Muted className="text-[10px] font-bold uppercase tracking-widest ml-4">
-              Página {page} de {Math.ceil((data?.total ?? 0) / 20)}
-            </Muted>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-6 py-3 bg-muted border border-border text-[10px] font-black uppercase tracking-widest rounded-2xl disabled:opacity-30 hover:text-primary transition-all active:scale-95"
+                }
               >
-                Anterior
-              </button>
-              <button
-                onClick={() => setPage((p) => p + 1)}
-                disabled={materials.length < 20}
-                className="px-6 py-3 bg-muted border border-border text-[10px] font-black uppercase tracking-widest rounded-2xl disabled:opacity-30 hover:text-primary transition-all active:scale-95"
-              >
-                Próxima
-              </button>
+                Salvar material
+              </Button>
             </div>
           </div>
-        )}
-      </ScaleIn>
-
-      {/* Premium Create Modal with Framer-like animation context */}
-      {createOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
-          <ScaleIn className="w-full max-w-xl">
-            <div className="premium-card p-10 flex flex-col gap-10 relative shadow-2xl border-primary/20 overflow-hidden">
-              {/* Accent decoration */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
-
-              <div className="flex justify-between items-start relative">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                    <PackagePlus size={24} strokeWidth={2.5} />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <H1 className="text-2xl tracking-tighter">Novo Material</H1>
-                    <Muted className="text-[10px] font-black uppercase tracking-[0.2em]">
-                      Cadastro técnico de insumo
-                    </Muted>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setCreateOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-90"
-                >
-                  <X size={20} strokeWidth={3} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-                <div className="md:col-span-2">
-                  <label className={labelClass}>Nome do Material *</label>
-                  <div className="relative">
-                    <input
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="Ex: Resina Z350 XT A2B"
-                      className={inputClass}
-                    />
-                    <Box
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 opacity-50"
-                      size={18}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Referência / SKU</label>
-                  <div className="relative">
-                    <input
-                      value={form.code}
-                      onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-                      placeholder="00X-AAA-99"
-                      className={inputClass}
-                    />
-                    <Tag
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 opacity-50"
-                      size={18}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelClass}>Unidade de Medida</label>
-                  <div className="relative">
-                    <input
-                      value={form.unit}
-                      onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
-                      placeholder="un, ml, kg, g..."
-                      className={inputClass}
-                    />
-                    <Ruler
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/30 opacity-50"
-                      size={18}
-                    />
-                  </div>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className={labelClass}>Estoque Mínimo (Ponto de Pedido)</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min="0"
-                      value={form.minStock}
-                      onChange={(e) => setForm((f) => ({ ...f, minStock: Number(e.target.value) }))}
-                      className={cn(inputClass, 'font-mono font-bold text-lg')}
-                    />
-                    <AlertCircle
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-primary opacity-50"
-                      size={20}
-                    />
-                  </div>
-                  <Muted className="text-[9px] uppercase font-bold tracking-widest mt-3 leading-relaxed">
-                    O sistema emitirá alertas automáticos quando o saldo real atingir este valor.
-                  </Muted>
-                </div>
-                <div>
-                  <label className={labelClass}>Qtd. inicial</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.001"
-                    value={form.initialQuantity}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, initialQuantity: Number(e.target.value) || 0 }))
-                    }
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Custo unit. (R$)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.unitCostCents === 0 ? '' : (form.unitCostCents / 100).toString()}
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      const nextCents =
-                        Number.isFinite(value) && value > 0 ? Math.round(value * 100) : 0;
-                      setForm((f) => ({ ...f, unitCostCents: nextCents }));
-                    }}
-                    placeholder="0,00"
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-6 mt-4 border-t border-border/50 relative">
-                <button
-                  onClick={() => setCreateOpen(false)}
-                  className="flex-1 py-5 rounded-2xl bg-muted border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all active:scale-95"
-                >
-                  Descartar
-                </button>
-                <button
-                  onClick={() =>
-                    createMaterial.mutate({
-                      name: form.name,
-                      code: form.code || undefined,
-                      unit: form.unit,
-                      minStock: form.minStock,
-                      initialQuantity: form.initialQuantity,
-                      unitCostCents: form.unitCostCents,
-                    })
-                  }
-                  disabled={!form.name.trim() || createMaterial.isPending}
-                  className="flex-[1.5] py-5 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3"
-                >
-                  {createMaterial.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <>
-                      <Plus size={16} strokeWidth={3} /> Confirmar Cadastro
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </ScaleIn>
         </div>
-      )}
-    </PageTransition>
+      ) : null}
+    </div>
   );
 }

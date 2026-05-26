@@ -9,7 +9,7 @@ type Props = {
 
 export function PredictionCard({ title, prediction, confidence, type }: Props) {
   const iconColor = {
-    positive: 'text-emerald-500',
+    positive: 'text-success',
     warning: 'text-amber-500',
     info: 'text-sky-500',
   }[type];
@@ -21,7 +21,7 @@ export function PredictionCard({ title, prediction, confidence, type }: Props) {
   }[type];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur transition-all hover:bg-zinc-900 shadow-sm hover:shadow-primary/10 hover:border-primary/30">
+    <div className="relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 backdrop-blur transition-all hover:bg-zinc-900 shadow-sm hover:shadow-primary/10 hover:border-primary/30">
       <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
       <div className="flex items-start justify-between">
         <div className="space-y-3 relative z-10 w-full">
@@ -31,7 +31,7 @@ export function PredictionCard({ title, prediction, confidence, type }: Props) {
           </div>
           <p className="text-base text-zinc-100 pr-4">{prediction}</p>
           <div className="flex items-center justify-between mt-4">
-            <span className="text-xs font-semibold tracking-wider text-primary bg-primary/10 px-2 py-1 rounded-md uppercase">
+            <span className="text-xs font-semibold tracking-normal text-primary bg-primary/10 px-2 py-1 rounded-md uppercase">
               IA Preditiva
             </span>
             <span className="text-xs text-zinc-500">Confiança {confidence}%</span>

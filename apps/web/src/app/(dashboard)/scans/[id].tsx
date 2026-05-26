@@ -40,7 +40,7 @@ export default function ScanDetailPage() {
         Voltar
       </button>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
         <h1 className="text-xl font-bold text-white mb-1">Scan #{scan.id}</h1>
         <p className="text-sm text-zinc-400">
           Scanner: {scan.scannerType} | Status: {scan.printStatus}
@@ -51,7 +51,7 @@ export default function ScanDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
           <h2 className="text-white font-semibold">Arquivos</h2>
           {row.downloadUrls.stlUpper && (
             <div className="mb-4">
@@ -102,7 +102,7 @@ export default function ScanDetailPage() {
           )}
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
           <h2 className="text-white font-semibold">Ações de Impressão</h2>
           <div className="flex flex-wrap gap-2">
             {(NEXT_STATUS[scan.printStatus] ?? []).map((status) => (
@@ -132,7 +132,7 @@ export default function ScanDetailPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
         <h2 className="text-white font-semibold mb-3">Dados Parseados do XML</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
           <p className="text-zinc-300">

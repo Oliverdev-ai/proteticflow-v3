@@ -92,7 +92,7 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
                         const ui = TYPE_UI[type] ?? TYPE_UI.info;
                         return (
                           <span
-                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ui.className}`}
+                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-normal ${ui.className}`}
                           >
                             {ui.label}
                           </span>

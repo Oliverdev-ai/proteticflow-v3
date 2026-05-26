@@ -1,17 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { FileBox, Plus, ScanLine } from 'lucide-react';
+import { SCAN_STATUS_CHIP } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import { FileBox, Plus, Printer, ScanLine } from 'lucide-react';
+import { cn } from '../../../lib/utils';
+import { Button } from '../../../components/ui/button';
+import { PageTitle } from '../../../components/shared/typography';
+import { FilterBar } from '../../../components/shared/filter-bar';
+import { DataTable, type Column } from '../../../components/shared/data-table';
+import { StatusChip } from '../../../components/shared/status-chip';
 
-type PrintStatus = 'waiting' | 'sent' | 'printing' | 'completed' | 'error';
+type PrintStatus = keyof typeof SCAN_STATUS_CHIP;
 type ScannerType = 'itero' | 'medit' | '3shape' | 'carestream' | 'outro';
+type TabView = 'all' | 'received';
 
-const STATUS_LABELS: Record<PrintStatus, string> = {
-  waiting: 'Aguardando',
-  sent: 'Enviado',
-  printing: 'Imprimindo',
-  completed: 'Concluido',
-  error: 'Erro',
+type ScanRow = {
+  id: number;
+  createdAt: string;
+  scannerType: ScannerType;
+  jobCode: string | null;
+  clientName: string | null;
+  printStatus: PrintStatus;
+  hasJob: boolean;
+  files: string[];
 };
 
 const SCANNER_LABELS: Record<ScannerType, string> = {
@@ -34,19 +45,20 @@ function fileNameFromKey(pathOrUrl: string | null): string {
   return decodeURIComponent(name);
 }
 
-function scannerLabel(value: string): string {
-  return SCANNER_LABELS[value as ScannerType] ?? value;
-}
-
-function statusLabel(value: string): string {
-  return STATUS_LABELS[value as PrintStatus] ?? value;
+function toPrintStatus(value: string): PrintStatus {
+  if (value === 'sent' || value === 'printing' || value === 'completed' || value === 'error') {
+    return value;
+  }
+  return 'waiting';
 }
 
 export default function ScanListPage() {
+  const navigate = useNavigate();
   const pageSize = 100;
-  const [activeTab, setActiveTab] = useState<'all' | 'received'>('all');
+  const [activeTab, setActiveTab] = useState<TabView>('all');
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [printStatus, setPrintStatus] = useState<string>('');
+  const [printStatus, setPrintStatus] = useState<PrintStatus | ''>('');
   const [clientId, setClientId] = useState<string>('');
   const [scannerType, setScannerType] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<string>('');
@@ -62,7 +74,7 @@ export default function ScanListPage() {
   const query = trpc.scan.list.useQuery({
     page,
     limit: pageSize,
-    printStatus: printStatus ? (printStatus as PrintStatus) : undefined,
+    printStatus: printStatus || undefined,
     clientId: clientId ? Number(clientId) : undefined,
     scannerType: scannerType ? (scannerType as ScannerType) : undefined,
     dateFrom: dateFrom ? toIsoDate(dateFrom) : undefined,
@@ -71,282 +83,365 @@ export default function ScanListPage() {
     hasFile: activeTab === 'received' ? true : undefined,
   });
 
-  const rows = useMemo(() => query.data?.data ?? [], [query.data]);
+  const rows: ScanRow[] = useMemo(
+    () =>
+      (query.data?.data ?? []).map((row) => {
+        const files = [
+          row.scan.xmlUrl ? `XML: ${fileNameFromKey(row.scan.xmlUrl)}` : null,
+          row.scan.stlUpperUrl ? `STL sup: ${fileNameFromKey(row.scan.stlUpperUrl)}` : null,
+          row.scan.stlLowerUrl ? `STL inf: ${fileNameFromKey(row.scan.stlLowerUrl)}` : null,
+          row.scan.galleryImageUrl ? `Galeria: ${fileNameFromKey(row.scan.galleryImageUrl)}` : null,
+        ].filter(Boolean) as string[];
+
+        return {
+          id: row.scan.id,
+          createdAt: row.scan.createdAt.toString(),
+          scannerType: row.scan.scannerType as ScannerType,
+          jobCode: row.jobCode ?? null,
+          clientName: row.clientName ?? null,
+          printStatus: toPrintStatus(row.scan.printStatus),
+          hasJob: Boolean(row.scan.jobId),
+          files,
+        };
+      }),
+    [query.data],
+  );
+
+  const normalizedSearch = search.trim().toLowerCase();
+  const visibleRows = normalizedSearch
+    ? rows.filter((row) => {
+      const files = row.files.join(' ').toLowerCase();
+      return (
+        row.id.toString().includes(normalizedSearch) ||
+        (row.jobCode ?? '').toLowerCase().includes(normalizedSearch) ||
+        (row.clientName ?? '').toLowerCase().includes(normalizedSearch) ||
+        files.includes(normalizedSearch)
+      );
+    })
+    : rows;
+
   const total = query.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const currentRows = rows;
+
+  const allColumns: Column<ScanRow>[] = [
+    {
+      id: 'id',
+      header: 'ID',
+      width: '90px',
+      cell: (row) => <span className="t-mono">#{row.id}</span>,
+    },
+    {
+      id: 'scanner',
+      header: 'Scanner',
+      width: '120px',
+      cell: (row) => <span className="t-small">{SCANNER_LABELS[row.scannerType] ?? row.scannerType}</span>,
+    },
+    {
+      id: 'job',
+      header: 'OS',
+      width: '140px',
+      hideBelow: 'sm',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{row.jobCode ?? '-'}</span>,
+    },
+    {
+      id: 'client',
+      header: 'Cliente',
+      width: 'flex',
+      hideBelow: 'md',
+      cell: (row) => <span className="truncate t-small text-[var(--fg-muted)]">{row.clientName ?? '-'}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '118px',
+      cell: (row) => {
+        const chip = SCAN_STATUS_CHIP[row.printStatus];
+        return <StatusChip label={chip.label} variant={chip.variant} />;
+      },
+    },
+    {
+      id: 'date',
+      header: 'Criado em',
+      width: '120px',
+      align: 'right',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{new Date(row.createdAt).toLocaleDateString('pt-BR')}</span>,
+    },
+  ];
+
+  const receivedColumns: Column<ScanRow>[] = [
+    {
+      id: 'date',
+      header: 'Data',
+      width: '120px',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{new Date(row.createdAt).toLocaleDateString('pt-BR')}</span>,
+    },
+    {
+      id: 'files',
+      header: 'Arquivos',
+      width: 'flex',
+      cell: (row) => (
+        <div className="min-w-0">
+          {row.files.length === 0 ? (
+            <span className="t-small text-[var(--fg-muted)]">Sem arquivo</span>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {row.files.map((file) => (
+                <span
+                  key={`${row.id}-${file}`}
+                  className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] px-2 py-0.5 text-xs text-[var(--fg-muted)]"
+                >
+                  <FileBox className="size-3" aria-hidden="true" />
+                  {file}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'scanner',
+      header: 'Scanner',
+      width: '110px',
+      hideBelow: 'sm',
+      cell: (row) => <span className="t-small">{SCANNER_LABELS[row.scannerType] ?? row.scannerType}</span>,
+    },
+    {
+      id: 'client',
+      header: 'Cliente',
+      width: '160px',
+      hideBelow: 'md',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{row.clientName ?? '-'}</span>,
+    },
+    {
+      id: 'job',
+      header: 'OS',
+      width: '100px',
+      hideBelow: 'md',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{row.jobCode ?? '-'}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '118px',
+      cell: (row) => {
+        const chip = SCAN_STATUS_CHIP[row.printStatus];
+        return <StatusChip label={chip.label} variant={chip.variant} />;
+      },
+    },
+    {
+      id: 'orphan',
+      header: 'Orfao',
+      width: '80px',
+      align: 'center',
+      cell: (row) => (
+        <StatusChip
+          label={row.hasJob ? 'Nao' : 'Sim'}
+          variant={row.hasJob ? 'neutral' : 'warning'}
+        />
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ScanLine className="text-primary" size={24} />
-            Scans 3D
-          </h1>
-          <p className="text-zinc-400 text-sm mt-1">Controle de arquivos STL/XML e impressão</p>
-        </div>
-        <Link
-          to="/scans/upload"
-          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus size={16} />
-          Novo Upload
-        </Link>
-      </div>
+    <div className="space-y-4">
+      <PageTitle
+        subtitle="Controle de arquivos STL/XML e status de impressao 3D."
+        actions={(
+          <Button type="button" onClick={() => navigate('/scans/upload')}>
+            <Plus className="size-4" aria-hidden="true" />
+            Novo upload
+          </Button>
+        )}
+      >
+        Scans 3D
+      </PageTitle>
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={() => setActiveTab('all')}
-          className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+          className={cn(
+            'h-9 rounded-[var(--radius-md)] border px-3 text-sm transition-colors',
             activeTab === 'all'
-              ? 'bg-primary text-white'
-              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-700'
-          }`}
+              ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--fg-on-primary)]'
+              : 'border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg-muted)] hover:text-[var(--fg)]',
+          )}
         >
-          Visao Geral
+          Visao geral
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('received')}
-          className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+          className={cn(
+            'h-9 rounded-[var(--radius-md)] border px-3 text-sm transition-colors',
             activeTab === 'received'
-              ? 'bg-primary text-white'
-              : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-700'
-          }`}
+              ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--fg-on-primary)]'
+              : 'border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg-muted)] hover:text-[var(--fg)]',
+          )}
         >
-          Arquivos Recebidos
+          Arquivos recebidos
         </button>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-        <select
-          value={printStatus}
-          onChange={(e) => setPrintStatus(e.target.value)}
-          className="input-field"
-        >
-          <option value="">Todos os status</option>
-          <option value="waiting">Aguardando</option>
-          <option value="sent">Enviado</option>
-          <option value="printing">Imprimindo</option>
-          <option value="completed">Concluido</option>
-          <option value="error">Erro</option>
-        </select>
-
-        {activeTab === 'received' && (
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        filters={(
           <>
             <select
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              className="input-field"
+              value={printStatus}
+              onChange={(event) => {
+                setPrintStatus(event.target.value as PrintStatus | '');
+                setPage(1);
+              }}
+              className="h-9 min-w-[160px] rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+              aria-label="Filtrar por status de impressao"
             >
-              <option value="">Todos os clientes</option>
-              {clientsQuery.data?.data?.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
+              <option value="">Status: Todos</option>
+              <option value="waiting">Aguardando</option>
+              <option value="sent">Enviado</option>
+              <option value="printing">Imprimindo</option>
+              <option value="completed">Concluido</option>
+              <option value="error">Erro</option>
             </select>
 
-            <select
-              value={scannerType}
-              onChange={(e) => setScannerType(e.target.value)}
-              className="input-field"
-            >
-              <option value="">Todos os scanners</option>
-              {Object.entries(SCANNER_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="input-field"
-            />
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="input-field"
-            />
+            {activeTab === 'received' ? (
+              <select
+                value={clientId}
+                onChange={(event) => {
+                  setClientId(event.target.value);
+                  setPage(1);
+                }}
+                className="h-9 min-w-[180px] rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                aria-label="Filtrar por cliente"
+              >
+                <option value="">Cliente: Todos</option>
+                {clientsQuery.data?.data?.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            ) : null}
           </>
         )}
-      </div>
-
-      {activeTab === 'received' && (
-        <label className="mb-4 inline-flex items-center gap-2 text-sm text-zinc-300">
-          <input
-            type="checkbox"
-            checked={orphanOnly}
-            onChange={(e) => setOrphanOnly(e.target.checked)}
-            className="h-4 w-4 rounded border-zinc-700 bg-zinc-900"
-          />
-          Mostrar somente scans orfaos (sem vinculo com OS)
-        </label>
-      )}
-
-      {query.error && (
-        <div className="mb-4 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
-          Erro ao carregar scans: {query.error.message}
-        </div>
-      )}
-      {query.isLoading && (
-        <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
-          Carregando scans...
-        </div>
-      )}
-
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-        {activeTab === 'all' ? (
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-850 border-b border-zinc-800">
-              <tr className="text-left text-zinc-400">
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Scanner</th>
-                <th className="px-4 py-3">OS</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Criado em</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentRows.map((row) => (
-                <tr key={row.scan.id} className="border-b border-zinc-800 last:border-b-0">
-                  <td className="px-4 py-3 text-zinc-300">#{row.scan.id}</td>
-                  <td className="px-4 py-3 text-white">{scannerLabel(row.scan.scannerType)}</td>
-                  <td className="px-4 py-3 text-zinc-300">{row.jobCode ?? '-'}</td>
-                  <td className="px-4 py-3 text-zinc-300">{row.clientName ?? '-'}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-zinc-800 text-zinc-300 text-xs">
-                      <Printer size={12} />
-                      {statusLabel(row.scan.printStatus)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-400">
-                    {new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link to={`/scans/${row.scan.id}`} className="text-primary hover:text-primary">
-                      Ver detalhe
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-850 border-b border-zinc-800">
-              <tr className="text-left text-zinc-400">
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3">Arquivo</th>
-                <th className="px-4 py-3">Scanner</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">OS</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Orfao</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentRows.map((row) => {
-                const files = [
-                  row.scan.xmlUrl ? `XML: ${fileNameFromKey(row.scan.xmlUrl)}` : null,
-                  row.scan.stlUpperUrl ? `STL sup: ${fileNameFromKey(row.scan.stlUpperUrl)}` : null,
-                  row.scan.stlLowerUrl ? `STL inf: ${fileNameFromKey(row.scan.stlLowerUrl)}` : null,
-                  row.scan.galleryImageUrl
-                    ? `Galeria: ${fileNameFromKey(row.scan.galleryImageUrl)}`
-                    : null,
-                ].filter(Boolean) as string[];
-
-                return (
-                  <tr key={row.scan.id} className="border-b border-zinc-800 last:border-b-0">
-                    <td className="px-4 py-3 text-zinc-300">
-                      {new Date(row.scan.createdAt).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-1">
-                        {files.map((file) => (
-                          <span
-                            key={`${row.scan.id}-${file}`}
-                            className="inline-flex items-center gap-1 text-xs text-zinc-300"
-                          >
-                            <FileBox size={12} className="text-primary" />
-                            {file}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-white">{scannerLabel(row.scan.scannerType)}</td>
-                    <td className="px-4 py-3 text-zinc-300">{row.clientName ?? '-'}</td>
-                    <td className="px-4 py-3 text-zinc-300">{row.jobCode ?? '-'}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-zinc-800 text-zinc-300 text-xs">
-                        <Printer size={12} />
-                        {statusLabel(row.scan.printStatus)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {row.scan.jobId ? (
-                        <span className="text-emerald-400 text-xs">Nao</span>
-                      ) : (
-                        <span className="text-amber-400 text-xs font-medium">Sim</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        to={`/scans/${row.scan.id}`}
-                        className="text-primary hover:text-primary"
-                      >
-                        Ver detalhe
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-
-        {currentRows.length === 0 && (
-          <div className="p-10 text-center text-zinc-500 text-sm">
-            {activeTab === 'received'
-              ? 'Nenhum arquivo recebido encontrado.'
-              : 'Nenhum scan encontrado.'}
-          </div>
-        )}
-      </div>
-
-      {total > 0 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-zinc-400">
-          <span>
-            {activeTab === 'received' ? 'Recebidos' : 'Scans'}: {total}
-          </span>
-          <div className="flex items-center gap-2">
+        actions={
+          activeTab === 'received' ? (
             <button
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              type="button"
+              onClick={() => {
+                setOrphanOnly((prev) => !prev);
+                setPage(1);
+              }}
+              className={cn(
+                'h-9 rounded-[var(--radius-md)] border px-3 text-sm transition-colors',
+                orphanOnly
+                  ? 'border-[var(--warning)] bg-[var(--warning)] text-white'
+                  : 'border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg-muted)] hover:text-[var(--fg)]',
+              )}
+            >
+              Somente orfaos
+            </button>
+          ) : undefined
+        }
+      />
+
+      {activeTab === 'received' ? (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <select
+            value={scannerType}
+            onChange={(event) => {
+              setScannerType(event.target.value);
+              setPage(1);
+            }}
+            className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+          >
+            <option value="">Scanner: Todos</option>
+            {Object.entries(SCANNER_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(event) => {
+              setDateFrom(event.target.value);
+              setPage(1);
+            }}
+            className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+          />
+
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(event) => {
+              setDateTo(event.target.value);
+              setPage(1);
+            }}
+            className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+          />
+        </div>
+      ) : null}
+
+      {query.error ? <p className="t-small text-[var(--destructive)]">Erro ao carregar scans: {query.error.message}</p> : null}
+
+      <DataTable
+        columns={activeTab === 'received' ? receivedColumns : allColumns}
+        rows={visibleRows}
+        getKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/scans/${row.id}`)}
+        loading={query.isLoading}
+        loadingRows={8}
+        empty={{
+          title: activeTab === 'received' ? 'Nenhum arquivo recebido encontrado' : 'Nenhum scan encontrado',
+          description: 'Ajuste os filtros para continuar.',
+          cta: (
+            <Button type="button" size="sm" onClick={() => navigate('/scans/upload')}>
+              Novo upload
+            </Button>
+          ),
+        }}
+      />
+
+      {total > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="t-small text-[var(--fg-muted)]">
+            {activeTab === 'received' ? 'Recebidos' : 'Scans'}: {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               disabled={page <= 1}
-              className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 disabled:opacity-50"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
             >
               Anterior
-            </button>
-            <span>
-              Página {page} de {totalPages}
+            </Button>
+            <span className="t-small rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5">
+              Pagina {page} de {totalPages}
             </span>
-            <button
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               disabled={page >= totalPages}
-              className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 disabled:opacity-50"
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
             >
-              Próxima
-            </button>
+              Proxima
+            </Button>
           </div>
         </div>
-      )}
+      ) : null}
+
+      <div className="t-small flex items-center gap-2 text-[var(--fg-muted)]">
+        <ScanLine className="size-4" aria-hidden="true" />
+        Visualizando: {activeTab === 'received' ? 'arquivos recebidos' : 'visao geral'}
+      </div>
     </div>
   );
 }

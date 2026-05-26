@@ -11,7 +11,7 @@ export function TicketForm({ busy, onSubmit }: TicketFormProps) {
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
       <h2 className="text-sm font-semibold text-white">Novo ticket</h2>
       <input
         value={subject}

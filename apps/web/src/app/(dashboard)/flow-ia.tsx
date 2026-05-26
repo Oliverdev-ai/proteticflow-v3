@@ -106,7 +106,7 @@ export default function FlowIAPage() {
         </div>
 
         <div className="xl:col-span-3 space-y-4">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-4">
             <p className="text-sm text-zinc-200">
               O Flow Assistant agora e global no dashboard.
             </p>

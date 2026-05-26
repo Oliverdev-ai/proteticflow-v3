@@ -79,55 +79,55 @@ export default function MaterialDetailPage() {
         Voltar para Materiais
       </Link>
 
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">
+            <div className="inline-flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-normal text-primary">
               <Box size={14} />
               Material
             </div>
-            <h1 className="text-2xl font-black text-foreground">{material.name}</h1>
+            <h1 className="text-2xl font-semibold text-foreground">{material.name}</h1>
             <p className="text-sm text-muted-foreground">
               Codigo: {material.code ?? 'Nao informado'} | Unidade: {material.unit}
             </p>
           </div>
           <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-right">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
               Saldo atual
             </p>
-            <p className="text-2xl font-black text-foreground">{formatStock(material.currentStock)}</p>
+            <p className="text-2xl font-semibold text-foreground">{formatStock(material.currentStock)}</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             <Package size={14} />
             Estoque Minimo
           </div>
-          <p className="text-xl font-black text-foreground">{formatStock(material.minStock)}</p>
+          <p className="text-xl font-semibold text-foreground">{formatStock(material.minStock)}</p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             <CircleDollarSign size={14} />
             Custo Medio
           </div>
-          <p className="text-xl font-black text-foreground">{formatCurrency(material.averageCostCents)}</p>
+          <p className="text-xl font-semibold text-foreground">{formatCurrency(material.averageCostCents)}</p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             <CircleDollarSign size={14} />
             Ultima Compra
           </div>
-          <p className="text-xl font-black text-foreground">{formatCurrency(material.lastPurchasePriceCents)}</p>
+          <p className="text-xl font-semibold text-foreground">{formatCurrency(material.lastPurchasePriceCents)}</p>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="flex items-center gap-2 border-b border-border px-5 py-4">
           <History size={16} className="text-primary" />
-          <h2 className="text-sm font-black uppercase tracking-widest text-foreground">
+          <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
             Movimentacoes Recentes
           </h2>
         </div>

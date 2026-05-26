@@ -130,7 +130,7 @@ export default function IAAvancadaPage() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="px-3 py-1.5 rounded bg-emerald-600 text-white text-xs hover:bg-emerald-500 disabled:opacity-50"
+                      className="px-3 py-1.5 rounded bg-emerald-600 text-white text-xs hover:bg-success disabled:opacity-50"
                       disabled={
                         feedbackMutation.isPending || row.recommendation.status !== 'suggested'
                       }

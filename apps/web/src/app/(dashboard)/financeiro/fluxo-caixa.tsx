@@ -15,7 +15,7 @@ import {
 import { Link } from 'react-router-dom';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
-import { H1, Subtitle, Muted, Large } from '../../../components/shared/typography';
+import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
 import { cn } from '../../../lib/utils';
 
@@ -61,12 +61,12 @@ export default function FluxoCaixaPage() {
         <div className="flex items-center gap-6">
           <Link
             to="/financeiro"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all active:scale-95 shadow-sm"
+            className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-all  shadow-sm"
           >
             <ChevronLeft size={20} strokeWidth={3} />
           </Link>
           <div className="flex flex-col gap-0.5">
-            <H1 className="tracking-tight">Fluxo de Caixa</H1>
+            <PageTitle className="tracking-tight">Fluxo de Caixa</PageTitle>
             <Subtitle>Inteligência financeira e projeção de liquidez mensal</Subtitle>
           </div>
         </div>
@@ -74,31 +74,31 @@ export default function FluxoCaixaPage() {
 
       {/* Projections Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ScaleIn className="premium-card p-8 border-emerald-500/10 bg-emerald-500/[0.01] relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        <ScaleIn className="premium-card p-8 border-success/10 bg-success/[0.01] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-success/5 rounded-full blur-3xl -mr-10 -mt-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
           <div className="flex flex-col gap-6 relative">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 shadow-inner border border-emerald-500/10">
+              <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-success/10 text-success shadow-inner border border-success/10">
                 <TrendingUp size={22} strokeWidth={2.5} />
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest text-emerald-500">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-[10px] font-semibold uppercase tracking-normal text-success">
                 <Clock size={12} strokeWidth={3} /> Projeção Positiva
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
-              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] ml-1">
+              <Muted className="text-[10px] font-semibold uppercase tracking-normal ml-1">
                 Recebimentos Pendentes
               </Muted>
-              <Large className="text-4xl font-black tracking-tighter text-emerald-500">
+              <Large className="text-4xl font-semibold tracking-tighter text-success">
                 {projection ? formatBRL(projection.pendingCredits) : '—'}
               </Large>
             </div>
 
-            <div className="flex items-center gap-3 pt-4 border-t border-emerald-500/10">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="flex items-center gap-3 pt-4 border-t border-success/10">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-normal">
                 Baseado em faturas AR com status pendente
               </span>
             </div>
@@ -110,26 +110,26 @@ export default function FluxoCaixaPage() {
 
           <div className="flex flex-col gap-6 relative">
             <div className="flex items-center justify-between">
-              <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-destructive/10 text-destructive shadow-inner border border-destructive/10">
+              <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive shadow-inner border border-destructive/10">
                 <TrendingDown size={22} strokeWidth={2.5} />
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20 text-[10px] font-black uppercase tracking-widest text-destructive">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20 text-[10px] font-semibold uppercase tracking-normal text-destructive">
                 <Clock size={12} strokeWidth={3} /> Saídas Previstas
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
-              <Muted className="text-[10px] font-black uppercase tracking-[0.2em] ml-1">
+              <Muted className="text-[10px] font-semibold uppercase tracking-normal ml-1">
                 Compromissos do Passivo
               </Muted>
-              <Large className="text-4xl font-black tracking-tighter text-destructive">
+              <Large className="text-4xl font-semibold tracking-tighter text-destructive">
                 {projection ? formatBRL(projection.pendingDebits) : '—'}
               </Large>
             </div>
 
             <div className="flex items-center gap-3 pt-4 border-t border-destructive/10">
               <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-normal">
                 Baseado em contas AP não liquidadas
               </span>
             </div>
@@ -142,12 +142,12 @@ export default function FluxoCaixaPage() {
         <div className="premium-card p-10 relative overflow-hidden">
           <div className="flex items-center justify-between mb-12 relative">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
+              <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-sm">
                 <BarChart3 size={24} strokeWidth={2.5} />
               </div>
               <div className="flex flex-col gap-0.5">
                 <Large className="tracking-tight">Histórico de Performance</Large>
-                <Muted className="text-[10px] font-black uppercase tracking-[0.3em]">
+                <Muted className="text-[10px] font-semibold uppercase tracking-normal">
                   Consolidado Entradas vs Saídas
                 </Muted>
               </div>
@@ -155,14 +155,14 @@ export default function FluxoCaixaPage() {
 
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <div className="w-2 h-2 rounded-full bg-success" />
+                <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                   Créditos
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-destructive" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                   Débitos
                 </span>
               </div>
@@ -172,7 +172,7 @@ export default function FluxoCaixaPage() {
           {isLoading ? (
             <div className="py-24 flex flex-col items-center justify-center gap-4">
               <Loader2 className="animate-spin text-primary/30" size={48} />
-              <Muted className="font-black uppercase tracking-widest animate-pulse">
+              <Muted className="font-semibold uppercase tracking-normal animate-pulse">
                 Processando extratos...
               </Muted>
             </div>
@@ -189,10 +189,10 @@ export default function FluxoCaixaPage() {
               {[...months].reverse().map((m, _idx) => (
                 <div
                   key={m.month}
-                  className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-6 border border-border/40 hover:border-primary/30 hover:bg-primary/[0.01] rounded-3xl transition-all duration-500 group relative"
+                  className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-6 border border-border/40 hover:border-primary/30 hover:bg-primary/[0.01] rounded-lg transition-all duration-500 group relative"
                 >
                   <div className="lg:col-span-2 flex flex-col gap-0.5">
-                    <span className="text-xs font-black text-foreground uppercase tracking-widest">
+                    <span className="text-xs font-semibold text-foreground uppercase tracking-normal">
                       {shortMonth(m.month)}
                     </span>
                     <Muted className="text-[10px] font-bold opacity-60 uppercase">
@@ -203,17 +203,17 @@ export default function FluxoCaixaPage() {
                   <div className="lg:col-span-6 flex flex-col gap-3">
                     <div className="flex items-center gap-4">
                       <div className="w-[100px] flex items-center gap-1.5">
-                        <TrendingUp size={12} className="text-emerald-500" />
-                        <span className="text-[10px] font-black text-emerald-500 tracking-tighter w-full">
+                        <TrendingUp size={12} className="text-success" />
+                        <span className="text-[10px] font-semibold text-success tracking-tighter w-full">
                           {formatBRL(m.credits)}
                         </span>
                       </div>
-                      <BarSegment value={m.credits} max={maxVal} color="bg-emerald-500" />
+                      <BarSegment value={m.credits} max={maxVal} color="bg-success" />
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="w-[100px] flex items-center gap-1.5">
                         <TrendingDown size={12} className="text-destructive" />
-                        <span className="text-[10px] font-black text-destructive tracking-tighter w-full">
+                        <span className="text-[10px] font-semibold text-destructive tracking-tighter w-full">
                           {formatBRL(m.debits)}
                         </span>
                       </div>
@@ -223,13 +223,13 @@ export default function FluxoCaixaPage() {
 
                   <div className="lg:col-span-4 flex items-center justify-end gap-6">
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">
+                      <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-normal opacity-60">
                         Margem Líquida
                       </span>
                       <span
                         className={cn(
-                          'text-xl font-black tracking-tighter tabular-nums leading-none',
-                          m.net >= 0 ? 'text-emerald-500' : 'text-destructive',
+                          'text-xl font-semibold tracking-tighter tabular-nums leading-none',
+                          m.net >= 0 ? 'text-success' : 'text-destructive',
                         )}
                       >
                         {m.net > 0 && '+'}
@@ -240,7 +240,7 @@ export default function FluxoCaixaPage() {
                       className={cn(
                         'w-10 h-10 flex items-center justify-center rounded-xl border transition-all duration-500',
                         m.net >= 0
-                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white'
+                          ? 'bg-success/10 text-success border-success/20 group-hover:bg-success group-hover:text-white'
                           : 'bg-destructive/10 text-destructive border-destructive/20 group-hover:bg-destructive group-hover:text-white',
                       )}
                     >
@@ -256,12 +256,12 @@ export default function FluxoCaixaPage() {
             </div>
           )}
 
-          <div className="mt-12 p-6 bg-muted/30 border border-border/50 rounded-2xl flex items-start gap-4">
+          <div className="mt-12 p-6 bg-muted/30 border border-border/50 rounded-lg flex items-start gap-4">
             <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
               <Info size={20} />
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-black text-foreground uppercase tracking-tight">
+              <span className="text-xs font-semibold text-foreground uppercase tracking-tight">
                 O Fluxo de Caixa Real
               </span>
               <p className="text-[11px] text-muted-foreground leading-relaxed">

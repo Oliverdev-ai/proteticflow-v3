@@ -85,15 +85,15 @@ export function ProfileForm() {
     });
   };
 
-  const inputClass = 'w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/30';
-  const labelClass = 'text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-1.5';
+  const inputClass = 'w-full bg-muted/30 border border-border rounded-xl px-4 py-3 text-sm font-semibold text-foreground focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/30';
+  const labelClass = 'text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1 flex items-center gap-1.5';
   const passwordInputClass = `${inputClass} pr-12`;
 
   return (
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Bio Card - Bento Large */}
-        <div className="lg:col-span-2 bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-8 relative overflow-hidden group/profile shadow-xl shadow-black/5">
+        <div className="lg:col-span-2 bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-8 relative overflow-hidden group/profile shadow-xl shadow-black/5">
           <div className="flex items-center gap-6 relative">
             <div className="w-20 h-20 rounded-[28px] bg-primary/10 border-2 border-primary/20 flex items-center justify-center p-1 group-hover/profile:border-primary/40 transition-all shadow-inner overflow-hidden">
               {user?.avatarUrl ? (
@@ -103,12 +103,12 @@ export function ProfileForm() {
               )}
             </div>
             <div className="flex flex-col gap-1">
-              <Large className="text-2xl font-black uppercase tracking-tight">{user?.name || 'Comandante'}</Large>
+              <Large className="text-2xl font-semibold uppercase tracking-tight">{user?.name || 'Comandante'}</Large>
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-normal text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                   <ShieldCheck size={10} strokeWidth={3} /> {user?.role || 'Operator'}
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-40 italic">Identidade de Acesso Web 3.0</span>
+                <span className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground opacity-40 italic">Identidade de Acesso Web 3.0</span>
               </div>
             </div>
           </div>
@@ -145,15 +145,15 @@ export function ProfileForm() {
 
           <div className="flex items-center justify-end gap-4 border-t border-border/50 pt-8 mt-2">
             {success && (
-              <div className="flex items-center gap-2 text-emerald-500 animate-in fade-in slide-in-from-right-4">
+              <div className="flex items-center gap-2 text-success animate-in fade-in slide-in-from-right-4">
                 <CheckCircle2 size={16} strokeWidth={3} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Sincronizado</span>
+                <span className="text-[10px] font-semibold uppercase tracking-normal">Sincronizado</span>
               </div>
             )}
             <button
               onClick={handleSave}
               disabled={loading}
-              className="flex items-center gap-3 bg-primary text-primary-foreground px-10 py-4 rounded-2xl shadow-xl shadow-primary/20 transition-all hover:brightness-110 active:scale-95 disabled:opacity-30 text-[10px] font-black uppercase tracking-widest"
+              className="flex items-center gap-3 bg-primary text-primary-foreground px-10 py-4 rounded-lg shadow-xl shadow-sm transition-all hover:brightness-110  disabled:opacity-30 text-[10px] font-semibold uppercase tracking-normal"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} strokeWidth={3} />}
               Efetivar Alteracoes
@@ -165,14 +165,14 @@ export function ProfileForm() {
 
         {/* Security / Links Card - Bento Small */}
         <div className="flex flex-col gap-8">
-          <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-6 relative overflow-hidden group/security shadow-lg shadow-black/5">
+          <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-6 relative overflow-hidden group/security shadow-lg shadow-black/5">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shadow-inner">
                 <Lock size={18} strokeWidth={3} />
               </div>
               <div className="flex flex-col">
-                <Large className="text-sm font-black uppercase tracking-wider">Auditoria de Seguranca</Large>
-                <Muted className="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">Infra de autenticacao</Muted>
+                <Large className="text-sm font-semibold uppercase tracking-normal">Auditoria de Seguranca</Large>
+                <Muted className="text-[8px] font-semibold uppercase tracking-normal opacity-30">Infra de autenticacao</Muted>
               </div>
             </div>
 
@@ -181,11 +181,11 @@ export function ProfileForm() {
                 type="button"
                 onClick={() => resetCredentialMutation.mutate()}
                 disabled={resetCredentialMutation.isPending}
-                className="flex items-center justify-between w-full p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
+                className="flex items-center justify-between w-full p-4 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
               >
                 <div className="flex items-center gap-3">
                   <Key size={14} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Redefinir Credencial</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-normal">Redefinir Credencial</span>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-primary/20 group-hover/btn:bg-primary transition-all shadow-glow" />
               </button>
@@ -193,11 +193,11 @@ export function ProfileForm() {
               <button
                 type="button"
                 onClick={() => setShowChangePassword((value) => !value)}
-                className="flex items-center justify-between w-full p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
+                className="flex items-center justify-between w-full p-4 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
               >
                 <div className="flex items-center gap-3">
                   <Key size={14} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Alterar Senha</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-normal">Alterar Senha</span>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-primary/20 group-hover/btn:bg-primary transition-all shadow-glow" />
               </button>
@@ -205,28 +205,28 @@ export function ProfileForm() {
               <button
                 type="button"
                 onClick={() => setShowAccessLogs((value) => !value)}
-                className="flex items-center justify-between w-full p-4 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
+                className="flex items-center justify-between w-full p-4 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all text-left group/btn"
               >
                 <div className="flex items-center gap-3">
                   <Briefcase size={14} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Logs de Acesso</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-normal">Logs de Acesso</span>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-primary/20 group-hover/btn:bg-primary transition-all shadow-glow" />
               </button>
 
               {resetCredentialMutation.isSuccess ? (
-                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                <p className="text-[10px] font-semibold uppercase tracking-normal text-success">
                   Email de redefinicao enviado.
                 </p>
               ) : null}
               {resetCredentialMutation.error ? (
-                <p className="text-[10px] font-black uppercase tracking-widest text-red-400">
+                <p className="text-[10px] font-semibold uppercase tracking-normal text-red-400">
                   {resetCredentialMutation.error.message}
                 </p>
               ) : null}
 
               {showChangePassword ? (
-                <div className="rounded-2xl border border-border/60 bg-background/50 p-4 space-y-4">
+                <div className="rounded-lg border border-border/60 bg-background/50 p-4 space-y-4">
                   <div className="space-y-3">
                     <div className="flex flex-col gap-1">
                       <label className={labelClass}>
@@ -302,7 +302,7 @@ export function ProfileForm() {
                     <button
                       type="button"
                       onClick={resetChangePasswordForm}
-                      className="flex-1 rounded-2xl border border-border/60 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground transition-all hover:bg-muted/40"
+                      className="flex-1 rounded-lg border border-border/60 px-4 py-3 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground transition-all hover:bg-muted/40"
                     >
                       Cancelar
                     </button>
@@ -310,7 +310,7 @@ export function ProfileForm() {
                       type="button"
                       onClick={handlePasswordChange}
                       disabled={changePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword}
-                      className="flex-1 rounded-2xl bg-primary px-4 py-3 text-[10px] font-black uppercase tracking-widest text-primary-foreground transition-all hover:brightness-110 disabled:opacity-40"
+                      className="flex-1 rounded-lg bg-primary px-4 py-3 text-[10px] font-semibold uppercase tracking-normal text-primary-foreground transition-all hover:brightness-110 disabled:opacity-40"
                     >
                       {changePasswordMutation.isPending ? 'Alterando...' : 'Atualizar Senha'}
                     </button>
@@ -321,24 +321,24 @@ export function ProfileForm() {
               {showAccessLogs ? (
                 <div className="mt-2 max-h-48 overflow-auto rounded-xl border border-border/60 bg-background/50 p-3">
                   {accessLogsQuery.isLoading ? (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                       Carregando logs...
                     </p>
                   ) : accessLogsQuery.data?.items?.length ? (
                     <div className="space-y-2">
                       {accessLogsQuery.data.items.map((log) => (
                         <div key={log.id} className="rounded-lg border border-border/40 bg-muted/20 p-2">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-foreground">
+                          <p className="text-[10px] font-semibold uppercase tracking-normal text-foreground">
                             {log.action}
                           </p>
-                          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          <p className="text-[9px] font-semibold uppercase tracking-normal text-muted-foreground">
                             {new Date(log.createdAt).toLocaleString('pt-BR')}
                           </p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
                       Nenhum log encontrado.
                     </p>
                   )}
@@ -347,13 +347,13 @@ export function ProfileForm() {
             </div>
 
             <div className="mt-4 pt-4 border-t border-border/50">
-              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-wider leading-relaxed opacity-50">
+              <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-normal leading-relaxed opacity-50">
                 Sua conta utiliza OAuth 2.0 via Protetic-Identity. Para desvincular provedores, acesse o portal central.
               </p>
             </div>
           </div>
 
-          <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-[32px] p-8 flex flex-col gap-6 relative overflow-hidden group/social shadow-lg shadow-black/5">
+          <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-6 relative overflow-hidden group/social shadow-lg shadow-black/5">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex items-center gap-1">
                 {[Github, Linkedin].map((Icon, i) => (
@@ -362,11 +362,11 @@ export function ProfileForm() {
                   </div>
                 ))}
               </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">Integracoes Sociais</span>
+              <span className="text-[9px] font-semibold uppercase tracking-normal text-muted-foreground opacity-40">Integracoes Sociais</span>
             </div>
             <div className="flex items-start gap-4">
               <Info size={16} className="text-primary shrink-0 mt-0.5" />
-              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-tight opacity-60 leading-normal">
+              <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-tight opacity-60 leading-normal">
                 Assinatura de commits e vinculacao de repositorios ativa para o ambiente de dev CLI.
               </p>
             </div>

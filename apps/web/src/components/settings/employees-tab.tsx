@@ -10,8 +10,8 @@ export function EmployeesTab() {
             <Users size={18} strokeWidth={3} />
          </div>
          <div className="flex flex-col gap-0.5">
-            <Large className="tracking-tight text-lg font-black uppercase">Elenco Operacional</Large>
-            <Muted className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Listagem de terminais e operadores ativos</Muted>
+            <Large className="tracking-tight text-lg font-semibold uppercase">Elenco Operacional</Large>
+            <Muted className="text-[10px] font-semibold uppercase tracking-normal opacity-40">Listagem de terminais e operadores ativos</Muted>
          </div>
       </div>
       

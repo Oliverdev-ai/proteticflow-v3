@@ -114,6 +114,7 @@
   --radius-lg: 14px;
   --radius-xl: 20px;
   --radius-pill: 999px;
+  --radius-full: 999px;
 
   /* Motion */
   --ease-out-expressive: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -161,12 +162,19 @@
 
   --success:          var(--green-600);
   --success-soft:     #E6F4EC;
+  --success-subtle:   var(--success-soft);
   --warning:          var(--amber-warn);
   --warning-soft:     #FDF1DA;
+  --warning-subtle:   var(--warning-soft);
   --destructive:      var(--red-600);
   --destructive-soft: #FBEAE8;
+  --destructive-subtle: var(--destructive-soft);
   --info:             var(--blue-500);
   --info-soft:        #E6EEFE;
+  --info-subtle:      var(--info-soft);
+  --primary-subtle:   var(--primary-soft);
+  --accent-subtle:    var(--accent-soft);
+  --text-muted:       var(--fg-muted);
 
   --border:           #E5DFD3;
   --border-strong:    #C8C0B1;
@@ -237,12 +245,19 @@
 
   --success:          #3FB37A;
   --success-soft:     rgb(31 157 95 / 0.14);
+  --success-subtle:   var(--success-soft);
   --warning:          #F0A93B;
   --warning-soft:     rgb(217 119 6 / 0.16);
+  --warning-subtle:   var(--warning-soft);
   --destructive:      #E5685F;
   --destructive-soft: rgb(217 72 63 / 0.16);
+  --destructive-subtle: var(--destructive-soft);
   --info:             #5E8CFC;
   --info-soft:        rgb(37 99 235 / 0.16);
+  --info-subtle:      var(--info-soft);
+  --primary-subtle:   var(--primary-soft);
+  --accent-subtle:    var(--accent-soft);
+  --text-muted:       var(--fg-muted);
 
   --border:           #232B35;
   --border-strong:    #303A47;
@@ -529,14 +544,55 @@ code, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
 }
 .premium-card:hover { box-shadow: var(--shadow-md); }
 
-/* ── 9. AUTH BACKGROUND ─────────────────────────────────────── */
+/* ── 9. CHIP STATUS ────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.chip-neutral {
+  background: var(--bg-muted);
+  color: var(--text-muted);
+}
+.chip-info {
+  background: var(--info-subtle);
+  color: var(--info);
+}
+.chip-warning {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+.chip-success {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.chip-accent {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+.chip-primary {
+  background: var(--primary-subtle);
+  color: var(--primary);
+}
+.chip-destructive {
+  background: var(--destructive-subtle);
+  color: var(--destructive);
+}
+
+/* ── 10. AUTH BACKGROUND ────────────────────────────────────── */
 .auth-bg {
   background-color: var(--navy-900);
   background-image: radial-gradient(circle at 1px 1px, rgb(250 247 242 / 0.04) 1px, transparent 0);
   background-size: 24px 24px;
 }
 
-/* ── 10. SCROLLBAR ──────────────────────────────────────────── */
+/* ── 11. SCROLLBAR ──────────────────────────────────────────── */
 .simplebar-track.simplebar-vertical { width: 8px; background: transparent; }
 .simplebar-scrollbar:before {
   background: var(--fg-subtle);
@@ -544,13 +600,13 @@ code, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
   opacity: 0.4;
 }
 
-/* ── 11. KEYFRAMES ──────────────────────────────────────────── */
+/* ── 12. KEYFRAMES ──────────────────────────────────────────── */
 @keyframes shimmer {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
 
-/* ── 12. REDUCED MOTION ─────────────────────────────────────── */
+/* ── 13. REDUCED MOTION ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

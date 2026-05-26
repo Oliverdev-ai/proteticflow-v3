@@ -44,7 +44,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-4">
       <h2 className="text-lg font-semibold text-white">Emitir NFS-e (unitaria)</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         <label className="text-sm text-zinc-300">

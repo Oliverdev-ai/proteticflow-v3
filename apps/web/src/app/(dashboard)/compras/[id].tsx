@@ -73,7 +73,7 @@ function ReceiveDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 shadow-2xl">
+      <div className="w-full max-w-md space-y-5 rounded-lg border border-border bg-card p-6 shadow-md">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-primary/10 p-2.5">
             <CheckCircle size={22} className="text-primary" />
@@ -235,7 +235,7 @@ export default function PurchaseDetailPage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="rounded-lg border border-border bg-card p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div className="space-y-2">
             <div className="flex items-center gap-2.5">
@@ -338,7 +338,7 @@ export default function PurchaseDetailPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="border-b border-border px-5 py-4">
           <h2 className="flex items-center gap-2 font-semibold text-foreground">
             <Package size={16} className="text-primary" />

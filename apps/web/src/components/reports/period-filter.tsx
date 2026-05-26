@@ -14,7 +14,7 @@ type PeriodFilterProps = {
 
 export function PeriodFilter({ value, onChange, onApply, isLoading = false }: PeriodFilterProps) {
   const labelClass =
-    'mb-1.5 ml-1 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground';
+    'mb-1.5 ml-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground';
   const inputClass =
     'w-full rounded-xl border border-border bg-muted/50 px-4 py-2.5 text-xs font-bold text-foreground shadow-inner transition-all placeholder:opacity-30 focus:border-primary/50 focus:outline-none focus:ring-4 focus:ring-primary/5';
 
@@ -50,7 +50,7 @@ export function PeriodFilter({ value, onChange, onApply, isLoading = false }: Pe
         <button
           onClick={onApply}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:brightness-110 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-lg shadow-sm transition-all hover:brightness-110 disabled:opacity-60"
         >
           <Search size={16} />
           {isLoading ? 'Aplicando...' : 'Aplicar periodo'}

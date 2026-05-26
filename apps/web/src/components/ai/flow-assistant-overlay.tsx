@@ -167,7 +167,7 @@ export function FlowAssistantOverlay() {
         <div
           ref={panelRef}
           data-flow-assistant
-          className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 z-50 border border-zinc-800 bg-zinc-950 md:rounded-2xl md:resize md:overflow-auto shadow-2xl"
+          className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 z-50 border border-zinc-800 bg-zinc-950 md:rounded-lg md:resize md:overflow-auto shadow-md"
           style={panelSize}
           onMouseUp={() => {
             const element = panelRef.current;

@@ -130,7 +130,7 @@ function NavGroupSection({
           title={group.label}
           className={cn(
             'flex justify-center items-center py-2 rounded-lg',
-            'text-white/40 text-[10px] font-bold uppercase tracking-wider',
+            'text-white/40 text-[10px] font-bold uppercase tracking-normal',
           )}
         >
           <Icon
@@ -348,7 +348,7 @@ function SidebarContent({
                 </p>
                 {plan && (
                   <span
-                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    className="text-[9px] font-bold uppercase tracking-normal px-1.5 py-0.5 rounded"
                     style={{ background: 'color-mix(in srgb, var(--primary) 20%, transparent)', color: 'var(--primary)' }}
                   >
                     {plan}

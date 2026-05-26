@@ -26,7 +26,7 @@ export function PlanBadge() {
   if (!status) {
     return (
       <div className="mx-2 mb-3 rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-2">
-        <p className="text-[11px] uppercase tracking-wider text-zinc-500">Plano</p>
+        <p className="text-[11px] uppercase tracking-normal text-zinc-500">Plano</p>
         <p className="text-sm text-zinc-300">Carregando...</p>
       </div>
     );
@@ -42,7 +42,7 @@ export function PlanBadge() {
 
   return (
     <div className={`mx-2 mb-3 rounded-lg px-3 py-2 border ${containerClass}`}>
-      <p className="text-[11px] uppercase tracking-wider text-zinc-500">Plano</p>
+      <p className="text-[11px] uppercase tracking-normal text-zinc-500">Plano</p>
       <p className="text-sm font-medium text-zinc-100">
         {formatPlan(status.plan)}
         {status.plan === 'trial' ? (

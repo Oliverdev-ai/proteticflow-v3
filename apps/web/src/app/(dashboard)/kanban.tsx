@@ -20,7 +20,7 @@ import {
 } from '@proteticflow/shared';
 import { useNavigate } from 'react-router-dom';
 import { PageTransition } from '../../components/shared/page-transition';
-import { H1, Subtitle, Muted } from '../../components/shared/typography';
+import { PageTitle, Subtitle, Muted } from '../../components/shared/typography';
 import { cn } from '../../lib/utils';
 import { ProofBadge } from '../../components/jobs/proof-badge';
 import { SuspendDialog } from '../../components/jobs/suspend-dialog';
@@ -67,13 +67,13 @@ const COLUMN_COLORS: Record<string, string> = {
   in_progress: 'border-blue-500/30',
   quality_check: 'border-amber-500/30',
   ready: 'border-primary/50',
-  delivered: 'border-emerald-500/30',
+  delivered: 'border-success/30',
 };
 
 const URGENCY_DOT: Record<string, string> = {
   overdue: 'bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.5)]',
   due24h: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]',
-  onTime: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
+  onTime: 'bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]',
 };
 
 function JobCard({
@@ -96,14 +96,14 @@ function JobCard({
       data-testid={`kanban-card-${job.id}`}
       onClick={() => !dragging && navigate(`/trabalhos/${job.id}`)}
       className={cn(
-        'flex cursor-pointer flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-all active:scale-[0.98]',
+        'flex cursor-pointer flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-all ',
         dragging
-          ? 'rotate-2 scale-105 border-primary opacity-50 shadow-2xl ring-2 ring-primary/20'
+          ? 'rotate-2 scale-105 border-primary opacity-50 shadow-md ring-2 ring-primary/20'
           : 'hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5',
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="rounded-lg bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-primary">
+        <span className="rounded-lg bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-normal text-primary">
           {job.code}
         </span>
         <div
@@ -116,7 +116,7 @@ function JobCard({
 
       <div className="flex flex-wrap items-center gap-1.5">
         {job.isUrgent ? (
-          <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-destructive">
+          <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal text-destructive">
             URGENTE
           </span>
         ) : null}
@@ -126,7 +126,7 @@ function JobCard({
         ) : null}
 
         {job.jobSubType === 'rework' ? (
-          <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-500">
+          <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal text-amber-500">
             REMOLDAGEM
           </span>
         ) : null}
@@ -182,7 +182,7 @@ function JobCard({
                 event.stopPropagation();
                 onSuspend(job);
               }}
-              className="rounded-md border border-border bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground transition-all hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+              className="rounded-md border border-border bg-muted px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal text-muted-foreground transition-all hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
             >
               Suspender
             </button>
@@ -210,7 +210,7 @@ function DroppableColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'flex min-h-[300px] flex-col gap-3 rounded-2xl p-2 transition-all duration-300',
+        'flex min-h-[300px] flex-col gap-3 rounded-lg p-2 transition-all duration-300',
         isDragOver ? 'bg-primary/5 ring-2 ring-primary/20 backdrop-blur-sm' : '',
       )}
     >
@@ -377,7 +377,7 @@ export default function KanbanPage() {
     <PageTransition className="flex h-full flex-col gap-6 overflow-hidden p-4 md:p-1">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <H1>Fluxo de Produção</H1>
+          <PageTitle>Fluxo de Produção</PageTitle>
           <Subtitle>Acompanhe status, urgências, provas e OS suspensas em tempo real</Subtitle>
         </div>
 
@@ -385,7 +385,7 @@ export default function KanbanPage() {
           <button
             type="button"
             onClick={() => navigate('/kanban-tv')}
-            className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs font-bold text-sky-500 shadow-sm transition-all hover:bg-sky-500/10 active:scale-95"
+            className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs font-bold text-sky-500 shadow-sm transition-all hover:bg-sky-500/10 "
           >
             <Monitor size={14} /> Modo TV
           </button>
@@ -394,7 +394,7 @@ export default function KanbanPage() {
             type="button"
             onClick={() => setActiveView('active')}
             className={cn(
-              'rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all',
+              'rounded-xl border px-4 py-2.5 text-xs font-semibold uppercase tracking-normal transition-all',
               activeView === 'active'
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
@@ -407,7 +407,7 @@ export default function KanbanPage() {
             type="button"
             onClick={() => setActiveView('suspended')}
             className={cn(
-              'rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all',
+              'rounded-xl border px-4 py-2.5 text-xs font-semibold uppercase tracking-normal transition-all',
               activeView === 'suspended'
                 ? 'border-amber-500/40 bg-amber-500/10 text-amber-500'
                 : 'border-border bg-card text-muted-foreground hover:border-amber-500/40 hover:text-foreground',
@@ -421,7 +421,7 @@ export default function KanbanPage() {
               type="button"
               onClick={() => setOverdueOnly((value) => !value)}
               className={cn(
-                'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold shadow-sm transition-all active:scale-95',
+                'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold shadow-sm transition-all ',
                 overdueOnly
                   ? 'border-destructive bg-destructive text-destructive-foreground shadow-destructive/20'
                   : 'border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground',
@@ -434,18 +434,18 @@ export default function KanbanPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
           Ativas: <span className="text-foreground">{metricsQuery.data?.activeCount ?? 0}</span>
         </div>
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
           Atrasadas:{' '}
           <span className="text-destructive">{metricsQuery.data?.overdueCount ?? 0}</span>
         </div>
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
           Urgentes:{' '}
           <span className="text-destructive">{metricsQuery.data?.urgentActiveCount ?? 0}</span>
         </div>
-        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-3 py-2 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">
           Provas vencidas:{' '}
           <span className="text-amber-500">{metricsQuery.data?.proofOverdueCount ?? 0}</span>
         </div>
@@ -454,20 +454,20 @@ export default function KanbanPage() {
       {activeView === 'active' ? (
         <div className="flex items-center gap-6 px-1">
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+            <span className="text-[10px] font-bold uppercase tracking-normal text-muted-foreground">
               No prazo
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-[10px] font-bold uppercase tracking-normal text-muted-foreground">
               24h restantes
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-[10px] font-bold uppercase tracking-normal text-muted-foreground">
               Atrasado
             </span>
           </div>
@@ -480,7 +480,7 @@ export default function KanbanPage() {
             type="button"
             onClick={() => setPausedFilter('all')}
             className={cn(
-              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
+              'rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-normal transition-all',
               pausedFilter === 'all'
                 ? 'border-primary/40 bg-primary/10 text-primary'
                 : 'border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground',
@@ -492,7 +492,7 @@ export default function KanbanPage() {
             type="button"
             onClick={() => setPausedFilter('rework_in_progress')}
             className={cn(
-              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
+              'rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-normal transition-all',
               pausedFilter === 'rework_in_progress'
                 ? 'border-amber-500/40 bg-amber-500/10 text-amber-500'
                 : 'border-border bg-card text-muted-foreground hover:border-amber-500/40 hover:text-foreground',
@@ -504,7 +504,7 @@ export default function KanbanPage() {
             type="button"
             onClick={() => setPausedFilter('suspended')}
             className={cn(
-              'rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all',
+              'rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-normal transition-all',
               pausedFilter === 'suspended'
                 ? 'border-slate-400/40 bg-slate-500/10 text-slate-300'
                 : 'border-border bg-card text-muted-foreground hover:border-slate-400/40 hover:text-foreground',
@@ -522,7 +522,7 @@ export default function KanbanPage() {
         </div>
       ) : error ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3">
-          <AlertCircle className="font-black text-destructive" size={32} />
+          <AlertCircle className="font-semibold text-destructive" size={32} />
           <p className="text-sm font-bold text-destructive">{error.message}</p>
         </div>
       ) : activeView === 'active' ? (
@@ -540,15 +540,15 @@ export default function KanbanPage() {
                 <div
                   key={status}
                   className={cn(
-                    'flex w-[280px] min-w-[280px] shrink-0 flex-col gap-4 rounded-3xl border bg-muted/20 p-4 transition-all',
+                    'flex w-[280px] min-w-[280px] shrink-0 flex-col gap-4 rounded-lg border bg-muted/20 p-4 transition-all',
                     COLUMN_COLORS[status] || 'border-border',
                   )}
                 >
-                  <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/50 bg-muted/40 p-3">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-muted/40 p-3">
+                    <h3 className="text-[10px] font-semibold uppercase tracking-normal text-foreground">
                       {JOB_STATUS_LABELS[status] ?? status}
                     </h3>
-                    <div className="rounded-lg bg-primary/20 px-2 py-0.5 text-[10px] font-black text-primary">
+                    <div className="rounded-lg bg-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
                       {colJobs.length}
                     </div>
                   </div>
@@ -566,18 +566,18 @@ export default function KanbanPage() {
 
           <DragOverlay>
             {activeJob ? (
-              <div className="pointer-events-none scale-105 overflow-hidden rounded-2xl ring-4 ring-primary/20 drop-shadow-2xl">
+              <div className="pointer-events-none scale-105 overflow-hidden rounded-lg ring-4 ring-primary/20 drop-shadow-md">
                 <JobCard job={activeJob} dragging />
               </div>
             ) : null}
           </DragOverlay>
         </DndContext>
       ) : (
-        <div className="custom-scrollbar flex-1 space-y-3 overflow-auto rounded-3xl border border-border bg-card/40 p-4">
+        <div className="custom-scrollbar flex-1 space-y-3 overflow-auto rounded-lg border border-border bg-card/40 p-4">
           {filteredPausedJobs.length === 0 ? (
             <div className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 text-center">
               <PauseCircle size={36} className="text-muted-foreground/30" />
-              <p className="text-sm font-black uppercase tracking-wider text-foreground">
+              <p className="text-sm font-semibold uppercase tracking-normal text-foreground">
                 Nenhuma OS nesta aba
               </p>
               <p className="max-w-md text-xs font-semibold text-muted-foreground">
@@ -588,27 +588,27 @@ export default function KanbanPage() {
             filteredPausedJobs.map((job) => (
               <div
                 key={job.id}
-                className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 md:flex-row md:items-center md:justify-between"
+                className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-lg bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-primary">
+                    <span className="rounded-lg bg-primary/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-normal text-primary">
                       {job.code}
                     </span>
                     {job.isUrgent ? (
-                      <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-destructive">
+                      <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal text-destructive">
                         URGENTE
                       </span>
                     ) : null}
                     {job.jobSubType === 'proof' ? <ProofBadge /> : null}
                     {job.jobSubType === 'rework' ? (
-                      <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-500">
+                      <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal text-amber-500">
                         REMOLDAGEM
                       </span>
                     ) : null}
                   </div>
 
-                  <p className="text-sm font-black text-foreground">
+                  <p className="text-sm font-semibold text-foreground">
                     {job.clientName ?? 'Cliente não informado'} -{' '}
                     {job.patientName ?? 'Paciente não informado'}
                   </p>
@@ -626,7 +626,7 @@ export default function KanbanPage() {
                   <button
                     type="button"
                     onClick={() => navigate(`/trabalhos/${job.id}`)}
-                    className="rounded-xl border border-border bg-muted px-3 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground transition-all hover:text-foreground"
+                    className="rounded-xl border border-border bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-normal text-muted-foreground transition-all hover:text-foreground"
                   >
                     Ver OS
                   </button>
@@ -635,7 +635,7 @@ export default function KanbanPage() {
                     type="button"
                     disabled={unsuspendMutation.isPending}
                     onClick={() => unsuspendMutation.mutate({ jobId: job.id })}
-                    className="flex items-center gap-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-500 transition-all hover:brightness-110 disabled:opacity-40"
+                    className="flex items-center gap-1 rounded-xl border border-success/30 bg-success/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-normal text-success transition-all hover:brightness-110 disabled:opacity-40"
                   >
                     <PlayCircle size={13} /> Reativar
                   </button>
@@ -647,7 +647,7 @@ export default function KanbanPage() {
       )}
 
       {toastMsg ? (
-        <div className="fixed bottom-10 left-1/2 z-[100] flex -translate-x-1/2 animate-in items-center gap-3 rounded-2xl border border-destructive-foreground/20 bg-destructive px-8 py-4 text-xs font-bold uppercase tracking-widest text-destructive-foreground shadow-2xl slide-in-from-bottom-5 duration-500">
+        <div className="fixed bottom-10 left-1/2 z-[100] flex -translate-x-1/2 animate-in items-center gap-3 rounded-lg border border-destructive-foreground/20 bg-destructive px-8 py-4 text-xs font-bold uppercase tracking-normal text-destructive-foreground shadow-md slide-in-from-bottom-5 duration-500">
           <AlertCircle size={18} />
           {toastMsg}
         </div>

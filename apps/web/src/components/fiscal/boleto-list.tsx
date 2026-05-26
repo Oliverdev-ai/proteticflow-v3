@@ -1,4 +1,6 @@
-import { formatCurrency, formatDate, type Boleto } from '@proteticflow/shared';
+import { formatCurrency, formatDate, BOLETO_STATUS_CHIP, type Boleto } from '@proteticflow/shared';
+import { DataTable, type Column } from '../shared/data-table';
+import { StatusChip } from '../shared/status-chip';
 import { BoletoActions } from './boleto-actions';
 
 type BoletoListProps = {
@@ -8,66 +10,82 @@ type BoletoListProps = {
   onCancel: (boletoId: number) => void;
 };
 
-const STATUS_LABELS: Record<Boleto['status'], string> = {
-  pending: 'Pendente',
-  paid: 'Pago',
-  overdue: 'Vencido',
-  cancelled: 'Cancelado',
-  refunded: 'Estornado',
+type BoletoRow = {
+  id: number;
+  amountCents: number;
+  dueDate: string;
+  status: keyof typeof BOLETO_STATUS_CHIP;
+  boleto: Boleto;
 };
 
-const STATUS_CLASSNAMES: Record<Boleto['status'], string> = {
-  pending: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
-  paid: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
-  overdue: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',
-  cancelled: 'bg-zinc-500/15 text-zinc-300 border border-zinc-500/30',
-  refunded: 'bg-sky-500/15 text-sky-300 border border-sky-500/30',
-};
+function toBoletoStatus(value: string): keyof typeof BOLETO_STATUS_CHIP {
+  if (value === 'paid' || value === 'overdue' || value === 'cancelled' || value === 'refunded') {
+    return value;
+  }
+  return 'pending';
+}
 
 export function BoletoList({ boletos, isBusy = false, onSync, onCancel }: BoletoListProps) {
-  if (boletos.length === 0) {
-    return (
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 text-sm text-zinc-400">
-        Nenhum boleto encontrado para os filtros atuais.
-      </div>
-    );
-  }
+  const rows: BoletoRow[] = boletos.map((boleto) => ({
+    id: boleto.id,
+    amountCents: boleto.amountCents,
+    dueDate: boleto.dueDate,
+    status: toBoletoStatus(boleto.status),
+    boleto,
+  }));
+
+  const columns: Column<BoletoRow>[] = [
+    {
+      id: 'id',
+      header: 'ID',
+      width: '90px',
+      cell: (row) => <span className="t-mono">#{row.id}</span>,
+    },
+    {
+      id: 'amount',
+      header: 'Valor',
+      width: '130px',
+      align: 'right',
+      cell: (row) => <span className="tabular-nums font-medium">{formatCurrency(row.amountCents)}</span>,
+    },
+    {
+      id: 'dueDate',
+      header: 'Vencimento',
+      width: '130px',
+      hideBelow: 'sm',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{formatDate(row.dueDate)}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '118px',
+      cell: (row) => {
+        const chip = BOLETO_STATUS_CHIP[row.status];
+        return <StatusChip label={chip.label} variant={chip.variant} />;
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Acoes',
+      width: '250px',
+      align: 'right',
+      cell: (row) => (
+        <div onClick={(event) => event.stopPropagation()}>
+          <BoletoActions boleto={row.boleto} isBusy={isBusy} onSync={onSync} onCancel={onCancel} />
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-zinc-950/70 border-b border-zinc-800 text-xs uppercase text-zinc-500">
-          <tr>
-            <th className="px-4 py-3 text-left">ID</th>
-            <th className="px-4 py-3 text-left">Valor</th>
-            <th className="px-4 py-3 text-left">Vencimento</th>
-            <th className="px-4 py-3 text-left">Status</th>
-            <th className="px-4 py-3 text-left">Acoes</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-800">
-          {boletos.map((boleto) => (
-            <tr key={boleto.id}>
-              <td className="px-4 py-3 text-zinc-200">#{boleto.id}</td>
-              <td className="px-4 py-3 text-zinc-200">{formatCurrency(boleto.amountCents)}</td>
-              <td className="px-4 py-3 text-zinc-300">{formatDate(boleto.dueDate)}</td>
-              <td className="px-4 py-3">
-                <span className={`inline-flex px-2 py-1 rounded-full text-xs ${STATUS_CLASSNAMES[boleto.status]}`}>
-                  {STATUS_LABELS[boleto.status]}
-                </span>
-              </td>
-              <td className="px-4 py-3">
-                <BoletoActions
-                  boleto={boleto}
-                  isBusy={isBusy}
-                  onSync={onSync}
-                  onCancel={onCancel}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      rows={rows}
+      getKey={(row) => row.id}
+      empty={{
+        title: 'Nenhum boleto encontrado',
+        description: 'Ajuste os filtros para continuar.',
+      }}
+    />
   );
 }

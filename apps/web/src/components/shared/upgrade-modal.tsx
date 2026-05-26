@@ -10,8 +10,8 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 shadow-2xl flex flex-col gap-6">
-        <h2 className="text-lg font-black uppercase tracking-widest">Faca Upgrade</h2>
+      <div className="w-full max-w-lg rounded-lg border border-border bg-card p-8 shadow-md flex flex-col gap-6">
+        <h2 className="text-lg font-semibold uppercase tracking-normal">Faca Upgrade</h2>
         <p className="text-sm text-muted-foreground">
           Seu periodo promocional terminou. Escolha um plano para continuar usando o ProteticFlow.
         </p>
@@ -23,7 +23,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
               href="/planos"
               className="rounded-xl border border-border p-4 flex flex-col gap-2 text-center hover:border-primary/50 transition-colors"
             >
-              <span className="text-[10px] font-black uppercase tracking-widest">{plan}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-normal">{plan}</span>
               <span className="text-xs text-muted-foreground">Ver detalhes</span>
             </a>
           ))}
@@ -32,7 +32,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
         <button
           type="button"
           onClick={onClose}
-          className="self-end text-xs font-black uppercase tracking-widest text-muted-foreground"
+          className="self-end text-xs font-semibold uppercase tracking-normal text-muted-foreground"
         >
           Fechar
         </button>

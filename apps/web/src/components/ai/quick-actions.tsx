@@ -24,8 +24,8 @@ export function QuickActions({ userRole, disabled, onAction }: QuickActionsProps
   const visibleActions = canUseFinancial ? [...ACTIONS, ...ADMIN_ACTIONS] : ACTIONS;
 
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-      <p className="text-xs uppercase tracking-wider text-zinc-500 mb-3">Quick Actions</p>
+    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+      <p className="text-xs uppercase tracking-normal text-zinc-500 mb-3">Quick Actions</p>
       <div className="flex flex-wrap gap-2">
         {visibleActions.map((action) => (
           <button

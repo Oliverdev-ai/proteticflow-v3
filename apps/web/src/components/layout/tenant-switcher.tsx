@@ -34,7 +34,7 @@ export function TenantSwitcher() {
 
       {open && (
         <div className="absolute top-full left-0 mt-2 w-72 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest px-3 pt-3 pb-1">Laboratorios</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-normal px-3 pt-3 pb-1">Laboratorios</p>
           {list?.map((tenant) => (
             <button
               key={tenant.id}

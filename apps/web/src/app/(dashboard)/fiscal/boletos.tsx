@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
+import { formatBRLInput, parseBRL } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { BoletoList } from '../../../components/fiscal/boleto-list';
+import { PageTitle } from '../../../components/shared/typography';
+import { Button } from '../../../components/ui/button';
 
 function toIso(date: string, endOfDay: boolean): string | undefined {
   if (!date) return undefined;
@@ -18,7 +21,7 @@ export default function BoletosPage() {
   const [dateTo, setDateTo] = useState('');
 
   const [manualClientId, setManualClientId] = useState<number | null>(null);
-  const [manualAmount, setManualAmount] = useState('0');
+  const [manualAmount, setManualAmount] = useState(formatBRLInput(0));
   const [manualDueDate, setManualDueDate] = useState(new Date().toISOString().slice(0, 10));
   const [manualDescription, setManualDescription] = useState('');
   const [arIdToGenerate, setArIdToGenerate] = useState('');
@@ -90,8 +93,8 @@ export default function BoletosPage() {
   async function handleGenerateManual(): Promise<void> {
     if (!manualClientId) return;
     setBoletoError(null);
-    const amountValue = Number(manualAmount);
-    if (!Number.isFinite(amountValue) || amountValue <= 0) return;
+    const amountCents = parseBRL(manualAmount);
+    if (amountCents <= 0) return;
 
     const payload: {
       clientId: number;
@@ -100,7 +103,7 @@ export default function BoletosPage() {
       description?: string;
     } = {
       clientId: manualClientId,
-      amountCents: Math.round(amountValue * 100),
+      amountCents,
       dueDate: new Date(`${manualDueDate}T12:00:00`).toISOString(),
     };
 
@@ -120,15 +123,14 @@ export default function BoletosPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Fiscal - Boletos</h1>
-        <p className="text-sm text-zinc-400">Geração, consulta e cancelamento de boletos.</p>
-      </div>
+      <PageTitle subtitle="Geracao, consulta e cancelamento de boletos.">
+        Fiscal - Boletos
+      </PageTitle>
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
-        <h2 className="text-lg font-semibold text-white">Filtros</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <label className="text-sm text-zinc-300">
+      <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] p-5 space-y-4">
+        <h2 className="font-[var(--font-display)] text-xl text-[var(--fg-strong)]">Filtros</h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+          <label className="text-sm text-[var(--fg-muted)]">
             Status
             <select
               value={status}
@@ -144,7 +146,7 @@ export default function BoletosPage() {
             </select>
           </label>
 
-          <label className="text-sm text-zinc-300">
+          <label className="text-sm text-[var(--fg-muted)]">
             Cliente
             <select
               value={clientId ?? ''}
@@ -162,7 +164,7 @@ export default function BoletosPage() {
             </select>
           </label>
 
-          <label className="text-sm text-zinc-300">
+          <label className="text-sm text-[var(--fg-muted)]">
             De
             <input
               type="date"
@@ -172,7 +174,7 @@ export default function BoletosPage() {
             />
           </label>
 
-          <label className="text-sm text-zinc-300">
+          <label className="text-sm text-[var(--fg-muted)]">
             Ate
             <input
               type="date"
@@ -184,10 +186,10 @@ export default function BoletosPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
-          <h2 className="text-lg font-semibold text-white">Gerar por AR</h2>
-          <label className="text-sm text-zinc-300 block">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] p-5 space-y-3">
+          <h2 className="font-[var(--font-display)] text-xl text-[var(--fg-strong)]">Gerar por AR</h2>
+          <label className="text-sm text-[var(--fg-muted)] block">
             ID da conta a receber
             <input
               type="number"
@@ -197,21 +199,20 @@ export default function BoletosPage() {
               className="input-field mt-1 w-full"
             />
           </label>
-          <button
+          <Button
             type="button"
             onClick={handleGenerateFromAr}
             disabled={busy || !arIdToGenerate}
-            className="px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm font-medium disabled:opacity-50"
           >
             Gerar boleto da AR
-          </button>
-          {boletoError && <p className="text-sm text-red-400 mt-2">Erro: {boletoError}</p>}
+          </Button>
+          {boletoError ? <p className="t-small text-[var(--destructive)]">Erro: {boletoError}</p> : null}
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
-          <h2 className="text-lg font-semibold text-white">Gerar boleto manual</h2>
-          <div className="grid md:grid-cols-2 gap-3">
-            <label className="text-sm text-zinc-300">
+        <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] p-5 space-y-3">
+          <h2 className="font-[var(--font-display)] text-xl text-[var(--fg-strong)]">Gerar boleto manual</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="text-sm text-[var(--fg-muted)]">
               Cliente
               <select
                 value={manualClientId ?? ''}
@@ -229,19 +230,21 @@ export default function BoletosPage() {
               </select>
             </label>
 
-            <label className="text-sm text-zinc-300">
+            <label className="text-sm text-[var(--fg-muted)]">
               Valor (R$)
               <input
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={manualAmount}
-                onChange={(event) => setManualAmount(event.target.value)}
+                onChange={(event) => {
+                  const cents = parseBRL(event.target.value);
+                  setManualAmount(formatBRLInput(cents));
+                }}
                 className="input-field mt-1 w-full"
               />
             </label>
 
-            <label className="text-sm text-zinc-300">
+            <label className="text-sm text-[var(--fg-muted)]">
               Vencimento
               <input
                 type="date"
@@ -251,7 +254,7 @@ export default function BoletosPage() {
               />
             </label>
 
-            <label className="text-sm text-zinc-300">
+            <label className="text-sm text-[var(--fg-muted)]">
               Descricao
               <input
                 type="text"
@@ -262,15 +265,16 @@ export default function BoletosPage() {
               />
             </label>
           </div>
-          <button
+
+          <Button
             type="button"
             onClick={handleGenerateManual}
             disabled={busy || !manualClientId}
-            className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium disabled:opacity-50"
           >
             Gerar boleto manual
-          </button>
-          {boletoError && <p className="text-sm text-red-400 mt-2">Erro: {boletoError}</p>}
+          </Button>
+
+          {boletoError ? <p className="t-small text-[var(--destructive)]">Erro: {boletoError}</p> : null}
         </div>
       </div>
 
