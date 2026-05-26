@@ -1,4 +1,6 @@
-import { formatCurrency, formatDate, type Nfse } from '@proteticflow/shared';
+import { formatCurrency, formatDate, INVOICE_STATUS_CHIP, type Nfse } from '@proteticflow/shared';
+import { DataTable, type Column } from '../shared/data-table';
+import { StatusChip } from '../shared/status-chip';
 
 type NfseListProps = {
   notas: Nfse[];
@@ -7,91 +9,126 @@ type NfseListProps = {
   onCancel: (nfseId: number) => void;
 };
 
-const STATUS_LABELS: Record<Nfse['status'], string> = {
-  draft: 'Rascunho',
-  pending: 'Pendente',
-  issued: 'Emitida',
-  cancelled: 'Cancelada',
-  error: 'Erro',
+type NfseRow = {
+  id: number;
+  tomadorName: string;
+  grossValueCents: number;
+  status: keyof typeof INVOICE_STATUS_CHIP;
+  issuedAt: string | null;
+  danfseUrl: string | null;
 };
 
-const STATUS_CLASSNAMES: Record<Nfse['status'], string> = {
-  draft: 'bg-zinc-500/15 text-zinc-300 border border-zinc-500/30',
-  pending: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
-  issued: 'bg-success/15 text-emerald-300 border border-success/30',
-  cancelled: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',
-  error: 'bg-red-500/15 text-red-300 border border-red-500/30',
-};
+function toInvoiceStatus(value: string): keyof typeof INVOICE_STATUS_CHIP {
+  if (value === 'pending' || value === 'issued' || value === 'cancelled' || value === 'error') {
+    return value;
+  }
+  return 'draft';
+}
 
 export function NfseList({ notas, isBusy = false, onSync, onCancel }: NfseListProps) {
-  if (notas.length === 0) {
-    return (
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 text-sm text-zinc-400">
-        Nenhuma nota fiscal encontrada para os filtros atuais.
-      </div>
-    );
-  }
+  const rows: NfseRow[] = notas.map((nota) => ({
+    id: nota.id,
+    tomadorName: nota.tomadorName,
+    grossValueCents: nota.grossValueCents,
+    status: toInvoiceStatus(nota.status),
+    issuedAt: nota.issuedAt ?? null,
+    danfseUrl: nota.danfseUrl ?? null,
+  }));
+
+  const columns: Column<NfseRow>[] = [
+    {
+      id: 'id',
+      header: 'ID',
+      width: '90px',
+      cell: (row) => <span className="t-mono">#{row.id}</span>,
+    },
+    {
+      id: 'tomador',
+      header: 'Tomador',
+      width: 'flex',
+      cell: (row) => <span className="truncate t-small">{row.tomadorName}</span>,
+    },
+    {
+      id: 'value',
+      header: 'Valor',
+      width: '140px',
+      align: 'right',
+      cell: (row) => <span className="tabular-nums font-medium">{formatCurrency(row.grossValueCents)}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '118px',
+      cell: (row) => {
+        const chip = INVOICE_STATUS_CHIP[row.status];
+        return <StatusChip label={chip.label} variant={chip.variant} />;
+      },
+    },
+    {
+      id: 'issuedAt',
+      header: 'Emissao',
+      width: '120px',
+      hideBelow: 'sm',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{row.issuedAt ? formatDate(row.issuedAt) : '-'}</span>,
+    },
+    {
+      id: 'actions',
+      header: 'Acoes',
+      width: '260px',
+      align: 'right',
+      cell: (row) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onSync(row.id);
+            }}
+            disabled={isBusy}
+            className="h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2.5 text-xs text-[var(--fg)] hover:bg-[var(--bg-muted)] disabled:opacity-50"
+          >
+            Sincronizar
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onCancel(row.id);
+            }}
+            disabled={isBusy || row.status !== 'issued'}
+            className="h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2.5 text-xs text-[var(--fg)] hover:bg-[var(--bg-muted)] disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!row.danfseUrl) return;
+              window.open(row.danfseUrl, '_blank', 'noopener,noreferrer');
+            }}
+            disabled={isBusy || !row.danfseUrl}
+            className="h-8 rounded-[var(--radius-sm)] border border-[var(--border)] px-2.5 text-xs text-[var(--fg)] hover:bg-[var(--bg-muted)] disabled:opacity-50"
+          >
+            Abrir DANFSE
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-zinc-950/70 border-b border-zinc-800 text-xs uppercase text-zinc-500">
-          <tr>
-            <th className="px-4 py-3 text-left">ID</th>
-            <th className="px-4 py-3 text-left">Tomador</th>
-            <th className="px-4 py-3 text-left">Valor</th>
-            <th className="px-4 py-3 text-left">Status</th>
-            <th className="px-4 py-3 text-left">Emissao</th>
-            <th className="px-4 py-3 text-left">Acoes</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-800">
-          {notas.map((nota) => (
-            <tr key={nota.id}>
-              <td className="px-4 py-3 text-zinc-200">#{nota.id}</td>
-              <td className="px-4 py-3 text-zinc-200">{nota.tomadorName}</td>
-              <td className="px-4 py-3 text-zinc-200">{formatCurrency(nota.grossValueCents)}</td>
-              <td className="px-4 py-3">
-                <span className={`inline-flex px-2 py-1 rounded-full text-xs ${STATUS_CLASSNAMES[nota.status]}`}>
-                  {STATUS_LABELS[nota.status]}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-zinc-300">{nota.issuedAt ? formatDate(nota.issuedAt) : '-'}</td>
-              <td className="px-4 py-3">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onSync(nota.id)}
-                    disabled={isBusy}
-                    className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 disabled:opacity-50"
-                  >
-                    Sincronizar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onCancel(nota.id)}
-                    disabled={isBusy || nota.status !== 'issued'}
-                    className="px-2 py-1 rounded bg-rose-700 hover:bg-rose-600 text-xs text-white disabled:opacity-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!nota.danfseUrl) return;
-                      window.open(nota.danfseUrl, '_blank', 'noopener,noreferrer');
-                    }}
-                    disabled={isBusy || !nota.danfseUrl}
-                    className="px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-xs text-white disabled:opacity-50"
-                  >
-                    Abrir DANFSE
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      rows={rows}
+      getKey={(row) => row.id}
+      empty={{
+        title: 'Nenhuma nota fiscal encontrada',
+        description: 'Ajuste os filtros para continuar.',
+      }}
+    />
   );
 }
