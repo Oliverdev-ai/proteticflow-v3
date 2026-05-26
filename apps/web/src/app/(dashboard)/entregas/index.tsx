@@ -1,16 +1,24 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Calendar, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
+import { DELIVERY_STATUS_CHIP } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import {
-  Truck,
-  Plus,
-  Calendar,
-  ChevronRight,
-  CheckCircle2,
-  Loader2,
-  MapPin,
-  Trash2,
-} from 'lucide-react';
+import { cn } from '../../../lib/utils';
+import { Button } from '../../../components/ui/button';
+import { PageTitle } from '../../../components/shared/typography';
+import { FilterBar } from '../../../components/shared/filter-bar';
+import { DataTable, type Column } from '../../../components/shared/data-table';
+import { StatusChip } from '../../../components/shared/status-chip';
+
+type DeliveryStatus = keyof typeof DELIVERY_STATUS_CHIP;
+
+type DeliveryRow = {
+  id: number;
+  date: string;
+  driverName: string | null;
+  vehicle: string | null;
+  itemCount: number;
+  status: DeliveryStatus;
+};
 
 type PickupStopForm = {
   tempId: string;
@@ -19,15 +27,11 @@ type PickupStopForm = {
   notes: string;
 };
 
-function getWeekDays() {
-  const today = new Date();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d;
-  });
+function toDeliveryStatus(value: string): DeliveryStatus {
+  if (value === 'in_transit' || value === 'delivered' || value === 'failed') {
+    return value;
+  }
+  return 'scheduled';
 }
 
 function buildClientAddress(client: {
@@ -43,6 +47,22 @@ function buildClientAddress(client: {
   return parts.join(', ');
 }
 
+function getCurrentWeekRange() {
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  return {
+    from: monday,
+    to: sunday,
+  };
+}
+
 function createEmptyForm() {
   return {
     date: new Date().toISOString().slice(0, 10),
@@ -56,18 +76,20 @@ function createEmptyForm() {
 }
 
 export default function DeliveryListPage() {
+  const utils = trpc.useUtils();
+  const { from, to } = getCurrentWeekRange();
+
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState(from.toISOString().slice(0, 10));
+  const [dateTo, setDateTo] = useState(to.toISOString().slice(0, 10));
+
   const [createOpen, setCreateOpen] = useState(false);
   const [createError, setCreateError] = useState('');
   const [form, setForm] = useState(createEmptyForm());
-  const utils = trpc.useUtils();
-  const weekDays = getWeekDays();
-  const startOfWeek = weekDays[0]!;
-  const endOfWeek = weekDays[6]!;
-  endOfWeek.setHours(23, 59, 59);
 
-  const { data, isLoading, error } = trpc.delivery.listSchedules.useQuery({
-    dateFrom: startOfWeek.toISOString(),
-    dateTo: endOfWeek.toISOString(),
+  const query = trpc.delivery.listSchedules.useQuery({
+    dateFrom: new Date(`${dateFrom}T00:00:00`).toISOString(),
+    dateTo: new Date(`${dateTo}T23:59:59`).toISOString(),
     page: 1,
     limit: 100,
   });
@@ -112,22 +134,68 @@ export default function DeliveryListPage() {
     },
   });
 
-  const schedules = data?.data ?? [];
+  const schedules = query.data?.data ?? [];
   const readyJobs = readyJobsQuery.data?.data ?? [];
+
+  const rows: DeliveryRow[] = schedules
+    .map((schedule) => ({
+      id: schedule.id,
+      date: schedule.date.toString(),
+      driverName: schedule.driverName ?? null,
+      vehicle: schedule.vehicle ?? null,
+      itemCount: Number((schedule as Record<string, unknown>).itemCount ?? 0),
+      status: toDeliveryStatus(String((schedule as Record<string, unknown>).status ?? 'scheduled')),
+    }))
+    .filter((row) => {
+      const normalized = search.trim().toLowerCase();
+      if (!normalized) return true;
+      return (
+        row.id.toString().includes(normalized) ||
+        (row.driverName ?? '').toLowerCase().includes(normalized) ||
+        (row.vehicle ?? '').toLowerCase().includes(normalized)
+      );
+    });
+
+  const columns: Column<DeliveryRow>[] = [
+    {
+      id: 'date',
+      header: 'Data',
+      width: '120px',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{new Date(row.date).toLocaleDateString('pt-BR')}</span>,
+    },
+    {
+      id: 'driver',
+      header: 'Motorista',
+      width: 'flex',
+      cell: (row) => (
+        <div className="min-w-0">
+          <span className="block truncate text-sm font-medium">{row.driverName ?? 'Sem motorista'}</span>
+          <span className="t-small text-[var(--fg-muted)]">{row.vehicle ?? 'Veiculo nao informado'}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'stops',
+      header: 'Paradas',
+      width: '96px',
+      align: 'right',
+      cell: (row) => <span className="tabular-nums">{row.itemCount}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '120px',
+      cell: (row) => {
+        const chip = DELIVERY_STATUS_CHIP[row.status];
+        return <StatusChip label={chip.label} variant={chip.variant} />;
+      },
+    },
+  ];
 
   const selectedJobs = useMemo(
     () => readyJobs.filter((job) => form.selectedJobIds.includes(job.id)),
     [form.selectedJobIds, readyJobs],
   );
-
-  const byDay: Record<string, typeof schedules> = {};
-  for (const s of schedules) {
-    const key = new Date(s.date).toISOString().split('T')[0]!;
-    if (!byDay[key]) byDay[key] = [];
-    byDay[key].push(s);
-  }
-
-  const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 
   function toggleJob(jobId: number) {
     setForm((prev) => {
@@ -264,207 +332,169 @@ export default function DeliveryListPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Truck className="text-primary" size={24} />
-            Roteiros de Entrega
-          </h1>
-          <p className="text-zinc-400 text-sm mt-1">Calendario semanal dos roteiros</p>
-        </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors"
-        >
-          <Plus size={16} /> Novo Roteiro
-        </button>
-      </div>
+    <div className="space-y-4">
+      <PageTitle
+        subtitle="Planejamento semanal de roteiros com status operacional por entrega."
+        actions={(
+          <Button type="button" onClick={openCreateModal}>
+            <Plus className="size-4" aria-hidden="true" />
+            Novo roteiro
+          </Button>
+        )}
+      >
+        Roteiros de entrega
+      </PageTitle>
 
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
-          Erro ao carregar roteiros: {error.message}
-        </div>
-      )}
-      {isLoading && (
-        <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
-          Carregando roteiros da semana...
-        </div>
-      )}
-      {!isLoading && schedules.length === 0 && (
-        <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
-          Nenhum roteiro cadastrado nesta semana.
-        </div>
-      )}
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        filters={(
+          <>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+              aria-label="Data inicial"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+              aria-label="Data final"
+            />
+          </>
+        )}
+      />
 
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-        <div className="grid grid-cols-7 border-b border-zinc-800">
-          {weekDays.map((day, i) => {
-            const isToday = day.toDateString() === new Date().toDateString();
-            return (
-              <div
-                key={i}
-                className={`p-3 text-center border-r border-zinc-800 last:border-r-0 ${isToday ? 'bg-primary/20' : ''}`}
-              >
-                <p className="text-xs text-zinc-500">{dayLabels[i]}</p>
-                <p className={`text-lg font-semibold ${isToday ? 'text-primary' : 'text-white'}`}>
-                  {day.getDate()}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+      {query.error ? (
+        <p className="t-small text-[var(--destructive)]">Erro ao carregar roteiros: {query.error.message}</p>
+      ) : null}
 
-        <div className="grid grid-cols-7 min-h-48">
-          {weekDays.map((day, i) => {
-            const key = day.toISOString().split('T')[0]!;
-            const daySchedules = byDay[key] ?? [];
-            return (
-              <div key={i} className="p-2 border-r border-zinc-800 last:border-r-0 space-y-2">
-                {daySchedules.length === 0 && (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-xs text-zinc-700">Sem roteiros</p>
-                  </div>
-                )}
-                {daySchedules.map((s) => {
-                  const itemCount = ((s as Record<string, unknown>).itemCount as number) ?? 0;
-                  return (
-                    <Link
-                      key={s.id}
-                      to={`/entregas/${s.id}`}
-                      className="block p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-white font-medium truncate">
-                          {s.driverName ?? 'Sem motorista'}
-                        </span>
-                        <ChevronRight
-                          size={12}
-                          className="text-zinc-500 group-hover:text-zinc-300"
-                        />
-                      </div>
-                      <p className="text-xs text-zinc-500 mt-0.5">
-                        {itemCount} {itemCount === 1 ? 'parada' : 'paradas'}
-                      </p>
-                      {s.vehicle && <p className="text-xs text-zinc-600">{s.vehicle}</p>}
-                    </Link>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getKey={(row) => row.id}
+        onRowClick={(row) => {
+          window.location.assign(`/entregas/${row.id}`);
+        }}
+        loading={query.isLoading}
+        loadingRows={8}
+        empty={{
+          title: 'Nenhum roteiro encontrado',
+          description: 'Ajuste os filtros para continuar.',
+          cta: (
+            <Button type="button" size="sm" onClick={openCreateModal}>
+              Novo roteiro
+            </Button>
+          ),
+        }}
+      />
 
-      {createOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-auto">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Calendar size={18} className="text-primary" /> Novo Roteiro
+      {createOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-auto rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-lg)]">
+            <h2 className="mb-4 flex items-center gap-2 font-[var(--font-display)] text-2xl text-[var(--fg-strong)]">
+              <Calendar className="size-5" aria-hidden="true" />
+              Novo roteiro
             </h2>
 
             {createError ? (
-              <div className="mb-4 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
-                {createError}
-              </div>
+              <p className="mb-4 t-small text-[var(--destructive)]">{createError}</p>
             ) : null}
 
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm text-zinc-400 mb-1">Data do roteiro</label>
+                <label className="space-y-1.5">
+                  <span className="t-small text-[var(--fg-muted)]">Data do roteiro</span>
                   <input
                     type="date"
                     value={form.date}
                     onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                    className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-zinc-400 mb-1">Motorista (opcional)</label>
+                </label>
+
+                <label className="space-y-1.5">
+                  <span className="t-small text-[var(--fg-muted)]">Motorista (opcional)</span>
                   <input
                     type="text"
                     value={form.driverName}
                     onChange={(event) => setForm((prev) => ({ ...prev, driverName: event.target.value }))}
                     placeholder="Nome do motorista"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
+                    className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
                   />
-                </div>
+                </label>
               </div>
 
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">Veiculo (opcional)</label>
+              <label className="space-y-1.5">
+                <span className="t-small text-[var(--fg-muted)]">Veiculo (opcional)</span>
                 <input
                   type="text"
                   value={form.vehicle}
                   onChange={(event) => setForm((prev) => ({ ...prev, vehicle: event.target.value }))}
                   placeholder="Placa ou modelo"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
+                  className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-sm text-zinc-400 mb-1">Observacoes (opcional)</label>
+              <label className="space-y-1.5">
+                <span className="t-small text-[var(--fg-muted)]">Observacoes (opcional)</span>
                 <textarea
                   value={form.notes}
                   onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
                   rows={3}
-                  placeholder="Informacoes para o motorista"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm placeholder-zinc-600"
+                  className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
                 />
-              </div>
+              </label>
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="block text-sm text-zinc-400">Paradas de entrega (OS prontas)</label>
-                  <span className="text-xs text-zinc-500">{selectedJobs.length} selecionada(s)</span>
+                  <span className="t-small text-[var(--fg-muted)]">Paradas de entrega (OS prontas)</span>
+                  <span className="t-small text-[var(--fg-muted)]">{selectedJobs.length} selecionada(s)</span>
                 </div>
 
-                <div className="rounded-xl border border-zinc-800 bg-zinc-950/60">
+                <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)]">
                   {readyJobsQuery.isLoading ? (
-                    <div className="flex items-center justify-center gap-2 p-6 text-sm text-zinc-400">
-                      <Loader2 size={16} className="animate-spin" /> Carregando OS prontas...
+                    <div className="flex items-center justify-center gap-2 p-5 t-small text-[var(--fg-muted)]">
+                      <Loader2 className="size-4 animate-spin" /> Carregando OS prontas...
                     </div>
                   ) : readyJobs.length === 0 ? (
-                    <div className="p-6 text-sm text-zinc-500">
-                      Nenhuma OS em status concluido disponivel para roteirizacao.
+                    <div className="p-5 t-small text-[var(--fg-muted)]">
+                      Nenhuma OS pronta disponivel para roteirizacao.
                     </div>
                   ) : (
-                    <div className="divide-y divide-zinc-800">
+                    <div className="divide-y divide-[var(--border)]">
                       {readyJobs.map((job) => {
                         const checked = form.selectedJobIds.includes(job.id);
                         return (
-                          <div key={job.id} className={`px-4 py-3 ${checked ? 'bg-primary/10' : 'hover:bg-zinc-900'}`}>
+                          <div key={job.id} className={cn('px-4 py-3', checked && 'bg-[var(--bg-muted)]')}>
                             <button
                               type="button"
                               onClick={() => toggleJob(job.id)}
-                              className="flex w-full items-start justify-between gap-4 text-left transition-colors"
+                              className="flex w-full items-start justify-between gap-4 text-left"
                             >
                               <div>
-                                <p className="text-sm font-semibold text-white">{job.code}</p>
-                                <p className="text-xs text-zinc-400">
+                                <p className="text-sm font-semibold text-[var(--fg-strong)]">{job.code}</p>
+                                <p className="t-small text-[var(--fg-muted)]">
                                   {job.clientName ?? 'Cliente sem nome'}
                                   {job.patientName ? ` - ${job.patientName}` : ''}
                                 </p>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <span className="text-xs text-zinc-500">
-                                  {new Date(job.deadline).toLocaleDateString('pt-BR')}
-                                </span>
-                                <CheckCircle2
-                                  size={16}
-                                  className={checked ? 'text-primary' : 'text-zinc-700'}
-                                />
-                              </div>
+                              <span className="t-small text-[var(--fg-muted)]">
+                                {new Date(job.deadline).toLocaleDateString('pt-BR')}
+                              </span>
                             </button>
+
                             {checked ? (
                               <div className="mt-3 flex items-center gap-2">
-                                <MapPin size={14} className="text-zinc-500" />
+                                <MapPin className="size-4 text-[var(--fg-muted)]" aria-hidden="true" />
                                 <input
                                   value={form.deliveryAddressByJobId[job.id] ?? ''}
                                   onChange={(event) => updateJobAddress(job.id, event.target.value)}
                                   placeholder="Endereco da entrega"
-                                  className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-white placeholder-zinc-600"
+                                  className="h-9 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
                                 />
                               </div>
                             ) : null}
@@ -478,29 +508,25 @@ export default function DeliveryListPage() {
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label className="block text-sm text-zinc-400">Paradas de coleta (pickup)</label>
-                  <button
-                    type="button"
-                    onClick={addPickupStop}
-                    className="rounded-lg border border-zinc-700 px-3 py-1 text-[11px] font-semibold text-zinc-300 hover:bg-zinc-800"
-                  >
+                  <span className="t-small text-[var(--fg-muted)]">Paradas de coleta</span>
+                  <Button type="button" size="sm" variant="secondary" onClick={addPickupStop}>
                     + Adicionar coleta
-                  </button>
+                  </Button>
                 </div>
 
                 {form.pickupStops.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 p-4 text-xs text-zinc-500">
+                  <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--border)] bg-[var(--bg)] p-4 t-small text-[var(--fg-muted)]">
                     Nenhuma parada de coleta adicionada.
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {form.pickupStops.map((stop) => (
-                      <div key={stop.tempId} className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
+                      <div key={stop.tempId} className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] p-3">
                         <div className="grid gap-3 md:grid-cols-[1fr_2fr_auto]">
                           <select
                             value={stop.clientId}
                             onChange={(event) => updatePickupStop(stop.tempId, { clientId: event.target.value })}
-                            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-white"
+                            className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm"
                           >
                             <option value="">Selecione o dentista</option>
                             {(clientsQuery.data?.data ?? []).map((client) => (
@@ -509,18 +535,20 @@ export default function DeliveryListPage() {
                               </option>
                             ))}
                           </select>
+
                           <input
                             value={stop.deliveryAddress}
                             onChange={(event) => updatePickupStop(stop.tempId, { deliveryAddress: event.target.value })}
                             placeholder="Endereco da coleta"
-                            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-white placeholder-zinc-600"
+                            className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm"
                           />
+
                           <button
                             type="button"
                             onClick={() => removePickupStop(stop.tempId)}
-                            className="inline-flex items-center justify-center rounded-lg border border-zinc-700 px-3 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-red-400"
+                            className="inline-flex h-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border)] px-3 text-[var(--fg-muted)] hover:bg-[var(--bg-muted)] hover:text-[var(--destructive)]"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 className="size-4" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -530,25 +558,17 @@ export default function DeliveryListPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setCreateOpen(false)}
-                  className="flex-1 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg hover:bg-zinc-800 text-sm transition-colors"
-                >
+                <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
                   Cancelar
-                </button>
-                <button
-                  onClick={submitCreateSchedule}
-                  disabled={createSchedule.isPending}
-                  className="flex-1 px-4 py-2 bg-primary hover:bg-primary text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-                >
-                  {createSchedule.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
-                  Criar Roteiro
-                </button>
+                </Button>
+                <Button type="button" loading={createSchedule.isPending} onClick={submitCreateSchedule}>
+                  Criar roteiro
+                </Button>
               </div>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

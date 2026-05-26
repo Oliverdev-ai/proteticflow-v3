@@ -114,20 +114,57 @@ export async function listSchedules(tenantId: number, filters: ListDeliverySched
     .orderBy(desc(deliverySchedules.date))
     .limit(filters.limit).offset(offset);
 
-  // Count de items por schedule
+  // Count e status agregado de items por schedule
   const scheduleIds = data.map(s => s.id);
-  const itemCounts = scheduleIds.length > 0
-    ? await db.select({ scheduleId: deliveryItems.scheduleId, count: sql<number>`count(*)` })
+  const itemRows = scheduleIds.length > 0
+    ? await db.select({
+        scheduleId: deliveryItems.scheduleId,
+        status: deliveryItems.status,
+      })
         .from(deliveryItems)
-        .where(and(eq(deliveryItems.tenantId, tenantId)))
-        .groupBy(deliveryItems.scheduleId)
+        .where(and(eq(deliveryItems.tenantId, tenantId), inArray(deliveryItems.scheduleId, scheduleIds)))
     : [];
 
-  const countMap = Object.fromEntries(itemCounts.map(r => [r.scheduleId, Number(r.count)]));
+  const aggregateMap = new Map<number, {
+    count: number;
+    hasInTransit: boolean;
+    hasFailed: boolean;
+    allDelivered: boolean;
+  }>();
+
+  for (const row of itemRows) {
+    const current = aggregateMap.get(row.scheduleId) ?? {
+      count: 0,
+      hasInTransit: false,
+      hasFailed: false,
+      allDelivered: true,
+    };
+
+    current.count += 1;
+    current.hasInTransit = current.hasInTransit || row.status === 'in_transit';
+    current.hasFailed = current.hasFailed || row.status === 'failed';
+    current.allDelivered = current.allDelivered && row.status === 'delivered';
+    aggregateMap.set(row.scheduleId, current);
+  }
+
   const [totalRow] = await db.select({ total: sql<number>`count(*)` }).from(deliverySchedules).where(and(...conditions));
 
   return {
-    data: data.map(s => ({ ...s, itemCount: countMap[s.id] ?? 0 })),
+    data: data.map((s) => {
+      const aggregate = aggregateMap.get(s.id);
+      const itemCount = aggregate?.count ?? 0;
+      const status = !aggregate
+        ? 'scheduled'
+        : aggregate.hasFailed
+          ? 'failed'
+          : aggregate.allDelivered && aggregate.count > 0
+            ? 'delivered'
+            : aggregate.hasInTransit
+              ? 'in_transit'
+              : 'scheduled';
+
+      return { ...s, itemCount, status };
+    }),
     total: Number(totalRow?.total ?? 0),
   };
 }
