@@ -157,7 +157,7 @@ export function FlowAssistantOverlay() {
       <button
         type="button"
         onClick={() => setOverlayState((current) => ({ ...current, open: !current.open }))}
-        className="fixed bottom-6 right-6 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-sky-400/40 bg-sky-500 text-sky-950 shadow-xl shadow-sky-500/20 hover:bg-sky-400"
+        className="fixed bottom-6 right-6 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--info)] bg-[var(--info-soft)] text-[var(--info)] shadow-xl shadow-sky-500/20 hover:bg-[var(--info-soft)]"
         aria-label={overlayState.open ? 'Fechar Flow Assistant' : 'Abrir Flow Assistant'}
       >
         {overlayState.open ? <X size={20} /> : <Mic size={20} />}
@@ -167,7 +167,7 @@ export function FlowAssistantOverlay() {
         <div
           ref={panelRef}
           data-flow-assistant
-          className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 z-50 border border-zinc-800 bg-zinc-950 md:rounded-lg md:resize md:overflow-auto shadow-md"
+          className="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 z-50 border border-border bg-muted md:rounded-lg md:resize md:overflow-auto shadow-md"
           style={panelSize}
           onMouseUp={() => {
             const element = panelRef.current;
@@ -180,18 +180,18 @@ export function FlowAssistantOverlay() {
             }));
           }}
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-zinc-950/90 px-4 py-3 backdrop-blur">
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-muted px-4 py-3 backdrop-blur">
             <div className="flex items-center gap-2">
-              <Bot size={16} className="text-sky-400" />
+              <Bot size={16} className="text-[var(--info)]" />
               <div>
-                <p className="text-sm font-semibold text-zinc-100">Flow Assistant</p>
-                <p className="text-[11px] text-zinc-500">Atalho global: Ctrl+Shift+Space</p>
+                <p className="text-sm font-semibold text-muted-foreground">Flow Assistant</p>
+                <p className="text-[11px] text-muted-foreground">Atalho global: Ctrl+Shift+Space</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setOverlayState((current) => ({ ...current, open: false }))}
-              className="rounded-md border border-zinc-700 p-1 text-zinc-300 hover:border-zinc-500"
+              className="rounded-md border border-border p-1 text-muted-foreground hover:border-border"
               aria-label="Fechar painel do Flow Assistant"
             >
               <X size={14} />

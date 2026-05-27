@@ -90,23 +90,23 @@ export default function CommissionsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Relatório de Comissões</h1>
-          <p className="text-zinc-400 text-sm">Acompanhe a produção técnica e valores a pagar.</p>
+          <p className="text-muted-foreground text-sm">Acompanhe a produção técnica e valores a pagar.</p>
         </div>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={handleExportCsv}
             disabled={isLoading || !report || report.length === 0}
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-zinc-700 disabled:opacity-50"
+            className="flex items-center gap-2 bg-muted hover:bg-muted text-muted-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-border disabled:opacity-50"
           >
             <Download size={16} /> Exportar CSV
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-zinc-900/50 p-4 rounded-lg border border-zinc-800">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-muted p-4 rounded-lg border border-border">
         <div className="space-y-1.5">
-          <label className="text-[10px] uppercase font-bold text-zinc-500 ml-1">Funcionário</label>
+          <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Funcionário</label>
           <select
             className="input-field w-full py-2 text-sm"
             onChange={(e) => setEmployeeId(e.target.value ? Number(e.target.value) : undefined)}
@@ -120,7 +120,7 @@ export default function CommissionsPage() {
           </select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] uppercase font-bold text-zinc-500 ml-1">De</label>
+          <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">De</label>
           <input
             type="date"
             value={dateFrom}
@@ -129,7 +129,7 @@ export default function CommissionsPage() {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] uppercase font-bold text-zinc-500 ml-1">Até</label>
+          <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Até</label>
           <input
             type="date"
             value={dateTo}
@@ -147,26 +147,26 @@ export default function CommissionsPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden shadow-sm">
+      <div className="bg-muted border border-border rounded-lg overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-zinc-800 bg-zinc-950/50">
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+            <tr className="border-b border-border bg-muted">
+              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                 Técnico
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                 OS / Trabalho
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                 Tarefa
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                 Vl. Total
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                 Comissão (%)
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal text-right">
+              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal text-right">
                 A Receber
               </th>
             </tr>
@@ -177,43 +177,43 @@ export default function CommissionsPage() {
                 <td colSpan={6} className="px-6 py-20 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                    <span className="text-sm text-zinc-500">Calculando comissões...</span>
+                    <span className="text-sm text-muted-foreground">Calculando comissões...</span>
                   </div>
                 </td>
               </tr>
             ) : report?.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-20 text-center text-zinc-500">
+                <td colSpan={6} className="px-6 py-20 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
-                    <FileText size={32} className="text-zinc-700 mb-2" />
+                    <FileText size={32} className="text-muted-foreground mb-2" />
                     <span className="text-sm">Nenhuma produção registrada neste período</span>
                   </div>
                 </td>
               </tr>
             ) : (
               (report as CommissionDetail[]).map((item, idx) => (
-                <tr key={idx} className="hover:bg-zinc-800/30 transition-colors group">
+                <tr key={idx} className="hover:bg-muted transition-colors group">
                   <td className="px-6 py-4">
-                    <div className="text-sm font-semibold text-zinc-200 group-hover:text-primary transition-colors">
+                    <div className="text-sm font-semibold text-muted-foreground group-hover:text-primary transition-colors">
                       {item.employeeName}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-zinc-300 font-mono">{item.jobCode}</div>
+                    <div className="text-sm text-muted-foreground font-mono">{item.jobCode}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-zinc-400">{item.task || 'Geral'}</div>
+                    <div className="text-sm text-muted-foreground">{item.task || 'Geral'}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-zinc-300 font-mono">
+                  <td className="px-6 py-4 text-sm text-muted-foreground font-mono">
                     R$ {((item.jobTotalCents || 0) / 100).toLocaleString('pt-BR')}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-xs text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-700">
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">
                       {item.commissionPercent}%
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="text-sm font-bold text-emerald-400">
+                    <div className="text-sm font-bold text-[var(--success)]">
                       R${' '}
                       {((item.commissionAmountCents || 0) / 100).toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,

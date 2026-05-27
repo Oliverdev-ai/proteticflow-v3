@@ -12,17 +12,17 @@ export default function AuthLayout() {
       {/* Conteúdo (acima do canvas) */}
       <div className="relative z-10 flex flex-col items-center">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-sky-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+          <div className="w-12 h-12 rounded-xl bg-[var(--info-soft)] flex items-center justify-center shadow-lg shadow-sky-500/20">
             <Layers3 size={22} className="text-white" />
           </div>
-          <span className="text-zinc-100 text-xl font-semibold tracking-tight">ProteticFlow</span>
+          <span className="text-muted-foreground text-xl font-semibold tracking-tight">ProteticFlow</span>
         </div>
 
-        <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-lg shadow-md p-8">
+        <div className="w-full max-w-md bg-muted backdrop-blur-sm border border-border rounded-lg shadow-md p-8">
           <Outlet />
         </div>
 
-        <p className="mt-8 text-zinc-600 text-xs">
+        <p className="mt-8 text-muted-foreground text-xs">
           © 2026 ProteticFlow. Todos os direitos reservados.
         </p>
       </div>

@@ -46,7 +46,7 @@ export default function TicketsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Suporte • Tickets</h1>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           Central de atendimento interno com fluxo de tickets escalados.
         </p>
       </div>
@@ -55,7 +55,7 @@ export default function TicketsPage() {
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-          className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+          className="rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
         >
           <option value="">Status (todos)</option>
           <option value="open">Abertos</option>
@@ -66,7 +66,7 @@ export default function TicketsPage() {
         <select
           value={priorityFilter}
           onChange={(event) => setPriorityFilter(event.target.value as typeof priorityFilter)}
-          className="rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+          className="rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
         >
           <option value="">Prioridade (todas)</option>
           <option value="low">Baixa</option>

@@ -128,7 +128,7 @@ function UserMenu({
           <button
             role="menuitem"
             onClick={() => { onLogout(); setOpen(false); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-foreground hover:bg-secondary hover:text-red-500 transition-colors"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-foreground hover:bg-secondary hover:text-[var(--destructive)] transition-colors"
           >
             <LogOut size={14} className="text-muted-foreground" />
             Sair
@@ -197,7 +197,7 @@ export function Header({ onToggleMobileSidebar, onToggleSidebar }: HeaderProps) 
   };
 
   return (
-    <header className="sticky top-0 h-14 bg-background/80 backdrop-blur-xl border-b border-border flex items-center px-3 md:px-5 gap-2.5 relative z-30">
+    <header className="sticky top-0 h-14 bg-background/80 backdrop-blur-sm border-b border-border flex items-center px-3 md:px-5 gap-2.5 relative z-30">
 
       {/* Hambúrguer mobile */}
       <button

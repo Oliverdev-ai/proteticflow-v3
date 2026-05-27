@@ -27,31 +27,31 @@ export default function ScanDetailPage() {
   const row = query.data;
   const scan = row?.scan;
 
-  if (query.isLoading) return <div className="p-6 text-zinc-400">Carregando...</div>;
-  if (!row || !scan) return <div className="p-6 text-red-400">Scan nao encontrado.</div>;
+  if (query.isLoading) return <div className="p-6 text-muted-foreground">Carregando...</div>;
+  if (!row || !scan) return <div className="p-6 text-[var(--destructive)]">Scan nao encontrado.</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <button
         onClick={() => navigate('/scans')}
-        className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm"
+        className="flex items-center gap-2 text-muted-foreground hover:text-white text-sm"
       >
         <ArrowLeft size={14} />
         Voltar
       </button>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
+      <div className="bg-muted border border-border rounded-lg p-5">
         <h1 className="text-xl font-bold text-white mb-1">Scan #{scan.id}</h1>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           Scanner: {scan.scannerType} | Status: {scan.printStatus}
         </p>
-        <p className="text-sm text-zinc-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           OS: {row.jobCode ?? '-'} | Cliente: {row.clientName ?? '-'}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
+        <div className="bg-muted border border-border rounded-lg p-5 space-y-3">
           <h2 className="text-white font-semibold">Arquivos</h2>
           {row.downloadUrls.stlUpper && (
             <div className="mb-4">
@@ -102,7 +102,7 @@ export default function ScanDetailPage() {
           )}
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3">
+        <div className="bg-muted border border-border rounded-lg p-5 space-y-3">
           <h2 className="text-white font-semibold">Ações de Impressão</h2>
           <div className="flex flex-wrap gap-2">
             {(NEXT_STATUS[scan.printStatus] ?? []).map((status) => (
@@ -115,7 +115,7 @@ export default function ScanDetailPage() {
                     printError: status === 'error' ? 'Erro manual' : undefined,
                   })
                 }
-                className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm"
+                className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted text-muted-foreground text-sm"
               >
                 <Printer size={14} className="inline mr-1" />
                 {status}
@@ -132,25 +132,25 @@ export default function ScanDetailPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
+      <div className="bg-muted border border-border rounded-lg p-5">
         <h2 className="text-white font-semibold mb-3">Dados Parseados do XML</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-          <p className="text-zinc-300">
+          <p className="text-muted-foreground">
             Order ID: <span className="text-white">{scan.parsedOrderId ?? '-'}</span>
           </p>
-          <p className="text-zinc-300">
+          <p className="text-muted-foreground">
             Dentista: <span className="text-white">{scan.parsedDentist ?? '-'}</span>
           </p>
-          <p className="text-zinc-300">
+          <p className="text-muted-foreground">
             CRO: <span className="text-white">{scan.parsedCro ?? '-'}</span>
           </p>
-          <p className="text-zinc-300">
+          <p className="text-muted-foreground">
             Paciente: <span className="text-white">{scan.parsedPatient ?? '-'}</span>
           </p>
-          <p className="text-zinc-300">
+          <p className="text-muted-foreground">
             Procedimento: <span className="text-white">{scan.parsedProcedure ?? '-'}</span>
           </p>
-          <p className="text-zinc-300">
+          <p className="text-muted-foreground">
             Prazo:{' '}
             <span className="text-white">
               {scan.parsedDeadline ? new Date(scan.parsedDeadline).toLocaleString('pt-BR') : '-'}
@@ -159,7 +159,7 @@ export default function ScanDetailPage() {
         </div>
       </div>
 
-      <div className="text-xs text-zinc-500">
+      <div className="text-xs text-muted-foreground">
         {changeStatus.error?.message || sendToPrinter.error?.message}
       </div>
     </div>

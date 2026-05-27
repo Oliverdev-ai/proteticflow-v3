@@ -23,11 +23,11 @@ export function NfseBatchModal({ closings, isBusy = false, onEmitBatch }: NfseBa
   );
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+    <div className="rounded-lg border border-border bg-muted p-5 space-y-3">
       <h2 className="text-lg font-semibold text-white">Emissao em lote por fechamento</h2>
-      <p className="text-sm text-zinc-400">Emite 1 NFS-e por cliente para o fechamento selecionado.</p>
+      <p className="text-sm text-muted-foreground">Emite 1 NFS-e por cliente para o fechamento selecionado.</p>
 
-      <label className="text-sm text-zinc-300 block">
+      <label className="text-sm text-muted-foreground block">
         Fechamento
         <select
           value={selectedClosingId ?? ''}
@@ -44,8 +44,8 @@ export function NfseBatchModal({ closings, isBusy = false, onEmitBatch }: NfseBa
       </label>
 
       {selectedClosing ? (
-        <p className="text-sm text-zinc-300">
-          Total do fechamento: <span className="text-zinc-100">{formatCurrency(selectedClosing.totalAmountCents)}</span>
+        <p className="text-sm text-muted-foreground">
+          Total do fechamento: <span className="text-muted-foreground">{formatCurrency(selectedClosing.totalAmountCents)}</span>
         </p>
       ) : null}
 
@@ -53,7 +53,7 @@ export function NfseBatchModal({ closings, isBusy = false, onEmitBatch }: NfseBa
         type="button"
         onClick={() => selectedClosingId && onEmitBatch(selectedClosingId)}
         disabled={isBusy || !selectedClosingId}
-        className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium disabled:opacity-50"
+        className="px-4 py-2 rounded-lg bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white text-sm font-medium disabled:opacity-50"
       >
         Emitir lote
       </button>

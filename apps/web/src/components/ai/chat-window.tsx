@@ -15,10 +15,10 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
   }, [messages, isLoading]);
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4 h-[58vh] overflow-y-auto space-y-3">
+    <div className="rounded-lg border border-border bg-muted p-4 h-[58vh] overflow-y-auto space-y-3">
       {messages.length === 0 ? (
         <div className="h-full flex items-center justify-center">
-          <p className="text-sm text-zinc-500">Inicie a conversa para criar esta sessao.</p>
+          <p className="text-sm text-muted-foreground">Inicie a conversa para criar esta sessao.</p>
         </div>
       ) : null}
 
@@ -28,7 +28,7 @@ export function ChatWindow({ messages, isLoading }: ChatWindowProps) {
 
       {isLoading ? (
         <div className="flex justify-start">
-          <div className="rounded-lg px-4 py-3 border bg-zinc-900 border-zinc-800 text-zinc-300">
+          <div className="rounded-lg px-4 py-3 border bg-muted border-border text-muted-foreground">
             <p className="text-sm">Flow IA esta escrevendo...</p>
           </div>
         </div>

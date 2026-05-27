@@ -37,7 +37,7 @@ export default [
       ds: dsPlugin,
     },
     rules: {
-      'ds/guardrails': 'warn',
+      'ds/guardrails': 'error',
     },
   },
   {

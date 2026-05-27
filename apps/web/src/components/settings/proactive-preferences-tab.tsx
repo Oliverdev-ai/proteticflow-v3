@@ -229,7 +229,7 @@ export function ProactivePreferencesTab() {
           type="button"
           disabled={updateMutation.isPending || !isDirty}
           onClick={() => void save()}
-          className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-5 py-2 text-sm font-semibold text-sky-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-[var(--info-soft)] px-5 py-2 text-sm font-semibold text-[var(--info)] hover:bg-[var(--info-soft)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {updateMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {updateMutation.isPending ? 'Salvando...' : 'Salvar preferências'}

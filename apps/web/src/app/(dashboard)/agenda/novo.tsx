@@ -74,7 +74,7 @@ export default function EventCreatePage() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <button
         onClick={() => navigate('/agenda')}
-        className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm"
+        className="flex items-center gap-2 text-muted-foreground hover:text-white text-sm"
       >
         <ArrowLeft size={14} />
         Voltar
@@ -82,14 +82,14 @@ export default function EventCreatePage() {
 
       <div>
         <h1 className="text-2xl font-bold text-white">Novo Evento</h1>
-        <p className="text-zinc-400 text-sm mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           Crie eventos de prova, entrega, reuniao e manutencao.
         </p>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
+      <div className="bg-muted border border-border rounded-lg p-5 space-y-4">
         <div>
-          <label className="block text-xs text-zinc-400 mb-1">Titulo</label>
+          <label className="block text-xs text-muted-foreground mb-1">Titulo</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -99,7 +99,7 @@ export default function EventCreatePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Tipo</label>
+            <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as EventType)}
@@ -114,7 +114,7 @@ export default function EventCreatePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Lembrete (minutos antes)</label>
+            <label className="block text-xs text-muted-foreground mb-1">Lembrete (minutos antes)</label>
             <input
               value={reminderMinutesBefore}
               onChange={(e) => setReminderMinutesBefore(Number(e.target.value))}
@@ -126,7 +126,7 @@ export default function EventCreatePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Inicio</label>
+            <label className="block text-xs text-muted-foreground mb-1">Inicio</label>
             <input
               type="datetime-local"
               value={startAt}
@@ -135,7 +135,7 @@ export default function EventCreatePage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Fim</label>
+            <label className="block text-xs text-muted-foreground mb-1">Fim</label>
             <input
               type="datetime-local"
               value={endAt}
@@ -147,7 +147,7 @@ export default function EventCreatePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">OS (opcional)</label>
+            <label className="block text-xs text-muted-foreground mb-1">OS (opcional)</label>
             <select
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
@@ -162,7 +162,7 @@ export default function EventCreatePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Cliente / Dentista (opcional)</label>
+            <label className="block text-xs text-muted-foreground mb-1">Cliente / Dentista (opcional)</label>
             <select
               value={dentistId}
               onChange={(e) => setDentistId(e.target.value)}
@@ -177,7 +177,7 @@ export default function EventCreatePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Funcionario (opcional)</label>
+            <label className="block text-xs text-muted-foreground mb-1">Funcionario (opcional)</label>
             <input
               type="number"
               value={employeeId}
@@ -189,7 +189,7 @@ export default function EventCreatePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Recorrencia</label>
+            <label className="block text-xs text-muted-foreground mb-1">Recorrencia</label>
             <select
               value={recurrence}
               onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
@@ -203,7 +203,7 @@ export default function EventCreatePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">
+            <label className="block text-xs text-muted-foreground mb-1">
               Fim da recorrencia (opcional)
             </label>
             <input
@@ -216,7 +216,7 @@ export default function EventCreatePage() {
         </div>
 
         {createMutation.error && (
-          <p className="text-red-400 text-sm">{createMutation.error.message}</p>
+          <p className="text-[var(--destructive)] text-sm">{createMutation.error.message}</p>
         )}
 
         <button

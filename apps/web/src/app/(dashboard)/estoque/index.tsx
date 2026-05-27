@@ -35,7 +35,7 @@ function SummaryCard({
     primary: 'bg-primary/10 text-primary border-primary/20',
     red: 'bg-destructive/10 text-destructive border-destructive/20',
     emerald: 'bg-success/10 text-success border-success/20',
-    orange: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    orange: 'bg-[var(--warning-soft)] text-[var(--warning)] border-[var(--warning)]',
   };
 
   return (
@@ -105,8 +105,8 @@ const QUICK_LINKS = [
     href: '/estoque/ordens-compra',
     desc: 'Fluxo de aquisições e recebimentos',
     icon: ShoppingCart,
-    color: 'text-orange-500',
-    bg: 'bg-orange-500/10',
+    color: 'text-[var(--warning)]',
+    bg: 'bg-[var(--warning-soft)]',
   },
 ];
 
@@ -206,7 +206,7 @@ export default function InventoryDashboard() {
               <div className="flex items-center justify-between">
                 <div
                   className={cn(
-                    'w-14 h-14 rounded-lg flex items-center justify-center shadow-inner transition-all group-hover:scale-110 group-hover:rotate-3',
+                    'w-14 h-14 rounded-lg flex items-center justify-center shadow-inner transition-all group-hover:scale-[1.02] group-hover:rotate-3',
                     bg,
                     color,
                   )}
@@ -236,7 +236,7 @@ export default function InventoryDashboard() {
 
       {/* Extra tools / Quick action banner */}
       {!isLoading && (dash?.totalMaterials ?? 0) === 0 && (
-        <div className="mt-4 p-8 bg-primary/5 border-2 border-dashed border-primary/20 rounded-[40px] flex flex-col items-center text-center gap-4 animate-in zoom-in-95">
+        <div className="mt-4 p-8 bg-primary/5 border-2 border-dashed border-primary/20 rounded-[var(--radius-lg)] flex flex-col items-center text-center gap-4 animate-in zoom-in-95">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary/40">
             <Settings2 size={32} />
           </div>

@@ -44,7 +44,7 @@ export default function EmployeeCreatePage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate('/funcionarios')}
-          className="text-zinc-500 hover:text-white transition-colors"
+          className="text-muted-foreground hover:text-white transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
@@ -54,23 +54,23 @@ export default function EmployeeCreatePage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Informações Pessoais */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <section className="bg-muted border border-border rounded-lg p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
               <User size={16} className="text-primary" /> Informações Pessoais
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Nome Completo *</label>
+                <label className="block text-xs text-muted-foreground mb-1.5">Nome Completo *</label>
                 <input
                   {...register('name')}
                   placeholder="Nome do funcionário"
                   className="input-field w-full"
                 />
-                {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+                {errors.name && <p className="text-[var(--destructive)] text-xs mt-1">{errors.name.message}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">CPF</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">CPF</label>
                   <input
                     {...register('cpf')}
                     placeholder="000.000.000-00"
@@ -78,7 +78,7 @@ export default function EmployeeCreatePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">RG</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">RG</label>
                   <input
                     {...register('rg')}
                     placeholder="00.000.000-0"
@@ -87,7 +87,7 @@ export default function EmployeeCreatePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Email</label>
+                <label className="block text-xs text-muted-foreground mb-1.5">Email</label>
                 <input
                   {...register('email')}
                   type="email"
@@ -97,7 +97,7 @@ export default function EmployeeCreatePage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Telefone</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Telefone</label>
                   <input
                     {...register('phone')}
                     placeholder="(00) 00000-0000"
@@ -105,7 +105,7 @@ export default function EmployeeCreatePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Nascimento</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Nascimento</label>
                   <input
                     {...register('birthDate', {
                       setValueAs: dateInputToIso,
@@ -119,14 +119,14 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Endereço */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <section className="bg-muted border border-border rounded-lg p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
               <MapPin size={16} className="text-primary" /> Endereço
             </h2>
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="block text-xs text-zinc-400 mb-1.5">CEP</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">CEP</label>
                   <input
                     {...register('zipCode')}
                     placeholder="00000-000"
@@ -134,27 +134,27 @@ export default function EmployeeCreatePage() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-zinc-400 mb-1.5">Rua</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Rua</label>
                   <input {...register('street')} className="input-field w-full" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Número</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Número</label>
                   <input {...register('addressNumber')} className="input-field w-full" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-zinc-400 mb-1.5">Bairro</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Bairro</label>
                   <input {...register('neighborhood')} className="input-field w-full" />
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div className="col-span-3">
-                  <label className="block text-xs text-zinc-400 mb-1.5">Cidade</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Cidade</label>
                   <input {...register('city')} className="input-field w-full" />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">UF</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">UF</label>
                   <input
                     {...register('state')}
                     maxLength={2}
@@ -166,14 +166,14 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Vínculo e Cargo */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <section className="bg-muted border border-border rounded-lg p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
               <Briefcase size={16} className="text-primary" /> Vínculo Empregatício
             </h2>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Função / Cargo</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Função / Cargo</label>
                   <input
                     {...register('position')}
                     placeholder="Ex: Protesista Sênior"
@@ -181,7 +181,7 @@ export default function EmployeeCreatePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Departamento</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Departamento</label>
                   <input
                     {...register('department')}
                     placeholder="Ex: Produção"
@@ -191,7 +191,7 @@ export default function EmployeeCreatePage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Tipo Profissional</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Tipo Profissional</label>
                   <select {...register('type')} className="input-field w-full">
                     <option value="protesista">Protesista</option>
                     <option value="auxiliar">Auxiliar</option>
@@ -202,7 +202,7 @@ export default function EmployeeCreatePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Tipo Contrato</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Tipo Contrato</label>
                   <select {...register('contractType')} className="input-field w-full">
                     <option value="clt">CLT</option>
                     <option value="pj_mei">PJ / MEI</option>
@@ -213,7 +213,7 @@ export default function EmployeeCreatePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Data de Admissão</label>
+                <label className="block text-xs text-muted-foreground mb-1.5">Data de Admissão</label>
                 <input
                   {...register('admissionDate', {
                     setValueAs: dateInputToIso,
@@ -226,24 +226,24 @@ export default function EmployeeCreatePage() {
           </section>
 
           {/* Remuneração e Comissão */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <section className="bg-muted border border-border rounded-lg p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
               <CreditCard size={16} className="text-primary" /> Remuneração
             </h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5">Salário Base (Cents)</label>
+                <label className="block text-xs text-muted-foreground mb-1.5">Salário Base (Cents)</label>
                 <input
                   {...register('baseSalaryCents', { valueAsNumber: true })}
                   type="number"
                   className="input-field w-full"
                 />
-                <p className="text-[10px] text-zinc-500 mt-1">Ex: 300000 para R$ 3.000,00</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Ex: 300000 para R$ 3.000,00</p>
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1.5 flex items-center justify-between">
+                <label className="block text-xs text-muted-foreground mb-1.5 flex items-center justify-between">
                   Comissão Padrão (%)
-                  <Percent size={12} className="text-zinc-500" />
+                  <Percent size={12} className="text-muted-foreground" />
                 </label>
                 <input
                   {...register('defaultCommissionPercent', { valueAsNumber: true })}
@@ -254,7 +254,7 @@ export default function EmployeeCreatePage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Vale Transp. (Cents)</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Vale Transp. (Cents)</label>
                   <input
                     {...register('transportAllowanceCents', { valueAsNumber: true })}
                     type="number"
@@ -262,7 +262,7 @@ export default function EmployeeCreatePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5">Vale Ref. (Cents)</label>
+                  <label className="block text-xs text-muted-foreground mb-1.5">Vale Ref. (Cents)</label>
                   <input
                     {...register('mealAllowanceCents', { valueAsNumber: true })}
                     type="number"
@@ -275,7 +275,7 @@ export default function EmployeeCreatePage() {
         </div>
 
         {createMutation.error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm">
+          <div className="p-4 bg-[var(--destructive-soft)] border border-[var(--destructive)] rounded-xl text-[var(--destructive)] text-sm">
             {createMutation.error.message}
           </div>
         )}
@@ -284,7 +284,7 @@ export default function EmployeeCreatePage() {
           <button
             type="button"
             onClick={() => navigate('/funcionarios')}
-            className="flex-1 py-3 rounded-xl border border-zinc-800 text-zinc-400 text-sm font-semibold hover:bg-zinc-800 hover:text-white transition-all"
+            className="flex-1 py-3 rounded-xl border border-border text-muted-foreground text-sm font-semibold hover:bg-muted hover:text-white transition-all"
           >
             Cancelar
           </button>

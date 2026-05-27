@@ -95,7 +95,7 @@ const testimonials = [
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+    <main className="min-h-screen bg-muted text-muted-foreground">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.20),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(16,185,129,0.12),transparent_40%)]" />
 
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16">
@@ -109,7 +109,7 @@ export default function LandingPage() {
             Gestão inteligente para laboratórios de prótese
           </span>
         </h1>
-        <p className="mt-6 max-w-3xl text-zinc-300 text-lg">
+        <p className="mt-6 max-w-3xl text-muted-foreground text-lg">
           Produção, financeiro, estoque, portal do cliente e IA em uma operação única por tenant.
           Menos retrabalho, mais previsibilidade e entrega com padrão.
         </p>
@@ -123,7 +123,7 @@ export default function LandingPage() {
           </Link>
           <Link
             to="/login"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-zinc-700 hover:border-zinc-500 text-zinc-200 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-border hover:border-border text-muted-foreground transition-colors"
           >
             Entrar na plataforma
           </Link>
@@ -138,11 +138,11 @@ export default function LandingPage() {
           {features.map((feature) => (
             <article
               key={feature.title}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-5"
+              className="rounded-lg border border-border bg-muted p-5"
             >
               <feature.icon className="text-primary mb-4" size={20} />
               <h3 className="font-semibold text-white">{feature.title}</h3>
-              <p className="text-sm text-zinc-400 mt-2 leading-relaxed">{feature.description}</p>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{feature.description}</p>
             </article>
           ))}
         </div>
@@ -157,15 +157,15 @@ export default function LandingPage() {
           {plans.map((plan) => (
             <article
               key={plan.name}
-              className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 flex flex-col"
+              className="rounded-lg border border-border bg-muted p-5 flex flex-col"
             >
               <p className="text-xs text-primary uppercase tracking-normal">{plan.highlight}</p>
               <h3 className="text-xl font-bold mt-2">{plan.name}</h3>
               <div className="mt-4 mb-5">
-                <span className="text-2xl font-extrabold">{plan.price}</span>
-                <span className="text-zinc-400 text-sm ml-1">{plan.period}</span>
+                <span className="text-2xl font-bold">{plan.price}</span>
+                <span className="text-muted-foreground text-sm ml-1">{plan.period}</span>
               </div>
-              <ul className="space-y-2 text-sm text-zinc-300 flex-1">
+              <ul className="space-y-2 text-sm text-muted-foreground flex-1">
                 {plan.items.map((item) => (
                   <li key={item} className="flex items-start gap-2">
                     <ChartBar size={14} className="text-primary mt-0.5 shrink-0" />
@@ -175,7 +175,7 @@ export default function LandingPage() {
               </ul>
               <Link
                 to="/register"
-                className="mt-6 inline-flex items-center justify-center rounded-xl bg-zinc-800 hover:bg-zinc-700 py-2.5 text-sm font-semibold transition-colors"
+                className="mt-6 inline-flex items-center justify-center rounded-xl bg-muted hover:bg-muted py-2.5 text-sm font-semibold transition-colors"
               >
                 Escolher plano
               </Link>
@@ -190,11 +190,11 @@ export default function LandingPage() {
           {testimonials.map((item) => (
             <article
               key={item.author}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/80 p-5"
+              className="rounded-lg border border-border bg-muted p-5"
             >
-              <p className="text-zinc-200 leading-relaxed">&ldquo;{item.quote}&rdquo;</p>
+              <p className="text-muted-foreground leading-relaxed">&ldquo;{item.quote}&rdquo;</p>
               <p className="mt-6 text-sm font-semibold">{item.author}</p>
-              <p className="text-xs text-zinc-400">{item.role}</p>
+              <p className="text-xs text-muted-foreground">{item.role}</p>
             </article>
           ))}
         </div>
@@ -205,7 +205,7 @@ export default function LandingPage() {
           <h2 className="text-2xl md:text-4xl font-semibold">
             Pronto para transformar seu laboratório?
           </h2>
-          <p className="text-zinc-200 mt-3 max-w-2xl">
+          <p className="text-muted-foreground mt-3 max-w-2xl">
             Crie sua conta gratuita, configure seu tenant e tenha operação ponta a ponta em poucos
             minutos.
           </p>
@@ -219,7 +219,7 @@ export default function LandingPage() {
             </Link>
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-zinc-600 hover:border-zinc-400 text-zinc-100 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-border hover:border-border text-muted-foreground transition-colors"
             >
               Ja tenho acesso
             </Link>
@@ -227,17 +227,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-zinc-800 py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-400">
+      <footer className="border-t border-border py-8">
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
           <span>&copy; 2026 ProteticFlow. Todos os direitos reservados.</span>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="hover:text-zinc-200 transition-colors">
+            <Link to="/login" className="hover:text-muted-foreground transition-colors">
               Login
             </Link>
-            <Link to="/register" className="hover:text-zinc-200 transition-colors">
+            <Link to="/register" className="hover:text-muted-foreground transition-colors">
               Registro
             </Link>
-            <Link to="/landing" className="hover:text-zinc-200 transition-colors">
+            <Link to="/landing" className="hover:text-muted-foreground transition-colors">
               Landing
             </Link>
           </div>

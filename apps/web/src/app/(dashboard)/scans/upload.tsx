@@ -157,7 +157,7 @@ export default function ScanUploadPage() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <button
         onClick={() => navigate('/scans')}
-        className="flex items-center gap-2 text-zinc-400 hover:text-white text-sm"
+        className="flex items-center gap-2 text-muted-foreground hover:text-white text-sm"
       >
         <ArrowLeft size={14} />
         Voltar
@@ -165,15 +165,15 @@ export default function ScanUploadPage() {
 
       <div>
         <h1 className="text-2xl font-bold text-white">Upload de Scan 3D</h1>
-        <p className="text-zinc-400 text-sm mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           Envie STL superior/inferior, XML e imagem de referencia.
         </p>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
+      <div className="bg-muted border border-border rounded-lg p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Scanner</label>
+            <label className="block text-xs text-muted-foreground mb-1">Scanner</label>
             <select
               value={scannerType}
               onChange={(e) => setScannerType(e.target.value as typeof scannerType)}
@@ -187,7 +187,7 @@ export default function ScanUploadPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">ID da OS (opcional)</label>
+            <label className="block text-xs text-muted-foreground mb-1">ID da OS (opcional)</label>
             <input
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
@@ -196,7 +196,7 @@ export default function ScanUploadPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">ID do cliente (opcional)</label>
+            <label className="block text-xs text-muted-foreground mb-1">ID do cliente (opcional)</label>
             <input
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
@@ -205,7 +205,7 @@ export default function ScanUploadPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Observações</label>
+            <label className="block text-xs text-muted-foreground mb-1">Observações</label>
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -216,7 +216,7 @@ export default function ScanUploadPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">STL Arcada Superior</label>
+            <label className="block text-xs text-muted-foreground mb-1">STL Arcada Superior</label>
             <input
               type="file"
               accept=".stl"
@@ -224,7 +224,7 @@ export default function ScanUploadPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">STL Arcada Inferior</label>
+            <label className="block text-xs text-muted-foreground mb-1">STL Arcada Inferior</label>
             <input
               type="file"
               accept=".stl"
@@ -232,7 +232,7 @@ export default function ScanUploadPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">XML do Scanner</label>
+            <label className="block text-xs text-muted-foreground mb-1">XML do Scanner</label>
             <input
               type="file"
               accept=".xml,text/xml"
@@ -240,7 +240,7 @@ export default function ScanUploadPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-400 mb-1">Imagem de Referencia</label>
+            <label className="block text-xs text-muted-foreground mb-1">Imagem de Referencia</label>
             <input
               type="file"
               accept="image/*"
@@ -249,8 +249,8 @@ export default function ScanUploadPage() {
           </div>
         </div>
 
-        {error && <div className="text-red-400 text-sm">{error}</div>}
-        {loading && <div className="text-zinc-300 text-sm">Upload em andamento: {progress}%</div>}
+        {error && <div className="text-[var(--destructive)] text-sm">{error}</div>}
+        {loading && <div className="text-muted-foreground text-sm">Upload em andamento: {progress}%</div>}
 
         <button
           onClick={handleSubmit}

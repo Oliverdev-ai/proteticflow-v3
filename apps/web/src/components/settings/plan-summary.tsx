@@ -32,11 +32,11 @@ export function PlanSummary() {
   if (!summary) return null;
 
   const stats = [
-    { label: 'Clientes', value: summary.clientCount.toString(), icon: Users, color: 'text-sky-500', bg: 'bg-sky-500/10' },
+    { label: 'Clientes', value: summary.clientCount.toString(), icon: Users, color: 'text-[var(--info)]', bg: 'bg-[var(--info-soft)]' },
     { label: 'Ordens/Mês', value: summary.jobCountThisMonth.toString(), icon: Briefcase, color: 'text-primary', bg: 'bg-primary/10' },
     { label: 'Usuários', value: summary.userCount.toString(), icon: Activity, color: 'text-success', bg: 'bg-success/10' },
     { label: 'Storage (MB)', value: summary.storageUsedMb.toString(), icon: Database, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { label: 'Tabelas de Preço', value: summary.priceTableCount.toString(), icon: Landmark, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { label: 'Tabelas de Preço', value: summary.priceTableCount.toString(), icon: Landmark, color: 'text-[var(--warning)]', bg: 'bg-[var(--warning-soft)]' },
   ];
 
   return (

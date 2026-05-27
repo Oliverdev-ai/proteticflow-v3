@@ -10,7 +10,7 @@ const TYPE_UI: Record<NotificationUiType, { label: string; className: string }> 
     className: 'bg-[var(--primary)]/15 text-[var(--primary)] border-[var(--primary)]/30',
   },
   warning: { label: 'Aviso', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  error: { label: 'Erro', className: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  error: { label: 'Erro', className: 'bg-[var(--destructive-soft)] text-[var(--destructive)] border-[var(--destructive)]' },
 };
 
 export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boolean }) {
@@ -51,7 +51,7 @@ export function NotificationPopover({ defaultOpen = false }: { defaultOpen?: boo
       >
         <Bell size={18} />
         {unreadCount > 0 ? (
-          <span className="absolute -top-2 -right-2 min-w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold px-1.5 flex items-center justify-center">
+          <span className="absolute -top-2 -right-2 min-w-5 h-5 rounded-full bg-[var(--destructive-soft)] text-white text-[10px] font-bold px-1.5 flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         ) : null}

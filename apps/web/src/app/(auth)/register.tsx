@@ -44,20 +44,20 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <h1 className="text-zinc-50 text-2xl font-semibold text-center">Criar conta</h1>
-      <p className="text-zinc-400 text-sm text-center mt-2">
+      <h1 className="text-muted-foreground text-2xl font-semibold text-center">Criar conta</h1>
+      <p className="text-muted-foreground text-sm text-center mt-2">
         Comece seu laboratório digital em minutos.
       </p>
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <div className="rounded-lg border border-[var(--destructive)] bg-[var(--destructive-soft)] px-3 py-2 text-sm text-[var(--destructive)]">
             {error}
           </div>
         )}
 
         <div className="relative">
-          <UserRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <UserRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             required
@@ -70,7 +70,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative">
-          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="email"
             required
@@ -83,7 +83,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative">
-          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type={showPassword ? 'text' : 'password'}
             required
@@ -96,7 +96,7 @@ export default function RegisterPage() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
             aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -104,7 +104,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="text-sm pt-1">
-          <Link to="/login" className="text-zinc-400 hover:text-zinc-200">
+          <Link to="/login" className="text-muted-foreground hover:text-muted-foreground">
             Já tem conta? Fazer login
           </Link>
         </div>
@@ -112,7 +112,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium disabled:opacity-50 transition-colors"
+          className="w-full h-11 rounded-xl bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white font-medium disabled:opacity-50 transition-colors"
         >
           {loading ? 'Criando conta...' : 'Criar conta'}
         </button>

@@ -31,7 +31,7 @@ export function FlowAiTab() {
   return (
     <div className="rounded-lg border border-border/50 bg-card/30 p-8 space-y-6">
       <div className="flex items-center gap-3">
-        <Mic size={18} className="text-sky-400" />
+        <Mic size={18} className="text-[var(--info)]" />
         <div>
           <h3 className="text-lg font-semibold uppercase tracking-normal text-foreground">Flow IA por voz</h3>
           <p className="text-xs text-muted-foreground">
@@ -60,7 +60,7 @@ export function FlowAiTab() {
             <select
               value={voiceGender}
               onChange={(event) => setVoiceGender(event.target.value === 'male' ? 'male' : 'female')}
-              className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm text-foreground focus:border-sky-500 focus:outline-none"
+              className="w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm text-foreground focus:border-[var(--info)] focus:outline-none"
             >
               <option value="female">Feminina</option>
               <option value="male">Masculina</option>
@@ -91,7 +91,7 @@ export function FlowAiTab() {
           type="button"
           onClick={() => void handleSave()}
           disabled={updateProfile.isPending}
-          className="rounded-lg bg-sky-500 px-5 py-2 text-sm font-semibold text-sky-950 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-[var(--info-soft)] px-5 py-2 text-sm font-semibold text-[var(--info)] hover:bg-[var(--info-soft)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {updateProfile.isPending ? 'Salvando...' : 'Salvar preferencias'}
         </button>

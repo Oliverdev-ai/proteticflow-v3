@@ -117,8 +117,8 @@ export default function PricingTableDetailPage() {
   if (tableError || !table)
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <AlertCircle className="text-red-400" size={32} />
-        <p className="text-red-400 text-sm">{tableError?.message ?? 'Tabela não encontrada'}</p>
+        <AlertCircle className="text-[var(--destructive)]" size={32} />
+        <p className="text-[var(--destructive)] text-sm">{tableError?.message ?? 'Tabela não encontrada'}</p>
         <button
           onClick={() => navigate('/precos')}
           className="text-xs text-primary hover:text-primary transition-colors"
@@ -135,7 +135,7 @@ export default function PricingTableDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/precos')}
-            className="text-zinc-500 hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-white transition-colors"
           >
             <ArrowLeft size={18} />
           </button>
@@ -149,19 +149,19 @@ export default function PricingTableDetailPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowBulk(true)}
-            className="flex items-center gap-1.5 text-xs border border-zinc-700 text-zinc-400 hover:text-primary hover:border-primary px-3 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 text-xs border border-border text-muted-foreground hover:text-primary hover:border-primary px-3 py-2 rounded-xl transition-colors"
           >
             <Percent size={13} /> Reajuste
           </button>
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 text-xs border border-zinc-700 text-zinc-400 hover:text-primary hover:border-primary px-3 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 text-xs border border-border text-muted-foreground hover:text-primary hover:border-primary px-3 py-2 rounded-xl transition-colors"
           >
             <Download size={13} /> Exportar CSV
           </button>
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-1.5 text-xs border border-zinc-700 text-zinc-400 hover:text-primary hover:border-primary px-3 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 text-xs border border-border text-muted-foreground hover:text-primary hover:border-primary px-3 py-2 rounded-xl transition-colors"
           >
             <Upload size={13} /> Importar CSV
           </button>
@@ -183,19 +183,19 @@ export default function PricingTableDetailPage() {
 
       {/* Import result */}
       {importResult && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-2">
+        <div className="bg-muted border border-border rounded-lg p-4 space-y-2">
           <p className="text-sm text-white font-medium">Resultado do import</p>
-          <p className="text-xs text-green-400">
+          <p className="text-xs text-[var(--success)]">
             {importResult.created} criados · {importResult.updated} atualizados
           </p>
           {importResult.errors.map((e, i) => (
-            <p key={i} className="text-xs text-red-400">
+            <p key={i} className="text-xs text-[var(--destructive)]">
               Linha {e.line}: {e.message}
             </p>
           ))}
           <button
             onClick={() => setImportResult(null)}
-            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="text-xs text-muted-foreground hover:text-muted-foreground transition-colors"
           >
             Fechar
           </button>
@@ -204,7 +204,7 @@ export default function PricingTableDetailPage() {
 
       {/* Search */}
       <div className="relative">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           value={search}
           onChange={(e) => {
@@ -212,7 +212,7 @@ export default function PricingTableDetailPage() {
             setPage(1);
           }}
           placeholder="Buscar por nome ou código..."
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-9 pr-4 py-2.5 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
+          className="w-full bg-muted border border-border rounded-xl pl-9 pr-4 py-2.5 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
         />
       </div>
 
@@ -223,7 +223,7 @@ export default function PricingTableDetailPage() {
         </div>
       ) : items?.data.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <p className="text-zinc-500 text-sm">Nenhum item nesta tabela.</p>
+          <p className="text-muted-foreground text-sm">Nenhum item nesta tabela.</p>
           <button
             onClick={() => setShowAddItem(true)}
             className="text-xs text-primary hover:text-primary transition-colors"
@@ -232,19 +232,19 @@ export default function PricingTableDetailPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+        <div className="bg-muted border border-border rounded-lg overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-zinc-800">
-                <th className="text-left text-xs font-semibold text-zinc-500 px-5 py-3">Nome</th>
-                <th className="text-left text-xs font-semibold text-zinc-500 px-5 py-3 hidden sm:table-cell">
+              <tr className="border-b border-border">
+                <th className="text-left text-xs font-semibold text-muted-foreground px-5 py-3">Nome</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground px-5 py-3 hidden sm:table-cell">
                   Código
                 </th>
-                <th className="text-left text-xs font-semibold text-zinc-500 px-5 py-3 hidden md:table-cell">
+                <th className="text-left text-xs font-semibold text-muted-foreground px-5 py-3 hidden md:table-cell">
                   Categoria
                 </th>
-                <th className="text-right text-xs font-semibold text-zinc-500 px-5 py-3">Preço</th>
-                <th className="text-right text-xs font-semibold text-zinc-500 px-5 py-3 hidden sm:table-cell">
+                <th className="text-right text-xs font-semibold text-muted-foreground px-5 py-3">Preço</th>
+                <th className="text-right text-xs font-semibold text-muted-foreground px-5 py-3 hidden sm:table-cell">
                   Prazo
                 </th>
                 <th className="px-5 py-3"></th>
@@ -254,21 +254,21 @@ export default function PricingTableDetailPage() {
               {items?.data.map((item, idx) => (
                 <tr
                   key={item.id}
-                  className={`border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors ${idx === items.data.length - 1 ? 'border-0' : ''}`}
+                  className={`border-b border-border hover:bg-muted transition-colors ${idx === items.data.length - 1 ? 'border-0' : ''}`}
                 >
                   <td className="px-5 py-3.5">
                     <p className="text-white text-sm font-medium">{item.name}</p>
                     {item.description && (
-                      <p className="text-zinc-500 text-xs mt-0.5 line-clamp-1">
+                      <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">
                         {item.description}
                       </p>
                     )}
                   </td>
                   <td className="px-5 py-3.5 hidden sm:table-cell">
-                    <span className="text-zinc-400 text-xs font-mono">{item.code || '—'}</span>
+                    <span className="text-muted-foreground text-xs font-mono">{item.code || '—'}</span>
                   </td>
                   <td className="px-5 py-3.5 hidden md:table-cell">
-                    <span className="text-zinc-400 text-sm">{item.category}</span>
+                    <span className="text-muted-foreground text-sm">{item.category}</span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <span className="text-primary font-semibold text-sm">
@@ -276,14 +276,14 @@ export default function PricingTableDetailPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-right hidden sm:table-cell">
-                    <span className="text-zinc-400 text-sm">{item.estimatedDays}d</span>
+                    <span className="text-muted-foreground text-sm">{item.estimatedDays}d</span>
                   </td>
                   <td className="px-5 py-3.5">
                     <button
                       onClick={() => {
                         if (confirm('Remover item?')) deleteItemMutation.mutate({ id: item.id });
                       }}
-                      className="text-zinc-600 hover:text-red-400 transition-colors"
+                      className="text-muted-foreground hover:text-[var(--destructive)] transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -298,13 +298,13 @@ export default function PricingTableDetailPage() {
       {/* Bulk modal */}
       {showBulk && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm space-y-4">
+          <div className="bg-muted border border-border rounded-lg p-6 w-full max-w-sm space-y-4">
             <h2 className="text-white font-semibold">Reajuste em lote</h2>
-            <p className="text-zinc-400 text-xs">
+            <p className="text-muted-foreground text-xs">
               Aplicado a todos os itens ativos desta tabela. Use valores negativos para desconto.
             </p>
             <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">Percentual (%)</label>
+              <label className="block text-xs text-muted-foreground mb-1.5">Percentual (%)</label>
               <input
                 value={bulkPercent}
                 onChange={(e) => setBulkPercent(e.target.value)}
@@ -316,12 +316,12 @@ export default function PricingTableDetailPage() {
               />
             </div>
             {bulkMutation.error && (
-              <p className="text-red-400 text-xs">{bulkMutation.error.message}</p>
+              <p className="text-[var(--destructive)] text-xs">{bulkMutation.error.message}</p>
             )}
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBulk(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm hover:bg-zinc-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted transition-colors"
               >
                 Cancelar
               </button>
@@ -345,11 +345,11 @@ export default function PricingTableDetailPage() {
       {/* Add item modal */}
       {showAddItem && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-sm space-y-4">
+          <div className="bg-muted border border-border rounded-lg p-6 w-full max-w-sm space-y-4">
             <h2 className="text-white font-semibold">Novo Item</h2>
             {['name', 'code', 'category', 'priceCents', 'estimatedDays'].map((f) => (
               <div key={f}>
-                <label className="block text-xs text-zinc-400 mb-1.5 capitalize">
+                <label className="block text-xs text-muted-foreground mb-1.5 capitalize">
                   {f === 'priceCents'
                     ? 'Preço (R$)'
                     : f === 'estimatedDays'
@@ -367,12 +367,12 @@ export default function PricingTableDetailPage() {
               </div>
             ))}
             {createItemMutation.error && (
-              <p className="text-red-400 text-xs">{createItemMutation.error.message}</p>
+              <p className="text-[var(--destructive)] text-xs">{createItemMutation.error.message}</p>
             )}
             <div className="flex gap-3">
               <button
                 onClick={() => setShowAddItem(false)}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm hover:bg-zinc-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted transition-colors"
               >
                 Cancelar
               </button>

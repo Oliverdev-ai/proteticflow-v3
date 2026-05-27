@@ -7,10 +7,10 @@ type PortalHeaderProps = {
 
 export function PortalHeader({ tenantName, tenantLogoUrl, tenantPrimaryColor, clientName }: PortalHeaderProps) {
   return (
-    <header className="rounded-lg border border-zinc-200 bg-white p-5">
+    <header className="rounded-lg border border-border bg-white p-5">
       <div className="flex items-center gap-3">
         {tenantLogoUrl ? (
-          <img src={tenantLogoUrl} alt={tenantName} className="w-12 h-12 rounded-lg object-cover border border-zinc-200" />
+          <img src={tenantLogoUrl} alt={tenantName} className="w-12 h-12 rounded-lg object-cover border border-border" />
         ) : (
           <div
             className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
@@ -20,9 +20,9 @@ export function PortalHeader({ tenantName, tenantLogoUrl, tenantPrimaryColor, cl
           </div>
         )}
         <div>
-          <p className="text-xs text-zinc-500 uppercase tracking-normal">Portal do Cliente</p>
-          <h1 className="text-xl font-semibold text-zinc-900">{tenantName}</h1>
-          <p className="text-sm text-zinc-600">Cliente: {clientName}</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-normal">Portal do Cliente</p>
+          <h1 className="text-xl font-semibold text-muted-foreground">{tenantName}</h1>
+          <p className="text-sm text-muted-foreground">Cliente: {clientName}</p>
         </div>
       </div>
     </header>

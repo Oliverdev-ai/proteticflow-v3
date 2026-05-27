@@ -149,7 +149,7 @@ export default function EmployeeEditPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/funcionarios')}
-            className="text-zinc-500 hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-white transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
@@ -158,7 +158,7 @@ export default function EmployeeEditPage() {
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
               employee.isActive
                 ? 'bg-success/10 text-success border border-success/20'
-                : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                : 'bg-[var(--destructive-soft)] text-[var(--destructive)] border border-[var(--destructive)]'
             }`}
           >
             {employee.isActive ? 'Ativo' : 'Inativo'}
@@ -171,14 +171,14 @@ export default function EmployeeEditPage() {
                 setIsEditing(true);
                 reset(employee as unknown as FormData);
               }}
-              className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 bg-muted hover:bg-muted text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
             >
               <Pencil size={15} /> Editar
             </button>
           ) : (
             <button
               onClick={() => setIsEditing(false)}
-              className="flex items-center gap-2 bg-zinc-900 border border-zinc-700 text-zinc-400 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 bg-muted border border-border text-muted-foreground px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
             >
               Cancelar
             </button>
@@ -192,7 +192,7 @@ export default function EmployeeEditPage() {
                     dismissalDate: new Date().toISOString(),
                   });
               }}
-              className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              className="flex items-center gap-2 bg-[var(--destructive-soft)] border border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive-soft)] px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
             >
               <Trash2 size={15} /> Demitir
             </button>
@@ -204,9 +204,9 @@ export default function EmployeeEditPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Form / Details */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
+            <section className="bg-muted border border-border rounded-lg p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                   <User size={16} className="text-primary" /> Dados Principais
                 </h2>
                 {isEditing && (
@@ -220,55 +220,55 @@ export default function EmployeeEditPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Nome Completo</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Nome Completo</label>
                   {isEditing ? (
                     <input {...register('name')} className="input-field w-full py-1.5" />
                   ) : (
-                    <p className="text-sm text-zinc-200">{employee.name}</p>
+                    <p className="text-sm text-muted-foreground">{employee.name}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Email</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Email</label>
                   {isEditing ? (
                     <input {...register('email')} className="input-field w-full py-1.5" />
                   ) : (
-                    <p className="text-sm text-zinc-200">{employee.email || '—'}</p>
+                    <p className="text-sm text-muted-foreground">{employee.email || '—'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">CPF</label>
+                  <label className="block text-xs text-muted-foreground mb-1">CPF</label>
                   {isEditing ? (
                     <input {...register('cpf')} className="input-field w-full py-1.5" />
                   ) : (
-                    <p className="text-sm text-zinc-200">{employee.cpf || '—'}</p>
+                    <p className="text-sm text-muted-foreground">{employee.cpf || '—'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Telefone</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Telefone</label>
                   {isEditing ? (
                     <input {...register('phone')} className="input-field w-full py-1.5" />
                   ) : (
-                    <p className="text-sm text-zinc-200">{employee.phone || '—'}</p>
+                    <p className="text-sm text-muted-foreground">{employee.phone || '—'}</p>
                   )}
                 </div>
               </div>
             </section>
 
-            <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+            <section className="bg-muted border border-border rounded-lg p-6 space-y-4">
+              <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                 <Briefcase size={16} className="text-primary" /> Contrato e Função
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Cargo</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Cargo</label>
                   {isEditing ? (
                     <input {...register('position')} className="input-field w-full py-1.5" />
                   ) : (
-                    <p className="text-sm text-zinc-200">{employee.position || '—'}</p>
+                    <p className="text-sm text-muted-foreground">{employee.position || '—'}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Tipo</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
                   {isEditing ? (
                     <select {...register('type')} className="input-field w-full py-1.5">
                       <option value="protesista">Protesista</option>
@@ -277,11 +277,11 @@ export default function EmployeeEditPage() {
                       <option value="gerente">Gerente</option>
                     </select>
                   ) : (
-                    <p className="text-sm text-zinc-200 capitalize">{employee.type}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{employee.type}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Contrato</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Contrato</label>
                   {isEditing ? (
                     <select {...register('contractType')} className="input-field w-full py-1.5">
                       <option value="clt">CLT</option>
@@ -289,11 +289,11 @@ export default function EmployeeEditPage() {
                       <option value="freelancer">Freelancer</option>
                     </select>
                   ) : (
-                    <p className="text-sm text-zinc-200 uppercase">{employee.contractType}</p>
+                    <p className="text-sm text-muted-foreground uppercase">{employee.contractType}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Salário Base</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Salário Base</label>
                   {isEditing ? (
                     <input
                       {...register('baseSalaryCents', { valueAsNumber: true })}
@@ -301,13 +301,13 @@ export default function EmployeeEditPage() {
                       className="input-field w-full py-1.5"
                     />
                   ) : (
-                    <p className="text-sm text-zinc-200">
+                    <p className="text-sm text-muted-foreground">
                       R$ {((employee.baseSalaryCents || 0) / 100).toLocaleString('pt-BR')}
                     </p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Comissão (%)</label>
+                  <label className="block text-xs text-muted-foreground mb-1">Comissão (%)</label>
                   {isEditing ? (
                     <input
                       {...register('defaultCommissionPercent', { valueAsNumber: true })}
@@ -315,20 +315,20 @@ export default function EmployeeEditPage() {
                       className="input-field w-full py-1.5"
                     />
                   ) : (
-                    <p className="text-sm text-zinc-200">{employee.defaultCommissionPercent}%</p>
+                    <p className="text-sm text-muted-foreground">{employee.defaultCommissionPercent}%</p>
                   )}
                 </div>
               </div>
             </section>
           </form>
 
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-5">
+          <section className="bg-muted border border-border rounded-lg p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                 <BarChart3 size={16} className="text-primary" /> Desempenho e Ponto
               </h2>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase tracking-normal text-zinc-500">
+                <span className="text-[10px] uppercase tracking-normal text-muted-foreground">
                   {String(currentMonth).padStart(2, '0')}/{currentYear}
                 </span>
                 <select
@@ -343,26 +343,26 @@ export default function EmployeeEditPage() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                <div className="text-[10px] uppercase text-zinc-500">OS concluídas</div>
+              <div className="bg-muted border border-border rounded-xl p-3">
+                <div className="text-[10px] uppercase text-muted-foreground">OS concluídas</div>
                 <div className="text-lg font-semibold text-white mt-1">
                   {performance?.osCompleted ?? 0}
                 </div>
               </div>
-              <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                <div className="text-[10px] uppercase text-zinc-500">Tempo médio</div>
+              <div className="bg-muted border border-border rounded-xl p-3">
+                <div className="text-[10px] uppercase text-muted-foreground">Tempo médio</div>
                 <div className="text-lg font-semibold text-white mt-1">
                   {performance?.avgCompletionDays ?? 0} dias
                 </div>
               </div>
-              <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                <div className="text-[10px] uppercase text-zinc-500">Taxa atraso</div>
+              <div className="bg-muted border border-border rounded-xl p-3">
+                <div className="text-[10px] uppercase text-muted-foreground">Taxa atraso</div>
                 <div className="text-lg font-semibold text-white mt-1">
                   {performance?.overdueRate ?? 0}%
                 </div>
               </div>
-              <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                <div className="text-[10px] uppercase text-zinc-500">
+              <div className="bg-muted border border-border rounded-xl p-3">
+                <div className="text-[10px] uppercase text-muted-foreground">
                   {commissionMode === 'month' ? 'Comissões mês' : 'Comissões por trabalho'}
                 </div>
                 <div className="text-sm font-semibold text-white mt-1">
@@ -372,8 +372,8 @@ export default function EmployeeEditPage() {
                   })}
                 </div>
               </div>
-              <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                <div className="text-[10px] uppercase text-zinc-500">Horas trabalhadas</div>
+              <div className="bg-muted border border-border rounded-xl p-3">
+                <div className="text-[10px] uppercase text-muted-foreground">Horas trabalhadas</div>
                 <div className="text-lg font-semibold text-white mt-1">
                   {performance?.hoursThisMonth ?? 0}h
                 </div>
@@ -382,7 +382,7 @@ export default function EmployeeEditPage() {
 
             <div className="flex flex-col md:flex-row md:items-end gap-3">
               <div>
-                <label className="block text-xs text-zinc-500 mb-1">Data</label>
+                <label className="block text-xs text-muted-foreground mb-1">Data</label>
                 <input
                   type="date"
                   value={clockDate}
@@ -391,7 +391,7 @@ export default function EmployeeEditPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 mb-1">Hora</label>
+                <label className="block text-xs text-muted-foreground mb-1">Hora</label>
                 <input
                   type="time"
                   value={clockTime}
@@ -403,7 +403,7 @@ export default function EmployeeEditPage() {
                 type="button"
                 onClick={onRegisterClockIn}
                 disabled={clockInMutation.isPending}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-sm font-medium text-white transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--success-soft)] hover:bg-[var(--success-soft)] disabled:opacity-60 text-sm font-medium text-white transition-colors"
               >
                 {clockInMutation.isPending ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -428,15 +428,15 @@ export default function EmployeeEditPage() {
             </div>
 
             {(clockInMutation.error || clockOutMutation.error) && (
-              <div className="rounded-xl border border-red-800 bg-red-950/30 p-3 text-xs text-red-300">
+              <div className="rounded-xl border border-[var(--destructive)] bg-[var(--destructive-soft)] p-3 text-xs text-[var(--destructive)]">
                 {clockInMutation.error?.message ?? clockOutMutation.error?.message}
               </div>
             )}
 
-            <div className="bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden">
+            <div className="bg-muted border border-border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-zinc-900 border-b border-zinc-800">
-                  <tr className="text-left text-zinc-400">
+                <thead className="bg-muted border-b border-border">
+                  <tr className="text-left text-muted-foreground">
                     <th className="px-4 py-3">Data</th>
                     <th className="px-4 py-3">Entrada</th>
                     <th className="px-4 py-3">Saída</th>
@@ -446,28 +446,28 @@ export default function EmployeeEditPage() {
                 </thead>
                 <tbody>
                   {timesheets?.map((entry) => (
-                    <tr key={entry.id} className="border-b border-zinc-800 last:border-b-0">
-                      <td className="px-4 py-3 text-zinc-200">
+                    <tr key={entry.id} className="border-b border-border last:border-b-0">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {new Date(entry.date).toLocaleDateString('pt-BR')}
                       </td>
-                      <td className="px-4 py-3 text-zinc-300">{formatTime(entry.clockIn)}</td>
-                      <td className="px-4 py-3 text-zinc-300">{formatTime(entry.clockOut)}</td>
-                      <td className="px-4 py-3 text-zinc-300">
+                      <td className="px-4 py-3 text-muted-foreground">{formatTime(entry.clockIn)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatTime(entry.clockOut)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
                         {entry.hoursWorked ? `${Number(entry.hoursWorked).toFixed(2)}h` : '-'}
                       </td>
-                      <td className="px-4 py-3 text-zinc-400">{entry.notes || '-'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{entry.notes || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               {(timesheets?.length ?? 0) === 0 && (
-                <div className="p-6 text-xs text-zinc-500 text-center">
+                <div className="p-6 text-xs text-muted-foreground text-center">
                   Nenhum lançamento de ponto neste mês.
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 text-[11px] text-zinc-400">
+            <div className="flex items-center justify-end gap-3 text-[11px] text-muted-foreground">
               <span className="inline-flex items-center gap-1">
                 <Wallet size={12} />
                 Horas totais: {monthlySummary?.totalHours ?? 0}h
@@ -478,18 +478,18 @@ export default function EmployeeEditPage() {
           </section>
 
           {/* Assignments / Production */}
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <section className="bg-muted border border-border rounded-lg p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
               <History size={16} className="text-primary" /> Histórico de Produção Recente
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-zinc-800">
-                    <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase">OS</th>
-                    <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase">Tarefa</th>
-                    <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase">Comissão</th>
-                    <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase text-right">
+                  <tr className="border-b border-border">
+                    <th className="pb-3 text-[10px] font-bold text-muted-foreground uppercase">OS</th>
+                    <th className="pb-3 text-[10px] font-bold text-muted-foreground uppercase">Tarefa</th>
+                    <th className="pb-3 text-[10px] font-bold text-muted-foreground uppercase">Comissão</th>
+                    <th className="pb-3 text-[10px] font-bold text-muted-foreground uppercase text-right">
                       Data
                     </th>
                   </tr>
@@ -497,7 +497,7 @@ export default function EmployeeEditPage() {
                 <tbody className="divide-y divide-zinc-800">
                   {assignments?.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-xs text-zinc-500">
+                      <td colSpan={4} className="py-8 text-center text-xs text-muted-foreground">
                         Nenhuma OS atribuída ainda.
                       </td>
                     </tr>
@@ -505,15 +505,15 @@ export default function EmployeeEditPage() {
                     assignments?.map((as) => (
                       <tr key={as.id} className="text-sm">
                         <td className="py-3 text-primary font-medium">#{as.jobId}</td>
-                        <td className="py-3 text-zinc-300">{as.task || 'Geral'}</td>
+                        <td className="py-3 text-muted-foreground">{as.task || 'Geral'}</td>
                         <td className="py-3">
                           {as.commissionAmountCents ? (
                             `R$ ${(as.commissionAmountCents / 100).toFixed(2)}`
                           ) : (
-                            <span className="text-zinc-600 text-[10px]">Aguardando cálculo</span>
+                            <span className="text-muted-foreground text-[10px]">Aguardando cálculo</span>
                           )}
                         </td>
-                        <td className="py-3 text-zinc-500 text-right text-xs">
+                        <td className="py-3 text-muted-foreground text-right text-xs">
                           {new Date(as.createdAt).toLocaleDateString('pt-BR')}
                         </td>
                       </tr>
@@ -527,21 +527,21 @@ export default function EmployeeEditPage() {
 
         {/* Skills sidebar */}
         <div className="space-y-6">
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
+          <section className="bg-muted border border-border rounded-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                 <Award size={16} className="text-primary" /> Habilidades
               </h2>
               <button
                 onClick={() => setShowSkillForm(true)}
-                className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-primary transition-colors"
+                className="p-1.5 bg-muted hover:bg-muted rounded-lg text-primary transition-colors"
               >
                 <Plus size={14} />
               </button>
             </div>
 
             {showSkillForm && (
-              <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl space-y-3">
+              <div className="p-3 bg-muted border border-border rounded-xl space-y-3">
                 <input
                   id="skillName"
                   placeholder="Nome da técnica"
@@ -556,7 +556,7 @@ export default function EmployeeEditPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowSkillForm(false)}
-                    className="flex-1 py-1 text-[10px] text-zinc-500 border border-zinc-800 rounded-md"
+                    className="flex-1 py-1 text-[10px] text-muted-foreground border border-border rounded-md"
                   >
                     Cancelar
                   </button>
@@ -578,24 +578,24 @@ export default function EmployeeEditPage() {
 
             <div className="space-y-3">
               {skills?.length === 0 && !showSkillForm && (
-                <p className="text-xs text-zinc-600 italic">Nenhuma habilidade cadastrada.</p>
+                <p className="text-xs text-muted-foreground italic">Nenhuma habilidade cadastrada.</p>
               )}
               {skills?.map((skill) => (
                 <div key={skill.id} className="flex items-center justify-between group">
                   <div>
-                    <div className="text-sm font-medium text-zinc-200">{skill.name}</div>
+                    <div className="text-sm font-medium text-muted-foreground">{skill.name}</div>
                     <div className="flex gap-1 mt-1">
                       {[1, 2, 3, 4].map((l) => (
                         <div
                           key={l}
-                          className={`h-1 w-4 rounded-full ${l <= skill.level ? 'bg-primary' : 'bg-zinc-800'}`}
+                          className={`h-1 w-4 rounded-full ${l <= skill.level ? 'bg-primary' : 'bg-muted'}`}
                         />
                       ))}
                     </div>
                   </div>
                   <button
                     onClick={() => removeSkillMutation.mutate({ skillId: skill.id })}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-zinc-600 hover:text-red-400 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-[var(--destructive)] transition-all"
                   >
                     <X size={12} />
                   </button>
@@ -604,15 +604,15 @@ export default function EmployeeEditPage() {
             </div>
           </section>
 
-          <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+          <section className="bg-muted border border-border rounded-lg p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
               <History size={16} className="text-primary" /> Metadados
             </h2>
-            <div className="space-y-2 text-[10px] text-zinc-500 uppercase tracking-normal">
+            <div className="space-y-2 text-[10px] text-muted-foreground uppercase tracking-normal">
               <div>Criado em: {new Date(employee.createdAt).toLocaleString('pt-BR')}</div>
               <div>Última alt: {new Date(employee.updatedAt).toLocaleString('pt-BR')}</div>
               {employee.dismissalDate && (
-                <div className="text-red-400">
+                <div className="text-[var(--destructive)]">
                   Demitido em: {new Date(employee.dismissalDate).toLocaleString('pt-BR')}
                 </div>
               )}

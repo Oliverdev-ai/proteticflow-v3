@@ -83,7 +83,7 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   'flex items-center gap-4 px-4 py-3.5 rounded-lg transition-all duration-300 relative group overflow-hidden outline-none',
-                  'text-[10px] font-semibold uppercase tracking-[0.15em]',
+                  'text-[10px] font-semibold uppercase tracking-normal',
                   activeTab === tab.id
                     ? 'bg-primary text-primary-foreground shadow-lg shadow-sm scale-[1.02] z-10'
                     : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
@@ -91,7 +91,7 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
               >
                 <div
                   className={cn(
-                    'shrink-0 transition-transform duration-500 group-hover:scale-110',
+                    'shrink-0 transition-transform duration-500 group-hover:scale-[1.02]',
                     activeTab === tab.id ? 'text-primary-foreground' : 'text-primary/60',
                   )}
                 >
@@ -117,12 +117,12 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center shadow-inner">
+                <div className="w-8 h-8 rounded-lg bg-[var(--warning-soft)] text-[var(--warning)] flex items-center justify-center shadow-inner">
                   <Settings2 size={14} strokeWidth={3} />
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[8px] font-semibold uppercase tracking-normal text-muted-foreground">Versão</span>
-                  <span className="text-[10px] font-semibold text-orange-500 uppercase tracking-normal">3.0.0-rc</span>
+                  <span className="text-[10px] font-semibold text-[var(--warning)] uppercase tracking-normal">3.0.0-rc</span>
                 </div>
               </div>
             </div>

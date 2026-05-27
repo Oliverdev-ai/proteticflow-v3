@@ -66,7 +66,7 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
     <ScaleIn className="flex flex-col gap-6">
       <div className="flex justify-between items-center bg-card/50 p-6 rounded-lg border border-border/50 backdrop-blur-sm shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+          <div className="w-10 h-10 rounded-xl bg-[var(--warning-soft)] flex items-center justify-center text-[var(--warning)]">
             <Hash size={20} />
           </div>
           <div>
@@ -208,7 +208,7 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
           </table>
         </div>
       ) : (
-        <div className="p-20 text-center bg-muted/10 border-2 border-dashed border-border/50 rounded-[40px] flex flex-col items-center gap-4">
+        <div className="p-20 text-center bg-muted/10 border-2 border-dashed border-border/50 rounded-[var(--radius-lg)] flex flex-col items-center gap-4">
           <Hash size={48} className="text-muted-foreground opacity-20" />
           <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground opacity-40">
             Nenhum bloco registrado para este parceiro
@@ -280,7 +280,7 @@ export default function ClientEditPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center gap-4">
         <Loader2 className="animate-spin text-primary" size={42} />
-        <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-muted-foreground animate-pulse">
+        <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground animate-pulse">
           Sincronizando dados...
         </p>
       </div>
@@ -343,7 +343,7 @@ export default function ClientEditPage() {
 
         <button
           onClick={() => navigate(`/clientes/${clientId}/portal`)}
-          className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-normal px-6 py-4 bg-primary/10 text-primary border border-primary/20 rounded-[20px] shadow-sm hover:bg-primary hover:text-primary-foreground transition-all "
+          className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-normal px-6 py-4 bg-primary/10 text-primary border border-primary/20 rounded-[var(--radius-lg)] shadow-sm hover:bg-primary hover:text-primary-foreground transition-all "
         >
           <Link2 size={14} strokeWidth={3} /> Portal do Parceiro{' '}
           <ExternalLink size={12} className="opacity-50 ml-1" />
@@ -351,13 +351,13 @@ export default function ClientEditPage() {
       </div>
 
       {/* Modern Tabs Navigation */}
-      <div className="flex gap-2 p-1.5 bg-card/50 border border-border/50 rounded-[28px] w-fit shadow-sm backdrop-blur-sm">
+      <div className="flex gap-2 p-1.5 bg-card/50 border border-border/50 rounded-[var(--radius-lg)] w-fit shadow-sm backdrop-blur-sm">
         {(['dados', 'extrato', 'blocos'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              'flex items-center gap-2.5 text-[10px] font-semibold uppercase tracking-normal px-8 py-3.5 rounded-[22px] transition-all',
+              'flex items-center gap-2.5 text-[10px] font-semibold uppercase tracking-normal px-8 py-3.5 rounded-[var(--radius-lg)] transition-all',
               tab === t
                 ? 'bg-primary text-primary-foreground shadow-lg shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
@@ -518,7 +518,7 @@ export default function ClientEditPage() {
                     )}
                   </button>
 
-                  <div className="p-4 bg-muted/30 rounded-[28px] border border-border/30 text-center space-y-1 mt-4">
+                  <div className="p-4 bg-muted/30 rounded-[var(--radius-lg)] border border-border/30 text-center space-y-1 mt-4">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-normal">
                       Última Atualização
                     </p>
@@ -564,8 +564,8 @@ export default function ClientEditPage() {
                 label: 'Saldo Pendente',
                 value: extract?.pendingCents ?? 0,
                 icon: Calendar,
-                color: 'text-orange-500',
-                bg: 'bg-orange-500/10',
+                color: 'text-[var(--warning)]',
+                bg: 'bg-[var(--warning-soft)]',
                 isBRL: true,
               },
             ].map((card) => (
@@ -593,7 +593,7 @@ export default function ClientEditPage() {
               </div>
             ))}
           </div>
-          <div className="p-8 bg-card/30 rounded-[40px] border border-border/50 text-center flex flex-col items-center gap-4">
+          <div className="p-8 bg-card/30 rounded-[var(--radius-lg)] border border-border/50 text-center flex flex-col items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground opacity-40">
               <ReceiptText size={24} />
             </div>

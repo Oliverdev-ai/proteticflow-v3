@@ -135,7 +135,7 @@ export function FiscalSettingsForm() {
          <div className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-6 relative overflow-hidden group/asaas">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center shadow-inner">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--info-soft)] text-[var(--info)] flex items-center justify-center shadow-inner">
                      <CreditCard size={18} strokeWidth={3} />
                   </div>
                   <Large className="text-base font-semibold uppercase tracking-tight">Asaas Gateway</Large>
@@ -209,7 +209,7 @@ export function FiscalSettingsForm() {
       </div>
 
       {/* Helper Info */}
-      <div className="p-6 bg-muted/30 border border-border rounded-[24px] flex items-start gap-4">
+      <div className="p-6 bg-muted/30 border border-border rounded-[var(--radius-lg)] flex items-start gap-4">
          <Info size={18} className="text-primary mt-0.5 shrink-0" />
          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight leading-relaxed opacity-60">
             A configuração fiscal é crítica para a emissão de boletos e notas fiscais de serviço. Certifique-se de que os dados do regime tributário e códigos de serviço estão em conformidade com as orientações do seu contador.

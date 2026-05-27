@@ -320,8 +320,8 @@ export function FlowAssistant({
         />
       ) : null}
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-        <p className="text-xs uppercase tracking-normal text-zinc-500 mb-2">Comando estruturado</p>
+      <div className="rounded-lg border border-border bg-muted p-3">
+        <p className="text-xs uppercase tracking-normal text-muted-foreground mb-2">Comando estruturado</p>
         <div className="flex gap-2">
           <input
             id="flow-command-input"
@@ -329,7 +329,7 @@ export function FlowAssistant({
             onChange={(event) => setCommandInput(event.target.value)}
             placeholder="Ex: suspender os 123 por aguardando material"
             disabled={isBusy}
-            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-sky-500 focus:outline-none"
+            className="flex-1 rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground focus:border-[var(--info)] focus:outline-none"
           />
           <button
             id="flow-command-send"
@@ -339,7 +339,7 @@ export function FlowAssistant({
               setCommandInput('');
             }}
             disabled={isBusy || commandInput.trim().length === 0}
-            className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-medium text-sky-950 hover:bg-sky-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-lg bg-[var(--info-soft)] px-3 py-2 text-sm font-medium text-[var(--info)] hover:bg-[var(--info-soft)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Executar
           </button>
@@ -360,9 +360,9 @@ export function FlowAssistant({
       </div>
 
       {lastResponse ? (
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <p className="text-xs uppercase tracking-normal text-zinc-500 mb-2">Pipeline F38</p>
-          <p className="text-sm text-zinc-100 whitespace-pre-wrap">{lastResponse.message}</p>
+        <div className="rounded-lg border border-border bg-muted p-4">
+          <p className="text-xs uppercase tracking-normal text-muted-foreground mb-2">Pipeline F38</p>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{lastResponse.message}</p>
 
           {lastResponse.status === 'missing_fields' && lastResponse.missingFields?.length ? (
             <p className="text-xs text-amber-300 mt-2">
@@ -371,7 +371,7 @@ export function FlowAssistant({
           ) : null}
 
           {lastResponse.status === 'no_intent' && lastResponse.suggestedIntents?.length ? (
-            <p className="text-xs text-zinc-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               Sugestoes: {lastResponse.suggestedIntents.join(', ')}
             </p>
           ) : null}
@@ -390,11 +390,11 @@ export function FlowAssistant({
             }}
           />
           {isClarificationVoiceWindowOpen ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[11px] text-muted-foreground">
               Responda por voz em ate 15s (ex: "o segundo" ou "Silva"), ou clique em um chip.
             </p>
           ) : (
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-muted-foreground">
               Janela de resposta por voz encerrada. Continue pelos chips.
             </p>
           )}
@@ -414,19 +414,19 @@ export function FlowAssistant({
         />
       ) : null}
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+      <div className="rounded-lg border border-border bg-muted p-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-normal text-zinc-500">Ultimas execucoes</p>
-          <p className="text-[11px] text-zinc-600">Perfil: {role}</p>
+          <p className="text-xs uppercase tracking-normal text-muted-foreground">Ultimas execucoes</p>
+          <p className="text-[11px] text-muted-foreground">Perfil: {role}</p>
         </div>
         <div className="mt-2 space-y-1">
           {recentRuns.length === 0 ? (
-            <p className="text-xs text-zinc-500">Nenhuma execucao registrada nesta sessao.</p>
+            <p className="text-xs text-muted-foreground">Nenhuma execucao registrada nesta sessao.</p>
           ) : null}
           {recentRuns.map((run) => (
-            <div key={run.id} className="flex items-center justify-between text-xs text-zinc-300">
+            <div key={run.id} className="flex items-center justify-between text-xs text-muted-foreground">
               <span className="truncate pr-2">{run.intent ?? 'sem intent'}</span>
-              <span className="text-zinc-500">
+              <span className="text-muted-foreground">
                 {run.executionStatus} - {formatRunDate(run.createdAt)}
               </span>
             </div>

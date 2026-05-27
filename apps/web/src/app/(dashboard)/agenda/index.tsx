@@ -84,11 +84,11 @@ function EventCard({ row, dragging = false }: { row: EventRow; dragging?: boolea
       <p className="font-medium truncate">
         {event.title} {row.jobCode ? `#${row.jobCode}` : ''}
       </p>
-      <p className="text-[11px] text-zinc-200 truncate">
+      <p className="text-[11px] text-muted-foreground truncate">
         {start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} -{' '}
         {row.clientName ?? '-'}
       </p>
-      <p className="text-[11px] text-zinc-300 truncate">{row.employeeName ?? 'Sem responsavel'}</p>
+      <p className="text-[11px] text-muted-foreground truncate">{row.employeeName ?? 'Sem responsavel'}</p>
     </div>
   );
 }
@@ -119,9 +119,9 @@ function DayCell({
   return (
     <div
       ref={setNodeRef}
-      className={`border border-zinc-800 rounded-lg p-2 min-h-28 space-y-1 ${isCurrentMonth ? 'bg-zinc-900/50' : 'bg-zinc-950/60'} ${isOver ? 'ring-1 ring-primary' : ''}`}
+      className={`border border-border rounded-lg p-2 min-h-28 space-y-1 ${isCurrentMonth ? 'bg-muted' : 'bg-muted'} ${isOver ? 'ring-1 ring-primary' : ''}`}
     >
-      <div className="text-xs text-zinc-500">{day.getDate()}</div>
+      <div className="text-xs text-muted-foreground">{day.getDate()}</div>
       {rows.map((row) => (
         <DraggableEvent key={row.event.id} row={row} />
       ))}
@@ -226,7 +226,7 @@ export default function AgendaPage() {
             <CalendarDays className="text-primary" size={24} />
             Agenda
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">Calendario semanal/mensal com drag-and-drop.</p>
+          <p className="text-muted-foreground text-sm mt-1">Calendario semanal/mensal com drag-and-drop.</p>
         </div>
         <Link
           to="/agenda/novo"
@@ -238,28 +238,28 @@ export default function AgendaPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={goPrev} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">
+        <button onClick={goPrev} className="px-3 py-2 bg-muted text-muted-foreground rounded-lg">
           Anterior
         </button>
-        <button onClick={goNext} className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg">
+        <button onClick={goNext} className="px-3 py-2 bg-muted text-muted-foreground rounded-lg">
           Proximo
         </button>
         <button
           onClick={() => setCurrent(new Date())}
-          className="px-3 py-2 bg-zinc-800 text-zinc-200 rounded-lg"
+          className="px-3 py-2 bg-muted text-muted-foreground rounded-lg"
         >
           Hoje
         </button>
-        <div className="text-sm text-zinc-300 mx-2">{headerText}</div>
+        <div className="text-sm text-muted-foreground mx-2">{headerText}</div>
         <button
           onClick={() => setMode('week')}
-          className={`px-3 py-2 rounded-lg ${mode === 'week' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}
+          className={`px-3 py-2 rounded-lg ${mode === 'week' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}
         >
           Semana
         </button>
         <button
           onClick={() => setMode('month')}
-          className={`px-3 py-2 rounded-lg ${mode === 'month' ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-300'}`}
+          className={`px-3 py-2 rounded-lg ${mode === 'month' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}
         >
           Mes
         </button>
@@ -295,20 +295,20 @@ export default function AgendaPage() {
         />
       </div>
 
-      {listQuery.error && <p className="text-sm text-red-400">{listQuery.error.message}</p>}
+      {listQuery.error && <p className="text-sm text-[var(--destructive)]">{listQuery.error.message}</p>}
       {listQuery.isLoading && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
+        <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
           Carregando eventos da agenda...
         </div>
       )}
       {!listQuery.isLoading && !listQuery.error && (listQuery.data?.length ?? 0) === 0 && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
+        <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
           Nenhum evento encontrado para o período e filtros selecionados.
         </div>
       )}
-      {moveMutation.isPending && <p className="text-xs text-zinc-500">Atualizando evento...</p>}
+      {moveMutation.isPending && <p className="text-xs text-muted-foreground">Atualizando evento...</p>}
       {moveMutation.error && (
-        <p className="text-xs text-red-400">Falha ao mover evento: {moveMutation.error.message}</p>
+        <p className="text-xs text-[var(--destructive)]">Falha ao mover evento: {moveMutation.error.message}</p>
       )}
 
       {!listQuery.isLoading && (

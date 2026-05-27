@@ -25,9 +25,9 @@ export function PlanBadge() {
   const status = statusQuery.data;
   if (!status) {
     return (
-      <div className="mx-2 mb-3 rounded-lg border border-zinc-800 bg-zinc-900/70 px-3 py-2">
-        <p className="text-[11px] uppercase tracking-normal text-zinc-500">Plano</p>
-        <p className="text-sm text-zinc-300">Carregando...</p>
+      <div className="mx-2 mb-3 rounded-lg border border-border bg-muted px-3 py-2">
+        <p className="text-[11px] uppercase tracking-normal text-muted-foreground">Plano</p>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     );
   }
@@ -35,18 +35,18 @@ export function PlanBadge() {
   const daysRemaining = getTrialDaysRemaining(status.planExpiresAt);
   const isExpiring = status.plan === 'trial' && !status.trialExpired && daysRemaining <= 7;
   const containerClass = status.trialExpired
-    ? 'border-red-700/60 bg-red-950/40'
+    ? 'border-[var(--destructive)] bg-[var(--destructive-soft)]'
     : isExpiring
       ? 'border-amber-700/60 bg-amber-950/30'
-      : 'border-zinc-800 bg-zinc-900/70';
+      : 'border-border bg-muted';
 
   return (
     <div className={`mx-2 mb-3 rounded-lg px-3 py-2 border ${containerClass}`}>
-      <p className="text-[11px] uppercase tracking-normal text-zinc-500">Plano</p>
-      <p className="text-sm font-medium text-zinc-100">
+      <p className="text-[11px] uppercase tracking-normal text-muted-foreground">Plano</p>
+      <p className="text-sm font-medium text-muted-foreground">
         {formatPlan(status.plan)}
         {status.plan === 'trial' ? (
-          <span className="ml-1 text-xs text-zinc-400">
+          <span className="ml-1 text-xs text-muted-foreground">
             ({status.trialExpired ? 'expirado' : `${daysRemaining} dias`})
           </span>
         ) : null}

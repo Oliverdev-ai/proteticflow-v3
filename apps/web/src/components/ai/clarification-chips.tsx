@@ -16,8 +16,8 @@ export function ClarificationChips({ candidates, disabled, onSelect }: Clarifica
   }
 
   return (
-    <div data-clarification className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 space-y-3">
-      <p className="text-xs text-zinc-300">Selecione o item correto para continuar:</p>
+    <div data-clarification className="rounded-xl border border-border bg-muted p-3 space-y-3">
+      <p className="text-xs text-muted-foreground">Selecione o item correto para continuar:</p>
       <div className="flex flex-wrap gap-2">
         {candidates.map((candidate) => (
           <button
@@ -26,7 +26,7 @@ export function ClarificationChips({ candidates, disabled, onSelect }: Clarifica
             data-chip={candidate.label}
             disabled={disabled}
             onClick={() => onSelect(candidate)}
-            className="rounded-full border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-100 hover:bg-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-full border border-[var(--info)] bg-[var(--info-soft)] px-3 py-1.5 text-xs text-[var(--info)] hover:bg-[var(--info-soft)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {candidate.label}
           </button>
@@ -36,7 +36,7 @@ export function ClarificationChips({ candidates, disabled, onSelect }: Clarifica
         <div className="space-y-1">
           {candidates.map((candidate) => (
             candidate.detail ? (
-              <p key={`detail-${candidate.id}`} className="text-[11px] text-zinc-500">
+              <p key={`detail-${candidate.id}`} className="text-[11px] text-muted-foreground">
                 {candidate.label}: {candidate.detail}
               </p>
             ) : null

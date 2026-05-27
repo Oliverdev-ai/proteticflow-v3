@@ -19,17 +19,17 @@ export function LicenseBanner() {
 
   if (status.trialExpired) {
     return (
-      <div className="mb-4 rounded-lg border border-red-700/60 bg-red-950/40 p-3">
+      <div className="mb-4 rounded-lg border border-[var(--destructive)] bg-[var(--destructive-soft)] p-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-red-300">Trial expirado</p>
-            <p className="text-xs text-red-200/80 mt-1">
+            <p className="text-sm font-semibold text-[var(--destructive)]">Trial expirado</p>
+            <p className="text-xs text-[var(--destructive)] mt-1">
               Seu periodo de teste terminou. Faca upgrade para continuar criando novos registros.
             </p>
           </div>
           <Link
             to="/planos"
-            className="shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
+            className="shrink-0 rounded-md bg-[var(--destructive-soft)] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[var(--destructive-soft)]"
           >
             Ver planos
           </Link>
@@ -58,7 +58,7 @@ export function LicenseBanner() {
         </div>
         <Link
           to="/planos"
-          className="shrink-0 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-amber-400"
+          className="shrink-0 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-amber-400"
         >
           Fazer upgrade
         </Link>
