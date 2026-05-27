@@ -8,6 +8,11 @@ import {
 } from '@proteticflow/shared';
 import * as clientService from './service.js';
 
+const searchClientsSchema = z.object({
+  q: z.string().trim().min(2).max(100),
+  limit: z.number().int().min(1).max(10).default(5),
+});
+
 export const clientRouter = router({
   // ── licensedProcedure: garante que Fase 23 (limites de plano) funcione automaticamente ──
   create: licensedProcedure
@@ -21,6 +26,12 @@ export const clientRouter = router({
     .input(listClientsSchema)
     .query(async ({ input, ctx }) => {
       return clientService.listClients(ctx.tenantId!, input);
+    }),
+
+  search: tenantProcedure
+    .input(searchClientsSchema)
+    .query(async ({ input, ctx }) => {
+      return clientService.searchClients(ctx.tenantId!, input);
     }),
 
   get: tenantProcedure

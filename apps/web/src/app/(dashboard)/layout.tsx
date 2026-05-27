@@ -7,6 +7,7 @@ import { Header } from '../../components/layout/header';
 import { UsageBanner } from '../../components/shared/usage-banner';
 import { Breadcrumb } from '../../components/layout/breadcrumb';
 import { FlowAssistantOverlay } from '../../components/ai/flow-assistant-overlay';
+import { CommandPalette, CommandPaletteProvider } from '../../components/command-palette';
 import { useAuth } from '../../hooks/use-auth';
 import { trpc } from '../../lib/trpc';
 import { useLocalStorage } from '../../hooks/use-local-storage';
@@ -45,31 +46,34 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar
-        collapsed={collapsed}
-        mobileOpen={mobileOpen}
-        onCloseMobile={() => setMobileOpen(false)}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
-      />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header
-          onToggleMobileSidebar={() => setMobileOpen(true)}
-          onToggleSidebar={() => setCollapsed((v) => !v)}
+    <CommandPaletteProvider>
+      <CommandPalette />
+      <div className="min-h-screen bg-background flex">
+        <Sidebar
+          collapsed={collapsed}
+          mobileOpen={mobileOpen}
+          onCloseMobile={() => setMobileOpen(false)}
+          onToggleCollapse={() => setCollapsed((v) => !v)}
         />
-        <main className="flex-1 overflow-hidden">
-          <SimpleBar className="h-full">
-            <div className="p-4 md:p-6">
-              <UsageBanner />
-              <Breadcrumb />
-              <Outlet />
-            </div>
-          </SimpleBar>
-        </main>
+
+        <div className="flex-1 flex flex-col min-w-0">
+          <Header
+            onToggleMobileSidebar={() => setMobileOpen(true)}
+            onToggleSidebar={() => setCollapsed((v) => !v)}
+          />
+          <main className="flex-1 overflow-hidden">
+            <SimpleBar className="h-full">
+              <div className="p-4 md:p-6">
+                <UsageBanner />
+                <Breadcrumb />
+                <Outlet />
+              </div>
+            </SimpleBar>
+          </main>
+        </div>
+        <FlowAssistantOverlay />
       </div>
-      <FlowAssistantOverlay />
-    </div>
+    </CommandPaletteProvider>
   );
 }
 

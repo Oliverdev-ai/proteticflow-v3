@@ -47,6 +47,7 @@ type MarkProofInput    = z.infer<typeof markProofSchema>;
 type ReturnProofInput  = z.infer<typeof returnProofSchema>;
 type CreateReworkInput = z.infer<typeof createReworkSchema>;
 type ToggleUrgentInput = z.infer<typeof toggleUrgentSchema>;
+type SearchJobsInput   = { q: string; limit: number };
 type JobStatus = typeof jobs.$inferSelect.status;
 
 const FINAL_JOB_STATUSES = ['delivered', 'cancelled'] as const;
@@ -489,6 +490,30 @@ export async function listJobs(tenantId: number, filters: ListJobsInput) {
   const nextCursor = hasMore ? items[items.length - 1]?.id : undefined;
 
   return { data: items, nextCursor };
+}
+
+export async function searchJobs(tenantId: number, input: SearchJobsInput) {
+  const term = `%${input.q}%`;
+
+  return db
+    .select({
+      id: jobs.id,
+      code: jobs.code,
+      status: jobs.status,
+      clientName: clients.name,
+    })
+    .from(jobs)
+    .leftJoin(clients, eq(jobs.clientId, clients.id))
+    .where(and(
+      eq(jobs.tenantId, tenantId),
+      isNull(jobs.deletedAt),
+      or(
+        ilike(jobs.code, term),
+        ilike(clients.name, term),
+      )!,
+    ))
+    .orderBy(desc(jobs.updatedAt), desc(jobs.id))
+    .limit(input.limit);
 }
 
 export async function getJob(tenantId: number, jobId: number) {
