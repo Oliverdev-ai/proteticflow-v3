@@ -16,6 +16,7 @@ import type { z } from 'zod';
 type CreateClientInput = z.infer<typeof createClientSchema>;
 type UpdateClientInput = z.infer<typeof updateClientSchema>;
 type ListClientsInput = z.infer<typeof listClientsSchema>;
+type SearchClientsInput = { q: string; limit: number };
 
 // ─── CRUD ────────────────────────────────────────────────────────────────────
 
@@ -98,6 +99,28 @@ export async function listClients(tenantId: number, filters: ListClientsInput) {
   ]);
 
   return { data, total: totalResult[0]?.count ?? 0 };
+}
+
+export async function searchClients(tenantId: number, input: SearchClientsInput) {
+  const term = `%${input.q}%`;
+
+  return db
+    .select({
+      id: clients.id,
+      name: clients.name,
+      documentType: clients.documentType,
+    })
+    .from(clients)
+    .where(and(
+      eq(clients.tenantId, tenantId),
+      isNull(clients.deletedAt),
+      or(
+        ilike(clients.name, term),
+        ilike(clients.document, term),
+      )!,
+    ))
+    .orderBy(clients.name)
+    .limit(input.limit);
 }
 
 export async function getClient(tenantId: number, clientId: number) {

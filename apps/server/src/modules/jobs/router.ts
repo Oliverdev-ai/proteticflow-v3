@@ -20,6 +20,11 @@ import {
 import * as jobService from './service.js';
 import * as osBlockService from './os-blocks.service.js';
 
+const searchJobsSchema = z.object({
+  q: z.string().trim().min(2).max(100),
+  limit: z.number().int().min(1).max(10).default(5),
+});
+
 export const jobRouter = router({
   // ── CRUD ────────────────────────────────────────────────────────────────────
   // licensedProcedure garante AP-06: limites de plano verificados automaticamente
@@ -33,6 +38,12 @@ export const jobRouter = router({
     .input(listJobsSchema)
     .query(async ({ input, ctx }) => {
       return jobService.listJobs(ctx.tenantId!, input);
+    }),
+
+  search: tenantProcedure
+    .input(searchJobsSchema)
+    .query(async ({ input, ctx }) => {
+      return jobService.searchJobs(ctx.tenantId!, input);
     }),
 
   get: tenantProcedure
