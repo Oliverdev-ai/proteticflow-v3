@@ -16,7 +16,13 @@ import {
 } from 'lucide-react';
 import { PageTransition } from '../../../components/shared/page-transition';
 import { PageTitle, Subtitle } from '../../../components/shared/typography';
-import { FormError, FormField, FormSection } from '../../../components/ui/form';
+import {
+  FORM_CONTROL_CLASS,
+  FORM_SELECT_CLASS,
+  FormError,
+  FormField,
+  FormSection,
+} from '../../../components/ui/form';
 import { Input } from '../../../components/ui/input';
 import { cn } from '../../../lib/utils';
 
@@ -85,9 +91,6 @@ export default function ClientCreatePage() {
     createMutation.mutate(payload);
   };
 
-  const controlClass =
-    'w-full bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--radius-sm)] px-3 py-2 text-[0.875rem] text-[var(--fg)] placeholder:text-[var(--fg-subtle)] focus-visible:outline-none focus-visible:border-[var(--border-focus)] focus-visible:shadow-[var(--shadow-focus)] disabled:opacity-50 disabled:cursor-not-allowed';
-
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-4xl mx-auto pb-12">
       {/* Header */}
@@ -150,10 +153,7 @@ export default function ClientCreatePage() {
                 <FormField label="Tipo de Pessoa">
                   <select
                     {...register('documentType')}
-                    className={cn(
-                      controlClass,
-                      "appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJtNiA5IDYgNiA2LTYiLz48L3N2Zz4=')] bg-[length:1.25rem_1.25rem] bg-[right_1rem_center] bg-no-repeat",
-                    )}
+                    className={FORM_SELECT_CLASS}
                   >
                     <option value="">Selecione...</option>
                     <option value="cpf">PESSOA FÍSICA (CPF)</option>
@@ -254,7 +254,7 @@ export default function ClientCreatePage() {
                     {...register('technicalPreferences')}
                     rows={6}
                     placeholder="Instruções recorrentes, materiais de preferência, etc..."
-                    className={cn(controlClass, 'resize-none min-h-[140px]')}
+                    className={cn(FORM_CONTROL_CLASS, 'resize-none min-h-[140px]')}
                   />
                 </FormField>
               </div>

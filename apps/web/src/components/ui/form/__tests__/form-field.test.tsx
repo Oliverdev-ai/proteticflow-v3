@@ -38,16 +38,32 @@ describe('FormField', () => {
     expect(html).not.toContain('Dica');
   });
 
-  it('propagates aria-describedby to children via htmlFor/id', () => {
+  it('propagates matching htmlFor/id and aria-describedby to children', () => {
     const html = renderToStaticMarkup(
       <FormField label="Categoria" hint="Escolha uma categoria">
         <select />
       </FormField>,
     );
 
-    expect(html).toContain('for=');
-    expect(html).toContain('id=');
-    expect(html).toContain('aria-describedby=');
+    const labelFor = html.match(/<label[^>]*for="([^"]+)"/)?.[1];
+    const selectId = html.match(/<select[^>]*id="([^"]+)"/)?.[1];
+    const describedBy = html.match(/<select[^>]*aria-describedby="([^"]+)"/)?.[1];
+
+    expect(labelFor).toBeDefined();
+    expect(selectId).toBeDefined();
+    expect(labelFor).toBe(selectId);
+    expect(describedBy).toBe(`${selectId}-hint`);
+    expect(html).toContain(`id="${selectId}-hint"`);
+  });
+
+  it('sets aria-invalid on child when error is present', () => {
+    const html = renderToStaticMarkup(
+      <FormField label="Categoria" error="Obrigatório">
+        <select />
+      </FormField>,
+    );
+
+    expect(html).toContain('aria-invalid="true"');
   });
 
   it('renders asterisk when required', () => {

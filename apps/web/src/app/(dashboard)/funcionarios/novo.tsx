@@ -5,7 +5,7 @@ import { createEmployeeSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Loader2, User, MapPin, Briefcase, CreditCard } from 'lucide-react';
 import type { z } from 'zod';
-import { FormError, FormField } from '../../../components/ui/form';
+import { FORM_SELECT_CLASS, FormError, FormField } from '../../../components/ui/form';
 import { Input } from '../../../components/ui/input';
 
 type FormData = z.input<typeof createEmployeeSchema>;
@@ -157,7 +157,7 @@ export default function EmployeeCreatePage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <FormField label="Tipo Profissional">
-                    <select {...register('type')} className="input-field w-full">
+                    <select {...register('type')} className={FORM_SELECT_CLASS}>
                       <option value="protesista">Protesista</option>
                       <option value="auxiliar">Auxiliar</option>
                       <option value="recepcionista">Recepcionista</option>
@@ -169,7 +169,7 @@ export default function EmployeeCreatePage() {
                 </div>
                 <div>
                   <FormField label="Tipo Contrato">
-                    <select {...register('contractType')} className="input-field w-full">
+                    <select {...register('contractType')} className={FORM_SELECT_CLASS}>
                       <option value="clt">CLT</option>
                       <option value="pj_mei">PJ / MEI</option>
                       <option value="freelancer">Freelancer</option>
