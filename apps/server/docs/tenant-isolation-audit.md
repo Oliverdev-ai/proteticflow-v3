@@ -9,6 +9,7 @@ Resumo executivo:
 - Routers de negocio auditados usam `tenantProcedure`/`licensedProcedure`/`adminProcedure` ou especializacoes (`financialProcedure`, `reportsProcedure`, `aiProcedure`).
 - Nao foram encontradas queries diretas sem escopo de tenant nos routers de negocio.
 - Em financeiro, fluxos multi-escrita criticos (`markArPaid`, `markApPaid`) usam `db.transaction()`.
+- Bloqueantes de concorrencia em `payroll.closePeriod`, `purchases.confirmPurchase` e `purchases.cancelPurchase` corrigidos com atomicidade/lock otimista.
 
 ### Procedures auditadas
 | Router | Procedure | Status |
@@ -54,3 +55,40 @@ Resumo executivo:
 - Busca de uso de `protectedProcedure` em modulos de negocio.
 - Busca de query direta em routers (`db.select/insert/update/delete/transaction`).
 - Verificacao de transacao financeira em `apps/server/src/modules/financial/service.ts` (`markArPaid` e `markApPaid`).
+
+## Derivação de procedures (chain de herança verificada)
+
+| Procedure | Herda de | tenantId injetado? |
+|---|---|---|
+| `licensedProcedure` | `tenantProcedure` | ✅ Sim |
+| `financialProcedure` | `tenantProcedure` | ✅ Sim |
+| `reportsProcedure` | `tenantProcedure` | ✅ Sim |
+| `adminProcedure` | `tenantProcedure` | ✅ Sim |
+| `aiProcedure` / `aiFullProcedure` | `tenantProcedure` | ✅ Sim |
+
+## Cobertura de db.transaction() — ops de escrita financeiras
+
+| Service | Função | Usa transaction? |
+|---|---|---|
+| payroll | `generateEntries` | ✅ |
+| payroll | `updateEntry` | ✅ |
+| payroll | `closePeriod` | ✅ (corrigido neste PR) |
+| payroll | `reopenPeriod` | ✅ |
+| purchases | `createPurchase` | ✅ |
+| purchases | `receivePurchase` | ✅ |
+| purchases | `confirmPurchase` | ✅ lock otimista (corrigido neste PR) |
+| purchases | `cancelPurchase` | ✅ lock otimista (corrigido neste PR) |
+
+## Falha corrigida — enforceLicense
+
+`enforceLicense` era no-op. Corrigido para invocar `checkFeatureAccess(ctx.tenantId, 'financial')`.
+
+## Resultado atualizado
+
+| Item | Status anterior | Status real |
+|---|---|---|
+| Tenant isolation (procedure chain) | ✅ OK | ✅ OK — `licensedProcedure` estende `tenantProcedure` |
+| `closePeriod` atomicidade | não auditado | ✅ Corrigido |
+| `cancelPurchase` race condition | não auditado | ✅ Corrigido |
+| `confirmPurchase` atomicidade | não auditado | ✅ Corrigido |
+| `enforceLicense` implementação | não auditado | ✅ Corrigido |

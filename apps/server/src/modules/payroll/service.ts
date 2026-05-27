@@ -184,24 +184,40 @@ async function countProcessedPayments(
 }
 
 export async function closePeriod(tenantId: number, periodId: number, userId: number) {
-  const [period] = await db.select().from(payrollPeriods)
-    .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
-  
-  if (!period) throw new TRPCError({ code: 'NOT_FOUND', message: 'Período não encontrado' });
-  if (period.status !== 'open') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Período já fechado' });
+  return db.transaction(async (tx) => {
+    const [period] = await tx
+      .select()
+      .from(payrollPeriods)
+      .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
 
-  const [updated] = await db.update(payrollPeriods)
-    .set({
-      status: 'closed',
-      closedAt: new Date(),
-      closedBy: userId,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)))
-    .returning();
+    if (!period) throw new TRPCError({ code: 'NOT_FOUND', message: 'Período não encontrado' });
+    if (period.status !== 'open') throw new TRPCError({ code: 'BAD_REQUEST', message: 'Período já fechado' });
 
-  logger.info({ action: 'payroll.close', tenantId, periodId }, 'Payroll period closed');
-  return updated;
+    const [updated] = await tx
+      .update(payrollPeriods)
+      .set({
+        status: 'closed',
+        closedAt: new Date(),
+        closedBy: userId,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(payrollPeriods.id, periodId),
+        eq(payrollPeriods.tenantId, tenantId),
+        eq(payrollPeriods.status, 'open'),
+      ))
+      .returning();
+
+    if (!updated) {
+      throw new TRPCError({
+        code: 'CONFLICT',
+        message: 'Período já foi fechado por outra operação',
+      });
+    }
+
+    logger.info({ action: 'payroll.close', tenantId, periodId }, 'Payroll period closed');
+    return updated;
+  });
 }
 
 export async function reopenPeriod(tenantId: number, periodId: number, userId: number) {

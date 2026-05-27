@@ -224,32 +224,22 @@ export async function updatePurchase(tenantId: number, poId: number, input: Upda
 }
 
 export async function confirmPurchase(tenantId: number, poId: number, userId: number) {
-  const [po] = await db
-    .select({ status: purchaseOrders.status })
-    .from(purchaseOrders)
-    .where(
-      and(
-        eq(purchaseOrders.id, poId),
-        eq(purchaseOrders.tenantId, tenantId),
-        isNull(purchaseOrders.deletedAt),
-      ),
-    );
-
-  if (!po) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: 'Compra não encontrada' });
-  }
-  if (po.status !== 'draft') {
-    throw new TRPCError({ code: 'BAD_REQUEST', message: `Transição inválida: ${po.status} -> sent` });
-  }
-
   const [updated] = await db
     .update(purchaseOrders)
     .set({ status: 'sent', updatedAt: new Date() })
-    .where(and(eq(purchaseOrders.id, poId), eq(purchaseOrders.tenantId, tenantId)))
+    .where(and(
+      eq(purchaseOrders.id, poId),
+      eq(purchaseOrders.tenantId, tenantId),
+      eq(purchaseOrders.status, 'draft'),
+      isNull(purchaseOrders.deletedAt),
+    ))
     .returning();
 
   if (!updated) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: 'Compra não encontrada' });
+    throw new TRPCError({
+      code: 'CONFLICT',
+      message: 'Compra já foi confirmada ou não está em rascunho',
+    });
   }
   logger.info({ tenantId, poId, userId }, 'purchases.confirm');
   return updated;
@@ -469,12 +459,16 @@ export async function cancelPurchase(tenantId: number, poId: number, userId: num
         eq(purchaseOrders.id, poId),
         eq(purchaseOrders.tenantId, tenantId),
         isNull(purchaseOrders.deletedAt),
+        inArray(purchaseOrders.status, ['draft', 'sent']),
       ),
     )
     .returning();
 
   if (!updated) {
-    throw new TRPCError({ code: 'NOT_FOUND', message: 'Compra não encontrada' });
+    throw new TRPCError({
+      code: 'CONFLICT',
+      message: 'Compra já foi processada ou cancelada por outra operação',
+    });
   }
   logger.info({ tenantId, poId, userId }, 'purchases.cancel');
   void logAudit({
