@@ -225,7 +225,7 @@ export async function reopenPeriod(tenantId: number, periodId: number, userId: n
     const [period] = await tx.select().from(payrollPeriods)
       .where(and(eq(payrollPeriods.id, periodId), eq(payrollPeriods.tenantId, tenantId)));
 
-    if (!period) throw new TRPCError({ code: 'NOT_FOUND', message: 'PerÃ­odo nÃ£o encontrado' });
+    if (!period) throw new TRPCError({ code: 'NOT_FOUND', message: 'Período não encontrado' });
     if (period.status !== 'closed') {
       throw new TRPCError({ code: 'BAD_REQUEST', message: 'Apenas folhas fechadas podem ser reabertas' });
     }
