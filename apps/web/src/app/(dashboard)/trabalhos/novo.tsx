@@ -315,6 +315,7 @@ export default function JobCreatePage() {
                   clientsData?.data.map((c) => (
                     <button
                       key={c.id}
+                      data-testid={`client-option-${c.id}`}
                       onClick={() => setClientId(clientId === c.id ? null : c.id)}
                       className={cn(
                         'group p-6 rounded-lg border-2 transition-all duration-500 relative overflow-hidden flex items-center gap-6 text-left ',
@@ -434,6 +435,7 @@ export default function JobCreatePage() {
                 )}
 
                 <button
+                  data-testid="btn-add-manual-item"
                   onClick={() => addItem()}
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-lg border-2 border-dashed border-border text-[9px] font-semibold text-muted-foreground uppercase tracking-normal hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all "
                 >
@@ -463,6 +465,7 @@ export default function JobCreatePage() {
                         </div>
                         <div className="flex-1 flex flex-col gap-1">
                           <input
+                            data-testid={`input-item-name-${i}`}
                             value={item.serviceNameSnapshot}
                             onChange={(e) => updateItem(i, 'serviceNameSnapshot', e.target.value)}
                               placeholder="Descrição do Serviço..."
@@ -490,6 +493,7 @@ export default function JobCreatePage() {
                                   R$
                                 </span>
                                 <input
+                                  data-testid={`input-item-unit-price-${i}`}
                                   type="number"
                                   value={item.unitPriceCents / 100}
                                   onChange={(e) =>
@@ -570,6 +574,7 @@ export default function JobCreatePage() {
                     strokeWidth={2.5}
                   />
                   <input
+                    data-testid="input-patient-name"
                     placeholder="Nome completo para rastreio..."
                     value={details.patientName}
                     onChange={(e) => setDetails((d) => ({ ...d, patientName: e.target.value }))}
@@ -638,6 +643,7 @@ export default function JobCreatePage() {
                     strokeWidth={3}
                   />
                   <input
+                    data-testid="input-job-deadline"
                     type="date"
                     value={details.deadline}
                     onChange={(e) => setDetails((d) => ({ ...d, deadline: e.target.value }))}
@@ -913,6 +919,7 @@ export default function JobCreatePage() {
           )}
           {step < 3 ? (
             <button
+              data-testid="btn-step-next"
               disabled={!canNext()}
               onClick={() => setStep((s) => s + 1)}
               className="flex-1 py-6 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-md shadow-sm hover:brightness-110 disabled:opacity-30 disabled:grayscale transition-all duration-300 flex items-center justify-center gap-3  group"
@@ -926,6 +933,7 @@ export default function JobCreatePage() {
             </button>
           ) : (
             <button
+              data-testid="btn-create-job"
               disabled={createMutation.isPending}
               onClick={handleSubmit}
               className="flex-1 py-6 rounded-lg bg-success text-white text-[10px] font-semibold uppercase tracking-normal shadow-md shadow-emerald-500/20 hover:brightness-110 disabled:opacity-50 transition-all duration-500 flex items-center justify-center gap-3  group"

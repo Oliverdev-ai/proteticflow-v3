@@ -121,6 +121,7 @@ export default function ClientCreatePage() {
                 <div className="md:col-span-2">
                   <Input
                     label="Nome Completo / Razão Social"
+                    data-testid="input-client-name"
                     required
                     error={errors.name?.message}
                     {...register('name')}
@@ -152,6 +153,7 @@ export default function ClientCreatePage() {
 
                 <FormField label="Tipo de Pessoa">
                   <select
+                    data-testid="select-document-type"
                     {...register('documentType')}
                     className={FORM_SELECT_CLASS}
                   >
@@ -251,6 +253,7 @@ export default function ClientCreatePage() {
 
                 <FormField label="Observações Técnicas">
                   <textarea
+                    data-testid="textarea-technical-preferences"
                     {...register('technicalPreferences')}
                     rows={6}
                     placeholder="Instruções recorrentes, materiais de preferência, etc..."
@@ -265,6 +268,7 @@ export default function ClientCreatePage() {
 
               <button
                 type="submit"
+                data-testid="btn-create-client"
                 disabled={isSubmitting || createMutation.isPending}
                 className="w-full bg-primary text-primary-foreground text-xs font-semibold px-6 py-4 rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110  uppercase tracking-normal flex items-center justify-center gap-2"
               >

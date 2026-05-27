@@ -28,7 +28,7 @@ export default function PublicPortalPage() {
   const hasJobs = useMemo(() => (snapshot?.jobs.length ?? 0) > 0, [snapshot?.jobs.length]);
 
   return (
-    <div className="min-h-screen bg-muted py-8 px-4">
+    <div data-testid="page-public-portal" className="min-h-screen bg-muted py-8 px-4">
       <div className="max-w-5xl mx-auto space-y-6">
         {query.isLoading ? (
           <section className="rounded-lg border border-border bg-white p-8 text-center text-muted-foreground">
