@@ -7,7 +7,7 @@ type ScenarioPanelProps = {
 
 export function ScenarioPanel({ preview, onPreview }: ScenarioPanelProps) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+    <div className="rounded-lg border border-border bg-muted p-5 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Cenario e resultado</h2>
         <button
@@ -20,7 +20,7 @@ export function ScenarioPanel({ preview, onPreview }: ScenarioPanelProps) {
       </div>
 
       {!preview ? (
-        <p className="text-sm text-zinc-500">Execute o calculo para visualizar subtotal, total e margem.</p>
+        <p className="text-sm text-muted-foreground">Execute o calculo para visualizar subtotal, total e margem.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Metric title="Subtotal" value={preview.subtotalCents} />
@@ -34,10 +34,10 @@ export function ScenarioPanel({ preview, onPreview }: ScenarioPanelProps) {
 
 function Metric({ title, value, suffix }: { title: string; value: number; suffix?: string }) {
   return (
-    <div className="rounded-xl border border-zinc-700 p-3">
-      <p className="text-xs uppercase tracking-normal text-zinc-500">{title}</p>
+    <div className="rounded-xl border border-border p-3">
+      <p className="text-xs uppercase tracking-normal text-muted-foreground">{title}</p>
       <p className="text-xl font-semibold text-white">R$ {(value / 100).toFixed(2)}</p>
-      {suffix ? <p className="text-xs text-zinc-400">{suffix}</p> : null}
+      {suffix ? <p className="text-xs text-muted-foreground">{suffix}</p> : null}
     </div>
   );
 }

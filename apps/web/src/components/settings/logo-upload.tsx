@@ -77,7 +77,7 @@ export function LogoUpload() {
           {/* Preview Section */}
           <div className="relative group/preview">
              <div className={cn(
-               "w-48 h-48 rounded-[40px] border-4 border-card shadow-md flex items-center justify-center overflow-hidden transition-all duration-700 bg-muted/20 relative",
+               "w-48 h-48 rounded-[var(--radius-lg)] border-4 border-card shadow-md flex items-center justify-center overflow-hidden transition-all duration-700 bg-muted/20 relative",
                currentLogo ? "ring-8 ring-primary/5" : "border-dashed border-border/60"
              )}>
                 {currentLogo ? (
@@ -99,7 +99,7 @@ export function LogoUpload() {
              {currentLogo && (
                 <button 
                   onClick={() => removeLogo.mutate({})}
-                  className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-destructive text-white shadow-xl flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-all active:scale-90"
+                  className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-destructive text-white shadow-xl flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-all active:scale-[0.98]"
                 >
                    <Trash2 size={16} strokeWidth={3} />
                 </button>

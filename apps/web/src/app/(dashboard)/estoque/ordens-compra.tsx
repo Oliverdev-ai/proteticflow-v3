@@ -1,142 +1,238 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { PURCHASE_ORDER_STATUS_CHIP } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import {
-  ShoppingCart,
-  ChevronLeft,
-  CheckCircle,
-  Clock,
-  Send,
-  XCircle,
-  ArrowRight,
-} from 'lucide-react';
+import { formatBRL } from '../../../lib/format';
+import { usePermissions } from '../../../hooks/use-permissions';
+import { Button } from '../../../components/ui/button';
+import { PageTitle } from '../../../components/shared/typography';
+import { FilterBar } from '../../../components/shared/filter-bar';
+import { DataTable, type Column } from '../../../components/shared/data-table';
+import { StatusChip } from '../../../components/shared/status-chip';
 
-const STATUS_CONFIG = {
-  draft: { label: 'Rascunho', color: 'text-zinc-400', bg: 'bg-zinc-800', icon: Clock },
-  sent: { label: 'Enviada', color: 'text-blue-400', bg: 'bg-blue-900/20', icon: Send },
-  received: {
-    label: 'Recebida',
-    color: 'text-green-400',
-    bg: 'bg-green-900/20',
-    icon: CheckCircle,
-  },
-  cancelled: { label: 'Cancelada', color: 'text-red-400', bg: 'bg-red-900/20', icon: XCircle },
+type PurchaseOrderStatus = keyof typeof PURCHASE_ORDER_STATUS_CHIP;
+const PAGE_SIZE = 20;
+
+type PurchaseOrderRow = {
+  id: number;
+  code: string;
+  status: PurchaseOrderStatus;
+  totalCents: number;
+  createdAt: string;
+  receivedAt: string | null;
 };
 
+function toPurchaseOrderStatus(value: string): PurchaseOrderStatus {
+  if (value === 'sent' || value === 'received' || value === 'cancelled') {
+    return value;
+  }
+  return 'draft';
+}
+
 export default function PurchaseOrdersPage() {
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const navigate = useNavigate();
   const utils = trpc.useUtils();
+  const { role } = usePermissions();
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | ''>('');
+  const [page, setPage] = useState(1);
+
+  const canManageStatus = role === 'superadmin' || role === 'gerente';
 
   const { data, isLoading, error } = trpc.inventory.listPOs.useQuery({
-    status: (statusFilter || undefined) as 'draft' | 'sent' | 'received' | 'cancelled' | undefined,
-    page: 1,
-    limit: 50,
+    status: statusFilter || undefined,
+    page,
+    limit: PAGE_SIZE,
   });
 
   const changePOStatus = trpc.inventory.changePOStatus.useMutation({
-    onSuccess: () => utils.inventory.listPOs.invalidate(),
+    onSuccess: async () => {
+      await utils.inventory.listPOs.invalidate();
+    },
   });
 
-  const pos = data?.data ?? [];
+  const rows: PurchaseOrderRow[] = (data?.data ?? []).map((po) => ({
+    id: po.id,
+    code: po.code,
+    status: toPurchaseOrderStatus(po.status),
+    totalCents: po.totalCents,
+    createdAt: po.createdAt,
+    receivedAt: po.receivedAt ? po.receivedAt.toString() : null,
+  }));
+
+  const total = Number(data?.total ?? 0);
+  const normalizedSearch = search.trim().toLowerCase();
+  const visibleRows = normalizedSearch
+    ? rows.filter((row) => row.code.toLowerCase().includes(normalizedSearch))
+    : rows;
+
+  const columns: Column<PurchaseOrderRow>[] = [
+    {
+      id: 'code',
+      header: 'OC',
+      width: '160px',
+      cell: (row) => <span className="t-mono text-[var(--fg)]">{row.code}</span>,
+    },
+    {
+      id: 'createdAt',
+      header: 'Criada em',
+      width: '130px',
+      hideBelow: 'sm',
+      cell: (row) => <span className="t-small text-[var(--fg-muted)]">{new Date(row.createdAt).toLocaleDateString('pt-BR')}</span>,
+    },
+    {
+      id: 'total',
+      header: 'Valor total',
+      width: '140px',
+      align: 'right',
+      cell: (row) => <span className="tabular-nums font-medium">{formatBRL(row.totalCents)}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      width: '120px',
+      cell: (row) => {
+        const chip = PURCHASE_ORDER_STATUS_CHIP[row.status];
+        return <StatusChip label={chip.label} variant={chip.variant} />;
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Acoes',
+      width: '220px',
+      align: 'right',
+      cell: (row) => (
+        <div className="flex items-center justify-end gap-2">
+          {canManageStatus && row.status === 'draft' ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              loading={changePOStatus.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                changePOStatus.mutate({ id: row.id, status: 'sent' });
+              }}
+            >
+              Enviar
+            </Button>
+          ) : null}
+
+          {canManageStatus && row.status === 'sent' ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              loading={changePOStatus.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                changePOStatus.mutate({ id: row.id, status: 'received' });
+              }}
+            >
+              Receber
+            </Button>
+          ) : null}
+
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate(`/estoque/oc/${row.id}`);
+            }}
+          >
+            Detalhes
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <Link to="/estoque" className="text-zinc-400 hover:text-white">
-          <ChevronLeft size={20} />
-        </Link>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <ShoppingCart size={22} className="text-primary" />
-          Ordens de Compra
-        </h1>
-      </div>
-
-      {/* Filter */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-        {(['', 'draft', 'sent', 'received', 'cancelled'] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${statusFilter === s ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
-          >
-            {s === '' ? 'Todas' : STATUS_CONFIG[s as keyof typeof STATUS_CONFIG].label}
-          </button>
-        ))}
-      </div>
-
-      {error && (
-        <div className="mb-3 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
-          Erro ao carregar ordens de compra: {error.message}
-        </div>
-      )}
-      {isLoading && (
-        <div className="mb-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-300">
-          Carregando ordens de compra...
-        </div>
-      )}
-      {changePOStatus.error && (
-        <div className="mb-3 rounded-xl border border-red-800 bg-red-900/20 p-4 text-sm text-red-300">
-          Não foi possível atualizar o status da OC: {changePOStatus.error.message}
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {pos.length === 0 && (
-          <p className="text-zinc-500 text-center py-10">Nenhuma ordem de compra encontrada</p>
+    <div className="space-y-4">
+      <PageTitle
+        subtitle="Acompanhamento do ciclo de compra e recebimento de insumos."
+        actions={(
+          <Button type="button" variant="secondary" onClick={() => navigate('/estoque')}>
+            <ChevronLeft className="size-4" aria-hidden="true" />
+            Voltar
+          </Button>
         )}
-        {pos.map((po: (typeof pos)[number]) => {
-          const cfg = STATUS_CONFIG[po.status as keyof typeof STATUS_CONFIG];
-          const StatusIcon = cfg.icon;
-          const totalBRL = (po.totalCents / 100).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-          });
-          return (
-            <div key={po.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-medium">{po.code}</span>
-                    <span
-                      className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}
-                    >
-                      <StatusIcon size={11} /> {cfg.label}
-                    </span>
-                  </div>
-                  <p className="text-zinc-500 text-xs mt-1">
-                    {new Date(po.createdAt).toLocaleDateString('pt-BR')}
-                  </p>
-                  <p className="text-white font-semibold my-1">{totalBRL}</p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <Link
-                    to={`/estoque/oc/${po.id}`}
-                    className="text-primary hover:text-primary text-xs flex items-center gap-1"
-                  >
-                    Ver detalhes <ArrowRight size={12} />
-                  </Link>
-                  {po.status === 'draft' && (
-                    <button
-                      onClick={() => changePOStatus.mutate({ id: po.id, status: 'sent' })}
-                      className="px-2 py-1 bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 rounded text-xs transition-colors"
-                    >
-                      Enviar OC
-                    </button>
-                  )}
-                  {po.status === 'sent' && (
-                    <button
-                      onClick={() => changePOStatus.mutate({ id: po.id, status: 'received' })}
-                      className="px-2 py-1 bg-green-600/20 text-green-400 hover:bg-green-600/40 rounded text-xs transition-colors"
-                    >
-                      ✓ Receber
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      >
+        Ordens de compra
+      </PageTitle>
+
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        filters={(
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as PurchaseOrderStatus | '');
+              setPage(1);
+            }}
+            className="h-9 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+            aria-label="Filtrar ordens de compra por status"
+          >
+            <option value="">Status: Todos</option>
+            <option value="draft">Rascunho</option>
+            <option value="sent">Enviada</option>
+            <option value="received">Recebida</option>
+            <option value="cancelled">Cancelada</option>
+          </select>
+        )}
+      />
+
+      {error ? <p className="t-small text-[var(--destructive)]">Erro ao carregar ordens de compra: {error.message}</p> : null}
+
+      <DataTable
+        columns={columns}
+        rows={visibleRows}
+        getKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/estoque/oc/${row.id}`)}
+        loading={isLoading}
+        loadingRows={8}
+        empty={{
+          title: 'Nenhuma ordem de compra encontrada',
+          description: statusFilter ? 'Ajuste os filtros para continuar.' : 'Registre uma nova ordem de compra em Estoque > Compras.',
+        }}
+      />
+
+      {total > PAGE_SIZE ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="t-small text-[var(--fg-muted)]">
+            Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, total)} de {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            >
+              <ChevronLeft className="size-4" aria-hidden="true" />
+            </Button>
+            <span className="t-small rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1.5">
+              Pagina {page}
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={rows.length < PAGE_SIZE}
+              onClick={() => setPage((prev) => prev + 1)}
+            >
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

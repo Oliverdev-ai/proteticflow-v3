@@ -170,7 +170,7 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 text-sm text-zinc-300">
+        <div className="rounded-lg border border-border bg-muted p-6 text-sm text-muted-foreground">
           Carregando dados do simulador...
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-lg border border-red-800 bg-red-900/20 p-6 text-sm text-red-300">
+        <div className="rounded-lg border border-[var(--destructive)] bg-[var(--destructive-soft)] p-6 text-sm text-[var(--destructive)]">
           Falha ao carregar dados iniciais: {bootstrapError.message}
         </div>
       </div>
@@ -192,8 +192,8 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-sm text-zinc-300">
+        <div className="rounded-lg border border-border bg-muted p-6">
+          <p className="text-sm text-muted-foreground">
             Cadastre ao menos um cliente para gerar simulações e PDF.
           </p>
           <Link
@@ -211,8 +211,8 @@ export default function SimulatorPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
-          <p className="text-sm text-zinc-300">
+        <div className="rounded-lg border border-border bg-muted p-6">
+          <p className="text-sm text-muted-foreground">
             Nenhuma tabela de preço ativa. Crie uma tabela antes de simular.
           </p>
           <Link
@@ -230,7 +230,7 @@ export default function SimulatorPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Simulador de Preços</h1>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           Simule, compare tabelas, envie PDF e converta em OS.
         </p>
       </div>
@@ -252,7 +252,7 @@ export default function SimulatorPage() {
 
       <ScenarioPanel preview={preview} onPreview={handlePreview} />
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+      <div className="rounded-lg border border-border bg-muted p-5 space-y-3">
         <h2 className="text-lg font-semibold text-white">Selecionar tabelas para comparar</h2>
         <div className="flex flex-wrap gap-2">
           {tables.map((table) => {
@@ -266,7 +266,7 @@ export default function SimulatorPage() {
                     checked ? prev.filter((id) => id !== table.id) : [...prev, table.id],
                   )
                 }
-                className={`px-3 py-1.5 rounded-lg text-sm border ${checked ? 'bg-sky-600 border-sky-500 text-white' : 'border-zinc-700 text-zinc-300 hover:border-zinc-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-sm border ${checked ? 'bg-[var(--info-soft)] border-[var(--info)] text-white' : 'border-border text-muted-foreground hover:border-border'}`}
               >
                 {table.name}
               </button>
@@ -284,10 +284,10 @@ export default function SimulatorPage() {
           onSelect={setSelectedSimulationId}
         />
 
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+        <div className="rounded-lg border border-border bg-muted p-5 space-y-3">
           <h2 className="text-lg font-semibold text-white">Ações</h2>
           <div className="space-y-2">
-            <label className="text-sm text-zinc-300">
+            <label className="text-sm text-muted-foreground">
               E-mail de destino
               <input
                 type="email"
@@ -301,14 +301,14 @@ export default function SimulatorPage() {
               type="button"
               onClick={handleSendBudgetEmail}
               disabled={!selectedSimulationId || !budgetEmail}
-              className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white text-sm"
+              className="px-4 py-2 rounded-lg bg-[var(--info-soft)] hover:bg-[var(--info-soft)] disabled:opacity-50 text-white text-sm"
             >
               Enviar PDF por email
             </button>
           </div>
 
-          <div className="space-y-2 border-t border-zinc-800 pt-3">
-            <label className="text-sm text-zinc-300">
+          <div className="space-y-2 border-t border-border pt-3">
+            <label className="text-sm text-muted-foreground">
               Prazo da OS
               <input
                 type="date"
@@ -321,32 +321,32 @@ export default function SimulatorPage() {
               type="button"
               onClick={handleApproveAndCreateJob}
               disabled={!selectedSimulationId}
-              className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm"
+              className="px-4 py-2 rounded-lg bg-[var(--success-soft)] hover:bg-[var(--success-soft)] disabled:opacity-50 text-white text-sm"
             >
               Aprovar e criar OS
             </button>
           </div>
 
           {simulationQuery.data?.convertedJobId ? (
-            <p className="text-sm text-emerald-400">
+            <p className="text-sm text-[var(--success)]">
               OS criada: #{simulationQuery.data.convertedJobId}
             </p>
           ) : null}
           {historyQuery.isLoading && (
-            <p className="text-xs text-zinc-500">Carregando historico...</p>
+            <p className="text-xs text-muted-foreground">Carregando historico...</p>
           )}
           {historyQuery.error && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-[var(--destructive)]">
               Erro ao carregar historico: {historyQuery.error.message}
             </p>
           )}
           {sendMutation.error && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-[var(--destructive)]">
               Erro ao enviar email: {sendMutation.error.message}
             </p>
           )}
           {approveMutation.error && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-[var(--destructive)]">
               Erro ao aprovar simulacao: {approveMutation.error.message}
             </p>
           )}

@@ -185,7 +185,7 @@ export default function JobCreatePage() {
             <div key={i} className="flex flex-col items-center gap-3 flex-1 relative z-10">
               <div
                 className={cn(
-                  'w-12 h-12 rounded-[20px] flex items-center justify-center text-sm font-semibold transition-all duration-500 shadow-lg',
+                  'w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center text-sm font-semibold transition-all duration-500 shadow-lg',
                   i < step
                     ? 'bg-success text-white shadow-emerald-500/20'
                     : i === step
@@ -293,7 +293,7 @@ export default function JobCreatePage() {
                 {resolveQuery.data && (
                   <div className="md:col-span-2 p-6 rounded-lg bg-success/[0.03] border-2 border-success ring-4 ring-emerald-500/10 flex items-center justify-between shadow-md animate-in zoom-in-95 duration-500">
                     <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 flex items-center justify-center rounded-[24px] bg-success text-white shadow-xl shadow-emerald-500/30">
+                      <div className="w-16 h-16 flex items-center justify-center rounded-[var(--radius-lg)] bg-success text-white shadow-xl shadow-emerald-500/30">
                         <CheckCircle2 size={28} strokeWidth={2.5} />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -354,7 +354,7 @@ export default function JobCreatePage() {
                         </div>
                       </div>
                       {clientId === c.id && (
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:scale-125 transition-transform duration-700" />
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:scale-[1.02] transition-transform duration-700" />
                       )}
                     </button>
                   ))}
@@ -425,7 +425,7 @@ export default function JobCreatePage() {
                             {formatBRL(pi.priceCents)}
                           </span>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-all group-hover:scale-110">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-all group-hover:scale-[1.02]">
                           <Plus size={14} strokeWidth={3} />
                         </div>
                       </button>
@@ -456,7 +456,7 @@ export default function JobCreatePage() {
                     items.map((item, i) => (
                       <div
                         key={i}
-                        className="flex gap-4 items-center group p-4 rounded-[24px] bg-card border border-border hover:border-primary/30 transition-all duration-500 animate-in slide-in-from-right-4"
+                        className="flex gap-4 items-center group p-4 rounded-[var(--radius-lg)] bg-card border border-border hover:border-primary/30 transition-all duration-500 animate-in slide-in-from-right-4"
                       >
                         <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-muted border border-border shadow-inner text-muted-foreground font-semibold text-[10px]">
                           {i + 1}
@@ -511,14 +511,14 @@ export default function JobCreatePage() {
                         </div>
                         <button
                           onClick={() => removeItem(i)}
-                          className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive hover:text-white transition-all active:scale-90"
+                          className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive hover:text-white transition-all active:scale-[0.98]"
                         >
                           <Trash2 size={16} strokeWidth={2.5} />
                         </button>
                       </div>
                     ))
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center gap-6 border-2 border-dashed border-border rounded-[40px] bg-muted/5 opacity-60">
+                    <div className="flex-1 flex flex-col items-center justify-center gap-6 border-2 border-dashed border-border rounded-[var(--radius-lg)] bg-muted/5 opacity-60">
                       <div className="w-20 h-20 flex items-center justify-center rounded-lg bg-muted border border-border text-muted-foreground/30 ring-8 ring-muted/20">
                         <Briefcase size={32} strokeWidth={2.5} />
                       </div>
@@ -804,7 +804,7 @@ export default function JobCreatePage() {
                   </div>
                 </div>
 
-                <div className="p-8 rounded-lg bg-primary/[0.04] border-2 border-primary/20 flex flex-col gap-6 relative shadow-md shadow-primary/5">
+                <div className="p-8 rounded-lg bg-primary/[0.04] border-2 border-primary/20 flex flex-col gap-6 relative shadow-sm">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-3xl -mr-8 -mt-8" />
                   <div className="flex items-center justify-between relative">
                     <Muted className="text-[10px] font-semibold uppercase tracking-normal text-primary">
@@ -826,7 +826,7 @@ export default function JobCreatePage() {
               </div>
 
               {/* Technical Overview Widget */}
-              <div className="lg:col-span-12 p-10 rounded-[40px] bg-card border border-border/60 shadow-xl overflow-hidden group/audit relative">
+              <div className="lg:col-span-12 p-10 rounded-[var(--radius-lg)] bg-card border border-border/60 shadow-xl overflow-hidden group/audit relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.02] rounded-full blur-[80px] -mr-32 -mt-32" />
 
                 <div className="flex items-center gap-4 mb-10 relative">
@@ -877,8 +877,8 @@ export default function JobCreatePage() {
             </div>
 
             {error && (
-              <div className="p-6 bg-destructive/10 border-2 border-destructive/20 rounded-[28px] flex items-center gap-4 animate-bounce shadow-xl shadow-sm">
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-destructive text-white shadow-lg shadow-destructive/20">
+              <div className="p-6 bg-destructive/10 border-2 border-destructive/20 rounded-[var(--radius-lg)] flex items-center gap-4 animate-bounce shadow-xl shadow-sm">
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-destructive text-white shadow-lg">
                   <AlertCircle size={20} strokeWidth={3} />
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -896,7 +896,7 @@ export default function JobCreatePage() {
       </div>
 
       {/* Global Action Bar (Sticky Bottom) */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/80 backdrop-blur-xl border-t border-border/50 z-[100] md:static md:p-0 md:bg-transparent md:border-0 md:mt-2">
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-background/80 backdrop-blur-sm border-t border-border/50 z-[100] md:static md:p-0 md:bg-transparent md:border-0 md:mt-2">
         <div className="flex gap-4 max-w-5xl mx-auto w-full">
           {step > 0 && (
             <button

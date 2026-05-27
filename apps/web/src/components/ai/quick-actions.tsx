@@ -24,8 +24,8 @@ export function QuickActions({ userRole, disabled, onAction }: QuickActionsProps
   const visibleActions = canUseFinancial ? [...ACTIONS, ...ADMIN_ACTIONS] : ACTIONS;
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-      <p className="text-xs uppercase tracking-normal text-zinc-500 mb-3">Quick Actions</p>
+    <div className="rounded-lg border border-border bg-muted p-4">
+      <p className="text-xs uppercase tracking-normal text-muted-foreground mb-3">Quick Actions</p>
       <div className="flex flex-wrap gap-2">
         {visibleActions.map((action) => (
           <button
@@ -33,7 +33,7 @@ export function QuickActions({ userRole, disabled, onAction }: QuickActionsProps
             type="button"
             onClick={() => void onAction(action.prompt)}
             disabled={disabled}
-            className="px-3 py-1.5 text-xs rounded-lg border border-zinc-700 text-zinc-200 hover:border-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 text-xs rounded-lg border border-border text-muted-foreground hover:border-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {action.label}
           </button>

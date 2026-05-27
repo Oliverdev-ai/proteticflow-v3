@@ -4,6 +4,7 @@ import { NfseEmitForm } from '../../../components/fiscal/nfse-emit-form';
 import { NfseBatchModal } from '../../../components/fiscal/nfse-batch-modal';
 import { NfseList } from '../../../components/fiscal/nfse-list';
 import { PageTitle, H2 } from '../../../components/shared/typography';
+import { Button } from '../../../components/ui/button';
 
 function toIso(date: string, endOfDay: boolean): string | undefined {
   if (!date) return undefined;
@@ -19,6 +20,9 @@ export default function NotasFiscaisPage() {
   const [clientId, setClientId] = useState<number | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [cancelNfseId, setCancelNfseId] = useState<number | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelError, setCancelError] = useState('');
 
   const clientsQuery = trpc.clientes.list.useQuery({ page: 1, limit: 100 });
   const closingsQuery = trpc.financial.listClosings.useQuery({ page: 1, limit: 100 });
@@ -65,7 +69,13 @@ export default function NotasFiscaisPage() {
 
   const cancelMutation = trpc.fiscal.cancelNfse.useMutation({
     onSuccess: async () => {
+      setCancelNfseId(null);
+      setCancelReason('');
+      setCancelError('');
       await utils.fiscal.listNfse.invalidate();
+    },
+    onError: (error) => {
+      setCancelError(error.message);
     },
   });
 
@@ -77,16 +87,39 @@ export default function NotasFiscaisPage() {
     syncMutation.isPending ||
     cancelMutation.isPending;
 
+  function openCancelModal(nfseId: number) {
+    setCancelError('');
+    setCancelReason('');
+    setCancelNfseId(nfseId);
+  }
+
+  function closeCancelModal() {
+    if (cancelMutation.isPending) return;
+    setCancelError('');
+    setCancelReason('');
+    setCancelNfseId(null);
+  }
+
+  function submitCancelNfse() {
+    if (cancelNfseId === null) return;
+    const reason = cancelReason.trim();
+    if (!reason) {
+      setCancelError('Informe o motivo do cancelamento.');
+      return;
+    }
+    cancelMutation.mutate({ nfseId: cancelNfseId, reason });
+  }
+
   return (
     <div className="space-y-6">
       <PageTitle subtitle="Emissão, acompanhamento e cancelamento de NFS-e.">
         Fiscal - Notas Fiscais
       </PageTitle>
 
-      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-elevated)] p-5 space-y-4">
         <H2>Filtros</H2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <label className="text-sm text-muted-foreground">
+          <label className="t-small text-[var(--fg-muted)]">
             Status
             <select
               value={status}
@@ -102,7 +135,7 @@ export default function NotasFiscaisPage() {
             </select>
           </label>
 
-          <label className="text-sm text-muted-foreground">
+          <label className="t-small text-[var(--fg-muted)]">
             Cliente
             <select
               value={clientId ?? ''}
@@ -120,7 +153,7 @@ export default function NotasFiscaisPage() {
             </select>
           </label>
 
-          <label className="text-sm text-muted-foreground">
+          <label className="t-small text-[var(--fg-muted)]">
             De
             <input
               type="date"
@@ -130,7 +163,7 @@ export default function NotasFiscaisPage() {
             />
           </label>
 
-          <label className="text-sm text-muted-foreground">
+          <label className="t-small text-[var(--fg-muted)]">
             Ate
             <input
               type="date"
@@ -169,12 +202,43 @@ export default function NotasFiscaisPage() {
         notas={nfseQuery.data?.data ?? []}
         isBusy={busy}
         onSync={(nfseId) => syncMutation.mutate({ nfseId })}
-        onCancel={(nfseId) => {
-          const reason = window.prompt('Motivo do cancelamento da NFS-e:');
-          if (!reason) return;
-          cancelMutation.mutate({ nfseId, reason });
-        }}
+        onCancel={openCancelModal}
       />
+
+      {cancelNfseId !== null ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-elevated)] p-6 shadow-[var(--shadow-lg)]">
+            <h3 className="font-[var(--font-display)] text-xl text-[var(--fg-strong)]">
+              Cancelar NFS-e #{cancelNfseId}
+            </h3>
+            <p className="mt-1 t-small text-[var(--fg-muted)]">
+              Informe o motivo do cancelamento para auditoria.
+            </p>
+
+            <label className="mt-4 block space-y-1.5">
+              <span className="t-small text-[var(--fg-muted)]">Motivo do cancelamento</span>
+              <textarea
+                value={cancelReason}
+                onChange={(event) => setCancelReason(event.target.value)}
+                rows={4}
+                className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--fg)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
+                placeholder="Descreva o motivo"
+              />
+            </label>
+
+            {cancelError ? <p className="mt-2 t-small text-[var(--destructive)]">{cancelError}</p> : null}
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={closeCancelModal} disabled={cancelMutation.isPending}>
+                Voltar
+              </Button>
+              <Button type="button" variant="destructive" onClick={submitCancelNfse} loading={cancelMutation.isPending}>
+                Confirmar cancelamento
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

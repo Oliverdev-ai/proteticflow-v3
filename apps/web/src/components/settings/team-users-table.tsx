@@ -104,7 +104,7 @@ export function TeamUsersTable({ showRoleActions = false }: TeamUsersTableProps)
           <p className="px-8 pb-3 pt-3 text-xs font-semibold text-success">{inviteFeedback}</p>
         ) : null}
         {inviteError ? (
-          <p className="px-8 pb-3 pt-3 text-xs font-semibold text-red-400">Erro: {inviteError}</p>
+          <p className="px-8 pb-3 pt-3 text-xs font-semibold text-[var(--destructive)]">Erro: {inviteError}</p>
         ) : null}
 
         <div className="overflow-x-auto">

@@ -5,6 +5,8 @@ import type { FilterBarProps } from './types';
 export function FilterBar({
   search,
   onSearchChange,
+  searchPlaceholder,
+  searchAriaLabel,
   filters,
   actions,
   className,
@@ -22,8 +24,8 @@ export function FilterBar({
           type="search"
           value={search ?? ''}
           onChange={(event) => onSearchChange?.(event.target.value)}
-          placeholder="Buscar..."
-          aria-label="Buscar"
+          placeholder={searchPlaceholder ?? 'Buscar...'}
+          aria-label={searchAriaLabel ?? 'Buscar'}
           className="h-full w-full border-0 bg-transparent text-sm text-[var(--fg)] placeholder:text-[var(--fg-subtle)] focus-visible:outline-none"
         />
       </div>

@@ -149,7 +149,7 @@ export default function LivroCaixaPage() {
           <div className="flex items-center justify-between relative">
             <div
               className={cn(
-                'w-12 h-12 flex items-center justify-center rounded-[20px] shadow-lg transition-transform duration-500 hover:rotate-12',
+                'w-12 h-12 flex items-center justify-center rounded-[var(--radius-lg)] shadow-lg transition-transform duration-500 hover:rotate-12',
                 (balance?.netBalance ?? 0) >= 0
                   ? 'bg-success text-white shadow-emerald-500/20'
                   : 'bg-destructive text-white shadow-destructive/20',
@@ -190,7 +190,7 @@ export default function LivroCaixaPage() {
       </div>
 
       {/* Filters Area */}
-      <div className="flex flex-wrap items-center gap-3 bg-card/30 backdrop-blur-sm p-2 rounded-[24px] border border-border w-fit">
+      <div className="flex flex-wrap items-center gap-3 bg-card/30 backdrop-blur-sm p-2 rounded-[var(--radius-lg)] border border-border w-fit">
         {(
           [
             { value: undefined, label: 'Todos' },
@@ -379,7 +379,7 @@ export default function LivroCaixaPage() {
                 </div>
                 <button
                   onClick={() => setShowCreate(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-90"
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-[0.98]"
                 >
                   <X size={20} strokeWidth={3} />
                 </button>

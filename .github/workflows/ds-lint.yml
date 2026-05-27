@@ -1,0 +1,28 @@
+name: DS Guardrails
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/src/**'
+      - 'apps/web/docs/**'
+      - 'apps/web/eslint-plugin-ds.mjs'
+      - 'scripts/ds-grep-check.mjs'
+      - 'eslint.config.mjs'
+
+jobs:
+  ds-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Install ripgrep
+        run: sudo apt-get install -y ripgrep
+      - name: ESLint DS rules
+        run: pnpm --filter web lint
+      - name: DS grep checks
+        run: pnpm ds:check

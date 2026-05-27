@@ -145,7 +145,7 @@ export function SmtpSettingsForm() {
        </div>
 
        {/* Footer Info */}
-       <div className="p-6 bg-muted/30 border border-border rounded-[24px] flex items-start gap-4">
+       <div className="p-6 bg-muted/30 border border-border rounded-[var(--radius-lg)] flex items-start gap-4">
           <Info size={18} className="text-primary mt-0.5 shrink-0" />
           <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight leading-relaxed opacity-60">
              O Proteticflow utiliza SMTP assíncrono. Em caso de volumes altos de faturas, recomendamos o uso de chaves dedicadas (SendGrid/Resend) ou um servidor corporativo robusto para evitar atrasos na fila de transmissão.

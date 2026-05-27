@@ -14,7 +14,7 @@ import {
 import { trpc } from '../../lib/trpc';
 import {
   canTransition,
-  JOB_STATUS_LABELS,
+  JOB_STATUS_CHIP,
   KANBAN_COLUMNS,
   type JobStatus,
 } from '@proteticflow/shared';
@@ -62,9 +62,13 @@ type SuspendedJob = {
   suspendReason: string | null;
 };
 
+function jobStatusLabel(status: JobStatus): string {
+  return JOB_STATUS_CHIP[status]?.label ?? status;
+}
+
 const COLUMN_COLORS: Record<string, string> = {
   pending: 'border-muted',
-  in_progress: 'border-blue-500/30',
+  in_progress: 'border-[var(--info)]',
   quality_check: 'border-amber-500/30',
   ready: 'border-primary/50',
   delivered: 'border-success/30',
@@ -358,7 +362,7 @@ export default function KanbanPage() {
 
     if (!canTransition(fromStatus, toStatus)) {
       setToastMsg(
-        `Transição de "${JOB_STATUS_LABELS[fromStatus]}" para "${JOB_STATUS_LABELS[toStatus]}" não é permitida`,
+        `Transição de "${jobStatusLabel(fromStatus)}" para "${jobStatusLabel(toStatus)}" não é permitida`,
       );
       setTimeout(() => setToastMsg(''), 4000);
       return;
@@ -385,7 +389,7 @@ export default function KanbanPage() {
           <button
             type="button"
             onClick={() => navigate('/kanban-tv')}
-            className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs font-bold text-sky-500 shadow-sm transition-all hover:bg-sky-500/10 "
+            className="flex items-center gap-2 rounded-xl border border-[var(--info)] bg-[var(--info-soft)] px-4 py-2.5 text-xs font-bold text-[var(--info)] shadow-sm transition-all hover:bg-[var(--info-soft)] "
           >
             <Monitor size={14} /> Modo TV
           </button>
@@ -506,8 +510,8 @@ export default function KanbanPage() {
             className={cn(
               'rounded-xl border px-3 py-2 text-[10px] font-semibold uppercase tracking-normal transition-all',
               pausedFilter === 'suspended'
-                ? 'border-slate-400/40 bg-slate-500/10 text-slate-300'
-                : 'border-border bg-card text-muted-foreground hover:border-slate-400/40 hover:text-foreground',
+                ? 'border-border bg-muted text-muted-foreground'
+                : 'border-border bg-card text-muted-foreground hover:border-border hover:text-foreground',
             )}
           >
             Suspenso ({suspendedOnlyCount})
@@ -546,7 +550,7 @@ export default function KanbanPage() {
                 >
                   <div className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-muted/40 p-3">
                     <h3 className="text-[10px] font-semibold uppercase tracking-normal text-foreground">
-                      {JOB_STATUS_LABELS[status] ?? status}
+                      {jobStatusLabel(status)}
                     </h3>
                     <div className="rounded-lg bg-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
                       {colJobs.length}

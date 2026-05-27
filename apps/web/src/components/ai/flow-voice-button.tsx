@@ -170,8 +170,8 @@ export function FlowVoiceButton({
         }}
         className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
           isRecording
-            ? 'border-sky-400 bg-sky-500/15 text-sky-200 animate-pulse'
-            : 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-sky-500'
+            ? 'border-[var(--info)] bg-[var(--info-soft)] text-[var(--info)] animate-pulse'
+            : 'border-border bg-muted text-muted-foreground hover:border-[var(--info)]'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <span className="inline-flex items-center gap-1.5">

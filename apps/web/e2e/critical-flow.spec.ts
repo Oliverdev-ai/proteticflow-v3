@@ -23,6 +23,9 @@ test.describe('fluxo critico e2e', () => {
     await page.getByRole('button', { name: /criar conta/i }).click();
 
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30000 });
+    await expect(
+      page.getByRole('heading', { name: /configure seu laborat.rio/i }),
+    ).toBeVisible({ timeout: 15000 });
 
     await page.getByPlaceholder('Ex: Lab Dental Silva').fill(labName);
     await page.getByPlaceholder('Cidade').fill('Sao Paulo');

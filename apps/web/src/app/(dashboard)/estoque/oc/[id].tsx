@@ -12,8 +12,8 @@ export default function PODetailPage() {
     onSuccess: () => utils.inventory.getPO.invalidate(),
   });
 
-  if (isLoading) return <div className="p-6 text-zinc-400">Carregando OC...</div>;
-  if (!data) return <div className="p-6 text-red-400">OC não encontrada.</div>;
+  if (isLoading) return <div className="p-6 text-muted-foreground">Carregando OC...</div>;
+  if (!data) return <div className="p-6 text-[var(--destructive)]">OC não encontrada.</div>;
 
   const { po, items } = data;
   const totalBRL = (po.totalCents / 100).toLocaleString('pt-BR', {
@@ -28,23 +28,23 @@ export default function PODetailPage() {
     cancelled: 'Cancelada',
   };
   const STATUS_COLOR = {
-    draft: 'text-zinc-400',
-    sent: 'text-blue-400',
-    received: 'text-green-400',
-    cancelled: 'text-red-400',
+    draft: 'text-muted-foreground',
+    sent: 'text-[var(--info)]',
+    received: 'text-[var(--success)]',
+    cancelled: 'text-[var(--destructive)]',
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-zinc-400 hover:text-white mb-6 text-sm transition-colors"
+        className="flex items-center gap-2 text-muted-foreground hover:text-white mb-6 text-sm transition-colors"
       >
         <ArrowLeft size={16} /> Voltar
       </button>
 
       {/* Header */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
+      <div className="bg-muted border border-border rounded-xl p-5 mb-6">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -55,17 +55,17 @@ export default function PODetailPage() {
                 · {STATUS_MAP[po.status as keyof typeof STATUS_MAP]}
               </span>
             </div>
-            <p className="text-zinc-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               Criada em {new Date(po.createdAt).toLocaleDateString('pt-BR')}
             </p>
             <p className="text-2xl font-bold text-primary mt-3">{totalBRL}</p>
-            {po.notes && <p className="text-zinc-400 text-sm mt-2">{po.notes}</p>}
+            {po.notes && <p className="text-muted-foreground text-sm mt-2">{po.notes}</p>}
           </div>
           <div className="flex flex-col gap-2">
             {po.status === 'draft' && (
               <button
                 onClick={() => changePOStatus.mutate({ id: po.id, status: 'sent' })}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <Send size={15} /> Enviar OC
               </button>
@@ -73,7 +73,7 @@ export default function PODetailPage() {
             {po.status === 'sent' && (
               <button
                 onClick={() => changePOStatus.mutate({ id: po.id, status: 'received' })}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--success-soft)] hover:bg-[var(--success-soft)] text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <CheckCircle size={15} /> Receber Todos
               </button>
@@ -81,7 +81,7 @@ export default function PODetailPage() {
             {(po.status === 'draft' || po.status === 'sent') && (
               <button
                 onClick={() => changePOStatus.mutate({ id: po.id, status: 'cancelled' })}
-                className="px-4 py-2 border border-red-800 text-red-400 hover:bg-red-900/20 rounded-lg text-sm transition-colors"
+                className="px-4 py-2 border border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive-soft)] rounded-lg text-sm transition-colors"
               >
                 Cancelar OC
               </button>
@@ -92,9 +92,9 @@ export default function PODetailPage() {
 
       {/* Items */}
       <h2 className="text-lg font-semibold text-white mb-3">Itens da Ordem</h2>
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+      <div className="bg-muted border border-border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-800 text-zinc-400">
+          <thead className="border-b border-border text-muted-foreground">
             <tr>
               <th className="text-left px-4 py-3 font-medium">Material</th>
               <th className="text-right px-4 py-3 font-medium">Quantidade</th>
@@ -104,12 +104,12 @@ export default function PODetailPage() {
           </thead>
           <tbody className="divide-y divide-zinc-800">
             {items.map(({ item, materialName }: (typeof items)[number]) => (
-              <tr key={item.id} className="hover:bg-zinc-800/40">
+              <tr key={item.id} className="hover:bg-muted">
                 <td className="px-4 py-3 text-white">
                   {materialName ?? `Material #${item.materialId}`}
                 </td>
-                <td className="px-4 py-3 text-right text-zinc-300">{Number(item.quantity)}</td>
-                <td className="px-4 py-3 text-right text-zinc-300">
+                <td className="px-4 py-3 text-right text-muted-foreground">{Number(item.quantity)}</td>
+                <td className="px-4 py-3 text-right text-muted-foreground">
                   {(item.unitPriceCents / 100).toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
@@ -124,7 +124,7 @@ export default function PODetailPage() {
               </tr>
             ))}
           </tbody>
-          <tfoot className="border-t border-zinc-800 bg-zinc-800/30">
+          <tfoot className="border-t border-border bg-muted">
             <tr>
               <td colSpan={3} className="px-4 py-3 text-white font-medium text-right">
                 Total

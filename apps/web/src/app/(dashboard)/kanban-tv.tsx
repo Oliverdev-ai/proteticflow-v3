@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layers3, RotateCcw, Clock, Monitor } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
-import { JOB_STATUS_LABELS, KANBAN_COLUMNS, type JobStatus } from '@proteticflow/shared';
+import { JOB_STATUS_CHIP, KANBAN_COLUMNS, type JobStatus } from '@proteticflow/shared';
 import { PageTransition } from '../../components/shared/page-transition';
 import { cn } from '../../lib/utils';
 
@@ -17,10 +17,10 @@ const STATUS_THEMES: Record<
     iconBg: 'bg-muted/20',
   },
   in_progress: {
-    border: 'border-blue-500/30',
-    bg: 'bg-blue-500/5',
-    text: 'text-blue-400',
-    iconBg: 'bg-blue-500/20',
+    border: 'border-[var(--info)]',
+    bg: 'bg-[var(--info-soft)]',
+    text: 'text-[var(--info)]',
+    iconBg: 'bg-[var(--info-soft)]',
   },
   quality_check: {
     border: 'border-amber-500/30',
@@ -49,7 +49,7 @@ const STATUS_THEMES: Record<
   delivered: {
     border: 'border-success/30',
     bg: 'bg-success/5',
-    text: 'text-emerald-400',
+    text: 'text-[var(--success)]',
     iconBg: 'bg-success/20',
   },
   cancelled: {
@@ -120,6 +120,7 @@ export default function KanbanTvPage() {
     (status) => status !== 'delivered' && status !== 'cancelled',
   );
   const boardColumns = boardQuery.data?.columns ?? [];
+  const jobStatusLabel = (status: JobStatus) => JOB_STATUS_CHIP[status]?.label ?? status;
 
   return (
     <PageTransition className="h-screen w-screen bg-[#050505] text-foreground overflow-hidden flex flex-col p-8 cursor-none">
@@ -135,13 +136,13 @@ export default function KanbanTvPage() {
           </div>
           <div>
             {tenantLogoUrl ? (
-              <h1 className="text-5xl font-semibold tracking-tighter text-white">Monitor do Laborat�rio</h1>
+              <h1 className="text-5xl font-semibold tracking-tighter text-white">Monitor do Laborat�rio</h1>
             ) : (
               <h1 className="text-5xl font-semibold tracking-tighter text-white">
                 Protetic<span className="text-primary">Flow</span>
               </h1>
             )}
-            <p className="text-sm font-bold uppercase tracking-[0.4em] text-muted-foreground opacity-60">
+            <p className="text-sm font-bold uppercase tracking-normal text-muted-foreground opacity-60">
               Monitor de Chão de Fábrica
             </p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-normal text-primary/80">
@@ -164,7 +165,7 @@ export default function KanbanTvPage() {
             </div>
           </div>
           <div className="flex items-center gap-4 px-8 py-4 bg-muted/20 border border-border/50 rounded-lg shadow-inner group">
-            <Clock size={32} className="text-primary group-hover:scale-110 transition-transform" />
+            <Clock size={32} className="text-primary group-hover:scale-[1.02] transition-transform" />
             <div className="text-5xl font-semibold tracking-tighter text-white tabular-nums">
               {currentTime.toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
@@ -185,7 +186,7 @@ export default function KanbanTvPage() {
           return (
             <div
               key={status}
-              className="flex-1 flex flex-col bg-muted/5 rounded-[40px] border border-border/30 overflow-hidden backdrop-blur-sm shadow-md"
+              className="flex-1 flex flex-col bg-muted/5 rounded-[var(--radius-lg)] border border-border/30 overflow-hidden backdrop-blur-sm shadow-md"
             >
               <div
                 className={cn(
@@ -194,7 +195,7 @@ export default function KanbanTvPage() {
                 )}
               >
                 <h2 className={cn('text-2xl font-semibold uppercase tracking-normal', theme.text)}>
-                  {JOB_STATUS_LABELS[status]}
+                  {jobStatusLabel(status)}
                 </h2>
                 <div
                   className={cn(

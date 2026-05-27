@@ -50,31 +50,31 @@ export default function SupportSuggestionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Suporte • Sugestoes</h1>
-        <p className="text-sm text-zinc-400">
+        <h1 className="text-2xl font-bold text-white">Suporte ï¿½ Sugestoes</h1>
+        <p className="text-sm text-muted-foreground">
           Envie melhorias para o produto e acompanhe o status das sugestoes do laboratorio.
         </p>
       </div>
 
-      <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+      <section className="rounded-lg border border-border bg-muted p-4 space-y-3">
         <h2 className="text-sm font-semibold text-white">Nova sugestao</h2>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Titulo da sugestao"
-          className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+          className="w-full rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
         />
         <textarea
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           placeholder="Descreva a melhoria sugerida"
-          className="w-full min-h-[110px] rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+          className="w-full min-h-[110px] rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value as SuggestionCategory)}
-            className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            className="rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
           >
             {(Object.keys(CATEGORY_LABEL) as SuggestionCategory[]).map((value) => (
               <option key={value} value={value}>{CATEGORY_LABEL[value]}</option>
@@ -83,7 +83,7 @@ export default function SupportSuggestionsPage() {
           <select
             value={perceivedImpact}
             onChange={(event) => setPerceivedImpact(event.target.value as SuggestionImpact)}
-            className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+            className="rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
           >
             {(Object.keys(IMPACT_LABEL) as SuggestionImpact[]).map((value) => (
               <option key={value} value={value}>{IMPACT_LABEL[value]}</option>
@@ -101,36 +101,36 @@ export default function SupportSuggestionsPage() {
               perceivedImpact,
             });
           }}
-          className="px-4 py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-sm disabled:opacity-50"
+          className="px-4 py-2 rounded bg-[var(--success-soft)] hover:bg-[var(--success-soft)] text-white text-sm disabled:opacity-50"
         >
           {busy ? 'Enviando...' : 'Enviar sugestao'}
         </button>
       </section>
 
-      <section className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+      <section className="rounded-lg border border-border bg-muted p-4 space-y-3">
         <h2 className="text-sm font-semibold text-white">Sugestoes enviadas</h2>
 
-        {suggestionsQuery.isLoading && <p className="text-sm text-zinc-400">Carregando sugestoes...</p>}
+        {suggestionsQuery.isLoading && <p className="text-sm text-muted-foreground">Carregando sugestoes...</p>}
         {suggestionsQuery.error && (
-          <p className="text-sm text-red-400">Erro ao carregar sugestoes: {suggestionsQuery.error.message}</p>
+          <p className="text-sm text-[var(--destructive)]">Erro ao carregar sugestoes: {suggestionsQuery.error.message}</p>
         )}
         {!suggestionsQuery.isLoading && !suggestionsQuery.error && suggestions.length === 0 && (
-          <p className="text-sm text-zinc-400">Nenhuma sugestao enviada ate agora.</p>
+          <p className="text-sm text-muted-foreground">Nenhuma sugestao enviada ate agora.</p>
         )}
 
         {!suggestionsQuery.isLoading && !suggestionsQuery.error && suggestions.length > 0 && (
           <div className="space-y-3">
             {suggestions.map((suggestion) => (
-              <article key={suggestion.id} className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 space-y-2">
+              <article key={suggestion.id} className="rounded-xl border border-border bg-muted p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold text-white">{suggestion.title}</h3>
-                  <span className="text-[10px] uppercase tracking-normal text-zinc-400">
+                  <span className="text-[10px] uppercase tracking-normal text-muted-foreground">
                     {STATUS_LABEL[suggestion.status]}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-300">{suggestion.description}</p>
-                <p className="text-xs text-zinc-500">
-                  Categoria: {CATEGORY_LABEL[suggestion.category as SuggestionCategory]} • Impacto: {IMPACT_LABEL[suggestion.perceivedImpact as SuggestionImpact]}
+                <p className="text-sm text-muted-foreground">{suggestion.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  Categoria: {CATEGORY_LABEL[suggestion.category as SuggestionCategory]} ï¿½ Impacto: {IMPACT_LABEL[suggestion.perceivedImpact as SuggestionImpact]}
                 </p>
               </article>
             ))}

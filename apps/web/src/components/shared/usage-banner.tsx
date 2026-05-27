@@ -25,7 +25,7 @@ export function UsageBanner() {
   return (
     <>
       <div className={`w-full px-4 py-2 text-center text-xs font-semibold uppercase tracking-normal ${
-        isTrialExpired ? 'bg-red-500 text-white' : 'bg-amber-400 text-black'
+        isTrialExpired ? 'bg-[var(--destructive-soft)] text-white' : 'bg-amber-400 text-black'
       }`}>
         {isTrialExpired
           ? `Trial encerrado - modo demo com limites reduzidos (${data.managerActionsUsed}/${data.managerActionsLimit ?? 0} acoes mes)`

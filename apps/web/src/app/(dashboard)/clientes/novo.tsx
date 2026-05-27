@@ -248,7 +248,7 @@ export default function ClientCreatePage() {
                 </label>
                 <input {...register('zipCode')} placeholder="00000-000" className={inputClass} />
                 {lookupQuery.error && (
-                  <p className="text-orange-500 text-[10px] font-semibold uppercase tracking-normal mt-2 animate-pulse">
+                  <p className="text-[var(--warning)] text-[10px] font-semibold uppercase tracking-normal mt-2 animate-pulse">
                     Endereço não encontrado
                   </p>
                 )}
