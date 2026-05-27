@@ -74,6 +74,7 @@
   /* Tipografia */
   --font-display: 'Instrument Serif', 'Iowan Old Style', 'Times New Roman', serif;
   --font-sans:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif:   'Instrument Serif', 'Iowan Old Style', 'Times New Roman', serif;
   --font-mono:    'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
 
   /* Escalas tipográficas */
@@ -132,6 +133,14 @@
   --shell-header:              56px;
   --content-max:             1440px;
   --kanban-col:               304px;
+
+  /* Layering */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-palette: 300;
+  --z-toast: 400;
 }
 
 /* ── 2. SEMÂNTICO — tema light (default) ───────────────────── */
@@ -147,6 +156,7 @@
   --fg-strong:        #0A0A07;
   --fg-muted:         var(--stone-600);
   --fg-subtle:        var(--stone-400);
+  --fg-disabled:      var(--stone-400);
   --fg-inverse:       var(--cream-50);
   --fg-on-primary:    #FFFFFF;
   --fg-on-accent:     #FFFFFF;
@@ -160,16 +170,25 @@
   --accent-hover:     var(--teal-700);
   --accent-soft:      var(--teal-50);
 
+  --brand:            var(--primary);
+  --brand-hover:      var(--primary-hover);
+  --brand-fg:         var(--fg-on-primary);
+
   --success:          var(--green-600);
+  --success-fg:       var(--fg-on-primary);
   --success-soft:     #E6F4EC;
   --success-subtle:   var(--success-soft);
   --warning:          var(--amber-warn);
+  --warning-fg:       var(--stone-900);
   --warning-soft:     #FDF1DA;
   --warning-subtle:   var(--warning-soft);
   --destructive:      var(--red-600);
+  --error:            var(--destructive);
+  --error-fg:         var(--fg-on-primary);
   --destructive-soft: #FBEAE8;
   --destructive-subtle: var(--destructive-soft);
   --info:             var(--blue-500);
+  --info-fg:          var(--fg-on-primary);
   --info-soft:        #E6EEFE;
   --info-subtle:      var(--info-soft);
   --primary-subtle:   var(--primary-soft);
@@ -230,6 +249,7 @@
   --fg-strong:        #FFFFFF;
   --fg-muted:         #97A0AB;
   --fg-subtle:        #5C6672;
+  --fg-disabled:      #5C6672;
   --fg-inverse:       var(--stone-900);
   --fg-on-primary:    #1A0F05;
   --fg-on-accent:     #04201D;
@@ -243,16 +263,25 @@
   --accent-hover:     var(--teal-300);
   --accent-soft:      rgb(46 155 142 / 0.14);
 
+  --brand:            var(--primary);
+  --brand-hover:      var(--primary-hover);
+  --brand-fg:         var(--fg-on-primary);
+
   --success:          #3FB37A;
+  --success-fg:       #062013;
   --success-soft:     rgb(31 157 95 / 0.14);
   --success-subtle:   var(--success-soft);
   --warning:          #F0A93B;
+  --warning-fg:       #2A1804;
   --warning-soft:     rgb(217 119 6 / 0.16);
   --warning-subtle:   var(--warning-soft);
   --destructive:      #E5685F;
+  --error:            var(--destructive);
+  --error-fg:         #2C0907;
   --destructive-soft: rgb(217 72 63 / 0.16);
   --destructive-subtle: var(--destructive-soft);
   --info:             #5E8CFC;
+  --info-fg:          #08152F;
   --info-soft:        rgb(37 99 235 / 0.16);
   --info-subtle:      var(--info-soft);
   --primary-subtle:   var(--primary-soft);
