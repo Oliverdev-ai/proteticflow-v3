@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { Eye, EyeOff, Lock, Mail, UserRound } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { registerSchema } from '@proteticflow/shared';
 import { trpc } from '../../lib/trpc';
 import { useAuth } from '../../hooks/use-auth';
+import { FormError } from '../../components/ui/form';
+import { Input } from '../../components/ui/input';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ export default function RegisterPage() {
       setLoading(false);
     },
   });
+  const isSubmitting = loading || registerMutation.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,58 +53,45 @@ export default function RegisterPage() {
       </p>
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
-        {error && (
-          <div className="rounded-lg border border-[var(--destructive)] bg-[var(--destructive-soft)] px-3 py-2 text-sm text-[var(--destructive)]">
-            {error}
-          </div>
-        )}
+        {error ? <FormError>{error}</FormError> : null}
 
-        <div className="relative">
-          <UserRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            required
-            className="input-field"
-            placeholder="Nome completo"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={loading}
-          />
-        </div>
+        <Input
+          label="Nome completo"
+          required
+          type="text"
+          placeholder="Nome completo"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={isSubmitting}
+        />
 
-        <div className="relative">
-          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="email"
-            required
-            className="input-field"
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-          />
-        </div>
+        <Input
+          label="E-mail"
+          required
+          type="email"
+          placeholder="E-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={isSubmitting}
+        />
 
-        <div className="relative">
-          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type={showPassword ? 'text' : 'password'}
-            required
-            className="input-field"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-            aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
-          >
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
+        <Input
+          label="Senha"
+          required
+          type={showPassword ? 'text' : 'password'}
+          placeholder="Senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={isSubmitting}
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowPassword((value) => !value)}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          {showPassword ? 'Ocultar senha' : 'Exibir senha'}
+        </button>
 
         <div className="text-sm pt-1">
           <Link to="/login" className="text-muted-foreground hover:text-muted-foreground">
@@ -111,10 +101,11 @@ export default function RegisterPage() {
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full h-11 rounded-xl bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white font-medium disabled:opacity-50 transition-colors"
+          disabled={isSubmitting}
+          className="w-full h-11 rounded-xl bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
         >
-          {loading ? 'Criando conta...' : 'Criar conta'}
+          {isSubmitting ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
+          Criar conta
         </button>
       </form>
     </div>

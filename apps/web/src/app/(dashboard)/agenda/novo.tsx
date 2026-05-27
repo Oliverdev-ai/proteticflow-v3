@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { trpc } from '../../../lib/trpc';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { FormError, FormField } from '../../../components/ui/form';
+import { Input } from '../../../components/ui/input';
 
 type EventType = 'prova' | 'entrega' | 'retirada' | 'reuniao' | 'manutencao' | 'outro';
 
@@ -88,18 +90,10 @@ export default function EventCreatePage() {
       </div>
 
       <div className="bg-muted border border-border rounded-lg p-5 space-y-4">
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1">Titulo</label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="input-field w-full"
-          />
-        </div>
+        <Input label="Título" required value={title} onChange={(e) => setTitle(e.target.value)} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
+          <FormField label="Tipo">
             <select
               value={type}
               onChange={(e) => setType(e.target.value as EventType)}
@@ -112,42 +106,34 @@ export default function EventCreatePage() {
               <option value="reuniao">Reuniao</option>
               <option value="manutencao">Manutencao</option>
             </select>
-          </div>
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Lembrete (minutos antes)</label>
-            <input
-              value={reminderMinutesBefore}
-              onChange={(e) => setReminderMinutesBefore(Number(e.target.value))}
-              type="number"
-              className="input-field w-full"
-            />
-          </div>
+          </FormField>
+          <Input
+            label="Lembrete (minutos antes)"
+            value={reminderMinutesBefore}
+            onChange={(e) => setReminderMinutesBefore(Number(e.target.value))}
+            type="number"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Inicio</label>
-            <input
-              type="datetime-local"
-              value={startAt}
-              onChange={(e) => setStartAt(e.target.value)}
-              className="input-field w-full"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Fim</label>
-            <input
-              type="datetime-local"
-              value={endAt}
-              onChange={(e) => setEndAt(e.target.value)}
-              className="input-field w-full"
-            />
-          </div>
+          <Input
+            label="Início"
+            required
+            type="datetime-local"
+            value={startAt}
+            onChange={(e) => setStartAt(e.target.value)}
+          />
+          <Input
+            label="Fim"
+            required
+            type="datetime-local"
+            value={endAt}
+            onChange={(e) => setEndAt(e.target.value)}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">OS (opcional)</label>
+          <FormField label="OS (opcional)">
             <select
               value={jobId}
               onChange={(e) => setJobId(e.target.value)}
@@ -160,9 +146,8 @@ export default function EventCreatePage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Cliente / Dentista (opcional)</label>
+          </FormField>
+          <FormField label="Cliente / Dentista (opcional)">
             <select
               value={dentistId}
               onChange={(e) => setDentistId(e.target.value)}
@@ -175,21 +160,17 @@ export default function EventCreatePage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Funcionario (opcional)</label>
-            <input
-              type="number"
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              className="input-field w-full"
-            />
-          </div>
+          </FormField>
+          <Input
+            label="Funcionário (opcional)"
+            type="number"
+            value={employeeId}
+            onChange={(e) => setEmployeeId(e.target.value)}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">Recorrencia</label>
+          <FormField label="Recorrência">
             <select
               value={recurrence}
               onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
@@ -201,23 +182,16 @@ export default function EventCreatePage() {
               <option value="biweekly">Quinzenal</option>
               <option value="monthly">Mensal</option>
             </select>
-          </div>
-          <div>
-            <label className="block text-xs text-muted-foreground mb-1">
-              Fim da recorrencia (opcional)
-            </label>
-            <input
-              type="datetime-local"
-              value={recurrenceEndDate}
-              onChange={(e) => setRecurrenceEndDate(e.target.value)}
-              className="input-field w-full"
-            />
-          </div>
+          </FormField>
+          <Input
+            label="Fim da recorrência (opcional)"
+            type="datetime-local"
+            value={recurrenceEndDate}
+            onChange={(e) => setRecurrenceEndDate(e.target.value)}
+          />
         </div>
 
-        {createMutation.error && (
-          <p className="text-[var(--destructive)] text-sm">{createMutation.error.message}</p>
-        )}
+        {createMutation.error ? <FormError>{createMutation.error.message}</FormError> : null}
 
         <button
           onClick={handleCreate}

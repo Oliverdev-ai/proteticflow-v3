@@ -12,6 +12,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
+import { Input } from '../../../components/ui/input';
 
 type Status = 'draft' | 'sent' | 'received' | 'cancelled';
 
@@ -103,19 +104,14 @@ function ReceiveDialog({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="receive-due-date" className="text-sm font-medium text-foreground">
-            Vencimento do pagamento
-          </label>
-          <input
+          <Input
+            label="Vencimento do pagamento"
+            hint="Esta data será usada no lançamento de Contas a Pagar."
             id="receive-due-date"
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
-          <p className="text-xs text-muted-foreground">
-            Esta data será usada no lançamento de Contas a Pagar.
-          </p>
         </div>
 
         <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3">

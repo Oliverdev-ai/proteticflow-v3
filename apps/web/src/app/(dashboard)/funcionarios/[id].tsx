@@ -22,6 +22,8 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { z } from 'zod';
+import { FormError, FormField } from '../../../components/ui/form';
+import { Input } from '../../../components/ui/input';
 
 type FormData = z.infer<typeof updateEmployeeSchema>;
 
@@ -212,43 +214,57 @@ export default function EmployeeEditPage() {
                 {isEditing && (
                   <button
                     type="submit"
-                    className="text-primary hover:text-primary flex items-center gap-1 text-xs font-bold uppercase transition-colors"
+                    disabled={updateMutation.isPending}
+                    className="text-primary hover:text-primary flex items-center gap-1 text-xs font-bold uppercase transition-colors disabled:opacity-60"
                   >
-                    <Save size={14} /> Salvar Alterações
+                    {updateMutation.isPending ? (
+                      <Loader2 size={14} className="animate-spin" aria-hidden />
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    Salvar Alterações
                   </button>
                 )}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Nome Completo</label>
                   {isEditing ? (
-                    <input {...register('name')} className="input-field w-full py-1.5" />
+                    <Input label="Nome Completo" {...register('name')} className="py-1.5" />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{employee.name}</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Nome Completo</label>
+                      <p className="text-sm text-muted-foreground">{employee.name}</p>
+                    </>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Email</label>
                   {isEditing ? (
-                    <input {...register('email')} className="input-field w-full py-1.5" />
+                    <Input label="Email" {...register('email')} className="py-1.5" />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{employee.email || '—'}</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Email</label>
+                      <p className="text-sm text-muted-foreground">{employee.email || '—'}</p>
+                    </>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">CPF</label>
                   {isEditing ? (
-                    <input {...register('cpf')} className="input-field w-full py-1.5" />
+                    <Input label="CPF" {...register('cpf')} className="py-1.5" />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{employee.cpf || '—'}</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">CPF</label>
+                      <p className="text-sm text-muted-foreground">{employee.cpf || '—'}</p>
+                    </>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Telefone</label>
                   {isEditing ? (
-                    <input {...register('phone')} className="input-field w-full py-1.5" />
+                    <Input label="Telefone" {...register('phone')} className="py-1.5" />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{employee.phone || '—'}</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Telefone</label>
+                      <p className="text-sm text-muted-foreground">{employee.phone || '—'}</p>
+                    </>
                   )}
                 </div>
               </div>
@@ -260,66 +276,84 @@ export default function EmployeeEditPage() {
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Cargo</label>
                   {isEditing ? (
-                    <input {...register('position')} className="input-field w-full py-1.5" />
+                    <Input label="Cargo" {...register('position')} className="py-1.5" />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{employee.position || '—'}</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Cargo</label>
+                      <p className="text-sm text-muted-foreground">{employee.position || '—'}</p>
+                    </>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
                   {isEditing ? (
-                    <select {...register('type')} className="input-field w-full py-1.5">
-                      <option value="protesista">Protesista</option>
-                      <option value="auxiliar">Auxiliar</option>
-                      <option value="recepcionista">Recepcionista</option>
-                      <option value="gerente">Gerente</option>
-                    </select>
+                    <FormField label="Tipo">
+                      <select {...register('type')} className="input-field w-full py-1.5">
+                        <option value="protesista">Protesista</option>
+                        <option value="auxiliar">Auxiliar</option>
+                        <option value="recepcionista">Recepcionista</option>
+                        <option value="gerente">Gerente</option>
+                      </select>
+                    </FormField>
                   ) : (
-                    <p className="text-sm text-muted-foreground capitalize">{employee.type}</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
+                      <p className="text-sm text-muted-foreground capitalize">{employee.type}</p>
+                    </>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Contrato</label>
                   {isEditing ? (
-                    <select {...register('contractType')} className="input-field w-full py-1.5">
-                      <option value="clt">CLT</option>
-                      <option value="pj_mei">PJ / MEI</option>
-                      <option value="freelancer">Freelancer</option>
-                    </select>
+                    <FormField label="Contrato">
+                      <select {...register('contractType')} className="input-field w-full py-1.5">
+                        <option value="clt">CLT</option>
+                        <option value="pj_mei">PJ / MEI</option>
+                        <option value="freelancer">Freelancer</option>
+                      </select>
+                    </FormField>
                   ) : (
-                    <p className="text-sm text-muted-foreground uppercase">{employee.contractType}</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Contrato</label>
+                      <p className="text-sm text-muted-foreground uppercase">{employee.contractType}</p>
+                    </>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Salário Base</label>
                   {isEditing ? (
-                    <input
+                    <Input
+                      label="Salário Base"
                       {...register('baseSalaryCents', { valueAsNumber: true })}
                       type="number"
-                      className="input-field w-full py-1.5"
+                      className="py-1.5"
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      R$ {((employee.baseSalaryCents || 0) / 100).toLocaleString('pt-BR')}
-                    </p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Salário Base</label>
+                      <p className="text-sm text-muted-foreground">
+                        R$ {((employee.baseSalaryCents || 0) / 100).toLocaleString('pt-BR')}
+                      </p>
+                    </>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Comissão (%)</label>
                   {isEditing ? (
-                    <input
+                    <Input
+                      label="Comissão (%)"
                       {...register('defaultCommissionPercent', { valueAsNumber: true })}
                       type="number"
-                      className="input-field w-full py-1.5"
+                      className="py-1.5"
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{employee.defaultCommissionPercent}%</p>
+                    <>
+                      <label className="block text-xs text-muted-foreground mb-1">Comissão (%)</label>
+                      <p className="text-sm text-muted-foreground">{employee.defaultCommissionPercent}%</p>
+                    </>
                   )}
                 </div>
               </div>
             </section>
+
+            {updateMutation.error ? <FormError>{updateMutation.error.message}</FormError> : null}
           </form>
 
           <section className="bg-muted border border-border rounded-lg p-6 space-y-5">
@@ -382,21 +416,19 @@ export default function EmployeeEditPage() {
 
             <div className="flex flex-col md:flex-row md:items-end gap-3">
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Data</label>
-                <input
+                <Input
+                  label="Data"
                   type="date"
                   value={clockDate}
                   onChange={(e) => setClockDate(e.target.value)}
-                  className="input-field"
                 />
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Hora</label>
-                <input
+                <Input
+                  label="Hora"
                   type="time"
                   value={clockTime}
                   onChange={(e) => setClockTime(e.target.value)}
-                  className="input-field"
                 />
               </div>
               <button
@@ -542,17 +574,15 @@ export default function EmployeeEditPage() {
 
             {showSkillForm && (
               <div className="p-3 bg-muted border border-border rounded-xl space-y-3">
-                <input
-                  id="skillName"
-                  placeholder="Nome da técnica"
-                  className="input-field w-full text-xs"
-                />
-                <select id="skillLevel" className="input-field w-full text-xs">
-                  <option value="1">Básico</option>
-                  <option value="2">Intermediário</option>
-                  <option value="3">Avançado</option>
-                  <option value="4">Especialista</option>
-                </select>
+                <Input label="Nome da técnica" id="skillName" placeholder="Nome da técnica" className="text-xs" />
+                <FormField label="Nível">
+                  <select id="skillLevel" className="input-field w-full text-xs">
+                    <option value="1">Básico</option>
+                    <option value="2">Intermediário</option>
+                    <option value="3">Avançado</option>
+                    <option value="4">Especialista</option>
+                  </select>
+                </FormField>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowSkillForm(false)}

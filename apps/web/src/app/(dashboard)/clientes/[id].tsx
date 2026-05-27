@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
+import { FormError, FormField } from '../../../components/ui/form';
+import { Input } from '../../../components/ui/input';
 import { cn } from '../../../lib/utils';
 
 type ClientEditFormInput = z.input<typeof updateClientSchema>;
@@ -102,40 +104,34 @@ function OsBlocksTab({ clientId }: { clientId: number }) {
       {isAdding && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-primary/5 rounded-lg border-2 border-primary/20 animate-in fade-in slide-in-from-top-4">
           <div className="md:col-span-1">
-            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1 text-primary">
-              Início
-            </label>
-            <input
+            <Input
+              label="Início"
               type="number"
               min="1"
               value={start}
               onChange={(e) => setStart(e.target.value)}
               placeholder="0001"
-              className="w-full bg-background border border-primary/20 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:opacity-30"
+              className="bg-background border-primary/20 font-bold"
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1 text-primary">
-              Fim
-            </label>
-            <input
+            <Input
+              label="Fim"
               type="number"
               min="1"
               value={end}
               onChange={(e) => setEnd(e.target.value)}
               placeholder="0050"
-              className="w-full bg-background border border-primary/20 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:opacity-30"
+              className="bg-background border-primary/20 font-bold"
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1">
-              Rótulo (Opcional)
-            </label>
-            <input
+            <Input
+              label="Rótulo (Opcional)"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="Ex: Bloco 2024"
-              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-primary/50 transition-all placeholder:opacity-30"
+              className="bg-background font-bold"
             />
           </div>
           <div className="flex items-end">
@@ -305,10 +301,8 @@ export default function ClientEditPage() {
       </div>
     );
 
-  const inputClass =
+  const controlClass =
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
-  const labelClass =
-    'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-5xl mx-auto pb-12">
@@ -400,24 +394,19 @@ export default function ClientEditPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className={labelClass}>Nome Completo / Clínica *</label>
-                    <input {...register('name')} className={inputClass} />
+                    <Input label="Nome Completo / Clínica" required {...register('name')} />
                   </div>
                   <div>
-                    <label className={labelClass}>Clínica Empresa</label>
-                    <input {...register('clinic')} className={inputClass} />
+                    <Input label="Clínica Empresa" {...register('clinic')} />
                   </div>
                   <div>
-                    <label className={labelClass}>Responsável Direto</label>
-                    <input {...register('contactPerson')} className={inputClass} />
+                    <Input label="Responsável Direto" {...register('contactPerson')} />
                   </div>
                   <div>
-                    <label className={labelClass}>E-mail de Contato</label>
-                    <input {...register('email')} type="email" className={inputClass} />
+                    <Input label="E-mail de Contato" type="email" {...register('email')} />
                   </div>
                   <div>
-                    <label className={labelClass}>Telefone / WhatsApp</label>
-                    <input {...register('phone')} className={inputClass} />
+                    <Input label="Telefone / WhatsApp" {...register('phone')} />
                   </div>
                 </div>
               </section>
@@ -439,46 +428,43 @@ export default function ClientEditPage() {
 
                 <div className="space-y-6">
                   <div>
-                    <label className={labelClass}>Tabela de Preço</label>
-                    <select
-                      {...register('pricingTableId', {
-                        setValueAs: (value) =>
-                          value === '' || value === null || value === undefined
-                            ? undefined
-                            : Number(value),
-                      })}
-                      className={inputClass}
-                    >
-                      <option value="">Tabela padrão do laboratório</option>
-                      {(priceTablesQuery.data?.data ?? []).map((table) => (
-                        <option key={table.id} value={table.id}>
-                          {table.name}
-                        </option>
-                      ))}
-                    </select>
+                    <FormField label="Tabela de Preço">
+                      <select
+                        {...register('pricingTableId', {
+                          setValueAs: (value) =>
+                            value === '' || value === null || value === undefined
+                              ? undefined
+                              : Number(value),
+                        })}
+                        className={controlClass}
+                      >
+                        <option value="">Tabela padrão do laboratório</option>
+                        {(priceTablesQuery.data?.data ?? []).map((table) => (
+                          <option key={table.id} value={table.id}>
+                            {table.name}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
                   </div>
                   <div>
-                    <label className={labelClass}>Ajuste Tarifário Global (%)</label>
-                    <div className="relative w-48">
-                      <input
-                        {...register('priceAdjustmentPercent', { valueAsNumber: true })}
-                        type="number"
-                        step="0.01"
-                        className={cn(inputClass, 'pr-12')}
-                      />
-                      <div className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-background border border-border rounded-lg text-xs font-semibold text-primary">
-                        %
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Observações e Preferências Técnicas</label>
-                    <textarea
-                      {...register('technicalPreferences')}
-                      rows={6}
-                      className={cn(inputClass, 'resize-none')}
-                      placeholder="Ex: Sempre enviar em caixa rígida, prefere protocolos X..."
+                    <Input
+                      label="Ajuste Tarifário Global (%)"
+                      {...register('priceAdjustmentPercent', { valueAsNumber: true })}
+                      type="number"
+                      step="0.01"
+                      className="w-48"
                     />
+                  </div>
+                  <div>
+                    <FormField label="Observações e Preferências Técnicas">
+                      <textarea
+                        {...register('technicalPreferences')}
+                        rows={6}
+                        className={cn(controlClass, 'resize-none')}
+                        placeholder="Ex: Sempre enviar em caixa rígida, prefere protocolos X..."
+                      />
+                    </FormField>
                   </div>
                 </div>
               </section>
@@ -494,9 +480,7 @@ export default function ClientEditPage() {
 
                 <div className="space-y-3">
                   {updateMutation.isError && (
-                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-[10px] font-semibold uppercase tracking-normal text-center">
-                      {updateMutation.error.message}
-                    </div>
+                    <FormError>{updateMutation.error.message}</FormError>
                   )}
                   {updateMutation.isSuccess && (
                     <div className="flex items-center justify-center gap-2 p-4 bg-success/10 border border-success/20 rounded-xl text-success text-[10px] font-semibold uppercase tracking-normal text-center">
@@ -510,12 +494,11 @@ export default function ClientEditPage() {
                     className="w-full bg-primary text-primary-foreground text-xs font-semibold px-6 py-4 rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110  uppercase tracking-normal flex items-center justify-center gap-2"
                   >
                     {updateMutation.isPending ? (
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={16} className="animate-spin" aria-hidden />
                     ) : (
-                      <>
-                        <CheckCircle2 size={16} strokeWidth={3} /> Salvar Alterações
-                      </>
+                      <CheckCircle2 size={16} strokeWidth={3} />
                     )}
+                    Salvar Alterações
                   </button>
 
                   <div className="p-4 bg-muted/30 rounded-[var(--radius-lg)] border border-border/30 text-center space-y-1 mt-4">

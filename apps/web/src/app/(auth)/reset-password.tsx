@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
+import { FormError } from '../../components/ui/form';
+import { Input } from '../../components/ui/input';
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -42,38 +44,33 @@ export default function ResetPasswordPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-        {error && (
-          <div className="rounded-lg border border-[var(--destructive)] bg-[var(--destructive-soft)] px-3 py-2 text-sm text-[var(--destructive)]">
-            {error}
-          </div>
-        )}
+        {error ? <FormError>{error}</FormError> : null}
 
-        <div className="relative">
-          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type={showPassword ? 'text' : 'password'}
-            required
-            placeholder="Nova senha (min 8 caracteres)"
-            className="input-field"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-            aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
-          >
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
+        <Input
+          label="Nova senha"
+          required
+          type={showPassword ? 'text' : 'password'}
+          placeholder="Nova senha (min 8 caracteres)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={resetPassword.isPending}
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowPassword((value) => !value)}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          {showPassword ? 'Ocultar senha' : 'Exibir senha'}
+        </button>
 
         <button
           type="submit"
           disabled={resetPassword.isPending}
-          className="w-full h-11 rounded-xl bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white font-medium disabled:opacity-50 transition-colors"
+          className="w-full h-11 rounded-xl bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
         >
-          {resetPassword.isPending ? 'Alterando...' : 'Alterar senha'}
+          {resetPassword.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
+          Alterar senha
         </button>
       </form>
     </div>
