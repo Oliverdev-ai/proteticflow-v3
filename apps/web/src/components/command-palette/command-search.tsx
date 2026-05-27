@@ -4,6 +4,7 @@ import { JOB_STATUS_CHIP, type JobStatus } from '@proteticflow/shared';
 import { useNavigate } from 'react-router-dom';
 import { trpc } from '../../lib/trpc';
 import { StatusChip } from '../shared/status-chip';
+import { COMMAND_ITEM_CLASS } from './command-palette.constants';
 
 type CommandSearchProps = {
   query: string;
@@ -41,9 +42,6 @@ function useDebouncedValue(value: string, delayMs: number) {
 
   return debounced;
 }
-
-const COMMAND_ITEM_CLASS =
-  'flex cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] px-2 py-2 text-sm text-[var(--fg)] data-[selected=true]:text-[var(--primary)] data-[selected=true]:ring-1 data-[selected=true]:ring-[var(--primary)]';
 
 export function CommandSearchResults({ query, onSelect }: CommandSearchProps) {
   const navigate = useNavigate();
