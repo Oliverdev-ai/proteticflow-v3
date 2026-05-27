@@ -95,9 +95,9 @@ export function ProfileForm() {
         {/* Bio Card - Bento Large */}
         <div className="lg:col-span-2 bg-card/30 backdrop-blur-sm border border-border/50 rounded-lg p-8 flex flex-col gap-8 relative overflow-hidden group/profile shadow-xl shadow-black/5">
           <div className="flex items-center gap-6 relative">
-            <div className="w-20 h-20 rounded-[28px] bg-primary/10 border-2 border-primary/20 flex items-center justify-center p-1 group-hover/profile:border-primary/40 transition-all shadow-inner overflow-hidden">
+            <div className="w-20 h-20 rounded-[var(--radius-lg)] bg-primary/10 border-2 border-primary/20 flex items-center justify-center p-1 group-hover/profile:border-primary/40 transition-all shadow-inner overflow-hidden">
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name ?? 'Avatar'} className="w-full h-full object-cover rounded-[22px]" />
+                <img src={user.avatarUrl} alt={user.name ?? 'Avatar'} className="w-full h-full object-cover rounded-[var(--radius-lg)]" />
               ) : (
                 <User size={32} className="text-primary" strokeWidth={2.5} />
               )}
@@ -220,7 +220,7 @@ export function ProfileForm() {
                 </p>
               ) : null}
               {resetCredentialMutation.error ? (
-                <p className="text-[10px] font-semibold uppercase tracking-normal text-red-400">
+                <p className="text-[10px] font-semibold uppercase tracking-normal text-[var(--destructive)]">
                   {resetCredentialMutation.error.message}
                 </p>
               ) : null}

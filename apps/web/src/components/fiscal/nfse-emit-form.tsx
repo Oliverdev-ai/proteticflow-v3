@@ -44,10 +44,10 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
   }
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-5 space-y-4">
+    <div className="rounded-lg border border-border bg-muted p-5 space-y-4">
       <h2 className="text-lg font-semibold text-white">Emitir NFS-e (unitaria)</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Cliente
           <select
             value={clientId ?? ''}
@@ -61,7 +61,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           </select>
         </label>
 
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Valor bruto (R$)
           <input
             type="number"
@@ -73,7 +73,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           />
         </label>
 
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           AR vinculada (opcional)
           <input
             type="number"
@@ -85,7 +85,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           />
         </label>
 
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Nome do servico (opcional)
           <input
             type="text"
@@ -96,7 +96,7 @@ export function NfseEmitForm({ clients, isBusy = false, onEmit }: NfseEmitFormPr
           />
         </label>
 
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Codigo do servico (opcional)
           <input
             type="text"

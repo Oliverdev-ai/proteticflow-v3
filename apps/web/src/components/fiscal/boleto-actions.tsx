@@ -25,7 +25,7 @@ export function BoletoActions({ boleto, isBusy = false, onSync, onCancel }: Bole
         type="button"
         onClick={() => onSync(boleto.id)}
         disabled={isBusy}
-        className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 disabled:opacity-50"
+        className="px-2 py-1 rounded bg-muted hover:bg-muted text-xs text-muted-foreground disabled:opacity-50"
       >
         Sincronizar
       </button>
@@ -33,7 +33,7 @@ export function BoletoActions({ boleto, isBusy = false, onSync, onCancel }: Bole
         type="button"
         onClick={() => onCancel(boleto.id)}
         disabled={isBusy || boleto.status === 'paid' || boleto.status === 'cancelled'}
-        className="px-2 py-1 rounded bg-rose-700 hover:bg-rose-600 text-xs text-white disabled:opacity-50"
+        className="px-2 py-1 rounded bg-[var(--destructive-soft)] hover:bg-[var(--destructive-soft)] text-xs text-white disabled:opacity-50"
       >
         Cancelar
       </button>
@@ -41,7 +41,7 @@ export function BoletoActions({ boleto, isBusy = false, onSync, onCancel }: Bole
         type="button"
         onClick={handleCopyPix}
         disabled={isBusy || !boleto.pixCopyPaste}
-        className="px-2 py-1 rounded bg-sky-700 hover:bg-sky-600 text-xs text-white disabled:opacity-50"
+        className="px-2 py-1 rounded bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-xs text-white disabled:opacity-50"
       >
         Copiar Pix
       </button>
@@ -49,7 +49,7 @@ export function BoletoActions({ boleto, isBusy = false, onSync, onCancel }: Bole
         type="button"
         onClick={handleOpenPdf}
         disabled={isBusy || !boleto.pdfUrl}
-        className="px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-xs text-white disabled:opacity-50"
+        className="px-2 py-1 rounded bg-[var(--success-soft)] hover:bg-[var(--success-soft)] text-xs text-white disabled:opacity-50"
       >
         Abrir PDF
       </button>

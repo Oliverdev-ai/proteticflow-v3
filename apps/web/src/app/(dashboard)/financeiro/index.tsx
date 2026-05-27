@@ -51,7 +51,7 @@ function SummaryCard({
       <div className="flex items-start justify-between relative">
         <div
           className={cn(
-            'p-3 rounded-lg border shadow-inner transition-all duration-500 group-hover:scale-110',
+            'p-3 rounded-lg border shadow-inner transition-all duration-500 group-hover:scale-[1.02]',
             colorMap[color],
           )}
         >
@@ -193,7 +193,7 @@ export default function FinancialDashboard() {
                 className="premium-card p-8 flex items-center justify-between group hover:border-primary/50 hover:bg-primary/[0.02] transition-all duration-500 hover:-translate-y-1 "
               >
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 flex items-center justify-center rounded-[24px] bg-secondary border border-border group-hover:bg-primary/10 group-hover:text-primary transition-all duration-500 shadow-inner group-hover:rotate-6">
+                  <div className="w-16 h-16 flex items-center justify-center rounded-[var(--radius-lg)] bg-secondary border border-border group-hover:bg-primary/10 group-hover:text-primary transition-all duration-500 shadow-inner group-hover:rotate-6">
                     <Icon
                       size={28}
                       className="text-muted-foreground group-hover:text-primary transition-colors"
@@ -257,7 +257,7 @@ export default function FinancialDashboard() {
             delay={0.4}
             className="premium-card p-6 flex items-center gap-4 group cursor-pointer hover:bg-muted/50 transition-colors border-dashed"
           >
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-orange-500/10 text-orange-500 border border-orange-500/20">
+            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--warning-soft)] text-[var(--warning)] border border-[var(--warning)]">
               <PieChart size={20} />
             </div>
             <div className="flex flex-col gap-0.5">

@@ -241,7 +241,7 @@ export default function FechamentoPage() {
                 </div>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-90"
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-[0.98]"
                 >
                   <X size={20} strokeWidth={3} />
                 </button>

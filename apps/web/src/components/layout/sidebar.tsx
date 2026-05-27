@@ -156,7 +156,7 @@ function NavGroupSection({
         onClick={() => setOpen((v) => !v)}
         className={cn(
           'w-full flex items-center gap-2 px-3 py-2 rounded-lg',
-          'text-white/35 text-[10px] font-bold uppercase tracking-[0.12em]',
+          'text-white/35 text-[10px] font-bold uppercase tracking-normal',
           'hover:text-white/55 hover:bg-white/[0.04] transition-colors duration-[80ms]',
           'outline-none focus-visible:ring-1 focus-visible:ring-white/20',
         )}
@@ -359,7 +359,7 @@ function SidebarContent({
               <button
                 onClick={() => void logout()}
                 title="Sair"
-                className="ml-auto h-7 w-7 flex items-center justify-center rounded-md text-white/35 hover:text-red-400 hover:bg-white/[0.06] transition-colors duration-[80ms]"
+                className="ml-auto h-7 w-7 flex items-center justify-center rounded-md text-white/35 hover:text-[var(--destructive)] hover:bg-white/[0.06] transition-colors duration-[80ms]"
                 aria-label="Sair da conta"
               >
                 <LogOut size={14} />

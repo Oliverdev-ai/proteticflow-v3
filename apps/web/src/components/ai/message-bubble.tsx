@@ -17,11 +17,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         className={`max-w-[85%] rounded-lg px-4 py-3 border ${
           isUser
             ? 'bg-primary border-primary text-white'
-            : 'bg-zinc-900 border-zinc-800 text-zinc-100'
+            : 'bg-muted border-border text-muted-foreground'
         }`}
       >
         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-        <p className={`text-[11px] mt-2 ${isUser ? 'text-primary' : 'text-zinc-500'}`}>{time}</p>
+        <p className={`text-[11px] mt-2 ${isUser ? 'text-primary' : 'text-muted-foreground'}`}>{time}</p>
       </div>
     </div>
   );

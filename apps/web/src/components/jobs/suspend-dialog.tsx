@@ -75,7 +75,7 @@ export function SuspendDialog({
             type="button"
             disabled={!isValid || isSubmitting}
             onClick={() => void onConfirm(reason.trim())}
-            className="flex flex-[1.5] items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-3 text-[10px] font-semibold uppercase tracking-normal text-destructive-foreground shadow-lg shadow-destructive/20 transition-all hover:brightness-110 disabled:opacity-40"
+            className="flex flex-[1.5] items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-3 text-[10px] font-semibold uppercase tracking-normal text-destructive-foreground shadow-sm transition-all hover:brightness-110 disabled:opacity-40"
           >
             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
             Confirmar suspensão

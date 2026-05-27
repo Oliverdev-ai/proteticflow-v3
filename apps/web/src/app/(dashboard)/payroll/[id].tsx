@@ -97,7 +97,7 @@ export default function PayrollDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/payroll')}
-            className="text-zinc-500 hover:text-white transition-colors"
+            className="text-muted-foreground hover:text-white transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
@@ -110,12 +110,12 @@ export default function PayrollDetailPage() {
                 className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-normal ${
                   period.status === 'closed'
                     ? 'bg-success/10 text-success'
-                    : 'bg-orange-500/10 text-orange-500'
+                    : 'bg-[var(--warning-soft)] text-[var(--warning)]'
                 }`}
               >
                 {period.status === 'closed' ? 'Fechado' : 'Aberto'}
               </span>
-              <span className="text-xs text-zinc-500 border-l border-zinc-800 pl-2">
+              <span className="text-xs text-muted-foreground border-l border-border pl-2">
                 Ref: {period.id}
               </span>
             </div>
@@ -127,7 +127,7 @@ export default function PayrollDetailPage() {
               <button
                 onClick={() => generateMutation.mutate({ periodId })}
                 disabled={generateMutation.isPending}
-                className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-zinc-700"
+                className="flex items-center gap-2 bg-muted hover:bg-muted text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-border"
               >
                 {generateMutation.isPending ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -163,7 +163,7 @@ export default function PayrollDetailPage() {
                 }
               }}
               disabled={reopenMutation.isPending}
-              className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-zinc-700"
+              className="flex items-center gap-2 bg-muted hover:bg-muted text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border border-border"
             >
               {reopenMutation.isPending ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -183,8 +183,8 @@ export default function PayrollDetailPage() {
       ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-lg">
-          <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Total Bruto</p>
+        <div className="bg-muted border border-border p-5 rounded-lg">
+          <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Total Bruto</p>
           <p className="text-2xl font-bold text-white">
             R${' '}
             {((period.totalGrossCents || 0) / 100).toLocaleString('pt-BR', {
@@ -192,18 +192,18 @@ export default function PayrollDetailPage() {
             })}
           </p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-lg">
-          <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Total Descontos</p>
-          <p className="text-2xl font-bold text-red-400">
+        <div className="bg-muted border border-border p-5 rounded-lg">
+          <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Total Descontos</p>
+          <p className="text-2xl font-bold text-[var(--destructive)]">
             R${' '}
             {((period.totalDiscountsCents || 0) / 100).toLocaleString('pt-BR', {
               minimumFractionDigits: 2,
             })}
           </p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-lg ring-1 ring-emerald-500/20">
-          <p className="text-[10px] uppercase font-bold text-zinc-500 mb-1">Total Líquido</p>
-          <p className="text-2xl font-bold text-emerald-400">
+        <div className="bg-muted border border-border p-5 rounded-lg ring-1 ring-emerald-500/20">
+          <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Total Líquido</p>
+          <p className="text-2xl font-bold text-[var(--success)]">
             R${' '}
             {((period.totalNetCents || 0) / 100).toLocaleString('pt-BR', {
               minimumFractionDigits: 2,
@@ -212,39 +212,39 @@ export default function PayrollDetailPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden shadow-sm">
+      <div className="bg-muted border border-border rounded-lg overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-950/50">
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+              <tr className="border-b border-border bg-muted">
+                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                   Funcionário
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                   Salário + Comissões
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                   Bônus
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                   Descontos
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal">
+                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal">
                   Líquido
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-zinc-500 uppercase tracking-normal w-[120px]"></th>
+                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-normal w-[120px]"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
               {isLoadingPeriod ? (
                 <tr>
                   <td colSpan={6} className="py-20 text-center">
-                    <Loader2 className="animate-spin mx-auto text-zinc-600" />
+                    <Loader2 className="animate-spin mx-auto text-muted-foreground" />
                   </td>
                 </tr>
               ) : entries.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center text-zinc-500">
+                  <td colSpan={6} className="py-20 text-center text-muted-foreground">
                     <AlertCircle size={32} className="mx-auto mb-2 opacity-20" />
                     <p>Nenhum lançamento gerado.</p>
                     <button
@@ -257,19 +257,19 @@ export default function PayrollDetailPage() {
                 </tr>
               ) : (
                 entries.map((entry: (typeof entries)[number]) => (
-                  <tr key={entry.id} className="hover:bg-zinc-800/20 transition-colors">
+                  <tr key={entry.id} className="hover:bg-muted transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs font-bold ring-1 ring-zinc-700">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs font-bold ring-1 ring-zinc-700">
                           {entry.employeeName?.charAt(0)}
                         </div>
-                        <div className="text-sm font-medium text-zinc-200">
+                        <div className="text-sm font-medium text-muted-foreground">
                           {entry.employeeName}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-xs text-zinc-400">
+                      <div className="text-xs text-muted-foreground">
                         R${' '}
                         {((entry.baseSalaryCents + entry.commissionsCents) / 100).toLocaleString(
                           'pt-BR',
@@ -280,7 +280,7 @@ export default function PayrollDetailPage() {
                       {editingEntryId === entry.id ? (
                         <input
                           type="number"
-                          className="w-20 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-emerald-400"
+                          className="w-20 bg-muted border border-border rounded px-2 py-1 text-xs text-[var(--success)]"
                           value={bonusValue}
                           onChange={(e) => setBonusValue(Number(e.target.value))}
                         />
@@ -294,12 +294,12 @@ export default function PayrollDetailPage() {
                       {editingEntryId === entry.id ? (
                         <input
                           type="number"
-                          className="w-20 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-red-400"
+                          className="w-20 bg-muted border border-border rounded px-2 py-1 text-xs text-[var(--destructive)]"
                           value={discountValue}
                           onChange={(e) => setDiscountValue(Number(e.target.value))}
                         />
                       ) : (
-                        <div className="text-xs text-red-400 font-medium">
+                        <div className="text-xs text-[var(--destructive)] font-medium">
                           - R$ {(0).toLocaleString('pt-BR')}
                         </div>
                       )}
@@ -329,7 +329,7 @@ export default function PayrollDetailPage() {
                               setBonusValue(0);
                               setNotes(entry.notes || '');
                             }}
-                            className="p-2 text-zinc-500 hover:text-white"
+                            className="p-2 text-muted-foreground hover:text-white"
                           >
                             <Pencil size={16} />
                           </button>

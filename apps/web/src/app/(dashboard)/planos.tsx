@@ -74,7 +74,7 @@ export default function PlanosPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Planos e Licenciamento</h1>
-        <p className="text-sm text-zinc-400">Carregando informacoes de assinatura...</p>
+        <p className="text-sm text-muted-foreground">Carregando informacoes de assinatura...</p>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function PlanosPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-white">Planos e Licenciamento</h1>
-        <p className="text-sm text-red-400">Não foi possível carregar os dados de licença.</p>
+        <p className="text-sm text-[var(--destructive)]">Não foi possível carregar os dados de licença.</p>
       </div>
     );
   }
@@ -93,12 +93,12 @@ export default function PlanosPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Planos e Licenciamento</h1>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Plano atual:{' '}
-            <span className="text-zinc-100 font-medium">{formatPlan(status.plan)}</span>
+            <span className="text-muted-foreground font-medium">{formatPlan(status.plan)}</span>
           </p>
           {status.plan === 'trial' ? (
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Trial {status.trialExpired ? 'expirado' : 'ativo'}.
             </p>
           ) : null}
@@ -109,7 +109,7 @@ export default function PlanosPage() {
             type="button"
             onClick={handleOpenBillingPortal}
             disabled={isLoading}
-            className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800 disabled:opacity-60"
+            className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted disabled:opacity-60"
           >
             Gerenciar cobrança
           </button>
@@ -118,16 +118,16 @@ export default function PlanosPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {usageCards.map((item) => (
-          <div key={item.label} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-            <p className="text-xs uppercase tracking-normal text-zinc-500">{item.label}</p>
+          <div key={item.label} className="rounded-xl border border-border bg-muted p-4">
+            <p className="text-xs uppercase tracking-normal text-muted-foreground">{item.label}</p>
             <p className="mt-2 text-xl font-semibold text-white">
               {item.current}
-              <span className="text-sm text-zinc-400">
+              <span className="text-sm text-muted-foreground">
                 {' '}
                 / {item.limit === null ? 'Ilimitado' : item.limit}
               </span>
             </p>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               {item.percent === null ? 'Sem limite' : `${item.percent}% usado`}
             </p>
           </div>

@@ -264,7 +264,7 @@ export default function PurchaseDetailPage() {
               </p>
               {po.receivedAt ? (
                 <p className="text-xs text-primary">
-                  ✓ Recebida em{' '}
+                  Recebida em{' '}
                   {new Date(po.receivedAt).toLocaleDateString('pt-BR', { dateStyle: 'long' })}
                 </p>
               ) : null}

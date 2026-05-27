@@ -113,7 +113,7 @@ export default function ContasReceberPage() {
       </div>
 
       {/* Filters & Navigation */}
-      <div className="flex flex-wrap items-center gap-3 bg-card/30 backdrop-blur-sm p-2 rounded-[24px] border border-border w-fit">
+      <div className="flex flex-wrap items-center gap-3 bg-card/30 backdrop-blur-sm p-2 rounded-[var(--radius-lg)] border border-border w-fit">
         {statuses.map((s) => (
           <button
             key={String(s.value)}
@@ -279,7 +279,7 @@ export default function ContasReceberPage() {
                 </div>
                 <button
                   onClick={() => setCancelId(null)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-90"
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-[0.98]"
                 >
                   <X size={20} strokeWidth={3} />
                 </button>
@@ -315,7 +315,7 @@ export default function ContasReceberPage() {
                 <button
                   disabled={!cancelReason.trim() || cancelAr.isPending}
                   onClick={() => cancelAr.mutate({ id: cancelId, cancelReason })}
-                  className="flex-[1.5] py-5 rounded-lg bg-destructive text-destructive-foreground text-[10px] font-semibold uppercase tracking-normal shadow-lg shadow-destructive/20 transition-all hover:brightness-110  disabled:opacity-50"
+                  className="flex-[1.5] py-5 rounded-lg bg-destructive text-destructive-foreground text-[10px] font-semibold uppercase tracking-normal shadow-sm transition-all hover:brightness-110  disabled:opacity-50"
                 >
                   {cancelAr.isPending ? (
                     <Loader2 size={16} className="animate-spin" />

@@ -11,24 +11,24 @@ export function TicketForm({ busy, onSubmit }: TicketFormProps) {
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-muted p-4 space-y-3">
       <h2 className="text-sm font-semibold text-white">Novo ticket</h2>
       <input
         value={subject}
         onChange={(event) => setSubject(event.target.value)}
         placeholder="Assunto"
-        className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+        className="w-full rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
       />
       <textarea
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         placeholder="Descrição do problema"
-        className="w-full min-h-[90px] rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+        className="w-full min-h-[90px] rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
       />
       <select
         value={priority}
         onChange={(event) => setPriority(event.target.value as 'low' | 'medium' | 'high' | 'urgent')}
-        className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-100"
+        className="rounded-lg bg-muted border border-border px-3 py-2 text-sm text-muted-foreground"
       >
         <option value="low">Baixa</option>
         <option value="medium">Média</option>
@@ -44,7 +44,7 @@ export function TicketForm({ busy, onSubmit }: TicketFormProps) {
           setDescription('');
           setPriority('medium');
         }}
-        className="px-4 py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-sm disabled:opacity-50"
+        className="px-4 py-2 rounded bg-[var(--success-soft)] hover:bg-[var(--success-soft)] text-white text-sm disabled:opacity-50"
       >
         Criar ticket
       </button>

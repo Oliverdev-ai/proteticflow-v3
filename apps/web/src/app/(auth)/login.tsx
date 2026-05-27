@@ -49,18 +49,18 @@ export default function LoginPage() {
 
   return (
     <div>
-      <h1 className="text-zinc-50 text-2xl font-semibold text-center">Entrar no ProteticFlow</h1>
-      <p className="text-zinc-400 text-sm text-center mt-2">Acesse sua operação com segurança.</p>
+      <h1 className="text-muted-foreground text-2xl font-semibold text-center">Entrar no ProteticFlow</h1>
+      <p className="text-muted-foreground text-sm text-center mt-2">Acesse sua operação com segurança.</p>
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <div className="rounded-lg border border-[var(--destructive)] bg-[var(--destructive-soft)] px-3 py-2 text-sm text-[var(--destructive)]">
             {error}
           </div>
         )}
 
         <div className="relative">
-          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="email"
             required
@@ -73,7 +73,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative">
-          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type={showPassword ? 'text' : 'password'}
             required
@@ -94,7 +94,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between text-sm pt-1">
-          <Link to="/forgot-password" className="text-zinc-400 hover:text-zinc-200">
+          <Link to="/forgot-password" className="text-muted-foreground hover:text-muted-foreground">
             Esqueci a senha
           </Link>
           <Link

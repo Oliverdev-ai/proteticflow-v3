@@ -85,7 +85,7 @@ export default function FlowIAPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Flow IA</h1>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           Assistente contextual do laboratório com histórico de sessões e comandos por linguagem
           natural.
         </p>
@@ -106,12 +106,12 @@ export default function FlowIAPage() {
         </div>
 
         <div className="xl:col-span-3 space-y-4">
-          <div className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-4">
-            <p className="text-sm text-zinc-200">
+          <div className="rounded-lg border border-border bg-muted p-4">
+            <p className="text-sm text-muted-foreground">
               O Flow Assistant agora e global no dashboard.
             </p>
-            <p className="text-xs text-zinc-400 mt-1">
-              Use o atalho <span className="font-semibold text-zinc-200">Ctrl+Shift+Space</span> em qualquer tela para abrir o overlay.
+            <p className="text-xs text-muted-foreground mt-1">
+              Use o atalho <span className="font-semibold text-muted-foreground">Ctrl+Shift+Space</span> em qualquer tela para abrir o overlay.
             </p>
           </div>
           <ChatWindow messages={messages} isLoading={sendMessageMutation.isPending} />

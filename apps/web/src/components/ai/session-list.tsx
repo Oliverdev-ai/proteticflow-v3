@@ -18,7 +18,7 @@ export function SessionList({
   onArchive,
 }: SessionListProps) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-muted p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white">Sessões</h2>
         <button
@@ -33,7 +33,7 @@ export function SessionList({
 
       <div className="space-y-2 max-h-[58vh] overflow-y-auto">
         {sessions.length === 0 ? (
-          <p className="text-xs text-zinc-500">Nenhuma sessão criada.</p>
+          <p className="text-xs text-muted-foreground">Nenhuma sessão criada.</p>
         ) : null}
 
         {sessions.map((session) => {
@@ -42,7 +42,7 @@ export function SessionList({
             <div
               key={session.id}
               className={`rounded-xl border px-3 py-2 ${
-                isSelected ? 'border-primary bg-primary/10' : 'border-zinc-800 bg-zinc-950'
+                isSelected ? 'border-primary bg-primary/10' : 'border-border bg-muted'
               }`}
             >
               <button
@@ -50,8 +50,8 @@ export function SessionList({
                 onClick={() => onSelect(session.id)}
                 className="w-full text-left"
               >
-                <p className="text-sm text-zinc-100 truncate">{session.title ?? `Sessão #${session.id}`}</p>
-                <p className="text-[11px] text-zinc-500 mt-1">
+                <p className="text-sm text-muted-foreground truncate">{session.title ?? `Sessão #${session.id}`}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">
                   {session.messageCount ?? 0} msgs • {new Date(session.updatedAt).toLocaleDateString('pt-BR')}
                 </p>
               </button>
@@ -66,7 +66,7 @@ export function SessionList({
                   Arquivar
                 </button>
               ) : (
-                <p className="mt-2 text-[11px] text-zinc-500">Arquivada</p>
+                <p className="mt-2 text-[11px] text-muted-foreground">Arquivada</p>
               )}
             </div>
           );

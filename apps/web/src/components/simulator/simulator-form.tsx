@@ -71,11 +71,11 @@ export function SimulatorForm(props: SimulatorFormProps) {
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-900 p-5">
+    <div className="space-y-4 rounded-lg border border-border bg-muted p-5">
       <h2 className="text-lg font-semibold text-white">Dados da simulacao</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Cliente
           <select
             value={props.clientId ?? ''}
@@ -89,7 +89,7 @@ export function SimulatorForm(props: SimulatorFormProps) {
           </select>
         </label>
 
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Tabela de preco
           <select
             value={props.pricingTableId ?? ''}
@@ -103,7 +103,7 @@ export function SimulatorForm(props: SimulatorFormProps) {
           </select>
         </label>
 
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Desconto de cenario (%)
           <input
             type="number"
@@ -117,7 +117,7 @@ export function SimulatorForm(props: SimulatorFormProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
-        <label className="text-sm text-zinc-300">
+        <label className="text-sm text-muted-foreground">
           Servico
           <select
             value={selectedCatalogId ?? ''}
@@ -134,7 +134,7 @@ export function SimulatorForm(props: SimulatorFormProps) {
         <button
           type="button"
           onClick={addItemFromCatalog}
-          className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-sm"
+          className="px-4 py-2 rounded-lg bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white text-sm"
         >
           Adicionar
         </button>
@@ -142,8 +142,8 @@ export function SimulatorForm(props: SimulatorFormProps) {
 
       <div className="space-y-2">
         {props.items.map((item) => (
-          <div key={item.priceItemId} className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-700 p-3">
-            <p className="text-sm text-zinc-200 flex-1">{item.serviceNameSnapshot}</p>
+          <div key={item.priceItemId} className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-3">
+            <p className="text-sm text-muted-foreground flex-1">{item.serviceNameSnapshot}</p>
             <input
               type="number"
               min={1}
@@ -156,23 +156,23 @@ export function SimulatorForm(props: SimulatorFormProps) {
               }}
               className="input-field w-20"
             />
-            <p className="text-sm text-zinc-400">R$ {(item.unitPriceCents / 100).toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">R$ {(item.unitPriceCents / 100).toFixed(2)}</p>
             <button
               type="button"
               onClick={() => props.onItemsChange(props.items.filter((row) => row.priceItemId !== item.priceItemId))}
-              className="px-2 py-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+              className="px-2 py-1 rounded bg-muted text-muted-foreground hover:bg-muted"
             >
               Remover
             </button>
           </div>
         ))}
-        {props.items.length === 0 ? <p className="text-sm text-zinc-500">Nenhum servico adicionado.</p> : null}
+        {props.items.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum servico adicionado.</p> : null}
       </div>
 
       <button
         type="button"
         onClick={props.onCreateDraft}
-        className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-sm"
+        className="px-4 py-2 rounded-lg bg-[var(--success-soft)] hover:bg-[var(--success-soft)] text-white text-sm"
       >
         Salvar simulacao
       </button>

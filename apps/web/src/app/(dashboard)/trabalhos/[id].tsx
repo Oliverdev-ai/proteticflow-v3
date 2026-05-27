@@ -36,9 +36,9 @@ import type { LucideIcon } from 'lucide-react';
 import { trpc } from '../../../lib/trpc';
 import {
   canTransition,
-  JOB_STATUS_LABELS,
-  JOB_STATUS_COLORS,
+  JOB_STATUS_CHIP,
   type JobStatus,
+  type StatusChipVariant,
 } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
@@ -50,14 +50,19 @@ import { ProofBadge } from '../../../components/jobs/proof-badge';
 import { SuspendDialog } from '../../../components/jobs/suspend-dialog';
 import { ReworkDialog } from '../../../components/jobs/rework-dialog';
 
-const COLOR_CLASS: Record<string, string> = {
-  slate: 'bg-muted text-muted-foreground border-border',
-  blue: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  emerald: 'bg-success/10 text-success border-success/20',
-  green: 'bg-success/10 text-success border-success/20',
-  red: 'bg-destructive/10 text-destructive border-destructive/20',
+const STATUS_VARIANT_CLASS: Record<StatusChipVariant, string> = {
+  neutral: 'bg-muted text-muted-foreground border-border',
+  info: 'bg-[var(--info-soft)] text-[var(--info)] border-[var(--info)]',
+  warning: 'bg-[var(--warning-soft)] text-[var(--warning)] border-[var(--warning)]',
+  success: 'bg-[var(--success-soft)] text-[var(--success)] border-[var(--success)]',
+  accent: 'bg-[var(--primary-soft)] text-primary border-primary/20',
+  primary: 'bg-primary text-primary-foreground border-primary',
+  destructive: 'bg-[var(--destructive-soft)] text-[var(--destructive)] border-[var(--destructive)]',
 };
+
+function jobStatusLabel(status: JobStatus): string {
+  return JOB_STATUS_CHIP[status]?.label ?? status;
+}
 
 const TABS = [
   { id: 'dados', label: 'Específicos', icon: FileText, desc: 'Ficha Técnica' },
@@ -209,7 +214,9 @@ export default function JobDetailPage() {
       </div>
     );
 
-  const statusColor = JOB_STATUS_COLORS[job.status as JobStatus] ?? 'slate';
+  const statusChip = JOB_STATUS_CHIP[job.status as JobStatus];
+  const statusClass = STATUS_VARIANT_CLASS[statusChip?.variant ?? 'neutral'];
+  const statusLabel = statusChip?.label ?? job.status;
   const workflowStatus =
     job.status === 'rework_in_progress' || job.status === 'suspended'
       ? ((job.resumeStatus as JobStatus | null | undefined) ?? 'pending')
@@ -239,11 +246,11 @@ export default function JobDetailPage() {
               <span
                 className={cn(
                   'inline-flex items-center gap-1.5 text-[9px] px-3 py-1 rounded-full border font-semibold uppercase tracking-normal leading-none',
-                  COLOR_CLASS[statusColor],
+                  statusClass,
                 )}
               >
                 <StatusIcon size={12} strokeWidth={3} />
-                {JOB_STATUS_LABELS[job.status as JobStatus] ?? job.status}
+                {statusLabel}
               </span>
               {job.isUrgent ? (
                 <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-[9px] font-semibold uppercase tracking-normal text-destructive">
@@ -301,7 +308,7 @@ export default function JobDetailPage() {
               type="button"
               onClick={() => returnProofMutation.mutate({ jobId })}
               disabled={returnProofMutation.isPending || !canManageProof}
-              className="flex h-12 items-center gap-2 rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 text-[10px] font-semibold uppercase tracking-normal text-sky-600 transition-all hover:brightness-110 disabled:opacity-40"
+              className="flex h-12 items-center gap-2 rounded-lg border border-[var(--info)] bg-[var(--info-soft)] px-4 text-[10px] font-semibold uppercase tracking-normal text-[var(--info)] transition-all hover:brightness-110 disabled:opacity-40"
             >
               {returnProofMutation.isPending ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -323,7 +330,7 @@ export default function JobDetailPage() {
                 type="button"
                 disabled={!proofDueDateInput || markProofMutation.isPending || !canManageProof}
                 onClick={handleMarkProof}
-                className="flex h-8 items-center gap-1 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 text-[9px] font-semibold uppercase tracking-normal text-sky-600 transition-all hover:brightness-110 disabled:opacity-40"
+                className="flex h-8 items-center gap-1 rounded-xl border border-[var(--info)] bg-[var(--info-soft)] px-3 text-[9px] font-semibold uppercase tracking-normal text-[var(--info)] transition-all hover:brightness-110 disabled:opacity-40"
               >
                 {markProofMutation.isPending ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -385,7 +392,7 @@ export default function JobDetailPage() {
                   ) : (
                     <CheckCircle2 size={18} strokeWidth={3} />
                   )}
-                  Avançar p/ {JOB_STATUS_LABELS[nextStatus]}
+                  Avançar p/ {jobStatusLabel(nextStatus)}
                 </button>
               )}
               <button
@@ -411,7 +418,7 @@ export default function JobDetailPage() {
                 <div key={s} className="flex flex-col items-center gap-3 flex-1 relative z-10">
                   <div
                     className={cn(
-                      'w-12 h-12 rounded-[20px] flex items-center justify-center text-sm font-semibold transition-all duration-700 shadow-lg',
+                      'w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center text-sm font-semibold transition-all duration-700 shadow-lg',
                       isPast
                         ? 'bg-success text-white shadow-emerald-500/10'
                         : isCurrent
@@ -436,7 +443,7 @@ export default function JobDetailPage() {
                             : 'text-muted-foreground opacity-30',
                       )}
                     >
-                      {JOB_STATUS_LABELS[s]}
+                      {jobStatusLabel(s)}
                     </span>
                   </div>
 
@@ -457,13 +464,13 @@ export default function JobDetailPage() {
 
       {/* Tabs Layout */}
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap gap-2 p-1.5 bg-card/50 backdrop-blur-sm border border-border rounded-[28px] shadow-sm w-fit">
+        <div className="flex flex-wrap gap-2 p-1.5 bg-card/50 backdrop-blur-sm border border-border rounded-[var(--radius-lg)] shadow-sm w-fit">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'flex flex-col items-start gap-0.5 px-6 py-3 transition-all rounded-[22px] group relative overflow-hidden',
+                'flex flex-col items-start gap-0.5 px-6 py-3 transition-all rounded-[var(--radius-lg)] group relative overflow-hidden',
                 tab === t.id
                   ? 'bg-primary text-primary-foreground shadow-xl shadow-primary/10'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -498,7 +505,7 @@ export default function JobDetailPage() {
           {/* Tab: EspecÃ­ficos (Dados) */}
           {tab === 'dados' && (
             <ScaleIn className="premium-card p-10 flex flex-col gap-10 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.02] pointer-events-none group-hover:scale-[1.02] transition-transform duration-1000">
                 <FileText size={400} />
               </div>
 
@@ -518,7 +525,7 @@ export default function JobDetailPage() {
                   },
                   {
                     label: 'Status Operacional',
-                    value: JOB_STATUS_LABELS[job.status as JobStatus],
+                    value: jobStatusLabel(job.status as JobStatus),
                     icon: Activity,
                     color: 'text-foreground',
                   },
@@ -782,14 +789,14 @@ export default function JobDetailPage() {
                                     : 'bg-primary/10 text-primary border-primary/20',
                                 )}
                               >
-                                {JOB_STATUS_LABELS[log.toStatus as JobStatus] || log.toStatus}
+                                {jobStatusLabel(log.toStatus as JobStatus)}
                               </span>
                               {log.fromStatus && (
                                 <ChevronRight size={12} className="text-muted-foreground/30" />
                               )}
                               {log.fromStatus && (
                                 <span className="text-[9px] font-bold text-muted-foreground opacity-30 uppercase tracking-normal">
-                                  {JOB_STATUS_LABELS[log.fromStatus as JobStatus] || log.fromStatus}
+                                  {jobStatusLabel(log.fromStatus as JobStatus)}
                                 </span>
                               )}
                             </div>
@@ -858,7 +865,7 @@ export default function JobDetailPage() {
                       <img
                         src={photo.url}
                         alt={photo.description ?? 'Foto Técnica'}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
                         <div className="flex flex-col gap-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
@@ -873,7 +880,7 @@ export default function JobDetailPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-90">
+                      <div className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-[0.98]">
                         <MoreHorizontal size={20} strokeWidth={3} />
                       </div>
                     </div>
@@ -887,7 +894,7 @@ export default function JobDetailPage() {
 
       {/* Modern Cancel Validation Dialog */}
       {showCancel && (
-        <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-[200] p-4 animate-in fade-in duration-500">
+        <div className="fixed inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-in fade-in duration-500">
           <ScaleIn className="w-full max-w-lg">
             <div className="premium-card p-12 flex flex-col gap-10 relative shadow-md border-destructive/20 overflow-hidden bg-white dark:bg-[#0a0a0b]">
               {/* Accent decoration */}
@@ -907,14 +914,14 @@ export default function JobDetailPage() {
                 </div>
                 <button
                   onClick={() => setShowCancel(false)}
-                  className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-90 border border-transparent hover:border-border"
+                  className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-all active:scale-[0.98] border border-transparent hover:border-border"
                 >
                   <X size={24} strokeWidth={3} />
                 </button>
               </div>
 
               <div className="flex flex-col gap-8 relative">
-                <div className="p-6 bg-destructive/[0.02] rounded-[24px] border border-destructive/10 flex items-start gap-4">
+                <div className="p-6 bg-destructive/[0.02] rounded-[var(--radius-lg)] border border-destructive/10 flex items-start gap-4">
                   <Info size={20} className="text-destructive mt-0.5 shrink-0" />
                   <p className="text-xs font-semibold text-destructive/70 leading-relaxed">
                     Ao confirmar o cancelamento da <strong>OS {job.code}</strong>, todas as
@@ -933,7 +940,7 @@ export default function JobDetailPage() {
                     onChange={(e) => setCancelReason(e.target.value)}
                     rows={5}
                     placeholder="Descreva o motivo real da interrupção do fluxo..."
-                    className="w-full bg-muted border border-border rounded-[24px] px-6 py-5 text-sm font-semibold text-foreground focus:outline-none focus:ring-4 focus:ring-destructive/5 focus:border-destructive/30 transition-all shadow-inner resize-none placeholder:text-muted-foreground/30"
+                    className="w-full bg-muted border border-border rounded-[var(--radius-lg)] px-6 py-5 text-sm font-semibold text-foreground focus:outline-none focus:ring-4 focus:ring-destructive/5 focus:border-destructive/30 transition-all shadow-inner resize-none placeholder:text-muted-foreground/30"
                     autoFocus
                   />
                 </div>
@@ -949,7 +956,7 @@ export default function JobDetailPage() {
                 <button
                   disabled={!cancelReason.trim() || changeStatus.isPending}
                   onClick={handleCancel}
-                  className="flex-[1.8] py-5 rounded-lg bg-destructive text-white text-[10px] font-semibold uppercase tracking-normal shadow-xl shadow-destructive/20 hover:brightness-110  disabled:opacity-30 transition-all flex items-center justify-center gap-3"
+                  className="flex-[1.8] py-5 rounded-lg bg-destructive text-white text-[10px] font-semibold uppercase tracking-normal shadow-xl hover:brightness-110  disabled:opacity-30 transition-all flex items-center justify-center gap-3"
                 >
                   {changeStatus.isPending ? (
                     <Loader2 size={16} className="animate-spin" />

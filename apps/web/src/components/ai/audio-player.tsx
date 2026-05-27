@@ -202,12 +202,12 @@ export function AudioPlayer({ audioChunks, autoPlay = true, onEnded }: AudioPlay
   return (
     <div
       data-audio-player
-      className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 space-y-3"
+      className="rounded-xl border border-border bg-muted p-3 space-y-3"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] uppercase tracking-normal text-zinc-400">Resposta por voz</p>
-          <p className="text-xs text-zinc-300">
+          <p className="text-[11px] uppercase tracking-normal text-muted-foreground">Resposta por voz</p>
+          <p className="text-xs text-muted-foreground">
             {isPlaying
               ? `Tocando trecho ${activeIndex !== null ? activeIndex + 1 : 1}/${audioChunks.length}`
               : isPaused
@@ -221,7 +221,7 @@ export function AudioPlayer({ audioChunks, autoPlay = true, onEnded }: AudioPlay
             type="button"
             onClick={isPaused ? handleResume : handlePause}
             disabled={!isPlaying && !isPaused}
-            className="rounded-md border border-zinc-700 px-2 py-1 text-zinc-200 hover:border-sky-500 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded-md border border-border px-2 py-1 text-muted-foreground hover:border-[var(--info)] disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label={isPaused ? 'Retomar audio' : 'Pausar audio'}
           >
             {isPaused ? <Play size={14} /> : <Pause size={14} />}
@@ -229,7 +229,7 @@ export function AudioPlayer({ audioChunks, autoPlay = true, onEnded }: AudioPlay
           <button
             type="button"
             onClick={() => setIsMuted((current) => !current)}
-            className="rounded-md border border-zinc-700 px-2 py-1 text-zinc-200 hover:border-sky-500"
+            className="rounded-md border border-border px-2 py-1 text-muted-foreground hover:border-[var(--info)]"
             aria-label={isMuted ? 'Ativar audio' : 'Silenciar audio'}
           >
             {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
@@ -238,7 +238,7 @@ export function AudioPlayer({ audioChunks, autoPlay = true, onEnded }: AudioPlay
       </div>
 
       {currentText ? (
-        <p className="rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs text-sky-100">
+        <p className="rounded-md border border-[var(--info)] bg-[var(--info-soft)] px-3 py-2 text-xs text-[var(--info)]">
           {currentText}
         </p>
       ) : null}
@@ -249,10 +249,10 @@ export function AudioPlayer({ audioChunks, autoPlay = true, onEnded }: AudioPlay
             key={`${index}-${chunk.text.slice(0, 16)}`}
             className={`text-[11px] ${
               index === activeIndex
-                ? 'text-sky-200'
+                ? 'text-[var(--info)]'
                 : index < nextIndex
-                  ? 'text-zinc-500'
-                  : 'text-zinc-400'
+                  ? 'text-muted-foreground'
+                  : 'text-muted-foreground'
             }`}
           >
             {chunk.text}

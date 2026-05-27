@@ -93,7 +93,7 @@ export function KpiCard({
           className={cn(
             'mt-4 inline-flex items-center gap-1 text-xs font-semibold font-tabular',
             trend.direction === 'up' && 'text-success',
-            trend.direction === 'down' && 'text-red-400',
+            trend.direction === 'down' && 'text-[var(--destructive)]',
             trend.direction === 'neutral' && 'text-muted-foreground',
           )}
         >

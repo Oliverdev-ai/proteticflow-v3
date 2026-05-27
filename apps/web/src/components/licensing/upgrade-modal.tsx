@@ -30,16 +30,16 @@ export function UpgradeModal({ open, targetPlan, isLoading, onClose, onConfirm }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-md">
+      <div className="w-full max-w-md rounded-xl border border-border bg-muted p-5 shadow-md">
         <h3 className="text-lg font-semibold text-white">{copy.title}</h3>
-        <p className="mt-2 text-sm text-zinc-400">{copy.subtitle}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{copy.subtitle}</p>
 
         <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-60"
+            className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted disabled:opacity-60"
           >
             Cancelar
           </button>

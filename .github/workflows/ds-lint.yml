@@ -1,4 +1,4 @@
-name: DS Guardrails (Warn)
+name: DS Guardrails
 
 on:
   pull_request:
@@ -22,8 +22,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install ripgrep
         run: sudo apt-get install -y ripgrep
-      - name: ESLint DS rules (warn mode)
+      - name: ESLint DS rules
         run: pnpm --filter web lint
-      - name: DS grep checks (warn mode)
+      - name: DS grep checks
         run: pnpm ds:check
-        continue-on-error: true

@@ -23,7 +23,7 @@ export function ProofBadge({ className, proofDueDate, proofReturnedAt }: ProofBa
         'inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-normal',
         isOverdue
           ? 'border-destructive/40 bg-destructive/10 text-destructive'
-          : 'border-sky-500/40 bg-sky-500/10 text-sky-600',
+          : 'border-[var(--info)] bg-[var(--info-soft)] text-[var(--info)]',
         className,
       )}
       title={isOverdue ? 'Prova em atraso' : 'OS em prova'}

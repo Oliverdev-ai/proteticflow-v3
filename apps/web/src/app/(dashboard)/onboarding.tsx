@@ -25,12 +25,12 @@ function StepBadge({ current }: { current: Step }) {
         <div key={step.id} className="flex items-center gap-2">
           <div
             className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ${
-              step.id <= current ? 'bg-primary text-white' : 'bg-zinc-800 text-zinc-500'
+              step.id <= current ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
             }`}
           >
             {step.id}
           </div>
-          <span className={`text-xs ${step.id === current ? 'text-white' : 'text-zinc-500'}`}>
+          <span className={`text-xs ${step.id === current ? 'text-white' : 'text-muted-foreground'}`}>
             {step.label}
           </span>
         </div>
@@ -73,14 +73,14 @@ export function OnboardingWizard() {
 
   if (step === 2) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-muted flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <StepBadge current={step} />
           <div className="flex justify-center">
             <Users className="text-primary" size={48} />
           </div>
           <h1 className="text-2xl font-bold text-white">Passo 2: cadastre seu primeiro cliente</h1>
-          <p className="text-zinc-400">
+          <p className="text-muted-foreground">
             Criar o primeiro cliente garante que a equipe ja consiga emitir OS sem retrabalho.
           </p>
           <div className="flex flex-col gap-2">
@@ -92,7 +92,7 @@ export function OnboardingWizard() {
             </button>
             <button
               onClick={() => setStep(3)}
-              className="w-full border border-zinc-700 hover:bg-zinc-800 text-zinc-200 text-sm font-semibold py-3 rounded-xl transition-colors"
+              className="w-full border border-border hover:bg-muted text-muted-foreground text-sm font-semibold py-3 rounded-xl transition-colors"
             >
               Continuar onboarding
             </button>
@@ -104,14 +104,14 @@ export function OnboardingWizard() {
 
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-muted flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <StepBadge current={step} />
           <div className="flex justify-center">
             <Wrench className="text-primary" size={48} />
           </div>
           <h1 className="text-2xl font-bold text-white">Passo 3: gere sua primeira OS</h1>
-          <p className="text-zinc-400">
+          <p className="text-muted-foreground">
             Com cliente e OS cadastrados, o Kanban, financeiro e relatórios passam a refletir seu
             fluxo real.
           </p>
@@ -124,7 +124,7 @@ export function OnboardingWizard() {
             </button>
             <button
               onClick={() => setStep(4)}
-              className="w-full border border-zinc-700 hover:bg-zinc-800 text-zinc-200 text-sm font-semibold py-3 rounded-xl transition-colors"
+              className="w-full border border-border hover:bg-muted text-muted-foreground text-sm font-semibold py-3 rounded-xl transition-colors"
             >
               Finalizar onboarding
             </button>
@@ -143,18 +143,18 @@ export function OnboardingWizard() {
 
   if (step === 4) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-muted flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-6">
           <StepBadge current={step} />
           <div className="flex justify-center">
-            <CheckCircle2 className="text-green-400" size={56} />
+            <CheckCircle2 className="text-[var(--success)]" size={56} />
           </div>
           <h1 className="text-2xl font-bold text-white">Onboarding concluído</h1>
-          <p className="text-zinc-400">
+          <p className="text-muted-foreground">
             Tudo pronto para operar seu laboratório no painel principal.
           </p>
           {completeOnboarding.error && (
-            <p className="text-red-400 text-sm">{completeOnboarding.error.message}</p>
+            <p className="text-[var(--destructive)] text-sm">{completeOnboarding.error.message}</p>
           )}
           <button
             onClick={() => completeOnboarding.mutate()}
@@ -173,7 +173,7 @@ export function OnboardingWizard() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8">
         <StepBadge current={step} />
         <div className="text-center space-y-2">
@@ -181,60 +181,60 @@ export function OnboardingWizard() {
             <Building2 className="text-primary" size={40} />
           </div>
           <h1 className="text-2xl font-bold text-white">Configure seu laboratório</h1>
-          <p className="text-zinc-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Esses dados aparecem em relatórios, PDFs e comunicação com clientes.
           </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm text-zinc-300 mb-1.5">Nome do laboratório *</label>
+            <label className="block text-sm text-muted-foreground mb-1.5">Nome do laboratório *</label>
             <input
               {...register('name')}
               placeholder="Ex: Lab Dental Silva"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
+              className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
             />
-            {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+            {errors.name && <p className="text-[var(--destructive)] text-xs mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm text-zinc-300 mb-1.5">CNPJ</label>
+            <label className="block text-sm text-muted-foreground mb-1.5">CNPJ</label>
             <input
               {...register('cnpj')}
               placeholder="00.000.000/0001-00"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
+              className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm text-zinc-300 mb-1.5">Telefone</label>
+              <label className="block text-sm text-muted-foreground mb-1.5">Telefone</label>
               <input
                 {...register('phone')}
                 placeholder="(00) 00000-0000"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
+                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm text-zinc-300 mb-1.5">Email</label>
+              <label className="block text-sm text-muted-foreground mb-1.5">Email</label>
               <input
                 {...register('email')}
                 placeholder="contato@lab.com"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
+                className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm text-zinc-300 mb-1.5 flex items-center gap-1">
-              <MapPin size={13} className="text-zinc-500" /> Cidade / UF
+            <label className="block text-sm text-muted-foreground mb-1.5 flex items-center gap-1">
+              <MapPin size={13} className="text-muted-foreground" /> Cidade / UF
             </label>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
                 <input
                   {...register('city')}
                   placeholder="Cidade"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
               <div>
@@ -242,14 +242,14 @@ export function OnboardingWizard() {
                   {...register('state')}
                   placeholder="UF"
                   maxLength={2}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors uppercase"
+                  className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-primary transition-colors uppercase"
                 />
               </div>
             </div>
           </div>
 
           {createTenant.error && (
-            <p className="text-red-400 text-sm">{createTenant.error.message}</p>
+            <p className="text-[var(--destructive)] text-sm">{createTenant.error.message}</p>
           )}
 
           <button

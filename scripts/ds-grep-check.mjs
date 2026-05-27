@@ -8,7 +8,7 @@ const checks = [
   },
   {
     name: 'cores tailwind cruas',
-    cmd: 'rg --no-ignore -l "(bg|text|border)-(blue|emerald|sky|violet|yellow|fuchsia|rose|zinc|slate|gray|neutral)-[0-9]" apps/web/src',
+    cmd: 'rg --no-ignore -l "(bg|text|border)-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral)-[0-9]" apps/web/src',
     expectEmpty: true,
   },
   {

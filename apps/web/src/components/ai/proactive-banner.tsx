@@ -56,16 +56,16 @@ export function ProactiveBanner({ context, onAction }: ProactiveBannerProps) {
   }
 
   return (
-    <div className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 p-4 space-y-3">
+    <div className="rounded-lg border border-[var(--info)] bg-[var(--info-soft)] p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-normal text-cyan-300">Sugestões proativas</p>
-          <p className="text-sm text-cyan-100">O Flow IA detectou pontos de atenção no laboratório.</p>
+          <p className="text-xs uppercase tracking-normal text-[var(--info)]">Sugestões proativas</p>
+          <p className="text-sm text-[var(--info)]">O Flow IA detectou pontos de atenção no laboratório.</p>
         </div>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="text-xs text-cyan-300 hover:text-cyan-100"
+          className="text-xs text-[var(--info)] hover:text-[var(--info)]"
         >
           Dispensar
         </button>
@@ -73,12 +73,12 @@ export function ProactiveBanner({ context, onAction }: ProactiveBannerProps) {
 
       <div className="space-y-2">
         {suggestions.map((suggestion) => (
-          <div key={suggestion.id} className="rounded-xl border border-cyan-700/40 px-3 py-2">
-            <p className="text-sm text-cyan-100">{suggestion.text}</p>
+          <div key={suggestion.id} className="rounded-xl border border-[var(--info)] px-3 py-2">
+            <p className="text-sm text-[var(--info)]">{suggestion.text}</p>
             <button
               type="button"
               onClick={() => void onAction(suggestion.prompt)}
-              className="mt-2 text-xs text-cyan-200 hover:text-white"
+              className="mt-2 text-xs text-[var(--info)] hover:text-white"
             >
               {suggestion.actionLabel}
             </button>

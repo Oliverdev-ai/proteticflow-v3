@@ -54,22 +54,22 @@ export function MembersTab({
   }
 
   if (isLoading) {
-    return <p className="text-sm text-zinc-400">Carregando membros...</p>;
+    return <p className="text-sm text-muted-foreground">Carregando membros...</p>;
   }
 
   if (error) {
-    return <p className="text-sm text-red-400">{error}</p>;
+    return <p className="text-sm text-[var(--destructive)]">{error}</p>;
   }
 
   if (members.length === 0) {
-    return <p className="text-sm text-zinc-400">Nenhum membro encontrado.</p>;
+    return <p className="text-sm text-muted-foreground">Nenhum membro encontrado.</p>;
   }
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
+      <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-zinc-900 text-zinc-400">
+          <thead className="bg-muted text-muted-foreground">
             <tr>
               <th className="text-left px-3 py-2">Nome</th>
               <th className="text-left px-3 py-2">Email</th>
@@ -80,17 +80,17 @@ export function MembersTab({
           </thead>
           <tbody>
             {members.map((member) => (
-              <tr key={member.memberId} className="border-t border-zinc-800">
-                <td className="px-3 py-2 text-zinc-100">{member.name}</td>
-                <td className="px-3 py-2 text-zinc-300">{member.email}</td>
-                <td className="px-3 py-2 text-zinc-300">{member.role}</td>
+              <tr key={member.memberId} className="border-t border-border">
+                <td className="px-3 py-2 text-muted-foreground">{member.name}</td>
+                <td className="px-3 py-2 text-muted-foreground">{member.email}</td>
+                <td className="px-3 py-2 text-muted-foreground">{member.role}</td>
                 <td className="px-3 py-2">
                   {member.blockedAt ? (
-                    <span className="inline-flex items-center rounded-md bg-red-900/30 text-red-300 px-2 py-0.5 text-xs">
+                    <span className="inline-flex items-center rounded-md bg-[var(--destructive-soft)] text-[var(--destructive)] px-2 py-0.5 text-xs">
                       Bloqueado
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-md bg-emerald-900/30 text-emerald-300 px-2 py-0.5 text-xs">
+                    <span className="inline-flex items-center rounded-md bg-[var(--success-soft)] text-[var(--success)] px-2 py-0.5 text-xs">
                       Ativo
                     </span>
                   )}
@@ -101,7 +101,7 @@ export function MembersTab({
                       type="button"
                       onClick={() => void onUnblock(member.userId)}
                       disabled={isMutating || submitting}
-                      className="px-3 py-1.5 rounded-md border border-zinc-700 text-zinc-200 hover:border-zinc-500 disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-md border border-border text-muted-foreground hover:border-border disabled:opacity-50"
                     >
                       Desbloquear
                     </button>
@@ -110,7 +110,7 @@ export function MembersTab({
                       type="button"
                       onClick={() => setSelectedUserId(member.userId)}
                       disabled={isMutating || submitting}
-                      className="px-3 py-1.5 rounded-md bg-red-700 text-white hover:bg-red-600 disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-md bg-[var(--destructive-soft)] text-white hover:bg-[var(--destructive-soft)] disabled:opacity-50"
                     >
                       Bloquear
                     </button>
@@ -123,15 +123,15 @@ export function MembersTab({
       </div>
 
       {selectedMember ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
-          <p className="text-sm text-zinc-200">
+        <div className="rounded-xl border border-border bg-muted p-4 space-y-3">
+          <p className="text-sm text-muted-foreground">
             Bloquear <span className="font-semibold">{selectedMember.name}</span>
           </p>
           <textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             placeholder="Informe o motivo do bloqueio"
-            className="w-full min-h-24 rounded-lg border border-zinc-700 bg-zinc-950 text-zinc-100 px-3 py-2"
+            className="w-full min-h-24 rounded-lg border border-border bg-muted text-muted-foreground px-3 py-2"
           />
           <div className="flex gap-2 justify-end">
             <button
@@ -141,7 +141,7 @@ export function MembersTab({
                 setReason('');
               }}
               disabled={submitting}
-              className="px-3 py-2 rounded-md border border-zinc-700 text-zinc-200 hover:border-zinc-500"
+              className="px-3 py-2 rounded-md border border-border text-muted-foreground hover:border-border"
             >
               Cancelar
             </button>
@@ -149,7 +149,7 @@ export function MembersTab({
               type="button"
               onClick={() => void handleConfirmBlock()}
               disabled={submitting || reason.trim().length < 3}
-              className="px-3 py-2 rounded-md bg-red-700 text-white hover:bg-red-600 disabled:opacity-50"
+              className="px-3 py-2 rounded-md bg-[var(--destructive-soft)] text-white hover:bg-[var(--destructive-soft)] disabled:opacity-50"
             >
               Confirmar bloqueio
             </button>

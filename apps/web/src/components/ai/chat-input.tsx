@@ -33,7 +33,7 @@ export function ChatInput({ onSend, disabled, isSending }: Props) {
   });
 
   return (
-    <div className="flex items-end gap-2 bg-zinc-900 border border-zinc-800 rounded-xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+    <div className="flex items-end gap-2 bg-muted border border-border rounded-xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-primary/50 transition-all">
       <div className="flex-1 py-1">
         <EditorContent editor={editor} />
       </div>
