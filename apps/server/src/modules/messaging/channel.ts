@@ -2,14 +2,27 @@ import { and, eq } from 'drizzle-orm';
 import type { PlanTier, ProactiveAlertType } from '@proteticflow/shared';
 import { PLAN_LIMITS } from '@proteticflow/shared';
 import { db } from '../../db/index.js';
+import type { WhatsappTenantConfig } from '../../db/schema/whatsapp.js';
 import { notifications } from '../../db/schema/notifications.js';
 import { pushSubscriptions } from '../../db/schema/users.js';
-import { env } from '../../env.js';
 import { logger } from '../../logger.js';
+import {
+  observeWhatsappSendLatency,
+  recordWhatsappOptInBlocked,
+  recordWhatsappSend,
+} from '../../metrics/whatsapp.js';
 import { sendEmail } from '../notifications/email.js';
 import { sendPushToUser } from '../notifications/push.js';
 import { sendBlipWhatsApp } from './providers/blip.provider.js';
+import type { BlipProviderConfig } from './providers/blip.provider.js';
 import { countChannelDispatchesThisMonth } from '../proactive/alert-log.service.js';
+import { canSendWhatsappByOptIn, normalizePhoneE164, sanitizeWhatsappBody } from './opt-in.service.js';
+import {
+  createOutboundWhatsappMessageLog,
+  markWhatsappMessageFailed,
+  markWhatsappMessageSent,
+  type WhatsappProvider,
+} from './whatsapp-messages.service.js';
 import {
   getQuietHoursReleaseAt,
   isAlertMuted,
@@ -31,6 +44,8 @@ export type Recipient = {
   email: string | null;
   phone: string | null;
   whatsappOptIn: boolean;
+  whatsappEnabled: boolean;
+  whatsappConfig: WhatsappTenantConfig;
   preferences: ProactiveUserPreferences;
 };
 
@@ -55,6 +70,20 @@ export class NoAvailableChannelError extends Error {
     super('Nenhum canal disponivel para envio');
     this.name = 'NoAvailableChannelError';
   }
+}
+
+type ResolvedWhatsappProvider =
+  | { provider: 'mock' }
+  | { provider: 'blip'; blip: BlipProviderConfig };
+
+function resolveWhatsappProviderConfig(config: WhatsappTenantConfig): ResolvedWhatsappProvider | null {
+  if (config.provider === 'mock') return { provider: 'mock' };
+  if (config.provider === 'blip') {
+    const blip = config.blip;
+    if (!blip?.apiToken || !blip.fromNumber) return null;
+    return { provider: 'blip', blip };
+  }
+  return null;
 }
 
 export class QuietHoursDeferredError extends Error {
@@ -209,12 +238,12 @@ export class WhatsAppChannel implements MessageChannel {
   async canSend(ctx: TenantCtx, to: Recipient, msg: OutboundMessage): Promise<boolean> {
     if (!isChannelEnabled(to.preferences, this.name)) return false;
     if (isAlertMuted(to.preferences, msg.alertType)) return false;
+    if (!to.whatsappEnabled) return false;
     if (!to.whatsappOptIn) return false;
     if (!to.phone) return false;
-
-    if (env.WHATSAPP_PROVIDER !== 'mock') {
-      if (!env.BLIP_API_TOKEN || !env.BLIP_FROM_NUMBER) return false;
-    }
+    const phoneE164 = normalizePhoneE164(to.phone);
+    if (!phoneE164) return false;
+    if (!resolveWhatsappProviderConfig(to.whatsappConfig)) return false;
 
     const limit = PLAN_LIMITS[ctx.plan].whatsappPerMonth;
     if (limit === 0) return false;
@@ -223,39 +252,84 @@ export class WhatsAppChannel implements MessageChannel {
       if (used >= limit) return false;
     }
 
+    const optInFromRegistry = await canSendWhatsappByOptIn(ctx.tenantId, phoneE164);
+    if (!optInFromRegistry) {
+      recordWhatsappOptInBlocked(ctx.tenantId, 'missing_opt_in_registry');
+      return false;
+    }
+
     return true;
   }
 
   async send(ctx: TenantCtx, to: Recipient, msg: OutboundMessage): Promise<SendResult> {
-    if (env.WHATSAPP_PROVIDER === 'mock') {
+    if (!to.whatsappEnabled) {
+      throw new Error('WhatsApp desabilitado para o tenant');
+    }
+
+    if (!to.phone) throw new Error('Destinatario sem phone');
+    const e164 = normalizePhoneE164(to.phone);
+    if (!e164) throw new Error('Destinatario sem phone_e164 valido');
+
+    const providerConfig = resolveWhatsappProviderConfig(to.whatsappConfig);
+    if (!providerConfig) throw new Error('Configuracao de provider WhatsApp invalida para tenant');
+
+    const body = sanitizeWhatsappBody(msg.body);
+    if (!body) throw new Error('Mensagem WhatsApp vazia apos sanitizacao');
+
+    const provider = providerConfig.provider as WhatsappProvider;
+    const startedAt = Date.now();
+    const logId = await createOutboundWhatsappMessageLog({
+      tenantId: ctx.tenantId,
+      userId: to.userId,
+      provider,
+      phoneE164: e164,
+      body,
+      templateName: null,
+      meta: { alertType: msg.alertType },
+    });
+
+    try {
+      if (providerConfig.provider === 'mock') {
+        const providerMessageId = `mock-${logId}`;
+        await markWhatsappMessageSent({
+          id: logId,
+          providerMessageId,
+          meta: { mode: 'mock' },
+        });
+        recordWhatsappSend(ctx.tenantId, providerConfig.provider, 'sent');
+        observeWhatsappSendLatency(ctx.tenantId, providerConfig.provider, Date.now() - startedAt);
+        return { channel: this.name, status: 'sent' };
+      }
+
+      const result = await sendBlipWhatsApp(providerConfig.blip, e164, body);
+      await markWhatsappMessageSent({
+        id: logId,
+        providerMessageId: result.id,
+        meta: { mode: 'blip' },
+      });
+      recordWhatsappSend(ctx.tenantId, providerConfig.provider, 'sent');
+      observeWhatsappSendLatency(ctx.tenantId, providerConfig.provider, Date.now() - startedAt);
+
       logger.info(
         {
-          action: 'messaging.whatsapp.mock_send',
+          action: 'messaging.whatsapp.blip_sent',
           tenantId: ctx.tenantId,
           userId: to.userId,
-          alertType: msg.alertType,
+          providerMessageId: result.id,
         },
-        'WhatsApp mock: mensagem registrada apenas em log',
+        'WhatsApp enviado via Blip BSP',
       );
       return { channel: this.name, status: 'sent' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido ao enviar WhatsApp';
+      await markWhatsappMessageFailed({
+        id: logId,
+        errorMessage: message,
+      });
+      recordWhatsappSend(ctx.tenantId, provider, 'failed');
+      observeWhatsappSendLatency(ctx.tenantId, provider, Date.now() - startedAt);
+      throw error;
     }
-
-    if (!to.phone) {
-      throw new Error('Destinatario sem phone');
-    }
-
-    const e164 = to.phone.replace(/\D/g, '');
-    await sendBlipWhatsApp(e164, msg.body);
-
-    logger.info(
-      {
-        action: 'messaging.whatsapp.blip_sent',
-        tenantId: ctx.tenantId,
-        userId: to.userId,
-      },
-      'WhatsApp enviado via Blip BSP',
-    );
-    return { channel: this.name, status: 'sent' };
   }
 }
 

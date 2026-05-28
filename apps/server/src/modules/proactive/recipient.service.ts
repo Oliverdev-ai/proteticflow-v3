@@ -3,8 +3,10 @@ import type { PlanTier } from '@proteticflow/shared';
 import { db } from '../../db/index.js';
 import { userPreferences } from '../../db/schema/proactive.js';
 import { tenantMembers, tenants } from '../../db/schema/tenants.js';
+import type { WhatsappTenantConfig } from '../../db/schema/whatsapp.js';
 import { users } from '../../db/schema/users.js';
 import { getUserPreferences, type ProactiveUserPreferences } from './preferences.service.js';
+import { normalizeTenantWhatsappConfig } from '../messaging/whatsapp-config.service.js';
 
 export type ProactiveRecipient = {
   tenantId: number;
@@ -13,6 +15,8 @@ export type ProactiveRecipient = {
   email: string | null;
   phone: string | null;
   whatsappOptIn: boolean;
+  whatsappEnabled: boolean;
+  whatsappConfig: WhatsappTenantConfig;
   plan: PlanTier;
   preferences: ProactiveUserPreferences;
 };
@@ -34,6 +38,8 @@ export async function listBriefingRecipients(now: Date = new Date()): Promise<Pr
       phoneE164: users.phoneE164,
       phone: users.phone,
       whatsappOptIn: users.whatsappOptIn,
+      whatsappEnabled: tenants.whatsappEnabled,
+      whatsappConfig: tenants.whatsappConfig,
       plan: tenants.plan,
     })
     .from(userPreferences)
@@ -62,6 +68,8 @@ export async function listBriefingRecipients(now: Date = new Date()): Promise<Pr
       email: row.email,
       phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
       whatsappOptIn: row.whatsappOptIn,
+      whatsappEnabled: row.whatsappEnabled,
+      whatsappConfig: normalizeTenantWhatsappConfig(row.whatsappConfig),
       plan: row.plan,
       preferences,
     });
@@ -83,6 +91,8 @@ export async function getRecipient(
       phoneE164: users.phoneE164,
       phone: users.phone,
       whatsappOptIn: users.whatsappOptIn,
+      whatsappEnabled: tenants.whatsappEnabled,
+      whatsappConfig: tenants.whatsappConfig,
     })
     .from(tenantMembers)
     .innerJoin(users, and(
@@ -106,6 +116,8 @@ export async function getRecipient(
     email: row.email,
     phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
     whatsappOptIn: row.whatsappOptIn,
+    whatsappEnabled: row.whatsappEnabled,
+    whatsappConfig: normalizeTenantWhatsappConfig(row.whatsappConfig),
     plan: row.plan,
     preferences: await getUserPreferences(tenantId, userId),
   };
@@ -122,6 +134,8 @@ export async function listActiveTenantRecipients(tenantId: number): Promise<Proa
       phoneE164: users.phoneE164,
       phone: users.phone,
       whatsappOptIn: users.whatsappOptIn,
+      whatsappEnabled: tenants.whatsappEnabled,
+      whatsappConfig: tenants.whatsappConfig,
     })
     .from(tenantMembers)
     .innerJoin(users, and(
@@ -144,6 +158,8 @@ export async function listActiveTenantRecipients(tenantId: number): Promise<Proa
       email: row.email,
       phone: row.whatsappOptIn ? (row.phoneE164 ?? row.phone) : null,
       whatsappOptIn: row.whatsappOptIn,
+      whatsappEnabled: row.whatsappEnabled,
+      whatsappConfig: normalizeTenantWhatsappConfig(row.whatsappConfig),
       preferences: await getUserPreferences(row.tenantId, row.userId),
     });
   }

@@ -17,6 +17,11 @@ import {
   listClientsSchema,
   listJobsSchema,
   messagesDraftToClientSchema,
+  sendWhatsappTemplateSchema,
+  requestWhatsappOptInSchema,
+  getWhatsappUsageSchema,
+  getWhatsappTemplatesStatusSchema,
+  getWhatsappConversationSchema,
   stockAlertsSchema,
   stockCheckMaterialSchema,
   suspendJobSchema,
@@ -72,6 +77,13 @@ import {
   executeMessagesMuteAlerts,
   executeMessagesDraftToClient,
 } from './tools/messages-tools.js';
+import {
+  executeGetWhatsappConversation,
+  executeGetWhatsappTemplatesStatus,
+  executeGetWhatsappUsage,
+  executeRequestWhatsappOptIn,
+  executeSendWhatsappTemplate,
+} from './tools/whatsapp-tools.js';
 import {
   buildPayrollGeneratePreviewStep,
   executePayrollGenerate,
@@ -548,6 +560,36 @@ export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
     inputSchema: muteAlertsSchema,
     execute: async (ctx, input) =>
       executeMessagesMuteAlerts(ctx, muteAlertsSchema.parse(input)),
+  },
+  send_whatsapp_template: {
+    name: 'send_whatsapp_template',
+    inputSchema: sendWhatsappTemplateSchema,
+    execute: async (ctx, input) =>
+      executeSendWhatsappTemplate(ctx, sendWhatsappTemplateSchema.parse(input)),
+  },
+  request_whatsapp_opt_in: {
+    name: 'request_whatsapp_opt_in',
+    inputSchema: requestWhatsappOptInSchema,
+    execute: async (ctx, input) =>
+      executeRequestWhatsappOptIn(ctx, requestWhatsappOptInSchema.parse(input)),
+  },
+  get_whatsapp_usage: {
+    name: 'get_whatsapp_usage',
+    inputSchema: getWhatsappUsageSchema,
+    execute: async (ctx, input) =>
+      executeGetWhatsappUsage(ctx, getWhatsappUsageSchema.parse(input)),
+  },
+  get_whatsapp_templates_status: {
+    name: 'get_whatsapp_templates_status',
+    inputSchema: getWhatsappTemplatesStatusSchema,
+    execute: async (ctx, input) =>
+      executeGetWhatsappTemplatesStatus(ctx, getWhatsappTemplatesStatusSchema.parse(input)),
+  },
+  get_whatsapp_conversation: {
+    name: 'get_whatsapp_conversation',
+    inputSchema: getWhatsappConversationSchema,
+    execute: async (ctx, input) =>
+      executeGetWhatsappConversation(ctx, getWhatsappConversationSchema.parse(input)),
   },
   'memory.remember': {
     name: 'memory.remember',

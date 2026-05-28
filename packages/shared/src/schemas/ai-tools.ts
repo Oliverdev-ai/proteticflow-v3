@@ -96,6 +96,41 @@ export const messagesDraftToClientSchema = z.object({
   path: ['clientName'],
 });
 
+export const sendWhatsappTemplateSchema = z.object({
+  clientId: z.number().int().positive().optional(),
+  phone: z.string().min(8).max(32).optional(),
+  templateName: z.string().min(2).max(120),
+  language: z.string().min(2).max(16).default('pt_BR'),
+  variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+}).refine((value) => value.clientId !== undefined || value.phone !== undefined, {
+  message: 'Informe clientId ou phone',
+  path: ['clientId'],
+});
+
+export const requestWhatsappOptInSchema = z.object({
+  clientId: z.number().int().positive().optional(),
+  phone: z.string().min(8).max(32).optional(),
+}).refine((value) => value.clientId !== undefined || value.phone !== undefined, {
+  message: 'Informe clientId ou phone',
+  path: ['clientId'],
+});
+
+export const getWhatsappUsageSchema = z.object({
+  startAt: z.string().datetime().optional(),
+  endAt: z.string().datetime().optional(),
+});
+
+export const getWhatsappTemplatesStatusSchema = z.object({});
+
+export const getWhatsappConversationSchema = z.object({
+  clientId: z.number().int().positive().optional(),
+  phone: z.string().min(8).max(32).optional(),
+  limit: z.number().int().min(1).max(100).default(30),
+}).refine((value) => value.clientId !== undefined || value.phone !== undefined, {
+  message: 'Informe clientId ou phone',
+  path: ['clientId'],
+});
+
 const aiToolJobStatusValues = [
   JOB_STATUS.PENDING,
   JOB_STATUS.IN_PROGRESS,
@@ -127,4 +162,9 @@ export type FinancialQuarterlyReportInput = z.infer<typeof financialQuarterlyRep
 export type AgendaTodayInput = z.infer<typeof agendaTodaySchema>;
 export type JobsOverdueInput = z.infer<typeof jobsOverdueSchema>;
 export type MessagesDraftToClientInput = z.infer<typeof messagesDraftToClientSchema>;
+export type SendWhatsappTemplateInput = z.infer<typeof sendWhatsappTemplateSchema>;
+export type RequestWhatsappOptInInput = z.infer<typeof requestWhatsappOptInSchema>;
+export type GetWhatsappUsageInput = z.infer<typeof getWhatsappUsageSchema>;
+export type GetWhatsappTemplatesStatusInput = z.infer<typeof getWhatsappTemplatesStatusSchema>;
+export type GetWhatsappConversationInput = z.infer<typeof getWhatsappConversationSchema>;
 export type JobsStatusUpdateInput = z.infer<typeof jobsStatusUpdateSchema>;

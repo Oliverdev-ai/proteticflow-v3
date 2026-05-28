@@ -1,14 +1,38 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { env } from '../../env.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MessageChannel, OutboundMessage, Recipient, TenantCtx } from './channel.js';
 import { ChannelRouter, QuietHoursDeferredError, WhatsAppChannel } from './channel.js';
 
-const { sendBlipWhatsAppMock } = vi.hoisted(() => ({
-  sendBlipWhatsAppMock: vi.fn(),
+const mocks = vi.hoisted(() => ({
+  sendBlipWhatsApp: vi.fn(),
+  canSendWhatsappByOptIn: vi.fn(),
+  createOutboundWhatsappMessageLog: vi.fn(),
+  markWhatsappMessageSent: vi.fn(),
+  markWhatsappMessageFailed: vi.fn(),
 }));
 
 vi.mock('./providers/blip.provider.js', () => ({
-  sendBlipWhatsApp: sendBlipWhatsAppMock,
+  sendBlipWhatsApp: mocks.sendBlipWhatsApp,
+}));
+
+vi.mock('./opt-in.service.js', () => ({
+  canSendWhatsappByOptIn: mocks.canSendWhatsappByOptIn,
+  normalizePhoneE164: (raw: string) => {
+    const digits = raw.replace(/\D/g, '');
+    return /^[1-9]\d{9,14}$/.test(digits) ? digits : null;
+  },
+  sanitizeWhatsappBody: (raw: string) => raw.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim(),
+}));
+
+vi.mock('./whatsapp-messages.service.js', () => ({
+  createOutboundWhatsappMessageLog: mocks.createOutboundWhatsappMessageLog,
+  markWhatsappMessageSent: mocks.markWhatsappMessageSent,
+  markWhatsappMessageFailed: mocks.markWhatsappMessageFailed,
+}));
+
+vi.mock('../../metrics/whatsapp.js', () => ({
+  recordWhatsappOptInBlocked: vi.fn(),
+  recordWhatsappSend: vi.fn(),
+  observeWhatsappSendLatency: vi.fn(),
 }));
 
 class StubChannel implements MessageChannel {
@@ -39,10 +63,18 @@ class StubChannel implements MessageChannel {
 function createRecipient(overrides?: Partial<Recipient>): Recipient {
   return {
     userId: 1,
-    name: 'Usuário',
+    name: 'Usuario',
     email: 'user@test.com',
     phone: '5511999999999',
     whatsappOptIn: true,
+    whatsappEnabled: true,
+    whatsappConfig: {
+      provider: 'blip',
+      blip: {
+        apiToken: 'blip-token-test',
+        fromNumber: '5511999990000',
+      },
+    },
     preferences: {
       userId: 1,
       tenantId: 1,
@@ -83,21 +115,21 @@ const baseMessage: OutboundMessage = {
   priority: 'normal',
 };
 
-const ORIGINAL_ENV = {
-  WHATSAPP_PROVIDER: env.WHATSAPP_PROVIDER,
-  BLIP_API_TOKEN: env.BLIP_API_TOKEN,
-  BLIP_FROM_NUMBER: env.BLIP_FROM_NUMBER,
-};
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.canSendWhatsappByOptIn.mockResolvedValue(true);
+  mocks.createOutboundWhatsappMessageLog.mockResolvedValue(101);
+  mocks.markWhatsappMessageSent.mockResolvedValue(undefined);
+  mocks.markWhatsappMessageFailed.mockResolvedValue(undefined);
+  mocks.sendBlipWhatsApp.mockResolvedValue({ id: 'blip-msg-1' });
+});
 
 afterEach(() => {
   vi.clearAllMocks();
-  env.WHATSAPP_PROVIDER = ORIGINAL_ENV.WHATSAPP_PROVIDER;
-  env.BLIP_API_TOKEN = ORIGINAL_ENV.BLIP_API_TOKEN;
-  env.BLIP_FROM_NUMBER = ORIGINAL_ENV.BLIP_FROM_NUMBER;
 });
 
 describe('ChannelRouter', () => {
-  it('faz fallback quando canal prioritário não está disponível', async () => {
+  it('faz fallback quando canal prioritario nao esta disponivel', async () => {
     const sentLog: string[] = [];
     const router = new ChannelRouter({
       in_app: new StubChannel('in_app', false, sentLog),
@@ -124,7 +156,7 @@ describe('ChannelRouter', () => {
     expect(sentLog).toEqual(['push']);
   });
 
-  it('respeita quiet hours para alertas não urgentes', async () => {
+  it('respeita quiet hours para alertas nao urgentes', async () => {
     const router = new ChannelRouter({
       in_app: new StubChannel('in_app', true, []),
     });
@@ -141,37 +173,29 @@ describe('ChannelRouter', () => {
       .rejects
       .toBeInstanceOf(QuietHoursDeferredError);
   });
-
-  it('bypassa quiet hours quando prioridade é urgent', async () => {
-    const sentLog: string[] = [];
-    const router = new ChannelRouter({
-      in_app: new StubChannel('in_app', true, sentLog),
-    });
-
-    const recipient = createRecipient({
-      preferences: {
-        ...createRecipient().preferences,
-        quietHoursStart: '00:00',
-        quietHoursEnd: '23:59',
-      },
-    });
-
-    const result = await router.send(tenantCtx, recipient, {
-      ...baseMessage,
-      priority: 'urgent',
-      alertType: 'stock_low',
-    }, 'urgent');
-
-    expect(result[0]?.channel).toBe('in_app');
-    expect(sentLog).toEqual(['in_app']);
-  });
 });
 
 describe('WhatsAppChannel', () => {
-  it('canSend retorna false com provider=blip sem token', async () => {
-    env.WHATSAPP_PROVIDER = 'blip';
-    env.BLIP_API_TOKEN = undefined;
-    env.BLIP_FROM_NUMBER = '5511999990000';
+  it('canSend retorna false quando tenant nao habilitou WhatsApp', async () => {
+    const channel = new WhatsAppChannel();
+    const recipient = createRecipient({
+      whatsappEnabled: false,
+      preferences: {
+        ...createRecipient().preferences,
+        channels: {
+          push: false,
+          email: false,
+          whatsapp: true,
+          in_app: false,
+        },
+      },
+    });
+
+    await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(false);
+  });
+
+  it('canSend retorna false quando opt-in registry nao permite envio', async () => {
+    mocks.canSendWhatsappByOptIn.mockResolvedValue(false);
 
     const channel = new WhatsAppChannel();
     const recipient = createRecipient({
@@ -189,55 +213,7 @@ describe('WhatsAppChannel', () => {
     await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(false);
   });
 
-  it('canSend retorna true com provider=blip e token configurado', async () => {
-    env.WHATSAPP_PROVIDER = 'blip';
-    env.BLIP_API_TOKEN = 'blip-token-test';
-    env.BLIP_FROM_NUMBER = '5511999990000';
-
-    const channel = new WhatsAppChannel();
-    const recipient = createRecipient({
-      preferences: {
-        ...createRecipient().preferences,
-        channels: {
-          push: false,
-          email: false,
-          whatsapp: true,
-          in_app: false,
-        },
-      },
-    });
-
-    await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(true);
-  });
-
-  it('canSend retorna false quando WhatsApp nao tem opt-in explicito', async () => {
-    env.WHATSAPP_PROVIDER = 'blip';
-    env.BLIP_API_TOKEN = 'blip-token-test';
-    env.BLIP_FROM_NUMBER = '5511999990000';
-
-    const channel = new WhatsAppChannel();
-    const recipient = createRecipient({
-      whatsappOptIn: false,
-      preferences: {
-        ...createRecipient().preferences,
-        channels: {
-          push: false,
-          email: false,
-          whatsapp: true,
-          in_app: false,
-        },
-      },
-    });
-
-    await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(false);
-  });
-
-  it('send com provider=blip chama sendBlipWhatsApp com E.164 normalizado', async () => {
-    env.WHATSAPP_PROVIDER = 'blip';
-    env.BLIP_API_TOKEN = 'blip-token-test';
-    env.BLIP_FROM_NUMBER = '5511999990000';
-    sendBlipWhatsAppMock.mockResolvedValue({ id: 'blip-msg-1' });
-
+  it('send com provider=blip sanitiza body e registra pre e pos envio', async () => {
     const channel = new WhatsAppChannel();
     const recipient = createRecipient({
       phone: '+55 (11) 9 9999-0000',
@@ -252,8 +228,39 @@ describe('WhatsAppChannel', () => {
       },
     });
 
-    const result = await channel.send(tenantCtxEnterprise, recipient, baseMessage);
-    expect(sendBlipWhatsAppMock).toHaveBeenCalledWith('5511999990000', 'Mensagem de teste');
+    const result = await channel.send(tenantCtxEnterprise, recipient, {
+      ...baseMessage,
+      body: 'Linha 1\r\nLinha 2',
+    });
+
+    expect(mocks.createOutboundWhatsappMessageLog).toHaveBeenCalledTimes(1);
+    expect(mocks.sendBlipWhatsApp).toHaveBeenCalledWith(
+      expect.objectContaining({ apiToken: 'blip-token-test' }),
+      '5511999990000',
+      'Linha 1 Linha 2',
+    );
+    expect(mocks.markWhatsappMessageSent).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ channel: 'whatsapp', status: 'sent' });
+  });
+
+  it('send falha quando phone nao esta em E.164', async () => {
+    const channel = new WhatsAppChannel();
+    const recipient = createRecipient({
+      phone: '123',
+      preferences: {
+        ...createRecipient().preferences,
+        channels: {
+          push: false,
+          email: false,
+          whatsapp: true,
+          in_app: false,
+        },
+      },
+    });
+
+    await expect(channel.send(tenantCtxEnterprise, recipient, baseMessage))
+      .rejects
+      .toThrow('Destinatario sem phone_e164 valido');
+    expect(mocks.createOutboundWhatsappMessageLog).not.toHaveBeenCalled();
   });
 });

@@ -198,14 +198,6 @@ async function processMessageJob(job: Job<FlowMessageJobData>): Promise<void> {
 export async function startFlowQueueWorkers(): Promise<void> {
   if (started) return;
 
-  if (env.NODE_ENV === 'production' && env.WHATSAPP_PROVIDER === 'mock') {
-    logger.error(
-      { action: 'jobs_queue.bootstrap.invalid_whatsapp_provider' },
-      'WHATSAPP_PROVIDER=mock em producao; servico proativo nao inicializado',
-    );
-    throw new Error('WHATSAPP_PROVIDER=mock nao permitido em producao');
-  }
-
   await registerFlowSchedulers();
   const connection = getRedisConnectionOptions();
 
