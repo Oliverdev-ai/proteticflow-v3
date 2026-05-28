@@ -93,4 +93,22 @@ describe('handleWhatsappWebhook', () => {
     expect(result).toEqual({ accepted: true, replay: true });
     expect(mocks.recordWhatsappReplayBlocked).toHaveBeenCalledWith(77);
   });
+
+  it('ignora status update sem phone quando ainda nao existe mensagem base', async () => {
+    mocks.updateWhatsappMessageStatusRankAware.mockResolvedValue({ applied: false, replay: false });
+    const payload = Buffer.from(JSON.stringify({
+      event: 'status_update',
+      status: 'delivered',
+      provider_message_id: 'status-no-phone-1',
+    }));
+
+    const result = await handleWhatsappWebhook({
+      tenantSlug: 'lab-teste',
+      rawBody: payload,
+      signature: sign(payload, 'webhook-secret-test'),
+    });
+
+    expect(result).toEqual({ accepted: true, replay: false });
+    expect(mocks.recordWhatsappWebhookEvent).toHaveBeenCalledWith(77, 'status_update', 'ignored');
+  });
 });

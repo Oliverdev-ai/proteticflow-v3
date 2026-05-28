@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TRPCError } from '@trpc/server';
-import { sendWhatsappTemplateMessage } from './whatsapp.service.js';
+import { requestWhatsappOptInAndNotify, sendWhatsappTemplateMessage } from './whatsapp.service.js';
 
 const mocks = vi.hoisted(() => ({
   getTenantWhatsappConfigById: vi.fn(),
@@ -71,5 +71,28 @@ describe('sendWhatsappTemplateMessage', () => {
 
     expect(mocks.createOutboundWhatsappMessageLog).not.toHaveBeenCalled();
     expect(mocks.recordWhatsappOptInBlocked).toHaveBeenCalledWith(1, 'send_template_without_opt_in');
+  });
+});
+
+describe('requestWhatsappOptInAndNotify', () => {
+  it('bloqueia solicitacao quando WhatsApp do tenant esta desabilitado', async () => {
+    mocks.getTenantWhatsappConfigById.mockResolvedValue({
+      tenantId: 1,
+      tenantSlug: 'tenant-1',
+      whatsappEnabled: false,
+      whatsappConfig: { provider: 'mock' },
+      whatsappVerifiedAt: null,
+    });
+
+    await expect(requestWhatsappOptInAndNotify({
+      tenantId: 1,
+      userId: 9,
+      phone: '5511999990000',
+    })).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    } satisfies Partial<TRPCError>);
+
+    expect(mocks.requestWhatsappOptIn).not.toHaveBeenCalled();
+    expect(mocks.createOutboundWhatsappMessageLog).not.toHaveBeenCalled();
   });
 });

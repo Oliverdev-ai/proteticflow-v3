@@ -239,7 +239,6 @@ export class WhatsAppChannel implements MessageChannel {
     if (!isChannelEnabled(to.preferences, this.name)) return false;
     if (isAlertMuted(to.preferences, msg.alertType)) return false;
     if (!to.whatsappEnabled) return false;
-    if (!to.whatsappOptIn) return false;
     if (!to.phone) return false;
     const phoneE164 = normalizePhoneE164(to.phone);
     if (!phoneE164) return false;

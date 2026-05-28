@@ -213,6 +213,26 @@ describe('WhatsAppChannel', () => {
     await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(false);
   });
 
+  it('canSend ignora booleano local stale e confia no registro de opt-in', async () => {
+    mocks.canSendWhatsappByOptIn.mockResolvedValue(true);
+
+    const channel = new WhatsAppChannel();
+    const recipient = createRecipient({
+      whatsappOptIn: false,
+      preferences: {
+        ...createRecipient().preferences,
+        channels: {
+          push: false,
+          email: false,
+          whatsapp: true,
+          in_app: false,
+        },
+      },
+    });
+
+    await expect(channel.canSend(tenantCtxEnterprise, recipient, baseMessage)).resolves.toBe(true);
+  });
+
   it('send com provider=blip sanitiza body e registra pre e pos envio', async () => {
     const channel = new WhatsAppChannel();
     const recipient = createRecipient({

@@ -232,6 +232,19 @@ export async function handleWhatsappWebhook(input: {
     return { accepted: true, replay: true };
   }
 
+  if (!updated.applied) {
+    logger.warn(
+      {
+        action: 'whatsapp.webhook.status_update_without_phone',
+        tenantId: tenant.tenantId,
+        providerMessageId: event.providerMessageId,
+      },
+      'Status update recebido sem phone e sem mensagem base para reconciliar',
+    );
+    recordWhatsappWebhookEvent(tenant.tenantId, event.eventType, 'ignored');
+    return { accepted: true, replay: false };
+  }
+
   recordWhatsappWebhookEvent(tenant.tenantId, event.eventType, 'processed');
   return { accepted: true, replay: false };
 }

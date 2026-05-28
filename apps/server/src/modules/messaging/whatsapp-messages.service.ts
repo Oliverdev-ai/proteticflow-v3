@@ -169,6 +169,10 @@ export async function updateWhatsappMessageStatusRankAware(input: {
     .limit(1);
 
   if (!current) {
+    if (!input.fallbackPhoneE164) {
+      return { applied: false, replay: false };
+    }
+
     const [created] = await db
       .insert(whatsappMessages)
       .values({
@@ -178,7 +182,7 @@ export async function updateWhatsappMessageStatusRankAware(input: {
         statusRank: nextRank,
         provider: input.provider,
         providerMessageId: input.providerMessageId,
-        phoneE164: input.fallbackPhoneE164 ?? 'unknown',
+        phoneE164: input.fallbackPhoneE164,
         body: '',
         meta: input.meta ?? {},
         updatedAt: now,
