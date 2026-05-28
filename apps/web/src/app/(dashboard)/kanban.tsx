@@ -103,7 +103,7 @@ function JobCard({
         'flex cursor-pointer flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-all ',
         dragging
           ? 'rotate-2 scale-105 border-primary opacity-50 shadow-md ring-2 ring-primary/20'
-          : 'hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5',
+          : 'hover:border-primary/50 hover:shadow-md',
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -427,7 +427,7 @@ export default function KanbanPage() {
               className={cn(
                 'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold shadow-sm transition-all ',
                 overdueOnly
-                  ? 'border-destructive bg-destructive text-destructive-foreground shadow-destructive/20'
+                  ? 'border-destructive bg-destructive text-destructive-foreground'
                   : 'border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground',
               )}
             >

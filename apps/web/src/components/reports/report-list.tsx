@@ -41,7 +41,7 @@ export function ReportList({ reports, selectedType, onSelect }: ReportListProps)
               className={cn(
                 "group w-full text-left p-4 rounded-lg border-2 transition-all duration-500 relative flex items-center gap-4  overflow-hidden",
                 isSelected 
-                  ? 'border-primary bg-primary/[0.03] shadow-lg shadow-primary/5' 
+                  ? 'border-primary bg-primary/[0.03] shadow-lg' 
                   : isDisabled 
                     ? 'border-transparent bg-muted/20 opacity-40 grayscale cursor-not-allowed'
                     : 'border-border/40 bg-card/50 hover:border-primary/30 hover:bg-muted/50'

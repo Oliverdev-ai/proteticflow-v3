@@ -218,7 +218,7 @@ export default function KanbanTvPage() {
                       theme.border,
                       theme.bg,
                       idx === 0
-                        ? 'scale-100 ring-4 ring-primary/20 brightness-110 shadow-primary/10'
+                        ? 'scale-100 ring-4 ring-primary/20 brightness-110'
                         : 'scale-[0.98] opacity-90',
                     )}
                   >

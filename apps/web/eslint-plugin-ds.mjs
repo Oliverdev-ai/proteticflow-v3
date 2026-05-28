@@ -79,10 +79,30 @@ export default {
 
           CallExpression(node) {
             if (!isCnCall(node)) return;
-            for (const arg of node.arguments) {
+
+            function walkArg(arg) {
+              if (!arg) return;
+
               if (arg.type === 'Literal') {
                 checkString(arg.value, arg);
+                return;
               }
+
+              if (arg.type === 'ConditionalExpression') {
+                walkArg(arg.consequent);
+                walkArg(arg.alternate);
+                return;
+              }
+
+              if (arg.type === 'ArrayExpression') {
+                for (const element of arg.elements) {
+                  if (element) walkArg(element);
+                }
+              }
+            }
+
+            for (const arg of node.arguments) {
+              walkArg(arg);
             }
           },
 

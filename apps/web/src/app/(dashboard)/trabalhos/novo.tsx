@@ -189,7 +189,7 @@ export default function JobCreatePage() {
                   i < step
                     ? 'bg-success text-white shadow-emerald-500/20'
                     : i === step
-                      ? 'bg-primary text-primary-foreground shadow-primary/30 scale-110 ring-4 ring-primary/10'
+                      ? 'bg-primary text-primary-foreground scale-110 ring-4 ring-primary/10'
                       : 'bg-muted text-muted-foreground border border-border opacity-40',
                 )}
               >
@@ -320,7 +320,7 @@ export default function JobCreatePage() {
                       className={cn(
                         'group p-6 rounded-lg border-2 transition-all duration-500 relative overflow-hidden flex items-center gap-6 text-left ',
                         clientId === c.id
-                          ? 'border-primary bg-primary/[0.03] shadow-xl shadow-primary/10'
+                          ? 'border-primary bg-primary/[0.03] shadow-xl'
                           : 'border-border bg-muted/40 hover:border-primary/40 hover:bg-muted/80',
                       )}
                     >
