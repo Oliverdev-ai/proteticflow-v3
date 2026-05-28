@@ -187,7 +187,7 @@ export default function JobCreatePage() {
                 className={cn(
                   'w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center text-sm font-semibold transition-all duration-500 shadow-lg',
                   i < step
-                    ? 'bg-success text-white shadow-emerald-500/20'
+                    ? 'bg-success text-white'
                     : i === step
                       ? 'bg-primary text-primary-foreground scale-110 ring-4 ring-primary/10'
                       : 'bg-muted text-muted-foreground border border-border opacity-40',
@@ -293,7 +293,7 @@ export default function JobCreatePage() {
                 {resolveQuery.data && (
                   <div className="md:col-span-2 p-6 rounded-lg bg-success/[0.03] border-2 border-success ring-4 ring-emerald-500/10 flex items-center justify-between shadow-md animate-in zoom-in-95 duration-500">
                     <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 flex items-center justify-center rounded-[var(--radius-lg)] bg-success text-white shadow-xl shadow-emerald-500/30">
+                      <div className="w-16 h-16 flex items-center justify-center rounded-[var(--radius-lg)] bg-success text-white shadow-xl">
                         <CheckCircle2 size={28} strokeWidth={2.5} />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -750,7 +750,7 @@ export default function JobCreatePage() {
           <ScaleIn className="p-8 flex flex-col gap-10">
             <div className="flex items-center justify-between pb-8 border-b border-border/50 relative">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-success text-white shadow-lg shadow-emerald-500/20">
+                <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-success text-white shadow-lg">
                   <ShieldCheck size={24} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -936,7 +936,7 @@ export default function JobCreatePage() {
               data-testid="btn-create-job"
               disabled={createMutation.isPending}
               onClick={handleSubmit}
-              className="flex-1 py-6 rounded-lg bg-success text-white text-[10px] font-semibold uppercase tracking-normal shadow-md shadow-emerald-500/20 hover:brightness-110 disabled:opacity-50 transition-all duration-500 flex items-center justify-center gap-3  group"
+              className="flex-1 py-6 rounded-lg bg-success text-white text-[10px] font-semibold uppercase tracking-normal shadow-md hover:brightness-110 disabled:opacity-50 transition-all duration-500 flex items-center justify-center gap-3  group"
             >
               {createMutation.isPending ? (
                 <Loader2 className="animate-spin" size={16} strokeWidth={3} />

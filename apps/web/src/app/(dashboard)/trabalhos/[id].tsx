@@ -420,7 +420,7 @@ export default function JobDetailPage() {
                     className={cn(
                       'w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center text-sm font-semibold transition-all duration-700 shadow-lg',
                       isPast
-                        ? 'bg-success text-white shadow-emerald-500/10'
+                        ? 'bg-success text-white'
                         : isCurrent
                           ? 'bg-primary text-primary-foreground scale-110 ring-4 ring-primary/10'
                           : 'bg-muted/40 text-muted-foreground border border-border opacity-30 grayscale',
