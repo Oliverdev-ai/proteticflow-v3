@@ -69,3 +69,6 @@ export * from './timesheets';
 
 // Motor proativo (briefing + alertas dedup + preferencias)
 export * from './proactive';
+
+// WhatsApp BSP real (templates, opt-ins, mensagens)
+export * from './whatsapp';

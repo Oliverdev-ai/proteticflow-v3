@@ -12,7 +12,7 @@ export default function AuthLayout() {
       {/* Conteúdo (acima do canvas) */}
       <div className="relative z-10 flex flex-col items-center">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[var(--info-soft)] flex items-center justify-center shadow-lg shadow-sky-500/20">
+          <div className="w-12 h-12 rounded-xl bg-[var(--info-soft)] flex items-center justify-center shadow-lg">
             <Layers3 size={22} className="text-white" />
           </div>
           <span className="text-muted-foreground text-xl font-semibold tracking-tight">ProteticFlow</span>

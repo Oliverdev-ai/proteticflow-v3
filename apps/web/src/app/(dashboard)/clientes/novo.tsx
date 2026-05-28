@@ -10,14 +10,20 @@ import {
   Loader2,
   MapPin,
   Building2,
-  User,
-  Mail,
   Percent,
   ChevronRight,
   Share2,
 } from 'lucide-react';
 import { PageTransition } from '../../../components/shared/page-transition';
-import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
+import { PageTitle, Subtitle } from '../../../components/shared/typography';
+import {
+  FORM_CONTROL_CLASS,
+  FORM_SELECT_CLASS,
+  FormError,
+  FormField,
+  FormSection,
+} from '../../../components/ui/form';
+import { Input } from '../../../components/ui/input';
 import { cn } from '../../../lib/utils';
 
 type ClientFormInput = z.input<typeof createClientSchema>;
@@ -85,11 +91,6 @@ export default function ClientCreatePage() {
     createMutation.mutate(payload);
   };
 
-  const inputClass =
-    'w-full bg-muted border border-border rounded-xl px-4 py-2 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
-  const labelClass =
-    'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
-
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-4xl mx-auto pb-12">
       {/* Header */}
@@ -111,262 +112,172 @@ export default function ClientCreatePage() {
         <div className="md:col-span-8 flex flex-col gap-8">
           {/* Sessão 1: Informações Gerais */}
           <section className="premium-card p-6 flex flex-col gap-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <Building2 size={20} />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
-                  Identificação
-                </h2>
-                <Muted className="text-[10px] uppercase font-bold tracking-normal">
-                  Nome e dados de identificação
-                </Muted>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className={labelClass}>Nome Completo / Razão Social *</label>
-                <div className="relative">
-                  <input
+            <FormSection
+              title="Identificação"
+              description="Nome e dados de identificação"
+              icon={<Building2 size={20} />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Input
+                    label="Nome Completo / Razão Social"
+                    data-testid="input-client-name"
+                    required
+                    error={errors.name?.message}
                     {...register('name')}
                     placeholder="Ex: Dr. Leandro Castro ou Clínica Odonto"
-                    className={inputClass}
-                  />
-                  <User
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/30"
-                    size={16}
                   />
                 </div>
-                {errors.name && (
-                  <p className="text-destructive text-[10px] font-semibold uppercase tracking-normal mt-2 ml-1">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
 
-              <div>
-                <label className={labelClass}>Clínica Responsável</label>
-                <input
+                <Input
+                  label="Clínica Responsável"
                   {...register('clinic')}
                   placeholder="Nome da empresa (opcional)"
-                  className={inputClass}
                 />
-              </div>
-              <div>
-                <label className={labelClass}>Pessoa de Contato</label>
-                <input
+                <Input
+                  label="Pessoa de Contato"
                   {...register('contactPerson')}
                   placeholder="Secretária ou Responsável"
-                  className={inputClass}
                 />
-              </div>
 
-              <div>
-                <label className={labelClass}>Email Principal</label>
-                <div className="relative">
-                  <input
-                    {...register('email')}
-                    type="email"
-                    placeholder="contato@exemplo.com"
-                    className={inputClass}
-                  />
-                  <Mail
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/30"
-                    size={16}
-                  />
+                <Input
+                  label="Email Principal"
+                  type="email"
+                  {...register('email')}
+                  placeholder="contato@exemplo.com"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input label="WhatsApp" {...register('phone')} placeholder="(00) 00000-0000" />
+                  <Input label="Fixo" {...register('phone2')} placeholder="(00) 0000-0000" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className={labelClass}>WhatsApp</label>
-                  <input
-                    {...register('phone')}
-                    placeholder="(00) 00000-0000"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Fixo</label>
-                  <input
-                    {...register('phone2')}
-                    placeholder="(00) 0000-0000"
-                    className={inputClass}
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className={labelClass}>Tipo de Pessoa</label>
-                <select
-                  {...register('documentType')}
-                  className={cn(
-                    inputClass,
-                    "appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAyNCAyNCIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJtNiA5IDYgNiA2LTYiLz48L3N2Zz4=')] bg-[length:1.25rem_1.25rem] bg-[right_1rem_center] bg-no-repeat",
-                  )}
-                >
-                  <option value="">Selecione...</option>
-                  <option value="cpf">PESSOA FÍSICA (CPF)</option>
-                  <option value="cnpj">PESSOA JURÍDICA (CNPJ)</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Documento (CPF/CNPJ)</label>
-                <input
+                <FormField label="Tipo de Pessoa">
+                  <select
+                    data-testid="select-document-type"
+                    {...register('documentType')}
+                    className={FORM_SELECT_CLASS}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="cpf">PESSOA FÍSICA (CPF)</option>
+                    <option value="cnpj">PESSOA JURÍDICA (CNPJ)</option>
+                  </select>
+                </FormField>
+                <Input
+                  label="Documento (CPF/CNPJ)"
                   {...register('document')}
                   placeholder="000.000.000-00"
-                  className={inputClass}
                 />
               </div>
-            </div>
+            </FormSection>
           </section>
 
           {/* Sessão 2: Endereço */}
           <section className="premium-card p-6 flex flex-col gap-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <MapPin size={20} />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
-                  Localização
-                </h2>
-                <Muted className="text-[10px] uppercase font-bold tracking-normal">
-                  Endereço de coleta e entrega
-                </Muted>
-              </div>
-            </div>
+            <FormSection
+              title="Localização"
+              description="Endereço de coleta e entrega"
+              icon={<MapPin size={20} />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="md:col-span-4">
+                  <Input
+                    label="CEP"
+                    hint={
+                      lookupQuery.isLoading
+                        ? 'Buscando endereço...'
+                        : lookupQuery.error
+                          ? 'Endereço não encontrado'
+                          : undefined
+                    }
+                    {...register('zipCode')}
+                    placeholder="00000-000"
+                  />
+                </div>
+                <div className="md:col-span-8">
+                  <Input
+                    label="Logradouro"
+                    {...register('street')}
+                    placeholder="Rua, Avenida..."
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-4">
-                <label className={labelClass}>
-                  CEP{' '}
-                  {lookupQuery.isLoading && (
-                    <Loader2 size={10} className="animate-spin inline ml-1 text-primary" />
-                  )}
-                </label>
-                <input {...register('zipCode')} placeholder="00000-000" className={inputClass} />
-                {lookupQuery.error && (
-                  <p className="text-[var(--warning)] text-[10px] font-semibold uppercase tracking-normal mt-2 animate-pulse">
-                    Endereço não encontrado
-                  </p>
-                )}
-              </div>
-              <div className="md:col-span-8">
-                <label className={labelClass}>Logradouro</label>
-                <input
-                  {...register('street')}
-                  placeholder="Rua, Avenida..."
-                  className={inputClass}
-                />
-              </div>
+                <div className="md:col-span-3">
+                  <Input label="Número" {...register('addressNumber')} />
+                </div>
+                <div className="md:col-span-4">
+                  <Input
+                    label="Complemento"
+                    {...register('complement')}
+                    placeholder="Sala, Apto, Bloco"
+                  />
+                </div>
+                <div className="md:col-span-5">
+                  <Input label="Bairro" {...register('neighborhood')} />
+                </div>
 
-              <div className="md:col-span-3">
-                <label className={labelClass}>Número</label>
-                <input {...register('addressNumber')} className={inputClass} />
+                <div className="md:col-span-9">
+                  <Input label="Cidade" {...register('city')} />
+                </div>
+                <div className="md:col-span-3">
+                  <Input
+                    label="Estado (UF)"
+                    {...register('state')}
+                    maxLength={2}
+                    placeholder="UF"
+                    className="uppercase text-center"
+                  />
+                </div>
               </div>
-              <div className="md:col-span-4">
-                <label className={labelClass}>Complemento</label>
-                <input
-                  {...register('complement')}
-                  placeholder="Sala, Apto, Bloco"
-                  className={inputClass}
-                />
-              </div>
-              <div className="md:col-span-5">
-                <label className={labelClass}>Bairro</label>
-                <input {...register('neighborhood')} className={inputClass} />
-              </div>
-
-              <div className="md:col-span-9">
-                <label className={labelClass}>Cidade</label>
-                <input {...register('city')} className={inputClass} />
-              </div>
-              <div className="md:col-span-3">
-                <label className={labelClass}>Estado (UF)</label>
-                <input
-                  {...register('state')}
-                  maxLength={2}
-                  placeholder="UF"
-                  className={cn(inputClass, 'uppercase text-center')}
-                />
-              </div>
-            </div>
+            </FormSection>
           </section>
         </div>
 
         {/* Coluna Lateral: Preferências e Ações */}
         <div className="md:col-span-4 flex flex-col gap-8">
           <section className="premium-card p-6 flex flex-col gap-6 sticky top-8">
-            <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <Percent size={20} />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold uppercase tracking-normal text-foreground">
-                  Comercial
-                </h2>
-                <Muted className="text-[10px] uppercase font-bold tracking-normal">
-                  Tabelas e ajustes
-                </Muted>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className={labelClass}>Ajuste Global (%)</label>
-                <div className="relative">
-                  <input
-                    {...register('priceAdjustmentPercent', { valueAsNumber: true })}
-                    type="number"
-                    step="0.01"
-                    min="-100"
-                    max="100"
-                    className={cn(inputClass, 'pr-12')}
-                  />
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-background border border-border rounded-lg text-xs font-semibold text-primary">
-                    %
-                  </div>
-                </div>
-                <Muted className="text-[9px] uppercase tracking-normal mt-2 leading-relaxed">
-                  Valores negativos aplicam desconto. <br />
-                  Ex: -10 = 10% OFF automático.
-                </Muted>
-              </div>
-
-              <div>
-                <label className={labelClass}>Observações Técnicas</label>
-                <textarea
-                  {...register('technicalPreferences')}
-                  rows={6}
-                  placeholder="Instruções recorrentes, materiais de preferência, etc..."
-                  className={cn(inputClass, 'resize-none min-h-[140px]')}
+            <FormSection
+              title="Comercial"
+              description="Tabelas e ajustes"
+              icon={<Percent size={20} />}
+            >
+              <div className="space-y-4">
+                <Input
+                  label="Ajuste Global (%)"
+                  hint="Valores negativos aplicam desconto. Ex: -10 = 10% OFF automático."
+                  {...register('priceAdjustmentPercent', { valueAsNumber: true })}
+                  type="number"
+                  step="0.01"
+                  min="-100"
+                  max="100"
                 />
+
+                <FormField label="Observações Técnicas">
+                  <textarea
+                    data-testid="textarea-technical-preferences"
+                    {...register('technicalPreferences')}
+                    rows={6}
+                    placeholder="Instruções recorrentes, materiais de preferência, etc..."
+                    className={cn(FORM_CONTROL_CLASS, 'resize-none min-h-[140px]')}
+                  />
+                </FormField>
               </div>
-            </div>
+            </FormSection>
 
             <div className="pt-6 flex flex-col gap-3 border-t border-border/50">
-              {createMutation.error && (
-                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-[10px] font-semibold uppercase tracking-normal text-center">
-                  {createMutation.error.message}
-                </div>
-              )}
+              {createMutation.error ? <FormError>{createMutation.error.message}</FormError> : null}
 
               <button
                 type="submit"
+                data-testid="btn-create-client"
                 disabled={isSubmitting || createMutation.isPending}
                 className="w-full bg-primary text-primary-foreground text-xs font-semibold px-6 py-4 rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110  uppercase tracking-normal flex items-center justify-center gap-2"
               >
                 {createMutation.isPending ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" /> Salvando...
-                  </>
+                  <Loader2 size={16} className="animate-spin" aria-hidden />
                 ) : (
-                  <>
-                    <ChevronRight size={16} strokeWidth={3} /> Criar Parceiro
-                  </>
+                  <ChevronRight size={16} strokeWidth={3} />
                 )}
+                Criar Parceiro
               </button>
 
               <button

@@ -22,7 +22,9 @@ export function PortalHeader({ tenantName, tenantLogoUrl, tenantPrimaryColor, cl
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-normal">Portal do Cliente</p>
           <h1 className="text-xl font-semibold text-muted-foreground">{tenantName}</h1>
-          <p className="text-sm text-muted-foreground">Cliente: {clientName}</p>
+          <p className="text-sm text-muted-foreground" data-testid="portal-client-name">
+            Cliente: {clientName}
+          </p>
         </div>
       </div>
     </header>

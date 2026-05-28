@@ -16,6 +16,7 @@ import { globalLimiter, authLimiter } from './middleware/rate-limit.js';
 import { requestLogger } from './middleware/request-logger.js';
 import { initSentry } from './core/sentry.js';
 import { ensureBucket } from './core/storage-bootstrap.js';
+import { handleWhatsappWebhook, WhatsappWebhookError } from './modules/messaging/webhook.service.js';
 
 const app = express();
 initSentry();
@@ -59,6 +60,34 @@ app.post(
   },
 );
 
+app.post(
+  '/webhooks/whatsapp/:tenantSlug',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const tenantSlug = String(req.params['tenantSlug'] ?? '');
+    const signature = req.header('x-whatsapp-signature')
+      ?? req.header('x-hub-signature-256')
+      ?? req.header('x-signature')
+      ?? '';
+
+    try {
+      const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body ?? '');
+      const result = await handleWhatsappWebhook({
+        tenantSlug,
+        rawBody,
+        signature,
+      });
+      return res.status(200).json({ received: result.accepted, replay: result.replay });
+    } catch (error) {
+      if (error instanceof WhatsappWebhookError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      logger.error({ err: error, tenantSlug }, 'WhatsApp webhook error');
+      return res.status(500).json({ error: 'Webhook error' });
+    }
+  },
+);
+
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
@@ -76,14 +105,6 @@ app.use(
     createContext: createContext(db),
   }),
 );
-
-if (env.NODE_ENV === 'production' && env.WHATSAPP_PROVIDER === 'mock') {
-  logger.error(
-    { action: 'bootstrap.invalid_whatsapp_provider' },
-    'WHATSAPP_PROVIDER=mock nao permitido em producao',
-  );
-  process.exit(1);
-}
 
 app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'Server iniciado');

@@ -135,7 +135,10 @@ export default function FinancialDashboard() {
   const { data: summary, isLoading } = trpc.financial.dashboardSummary.useQuery();
 
   return (
-    <PageTransition className="flex flex-col gap-10 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
+    <PageTransition
+      data-testid="page-financial-dashboard"
+      className="flex flex-col gap-10 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12"
+    >
       {/* Header */}
       <div className="flex flex-col gap-1">
         <PageTitle className="tracking-tight">Gestão Financeira</PageTitle>
@@ -190,6 +193,7 @@ export default function FinancialDashboard() {
               <Link
                 key={id}
                 to={href}
+                data-testid={`finance-module-${id}`}
                 className="premium-card p-8 flex items-center justify-between group hover:border-primary/50 hover:bg-primary/[0.02] transition-all duration-500 hover:-translate-y-1 "
               >
                 <div className="flex items-center gap-6">

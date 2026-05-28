@@ -67,6 +67,7 @@ export function PortalTokenManager({ clientId }: PortalTokenManagerProps) {
           </label>
           <button
             type="button"
+            data-testid="btn-generate-portal-token"
             onClick={() => createMutation.mutate({ clientId, expiresInDays })}
             className="px-4 py-2 rounded-lg bg-primary hover:bg-primary text-white text-sm"
           >

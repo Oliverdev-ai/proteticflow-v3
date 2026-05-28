@@ -187,9 +187,9 @@ export default function JobCreatePage() {
                 className={cn(
                   'w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center text-sm font-semibold transition-all duration-500 shadow-lg',
                   i < step
-                    ? 'bg-success text-white shadow-emerald-500/20'
+                    ? 'bg-success text-white'
                     : i === step
-                      ? 'bg-primary text-primary-foreground shadow-primary/30 scale-110 ring-4 ring-primary/10'
+                      ? 'bg-primary text-primary-foreground scale-110 ring-4 ring-primary/10'
                       : 'bg-muted text-muted-foreground border border-border opacity-40',
                 )}
               >
@@ -293,7 +293,7 @@ export default function JobCreatePage() {
                 {resolveQuery.data && (
                   <div className="md:col-span-2 p-6 rounded-lg bg-success/[0.03] border-2 border-success ring-4 ring-emerald-500/10 flex items-center justify-between shadow-md animate-in zoom-in-95 duration-500">
                     <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 flex items-center justify-center rounded-[var(--radius-lg)] bg-success text-white shadow-xl shadow-emerald-500/30">
+                      <div className="w-16 h-16 flex items-center justify-center rounded-[var(--radius-lg)] bg-success text-white shadow-xl">
                         <CheckCircle2 size={28} strokeWidth={2.5} />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -315,11 +315,12 @@ export default function JobCreatePage() {
                   clientsData?.data.map((c) => (
                     <button
                       key={c.id}
+                      data-testid={`client-option-${c.id}`}
                       onClick={() => setClientId(clientId === c.id ? null : c.id)}
                       className={cn(
                         'group p-6 rounded-lg border-2 transition-all duration-500 relative overflow-hidden flex items-center gap-6 text-left ',
                         clientId === c.id
-                          ? 'border-primary bg-primary/[0.03] shadow-xl shadow-primary/10'
+                          ? 'border-primary bg-primary/[0.03] shadow-xl'
                           : 'border-border bg-muted/40 hover:border-primary/40 hover:bg-muted/80',
                       )}
                     >
@@ -434,6 +435,7 @@ export default function JobCreatePage() {
                 )}
 
                 <button
+                  data-testid="btn-add-manual-item"
                   onClick={() => addItem()}
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-lg border-2 border-dashed border-border text-[9px] font-semibold text-muted-foreground uppercase tracking-normal hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all "
                 >
@@ -463,6 +465,7 @@ export default function JobCreatePage() {
                         </div>
                         <div className="flex-1 flex flex-col gap-1">
                           <input
+                            data-testid={`input-item-name-${i}`}
                             value={item.serviceNameSnapshot}
                             onChange={(e) => updateItem(i, 'serviceNameSnapshot', e.target.value)}
                               placeholder="Descrição do Serviço..."
@@ -490,6 +493,7 @@ export default function JobCreatePage() {
                                   R$
                                 </span>
                                 <input
+                                  data-testid={`input-item-unit-price-${i}`}
                                   type="number"
                                   value={item.unitPriceCents / 100}
                                   onChange={(e) =>
@@ -570,6 +574,7 @@ export default function JobCreatePage() {
                     strokeWidth={2.5}
                   />
                   <input
+                    data-testid="input-patient-name"
                     placeholder="Nome completo para rastreio..."
                     value={details.patientName}
                     onChange={(e) => setDetails((d) => ({ ...d, patientName: e.target.value }))}
@@ -638,6 +643,7 @@ export default function JobCreatePage() {
                     strokeWidth={3}
                   />
                   <input
+                    data-testid="input-job-deadline"
                     type="date"
                     value={details.deadline}
                     onChange={(e) => setDetails((d) => ({ ...d, deadline: e.target.value }))}
@@ -744,7 +750,7 @@ export default function JobCreatePage() {
           <ScaleIn className="p-8 flex flex-col gap-10">
             <div className="flex items-center justify-between pb-8 border-b border-border/50 relative">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-success text-white shadow-lg shadow-emerald-500/20">
+                <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-success text-white shadow-lg">
                   <ShieldCheck size={24} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -913,6 +919,7 @@ export default function JobCreatePage() {
           )}
           {step < 3 ? (
             <button
+              data-testid="btn-step-next"
               disabled={!canNext()}
               onClick={() => setStep((s) => s + 1)}
               className="flex-1 py-6 rounded-lg bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal shadow-md shadow-sm hover:brightness-110 disabled:opacity-30 disabled:grayscale transition-all duration-300 flex items-center justify-center gap-3  group"
@@ -926,9 +933,10 @@ export default function JobCreatePage() {
             </button>
           ) : (
             <button
+              data-testid="btn-create-job"
               disabled={createMutation.isPending}
               onClick={handleSubmit}
-              className="flex-1 py-6 rounded-lg bg-success text-white text-[10px] font-semibold uppercase tracking-normal shadow-md shadow-emerald-500/20 hover:brightness-110 disabled:opacity-50 transition-all duration-500 flex items-center justify-center gap-3  group"
+              className="flex-1 py-6 rounded-lg bg-success text-white text-[10px] font-semibold uppercase tracking-normal shadow-md hover:brightness-110 disabled:opacity-50 transition-all duration-500 flex items-center justify-center gap-3  group"
             >
               {createMutation.isPending ? (
                 <Loader2 className="animate-spin" size={16} strokeWidth={3} />

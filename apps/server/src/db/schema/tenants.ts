@@ -9,7 +9,10 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  jsonb,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import type { WhatsappTenantConfig } from './whatsapp';
 
 // Enums
 export const planTierEnum = pgEnum('plan_tier', ['trial', 'starter', 'pro', 'enterprise']);
@@ -30,6 +33,12 @@ export const tenants = pgTable('tenants', {
   cnpj: varchar('cnpj', { length: 18 }),
   phone: varchar('phone', { length: 32 }),
   email: varchar('email', { length: 320 }),
+  whatsappEnabled: boolean('whatsapp_enabled').default(false).notNull(),
+  whatsappConfig: jsonb('whatsapp_config')
+    .$type<WhatsappTenantConfig>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
+  whatsappVerifiedAt: timestamp('whatsapp_verified_at', { withTimezone: true }),
   address: text('address'),
   city: varchar('city', { length: 128 }),
   state: varchar('state', { length: 2 }),

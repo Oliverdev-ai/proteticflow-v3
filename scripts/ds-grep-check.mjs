@@ -27,6 +27,11 @@ const checks = [
     expectEmpty: true,
   },
   {
+    name: 'shadow colorida banida',
+    cmd: 'rg --no-ignore -l "shadow-(primary|accent|success|warning|destructive|info)/|shadow-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral)-[0-9]" apps/web/src',
+    expectEmpty: true,
+  },
+  {
     name: 'emoji em chrome',
     cmd: 'rg --no-ignore -lP "[\\x{2600}-\\x{27BF}]|[\\x{1F300}-\\x{1FAFF}]" apps/web/src/app apps/web/src/components',
     expectEmpty: true,

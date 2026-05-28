@@ -869,6 +869,45 @@ function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities
     }
   }
 
+  if (intent === 'send_whatsapp_template') {
+    if (typeof entities.clientId === 'number') {
+      input.clientId = entities.clientId;
+    }
+    if (typeof entities.phone === 'string') {
+      input.phone = entities.phone;
+    }
+    if (typeof entities.templateName === 'string') {
+      input.templateName = entities.templateName;
+    }
+  }
+
+  if (intent === 'request_whatsapp_opt_in') {
+    if (typeof entities.clientId === 'number') {
+      input.clientId = entities.clientId;
+    }
+    if (typeof entities.phone === 'string') {
+      input.phone = entities.phone;
+    }
+  }
+
+  if (intent === 'get_whatsapp_usage') {
+    if (typeof entities.startDate === 'string') {
+      input.startAt = entities.startDate;
+    }
+    if (typeof entities.endDate === 'string') {
+      input.endAt = entities.endDate;
+    }
+  }
+
+  if (intent === 'get_whatsapp_conversation') {
+    if (typeof entities.clientId === 'number') {
+      input.clientId = entities.clientId;
+    }
+    if (typeof entities.phone === 'string') {
+      input.phone = entities.phone;
+    }
+  }
+
   if (intent === 'memory.remember') {
     if (typeof entities.key === 'string') {
       input.key = entities.key.trim().toLowerCase();

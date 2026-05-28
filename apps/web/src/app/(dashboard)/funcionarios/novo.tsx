@@ -3,8 +3,10 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createEmployeeSchema } from '@proteticflow/shared';
 import { trpc } from '../../../lib/trpc';
-import { ArrowLeft, Loader2, User, MapPin, Briefcase, CreditCard, Percent } from 'lucide-react';
+import { ArrowLeft, Loader2, User, MapPin, Briefcase, CreditCard } from 'lucide-react';
 import type { z } from 'zod';
+import { FORM_SELECT_CLASS, FormError, FormField } from '../../../components/ui/form';
+import { Input } from '../../../components/ui/input';
 
 type FormData = z.input<typeof createEmployeeSchema>;
 
@@ -59,59 +61,38 @@ export default function EmployeeCreatePage() {
               <User size={16} className="text-primary" /> Informações Pessoais
             </h2>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1.5">Nome Completo *</label>
-                <input
-                  {...register('name')}
-                  placeholder="Nome do funcionário"
-                  className="input-field w-full"
-                />
-                {errors.name && <p className="text-[var(--destructive)] text-xs mt-1">{errors.name.message}</p>}
-              </div>
+              <Input
+                label="Nome Completo"
+                required
+                error={errors.name?.message}
+                {...register('name')}
+                placeholder="Nome do funcionário"
+              />
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">CPF</label>
-                  <input
-                    {...register('cpf')}
-                    placeholder="000.000.000-00"
-                    className="input-field w-full"
-                  />
+                  <Input label="CPF" {...register('cpf')} placeholder="000.000.000-00" />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">RG</label>
-                  <input
-                    {...register('rg')}
-                    placeholder="00.000.000-0"
-                    className="input-field w-full"
-                  />
+                  <Input label="RG" {...register('rg')} placeholder="00.000.000-0" />
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1.5">Email</label>
-                <input
-                  {...register('email')}
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  className="input-field w-full"
-                />
-              </div>
+              <Input
+                label="Email"
+                {...register('email')}
+                type="email"
+                placeholder="email@exemplo.com"
+              />
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Telefone</label>
-                  <input
-                    {...register('phone')}
-                    placeholder="(00) 00000-0000"
-                    className="input-field w-full"
-                  />
+                  <Input label="Telefone" {...register('phone')} placeholder="(00) 00000-0000" />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Nascimento</label>
-                  <input
+                  <Input
+                    label="Nascimento"
                     {...register('birthDate', {
                       setValueAs: dateInputToIso,
                     })}
                     type="date"
-                    className="input-field w-full"
                   />
                 </div>
               </div>
@@ -126,40 +107,26 @@ export default function EmployeeCreatePage() {
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
-                  <label className="block text-xs text-muted-foreground mb-1.5">CEP</label>
-                  <input
-                    {...register('zipCode')}
-                    placeholder="00000-000"
-                    className="input-field w-full"
-                  />
+                  <Input label="CEP" {...register('zipCode')} placeholder="00000-000" />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-muted-foreground mb-1.5">Rua</label>
-                  <input {...register('street')} className="input-field w-full" />
+                  <Input label="Rua" {...register('street')} />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Número</label>
-                  <input {...register('addressNumber')} className="input-field w-full" />
+                  <Input label="Número" {...register('addressNumber')} />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs text-muted-foreground mb-1.5">Bairro</label>
-                  <input {...register('neighborhood')} className="input-field w-full" />
+                  <Input label="Bairro" {...register('neighborhood')} />
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div className="col-span-3">
-                  <label className="block text-xs text-muted-foreground mb-1.5">Cidade</label>
-                  <input {...register('city')} className="input-field w-full" />
+                  <Input label="Cidade" {...register('city')} />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">UF</label>
-                  <input
-                    {...register('state')}
-                    maxLength={2}
-                    className="input-field w-full uppercase"
-                  />
+                  <Input label="UF" {...register('state')} maxLength={2} className="uppercase" />
                 </div>
               </div>
             </div>
@@ -173,55 +140,52 @@ export default function EmployeeCreatePage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Função / Cargo</label>
-                  <input
+                  <Input
+                    label="Função / Cargo"
                     {...register('position')}
                     placeholder="Ex: Protesista Sênior"
-                    className="input-field w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Departamento</label>
-                  <input
+                  <Input
+                    label="Departamento"
                     {...register('department')}
                     placeholder="Ex: Produção"
-                    className="input-field w-full"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Tipo Profissional</label>
-                  <select {...register('type')} className="input-field w-full">
-                    <option value="protesista">Protesista</option>
-                    <option value="auxiliar">Auxiliar</option>
-                    <option value="recepcionista">Recepcionista</option>
-                    <option value="gerente">Gerente</option>
-                    <option value="proprietario">Proprietário</option>
-                    <option value="outro">Outro</option>
-                  </select>
+                  <FormField label="Tipo Profissional">
+                    <select {...register('type')} className={FORM_SELECT_CLASS}>
+                      <option value="protesista">Protesista</option>
+                      <option value="auxiliar">Auxiliar</option>
+                      <option value="recepcionista">Recepcionista</option>
+                      <option value="gerente">Gerente</option>
+                      <option value="proprietario">Proprietário</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                  </FormField>
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Tipo Contrato</label>
-                  <select {...register('contractType')} className="input-field w-full">
-                    <option value="clt">CLT</option>
-                    <option value="pj_mei">PJ / MEI</option>
-                    <option value="freelancer">Freelancer</option>
-                    <option value="estagiario">Estagiário</option>
-                    <option value="autonomo">Autônomo</option>
-                  </select>
+                  <FormField label="Tipo Contrato">
+                    <select {...register('contractType')} className={FORM_SELECT_CLASS}>
+                      <option value="clt">CLT</option>
+                      <option value="pj_mei">PJ / MEI</option>
+                      <option value="freelancer">Freelancer</option>
+                      <option value="estagiario">Estagiário</option>
+                      <option value="autonomo">Autônomo</option>
+                    </select>
+                  </FormField>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1.5">Data de Admissão</label>
-                <input
-                  {...register('admissionDate', {
-                    setValueAs: dateInputToIso,
-                  })}
-                  type="date"
-                  className="input-field w-full"
-                />
-              </div>
+              <Input
+                label="Data de Admissão"
+                {...register('admissionDate', {
+                  setValueAs: dateInputToIso,
+                })}
+                type="date"
+              />
             </div>
           </section>
 
@@ -231,42 +195,31 @@ export default function EmployeeCreatePage() {
               <CreditCard size={16} className="text-primary" /> Remuneração
             </h2>
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1.5">Salário Base (Cents)</label>
-                <input
-                  {...register('baseSalaryCents', { valueAsNumber: true })}
-                  type="number"
-                  className="input-field w-full"
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">Ex: 300000 para R$ 3.000,00</p>
-              </div>
-              <div>
-                <label className="block text-xs text-muted-foreground mb-1.5 flex items-center justify-between">
-                  Comissão Padrão (%)
-                  <Percent size={12} className="text-muted-foreground" />
-                </label>
-                <input
-                  {...register('defaultCommissionPercent', { valueAsNumber: true })}
-                  type="number"
-                  step="0.1"
-                  className="input-field w-full"
-                />
-              </div>
+              <Input
+                label="Salário Base (Cents)"
+                hint="Ex: 300000 para R$ 3.000,00"
+                {...register('baseSalaryCents', { valueAsNumber: true })}
+                type="number"
+              />
+              <Input
+                label="Comissão Padrão (%)"
+                {...register('defaultCommissionPercent', { valueAsNumber: true })}
+                type="number"
+                step="0.1"
+              />
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Vale Transp. (Cents)</label>
-                  <input
+                  <Input
+                    label="Vale Transp. (Cents)"
                     {...register('transportAllowanceCents', { valueAsNumber: true })}
                     type="number"
-                    className="input-field w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1.5">Vale Ref. (Cents)</label>
-                  <input
+                  <Input
+                    label="Vale Ref. (Cents)"
                     {...register('mealAllowanceCents', { valueAsNumber: true })}
                     type="number"
-                    className="input-field w-full"
                   />
                 </div>
               </div>
@@ -274,11 +227,7 @@ export default function EmployeeCreatePage() {
           </section>
         </div>
 
-        {createMutation.error && (
-          <div className="p-4 bg-[var(--destructive-soft)] border border-[var(--destructive)] rounded-xl text-[var(--destructive)] text-sm">
-            {createMutation.error.message}
-          </div>
-        )}
+        {createMutation.error ? <FormError>{createMutation.error.message}</FormError> : null}
 
         <div className="flex gap-4 pt-4">
           <button
@@ -294,12 +243,9 @@ export default function EmployeeCreatePage() {
             className="flex-[2] py-3 rounded-xl bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-sm"
           >
             {createMutation.isPending ? (
-              <>
-                <Loader2 size={16} className="animate-spin" /> Salvando...
-              </>
-            ) : (
-              'Cadastrar Funcionário'
-            )}
+              <Loader2 size={16} className="animate-spin" aria-hidden />
+            ) : null}
+            Cadastrar Funcionário
           </button>
         </div>
       </form>

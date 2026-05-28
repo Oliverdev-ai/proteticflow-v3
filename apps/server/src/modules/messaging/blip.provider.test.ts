@@ -1,33 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from '../../env.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sendBlipWhatsApp } from './providers/blip.provider.js';
 
-const ORIGINAL_ENV = {
-  BLIP_API_TOKEN: env.BLIP_API_TOKEN,
-  BLIP_FROM_NUMBER: env.BLIP_FROM_NUMBER,
-  BLIP_BASE_URL: env.BLIP_BASE_URL,
+const defaultConfig = {
+  apiToken: 'blip-token-test',
+  fromNumber: '5511999990000',
+  baseUrl: 'https://http.msging.net',
 };
 
 describe('blip.provider', () => {
-  beforeEach(() => {
-    env.BLIP_API_TOKEN = 'blip-token-test';
-    env.BLIP_FROM_NUMBER = '5511999990000';
-    env.BLIP_BASE_URL = 'https://http.msging.net';
-  });
-
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-    env.BLIP_API_TOKEN = ORIGINAL_ENV.BLIP_API_TOKEN;
-    env.BLIP_FROM_NUMBER = ORIGINAL_ENV.BLIP_FROM_NUMBER;
-    env.BLIP_BASE_URL = ORIGINAL_ENV.BLIP_BASE_URL;
   });
 
   it('serializa body e Authorization Key corretamente', async () => {
     const fetchMock = vi.fn<typeof fetch>(async () => new Response('', { status: 202 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await sendBlipWhatsApp('5511999990000', 'Mensagem teste');
+    const result = await sendBlipWhatsApp(defaultConfig, '5511999990000', 'Mensagem teste');
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const firstCall = fetchMock.mock.calls[0];
@@ -59,19 +49,19 @@ describe('blip.provider', () => {
     const fetchMock = vi.fn<typeof fetch>(async () => new Response('invalid destination', { status: 400 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(sendBlipWhatsApp('5511999990000', 'Mensagem teste'))
+    await expect(sendBlipWhatsApp(defaultConfig, '5511999990000', 'Mensagem teste'))
       .rejects
       .toThrow(/Blip HTTP 400/i);
   });
 
   it('falha antes do fetch sem credenciais obrigatorias', async () => {
-    env.BLIP_API_TOKEN = undefined;
+    const brokenConfig = { ...defaultConfig, apiToken: '' };
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(sendBlipWhatsApp('5511999990000', 'Mensagem teste'))
+    await expect(sendBlipWhatsApp(brokenConfig, '5511999990000', 'Mensagem teste'))
       .rejects
-      .toThrow('BLIP_API_TOKEN ou BLIP_FROM_NUMBER nao configurado');
+      .toThrow('Configuracao Blip incompleta para o tenant');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

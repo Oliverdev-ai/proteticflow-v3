@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { trpc } from '../../lib/trpc';
+import { Input } from '../../components/ui/input';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -36,23 +37,22 @@ export default function ForgotPasswordPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-        <div className="relative">
-          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="email"
-            required
-            placeholder="Seu e-mail"
-            className="input-field"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+        <Input
+          label="Seu e-mail"
+          required
+          type="email"
+          placeholder="Seu e-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={forgotPassword.isPending}
+        />
         <button
           type="submit"
           disabled={forgotPassword.isPending}
-          className="w-full h-11 rounded-xl bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white font-medium disabled:opacity-50 transition-colors"
+          className="w-full h-11 rounded-xl bg-[var(--info-soft)] hover:bg-[var(--info-soft)] text-white font-medium disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
         >
-          {forgotPassword.isPending ? 'Enviando...' : 'Recuperar senha'}
+          {forgotPassword.isPending ? <Loader2 size={16} className="animate-spin" aria-hidden /> : null}
+          Recuperar senha
         </button>
       </form>
 

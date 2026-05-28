@@ -7,6 +7,7 @@ import { env } from '../env.js';
 import { checkRedisConnection } from '../redis.js';
 import { logger } from '../logger.js';
 import { metricsContentType, renderMetrics } from '../metrics/ai-metrics.js';
+import { renderWhatsappMetrics } from '../metrics/whatsapp.js';
 import { getMetricsAuthFailure } from './metrics-auth.js';
 
 export const healthRouter: Router = ExpressRouter();
@@ -54,5 +55,5 @@ healthRouter.get('/metrics', (req, res) => {
   }
 
   res.setHeader('Content-Type', metricsContentType);
-  res.status(200).send(renderMetrics());
+  res.status(200).send(`${renderMetrics()}\n${renderWhatsappMetrics()}`);
 });

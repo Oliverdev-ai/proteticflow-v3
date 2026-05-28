@@ -17,9 +17,9 @@ export function requireManagerE2E() {
 
 export async function loginWithCredentials(page: Page, email: string, password: string) {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.getByPlaceholder('E-mail').fill(email);
-  await page.getByPlaceholder('Senha').fill(password);
-  await page.getByRole('button', { name: /entrar|login/i }).click();
+  await page.getByTestId('input-email').fill(email);
+  await page.getByTestId('input-password').fill(password);
+  await page.getByTestId('btn-login').click();
   await page.waitForURL(/^\/$/, { timeout: 30000 });
 }
 

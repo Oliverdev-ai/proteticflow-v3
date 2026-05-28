@@ -64,6 +64,7 @@ export default function LoginPage() {
           <input
             type="email"
             required
+            data-testid="input-email"
             className="input-field"
             placeholder="E-mail"
             value={email}
@@ -77,6 +78,7 @@ export default function LoginPage() {
           <input
             type={showPassword ? 'text' : 'password'}
             required
+            data-testid="input-password"
             className="input-field !pr-11"
             placeholder="Senha"
             value={password}
@@ -107,6 +109,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
+          data-testid="btn-login"
           disabled={loading}
           className="w-full h-11 rounded-xl bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--fg-on-primary)] font-semibold disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus)]"
         >

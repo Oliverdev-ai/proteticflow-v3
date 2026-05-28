@@ -157,7 +157,7 @@ export function FlowAssistantOverlay() {
       <button
         type="button"
         onClick={() => setOverlayState((current) => ({ ...current, open: !current.open }))}
-        className="fixed bottom-6 right-6 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--info)] bg-[var(--info-soft)] text-[var(--info)] shadow-xl shadow-sky-500/20 hover:bg-[var(--info-soft)]"
+        className="fixed bottom-6 right-6 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--info)] bg-[var(--info-soft)] text-[var(--info)] shadow-xl hover:bg-[var(--info-soft)]"
         aria-label={overlayState.open ? 'Fechar Flow Assistant' : 'Abrir Flow Assistant'}
       >
         {overlayState.open ? <X size={20} /> : <Mic size={20} />}

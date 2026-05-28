@@ -38,6 +38,10 @@ const BANNED_PATTERNS = [
     message: 'DS: sombra colorida banida. Usar shadow-sm ou var(--shadow-*).',
   },
   {
+    regex: /\bshadow-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral)-\d+(?:\/\d+)?\b/,
+    message: 'DS: sombra colorida Tailwind crua banida. Usar shadow-sm ou var(--shadow-*).',
+  },
+  {
     regex: /\bbackdrop-blur-(xl|2xl|3xl)\b/,
     message: 'DS: backdrop-blur permitido apenas no command palette (z-palette). Usar blur-sm se necessario.',
   },
@@ -79,10 +83,30 @@ export default {
 
           CallExpression(node) {
             if (!isCnCall(node)) return;
-            for (const arg of node.arguments) {
+
+            function walkArg(arg) {
+              if (!arg) return;
+
               if (arg.type === 'Literal') {
                 checkString(arg.value, arg);
+                return;
               }
+
+              if (arg.type === 'ConditionalExpression') {
+                walkArg(arg.consequent);
+                walkArg(arg.alternate);
+                return;
+              }
+
+              if (arg.type === 'ArrayExpression') {
+                for (const element of arg.elements) {
+                  if (element) walkArg(element);
+                }
+              }
+            }
+
+            for (const arg of node.arguments) {
+              walkArg(arg);
             }
           },
 

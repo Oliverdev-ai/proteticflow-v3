@@ -41,7 +41,7 @@ describe('notification-popover', () => {
     const html = renderToString(<NotificationPopover defaultOpen />);
 
     expect(html).toContain('Info');
-    expect(html).toContain('Warning');
-    expect(html).toContain('Error');
+    expect(html).toContain('Aviso');
+    expect(html).toContain('Erro');
   });
 });

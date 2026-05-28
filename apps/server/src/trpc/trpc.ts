@@ -151,7 +151,11 @@ const enforceSuperadmin = t.middleware(async ({ ctx, next }) => {
 
 export const superadminProcedure = protectedProcedure.use(enforceSuperadmin);
 
-const enforceLicense = t.middleware(async ({ ctx, next }) => next({ ctx }));
+const enforceLicense = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.tenantId) throw new TRPCError({ code: 'PRECONDITION_FAILED' });
+  await checkFeatureAccess(ctx.tenantId, 'financial');
+  return next({ ctx });
+});
 
 const enforceFinancial = t.middleware(async ({ ctx, next }) => {
   if (!ctx.tenantId) throw new TRPCError({ code: 'PRECONDITION_FAILED' });

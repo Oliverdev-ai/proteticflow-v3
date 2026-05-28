@@ -154,6 +154,52 @@ export const FLOW_COMMANDS = {
     patterns: [/silenc(iar|ie).*(alerta|notifica)/i, /mute.*(alerta|notifica)/i, /nao me avise/i],
     requiredFields: ['alertTypes'],
   },
+  send_whatsapp_template: {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao'],
+    patterns: [
+      /enviar.*template.*whatsapp/i,
+      /template.*whatsapp.*cliente/i,
+      /disparar.*whatsapp/i,
+    ],
+    requiredFields: ['templateName'],
+  },
+  request_whatsapp_opt_in: {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao'],
+    patterns: [
+      /solicitar.*opt[-\s]?in.*whatsapp/i,
+      /pedir.*consentimento.*whatsapp/i,
+      /opt[-\s]?in.*cliente/i,
+    ],
+  },
+  get_whatsapp_usage: {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'contabil'],
+    patterns: [
+      /uso.*whatsapp/i,
+      /consumo.*whatsapp/i,
+      /metricas?.*whatsapp/i,
+    ],
+  },
+  get_whatsapp_templates_status: {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'recepcao'],
+    patterns: [
+      /status.*templates?.*whatsapp/i,
+      /templates?.*whatsapp.*aprov/i,
+      /whatsapp.*templates?.*status/i,
+    ],
+  },
+  get_whatsapp_conversation: {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'recepcao'],
+    patterns: [
+      /historico.*whatsapp/i,
+      /conversa.*whatsapp/i,
+      /mensagens?.*whatsapp.*cliente/i,
+    ],
+  },
   'memory.remember': {
     risk: 'transactional',
     roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
@@ -406,6 +452,24 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
   const clientNameMatch = rawInput.match(/(?:dr\.?|dra\.?|cliente|dentista)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9\s'-]{2,80})/i);
   if (clientNameMatch?.[1]) {
     entities.clientName = clientNameMatch[1].trim();
+  }
+
+  const phoneMatch = rawInput.match(/(\+?\d[\d\s().-]{8,}\d)/);
+  if (phoneMatch?.[1]) {
+    const digits = phoneMatch[1].replace(/\D/g, '');
+    if (digits.length >= 10 && digits.length <= 15) {
+      entities.phone = digits;
+    }
+  }
+
+  const templateQuotedMatch = rawInput.match(/template\s+["']([A-Za-z0-9_.-]{2,120})["']/i);
+  if (templateQuotedMatch?.[1]) {
+    entities.templateName = templateQuotedMatch[1].trim();
+  } else {
+    const templateSimpleMatch = rawInput.match(/template\s+([A-Za-z0-9_.-]{2,120})/i);
+    if (templateSimpleMatch?.[1]) {
+      entities.templateName = templateSimpleMatch[1].trim();
+    }
   }
 
   const supplierNameMatch = rawInput.match(/fornecedor\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9\s'-]{2,80})/i);

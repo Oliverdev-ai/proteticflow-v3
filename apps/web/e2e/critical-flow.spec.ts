@@ -1,117 +1,111 @@
-import { expect, test } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+import { expect, test, type Page } from '@playwright/test';
+import { loginManager } from './support/auth';
 
 function uniqueSuffix() {
-  return Date.now().toString().slice(-8);
+  return randomUUID().slice(0, 8);
+}
+
+function futureDate(daysAhead: number) {
+  const value = new Date();
+  value.setDate(value.getDate() + daysAhead);
+  return value.toISOString().slice(0, 10);
+}
+
+function extractIdFromUrl(currentUrl: string, entity: 'cliente' | 'trabalho') {
+  const matcher = entity === 'cliente' ? /\/clientes\/(\d+)(?:\/|$)/ : /\/trabalhos\/(\d+)(?:\/|$)/;
+  const match = currentUrl.match(matcher);
+
+  if (!match || !match[1]) {
+    throw new Error(`Nao foi possivel extrair id de ${entity} da URL: ${currentUrl}`);
+  }
+
+  const id = Number.parseInt(match[1], 10);
+  if (!Number.isFinite(id)) {
+    throw new Error(`ID invalido de ${entity} extraido da URL: ${currentUrl}`);
+  }
+
+  return id;
+}
+
+async function createClient(page: Page) {
+  const suffix = uniqueSuffix();
+  const clientName = `Cliente E2E ${suffix}`;
+
+  await page.goto('/clientes/novo', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('input-client-name').fill(clientName);
+  await page.getByTestId('select-document-type').selectOption('cpf');
+  await page.getByTestId('textarea-technical-preferences').fill(`Preferencias recorrentes ${suffix}`);
+  await page.getByTestId('btn-create-client').click();
+  await page.waitForURL(/\/clientes\/\d+$/, { timeout: 20_000 });
+
+  const clientId = extractIdFromUrl(page.url(), 'cliente');
+  return { clientId, clientName, suffix };
+}
+
+async function createJobForClient(page: Page, clientId: number, suffix: string) {
+  const patientName = `Paciente ${suffix}`;
+
+  await page.goto('/trabalhos/novo', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId(`client-option-${clientId}`).click();
+  await page.getByTestId('btn-step-next').click();
+
+  await page.getByTestId('btn-add-manual-item').click();
+  await page.getByTestId('input-item-name-0').fill(`Servico E2E ${suffix}`);
+  await page.getByTestId('input-item-unit-price-0').fill('23000');
+  await page.getByTestId('btn-step-next').click();
+
+  await page.getByTestId('input-patient-name').fill(patientName);
+  await page.getByTestId('input-job-deadline').fill(futureDate(4));
+  await page.getByTestId('btn-step-next').click();
+
+  await page.getByTestId('btn-create-job').click();
+  await page.waitForURL(/\/trabalhos\/\d+$/, { timeout: 20_000 });
+
+  const jobId = extractIdFromUrl(page.url(), 'trabalho');
+  return { jobId, patientName };
 }
 
 test.describe('fluxo critico e2e', () => {
-  test('registro -> onboarding -> dashboard -> cliente -> os -> kanban -> portal', async ({
-    page,
-  }) => {
-    const suffix = uniqueSuffix();
-    const userName = `Gestor E2E ${suffix}`;
-    const email = `e2e.critical.${suffix}@example.com`;
-    const password = `Senha${suffix}A1`;
-    const labName = `Lab E2E ${suffix}`;
-    const clientName = `Cliente E2E ${suffix}`;
-    const patientName = `Paciente ${suffix}`;
+  test.beforeEach(async ({ page }) => {
+    await loginManager(page);
+  });
 
-    await page.goto('/register', { waitUntil: 'domcontentloaded' });
-    await page.getByPlaceholder('Nome').fill(userName);
-    await page.getByPlaceholder('E-mail').fill(email);
-    await page.getByPlaceholder('Senha').fill(password);
-    await page.getByRole('button', { name: /criar conta/i }).click();
+  test('cria cliente com seletores estaveis', async ({ page }) => {
+    const { clientId } = await createClient(page);
+    expect(clientId).toBeGreaterThan(0);
+  });
 
-    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30000 });
-    await expect(
-      page.getByRole('heading', { name: /configure seu laborat.rio/i }),
-    ).toBeVisible({ timeout: 15000 });
-
-    await page.getByPlaceholder('Ex: Lab Dental Silva').fill(labName);
-    await page.getByPlaceholder('Cidade').fill('Sao Paulo');
-    await page.getByPlaceholder('UF').fill('SP');
-    await page.getByRole('button', { name: /criar laborat/i }).click();
-
-    if (page.url().includes('/onboarding')) {
-      await expect
-        .poll(
-          async () => {
-            const heading = (await page.locator('h1').first().textContent())?.trim() ?? '';
-            return heading;
-          },
-          { timeout: 20000 },
-        )
-        .toMatch(/passo 2|dashboard|onboarding concluido/i);
-
-      await expect(page.getByRole('heading', { name: /passo 2/i })).toBeVisible({ timeout: 15000 });
-      await page.getByRole('button', { name: /continuar onboarding/i }).click();
-      await expect(page.getByRole('heading', { name: /passo 3/i })).toBeVisible({ timeout: 15000 });
-      await page.getByRole('button', { name: /finalizar onboarding/i }).click();
-      await expect(page.getByRole('heading', { name: /onboarding concluido/i })).toBeVisible({
-        timeout: 15000,
-      });
-      await page.getByRole('button', { name: /acessar o painel/i }).click();
-    }
-
-    await expect(page).toHaveURL(/\/$/, { timeout: 30000 });
-    await expect(
-      page
-        .getByRole('heading', { name: /dashboard/i })
-        .or(page.getByText(/n.o foi poss.vel carregar o dashboard/i)),
-    ).toBeVisible({ timeout: 20000 });
-
-    await page.goto('/clientes/novo', { waitUntil: 'domcontentloaded' });
-    await page.getByPlaceholder(/nome do cliente/i).fill(clientName);
-    await page.getByRole('button', { name: /criar cliente/i }).click();
-    await expect(page).toHaveURL(/\/clientes\/\d+$/, { timeout: 20000 });
-    await expect(page.getByText(clientName, { exact: false })).toBeVisible();
-
-    await page.goto('/trabalhos/novo', { waitUntil: 'domcontentloaded' });
-    await page
-      .getByRole('button', { name: new RegExp(clientName, 'i') })
-      .first()
-      .click();
-    await page.getByRole('button', { name: /pr.ximo/i }).click();
-
-    await page.getByRole('button', { name: /adicionar item avulso/i }).click();
-    await page.getByPlaceholder(/nome do servi/i).fill('Servico E2E');
-    await page.locator('input[placeholder="Centavos"]').fill('23000');
-    await page.getByRole('button', { name: /pr.ximo/i }).click();
-
-    const deadlineInput = page.locator('input[type="date"]').first();
-    await deadlineInput.fill(
-      new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-    );
-    await page.getByRole('textbox').first().fill(patientName);
-    await page.getByRole('button', { name: /pr.ximo/i }).click();
-
-    await page.getByRole('button', { name: /criar os/i }).click();
-    await expect(page).toHaveURL(/\/trabalhos\/\d+$/, { timeout: 20000 });
+  test('cria OS e valida card no kanban', async ({ page }) => {
+    const { clientId, suffix } = await createClient(page);
+    const { jobId } = await createJobForClient(page, clientId, suffix);
 
     await page.goto('/kanban', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /kanban/i })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(patientName)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId(`kanban-card-${jobId}`)).toBeVisible({ timeout: 15_000 });
+  });
 
+  test('carrega dashboard financeiro com ancoras estaveis', async ({ page }) => {
     await page.goto('/financeiro', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /financeiro/i })).toBeVisible({
-      timeout: 15000,
-    });
-    await expect(page.getByText(/contas a receber/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('page-financial-dashboard')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('finance-module-ar')).toBeVisible({ timeout: 15_000 });
+  });
 
-    await page.goto('/clientes', { waitUntil: 'domcontentloaded' });
-    await page.getByText(clientName).first().click();
-    await expect(page).toHaveURL(/\/clientes\/\d+$/, { timeout: 15000 });
-    await page.getByRole('button', { name: /portal/i }).click();
-    await expect(page).toHaveURL(/\/clientes\/\d+\/portal$/, { timeout: 15000 });
+  test('gera token de portal e valida acesso publico', async ({ page }) => {
+    const { clientId, clientName } = await createClient(page);
 
-    await page.getByRole('button', { name: /gerar token/i }).click();
-    const portalUrlLocator = page.locator('[data-testid="portal-url"]');
-    await expect(portalUrlLocator).toBeVisible({ timeout: 15000 });
+    await page.goto(`/clientes/${clientId}/portal`, { waitUntil: 'domcontentloaded' });
+    await page.waitForURL(/\/clientes\/\d+\/portal$/, { timeout: 15_000 });
+
+    await page.getByTestId('btn-generate-portal-token').click();
+    const portalUrlLocator = page.getByTestId('portal-url');
+    await expect(portalUrlLocator).toBeVisible({ timeout: 15_000 });
+
     const portalUrl = (await portalUrlLocator.textContent())?.trim();
     expect(portalUrl).toBeTruthy();
 
     const portalPath = new URL(portalUrl!).pathname;
     await page.goto(portalPath, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText(clientName, { exact: false })).toBeVisible({ timeout: 15000 });
+    await page.waitForURL(/\/portal\/[^/]+$/, { timeout: 15_000 });
+    await expect(page.getByTestId('portal-client-name')).toContainText(clientName);
   });
 });

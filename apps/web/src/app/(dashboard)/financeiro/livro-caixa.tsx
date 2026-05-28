@@ -151,8 +151,8 @@ export default function LivroCaixaPage() {
               className={cn(
                 'w-12 h-12 flex items-center justify-center rounded-[var(--radius-lg)] shadow-lg transition-transform duration-500 hover:rotate-12',
                 (balance?.netBalance ?? 0) >= 0
-                  ? 'bg-success text-white shadow-emerald-500/20'
-                  : 'bg-destructive text-white shadow-destructive/20',
+                  ? 'bg-success text-white'
+                  : 'bg-destructive text-white',
               )}
             >
               <Activity size={24} strokeWidth={2.5} />
@@ -395,11 +395,11 @@ export default function LivroCaixaPage() {
                         onClick={() => setForm((p) => ({ ...p, type: t }))}
                         className={cn(
                           'flex-1 flex flex-col items-center gap-3 p-6 rounded-lg border transition-all duration-300  group/btn',
-                          form.type === t
-                            ? t === 'credit'
-                              ? 'bg-success text-white border-success shadow-xl shadow-emerald-500/20'
-                              : 'bg-destructive text-white border-destructive shadow-xl shadow-destructive/20'
-                            : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/30',
+                            form.type === t
+                              ? t === 'credit'
+                                ? 'bg-success text-white border-success shadow-xl'
+                                : 'bg-destructive text-white border-destructive shadow-xl'
+                              : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/30',
                         )}
                       >
                         <div

@@ -1,15 +1,20 @@
 import { randomUUID } from 'node:crypto';
-import { env } from '../../../env.js';
 import { logger } from '../../../logger.js';
 
 export type BlipSendResult = { id: string };
+export type BlipProviderConfig = {
+  apiToken: string;
+  fromNumber: string;
+  baseUrl?: string;
+};
 
 export async function sendBlipWhatsApp(
+  config: BlipProviderConfig,
   to: string,
   text: string,
 ): Promise<BlipSendResult> {
-  if (!env.BLIP_API_TOKEN || !env.BLIP_FROM_NUMBER) {
-    throw new Error('BLIP_API_TOKEN ou BLIP_FROM_NUMBER nao configurado');
+  if (!config.apiToken || !config.fromNumber) {
+    throw new Error('Configuracao Blip incompleta para o tenant');
   }
 
   const body = {
@@ -19,10 +24,11 @@ export async function sendBlipWhatsApp(
     content: text,
   };
 
-  const response = await fetch(`${env.BLIP_BASE_URL}/messages`, {
+  const baseUrl = config.baseUrl ?? 'https://http.msging.net';
+  const response = await fetch(`${baseUrl}/messages`, {
     method: 'POST',
     headers: {
-      Authorization: `Key ${env.BLIP_API_TOKEN}`,
+      Authorization: `Key ${config.apiToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
