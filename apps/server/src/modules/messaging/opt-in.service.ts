@@ -2,7 +2,9 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { whatsappOptIns } from '../../db/schema/whatsapp.js';
 
-const E164_RE = /^[1-9]\d{9,14}$/;
+const INTERNATIONAL_E164_RE = /^[1-9]\d{7,14}$/;
+const BR_LOCAL_RE = /^[1-9]\d{9,10}$/;
+const BR_WITH_COUNTRY_CODE_RE = /^55[1-9]\d{9,10}$/;
 const OPT_OUT_KEYWORDS = new Set([
   'PARAR',
   'SAIR',
@@ -16,7 +18,21 @@ export type WhatsappOptInStatus = 'pending' | 'opted_in' | 'opted_out';
 
 export function normalizePhoneE164(raw: string): string | null {
   const digits = raw.replace(/\D/g, '');
-  return E164_RE.test(digits) ? digits : null;
+  if (!digits) return null;
+
+  if (raw.trim().startsWith('+')) {
+    return INTERNATIONAL_E164_RE.test(digits) ? digits : null;
+  }
+
+  if (BR_WITH_COUNTRY_CODE_RE.test(digits)) {
+    return digits;
+  }
+
+  if (BR_LOCAL_RE.test(digits)) {
+    return `55${digits}`;
+  }
+
+  return null;
 }
 
 export function sanitizeWhatsappBody(raw: string): string {
