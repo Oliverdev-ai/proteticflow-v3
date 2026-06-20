@@ -21,4 +21,16 @@ describe('normalizePhoneE164', () => {
     expect(normalizePhoneE164('33119999990000')).toBeNull();
     expect(normalizePhoneE164('abc')).toBeNull();
   });
+
+  it('rejeita telefone brasileiro local com DDD invalido', () => {
+    expect(normalizePhoneE164('2012345678')).toBeNull();
+  });
+
+  it('rejeita telefone brasileiro com DDI 55 e DDD invalido', () => {
+    expect(normalizePhoneE164('552012345678')).toBeNull();
+  });
+
+  it('rejeita telefone brasileiro internacionalizado com DDD invalido', () => {
+    expect(normalizePhoneE164('+55 20 1234-5678')).toBeNull();
+  });
 });
