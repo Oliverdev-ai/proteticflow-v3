@@ -8,7 +8,7 @@ const checks = [
   },
   {
     name: 'cores tailwind cruas',
-    cmd: 'rg --no-ignore -l "(bg|text|border)-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral)-[0-9]" apps/web/src',
+    cmd: 'rg --no-ignore -l "(bg|text|border)-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral|stone|cool)-[0-9]" apps/web/src',
     expectEmpty: true,
   },
   {
@@ -18,7 +18,12 @@ const checks = [
   },
   {
     name: 'raio arbitrario >14px',
-    cmd: 'rg --no-ignore -l "rounded-\\[(1[5-9]|[2-9][0-9]|[0-9]{3,})px\\]" apps/web/src',
+    cmd: String.raw`rg --no-ignore -l "rounded-\[(1[5-9]|[2-9][0-9]|[0-9]{3,})px\]" apps/web/src`,
+    expectEmpty: true,
+  },
+  {
+    name: 'uppercase com tracking arbitrario',
+    cmd: String.raw`rg --no-ignore -l "uppercase.*tracking-\[|tracking-\[.*uppercase" apps/web/src`,
     expectEmpty: true,
   },
   {
@@ -27,8 +32,13 @@ const checks = [
     expectEmpty: true,
   },
   {
+    name: 'backdrop blur alto',
+    cmd: 'rg --no-ignore -l "backdrop-blur-(xl|2xl|3xl)" apps/web/src',
+    expectEmpty: true,
+  },
+  {
     name: 'shadow colorida banida',
-    cmd: 'rg --no-ignore -l "shadow-(primary|accent|success|warning|destructive|info)/|shadow-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral)-[0-9]" apps/web/src',
+    cmd: 'rg --no-ignore -l "shadow-(primary|accent|success|warning|destructive|info)/|shadow-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral|stone|cool)-[0-9]" apps/web/src',
     expectEmpty: true,
   },
   {
