@@ -38,7 +38,11 @@ const BANNED_PATTERNS = [
     message: 'DS: sombra colorida banida. Usar shadow-sm ou var(--shadow-*).',
   },
   {
-    regex: /\bshadow-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral|stone|cool)-\d+(?:\/\d+)?\b/,
+    regex: /\bshadow-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red)-\d+(?:\/\d+)?\b/,
+    message: 'DS: sombra colorida Tailwind crua banida. Usar shadow-sm ou var(--shadow-*).',
+  },
+  {
+    regex: /\bshadow-(zinc|slate|gray|neutral|stone|cool)-\d+(?:\/\d+)?\b/,
     message: 'DS: sombra colorida Tailwind crua banida. Usar shadow-sm ou var(--shadow-*).',
   },
   {

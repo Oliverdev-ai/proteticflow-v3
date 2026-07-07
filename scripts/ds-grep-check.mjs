@@ -18,12 +18,12 @@ const checks = [
   },
   {
     name: 'raio arbitrario >14px',
-    cmd: 'rg --no-ignore -l "rounded-\\[(1[5-9]|[2-9][0-9]|[0-9]{3,})px\\]" apps/web/src',
+    cmd: String.raw`rg --no-ignore -l "rounded-\[(1[5-9]|[2-9][0-9]|[0-9]{3,})px\]" apps/web/src`,
     expectEmpty: true,
   },
   {
     name: 'uppercase com tracking arbitrario',
-    cmd: 'rg --no-ignore -l "uppercase.*tracking-\\[|tracking-\\[.*uppercase" apps/web/src',
+    cmd: String.raw`rg --no-ignore -l "uppercase.*tracking-\[|tracking-\[.*uppercase" apps/web/src`,
     expectEmpty: true,
   },
   {
