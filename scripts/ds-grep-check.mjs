@@ -8,7 +8,7 @@ const checks = [
   },
   {
     name: 'cores tailwind cruas',
-    cmd: 'rg --no-ignore -l "(bg|text|border)-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral)-[0-9]" apps/web/src',
+    cmd: 'rg --no-ignore -l "(bg|text|border)-(blue|emerald|sky|violet|yellow|fuchsia|rose|pink|orange|lime|green|teal|cyan|indigo|purple|red|zinc|slate|gray|neutral|stone|cool)-[0-9]" apps/web/src',
     expectEmpty: true,
   },
   {
@@ -22,8 +22,18 @@ const checks = [
     expectEmpty: true,
   },
   {
+    name: 'uppercase com tracking arbitrario',
+    cmd: 'rg --no-ignore -l "uppercase.*tracking-\\[|tracking-\\[.*uppercase" apps/web/src',
+    expectEmpty: true,
+  },
+  {
     name: 'scale agressivo',
     cmd: 'rg --no-ignore -l "active:scale-9[0-7]|hover:scale-1[1-9]" apps/web/src',
+    expectEmpty: true,
+  },
+  {
+    name: 'backdrop blur alto',
+    cmd: 'rg --no-ignore -l "backdrop-blur-(xl|2xl|3xl)" apps/web/src',
     expectEmpty: true,
   },
   {
