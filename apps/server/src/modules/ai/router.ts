@@ -235,7 +235,7 @@ export const aiRouter = router({
     requestExport: tenantProcedure
       .mutation(({ ctx }) => lgpdService.requestLgpdExport(ctx.tenantId!, ctx.user!.id)),
 
-    requestDelete: tenantProcedure
+    requestDelete: aiAdminProcedure
       .mutation(({ ctx }) => lgpdService.requestLgpdDelete(ctx.tenantId!, ctx.user!.id)),
   }),
 

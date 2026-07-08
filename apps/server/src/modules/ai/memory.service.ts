@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { and, asc, count, desc, eq, gt, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, inArray, or, sql } from 'drizzle-orm';
 import type { Role } from '@proteticflow/shared';
 import { PLAN_TIER } from '@proteticflow/shared';
 import { db } from '../../db/index.js';
@@ -104,6 +104,7 @@ export type MemoryModel = {
 };
 
 type AiMemoryRow = typeof aiMemory.$inferSelect;
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -189,6 +190,15 @@ function sanitizeMemoryText(value: string): string {
   return result.clean;
 }
 
+function sanitizeOptionalMemoryText(value: string): string | null {
+  const result = sanitizeUserText(value);
+  return result.clean.length > 0 ? result.clean : null;
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 function sanitizeJsonValue(value: unknown): JsonValue {
   if (value === null) return null;
   if (typeof value === 'string') return sanitizeMemoryText(value);
@@ -204,7 +214,7 @@ function sanitizeJsonValue(value: unknown): JsonValue {
     }
     return output;
   }
-  return String(value);
+  return null;
 }
 
 function sanitizeMemoryValue(value: Record<string, unknown>): AiMemoryValue {
@@ -309,8 +319,8 @@ async function refreshTenantMemoryMetric(tenantId: number): Promise<void> {
   }
 }
 
-async function enforceTenantCap(tenantId: number): Promise<void> {
-  const [row] = await db
+async function enforceTenantCapTx(tx: DbTransaction, tenantId: number): Promise<void> {
+  const [row] = await tx
     .select({ total: count() })
     .from(aiMemory)
     .where(eq(aiMemory.tenantId, tenantId));
@@ -318,7 +328,7 @@ async function enforceTenantCap(tenantId: number): Promise<void> {
   if (total <= MAX_MEMORY_ENTRIES) return;
 
   const overflow = total - MAX_MEMORY_ENTRIES;
-  const victims = await db
+  const victims = await tx
     .select({ id: aiMemory.id })
     .from(aiMemory)
     .where(eq(aiMemory.tenantId, tenantId))
@@ -327,7 +337,7 @@ async function enforceTenantCap(tenantId: number): Promise<void> {
 
   if (victims.length === 0) return;
 
-  await db
+  await tx
     .delete(aiMemory)
     .where(and(
       eq(aiMemory.tenantId, tenantId),
@@ -383,22 +393,6 @@ export class MemoryService {
     const userId = scope === 'user' ? ctx.userId : null;
     const now = new Date();
 
-    const [existing] = await db
-      .select()
-      .from(aiMemory)
-      .where(and(
-        eq(aiMemory.tenantId, ctx.tenantId),
-        scope === 'user' ? eq(aiMemory.userId, ctx.userId) : isNull(aiMemory.userId),
-        eq(aiMemory.scope, scope),
-        eq(aiMemory.category, input.category),
-        input.entityType ? eq(aiMemory.entityType, input.entityType) : isNull(aiMemory.entityType),
-        input.entityId !== undefined && input.entityId !== null
-          ? eq(aiMemory.entityId, input.entityId)
-          : isNull(aiMemory.entityId),
-        eq(aiMemory.keyText, keyText),
-      ))
-      .limit(1);
-
     const values: typeof aiMemory.$inferInsert = {
       tenantId: ctx.tenantId,
       userId,
@@ -411,26 +405,44 @@ export class MemoryService {
       embedding,
       source: input.source ?? 'flow_ia',
       confidence: clampConfidence(input.confidence),
+      createdAt: now,
       updatedAt: now,
       expiresAt: expiresAtFromTtl(ttlDays),
     };
 
-    const [row] = existing
-      ? await db
-        .update(aiMemory)
-        .set(values)
-        .where(and(eq(aiMemory.tenantId, ctx.tenantId), eq(aiMemory.id, existing.id)))
-        .returning()
-      : await db.insert(aiMemory).values({
-        ...values,
-        createdAt: now,
-      }).returning();
+    const row = await db.transaction(async (tx) => {
+      const [upserted] = await tx
+        .insert(aiMemory)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [
+            aiMemory.tenantId,
+            aiMemory.scope,
+            aiMemory.category,
+            aiMemory.keyText,
+            aiMemory.userId,
+            aiMemory.entityType,
+            aiMemory.entityId,
+          ],
+          set: {
+            valueJson,
+            embedding,
+            source: values.source,
+            confidence: values.confidence,
+            updatedAt: now,
+            expiresAt: values.expiresAt,
+          },
+        })
+        .returning();
 
-    if (!row) {
-      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao gravar memoria' });
-    }
+      if (!upserted) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao gravar memoria' });
+      }
 
-    await enforceTenantCap(ctx.tenantId);
+      await enforceTenantCapTx(tx, ctx.tenantId);
+      return upserted;
+    });
+
     void refreshTenantMemoryMetric(ctx.tenantId);
     void logAudit({
       tenantId: ctx.tenantId,
@@ -530,7 +542,18 @@ export class MemoryService {
     if (filters.entityType) conditions.push(eq(aiMemory.entityType, filters.entityType));
     if (filters.entityId !== undefined) conditions.push(eq(aiMemory.entityId, filters.entityId));
     if (filters.search && filters.search.trim().length > 0) {
-      conditions.push(ilike(aiMemory.keyText, `%${sanitizeMemoryText(filters.search)}%`));
+      const search = sanitizeOptionalMemoryText(filters.search);
+      if (!search) {
+        return {
+          items: [],
+          total: 0,
+          page,
+          limit,
+          cap: MAX_MEMORY_ENTRIES,
+        };
+      }
+      const pattern = `%${escapeLikePattern(search)}%`;
+      conditions.push(sql`${aiMemory.keyText} ILIKE ${pattern} ESCAPE '\\'`);
     }
 
     const where = and(...conditions);
@@ -671,10 +694,15 @@ export class MemoryService {
   }
 
   async exportJson(ctx: TenantCtx): Promise<{ generatedAt: string; items: MemoryModel[] }> {
-    const result = await this.list(ctx, { page: 1, limit: MAX_MEMORY_ENTRIES });
+    const rows = await db
+      .select()
+      .from(aiMemory)
+      .where(and(...buildAccessibleConditions(ctx)))
+      .orderBy(desc(aiMemory.updatedAt), desc(aiMemory.createdAt));
+
     return {
       generatedAt: new Date().toISOString(),
-      items: result.items,
+      items: rows.map(toMemoryModel),
     };
   }
 
@@ -690,46 +718,55 @@ export class MemoryService {
     const expiresAt = expiresAtFromTtl(Math.min(ttlDays, MAX_MEMORY_TTL_DAYS));
     const now = new Date();
 
-    const [existing] = await db
-      .select()
-      .from(aiMemory)
-      .where(and(
-        eq(aiMemory.tenantId, ctx.tenantId),
-        eq(aiMemory.userId, ctx.userId),
-        eq(aiMemory.scope, 'user'),
-        eq(aiMemory.category, 'workflow_rule'),
-        eq(aiMemory.keyText, keyText),
-      ))
-      .limit(1);
-
     const values: typeof aiMemory.$inferInsert = {
       tenantId: ctx.tenantId,
       userId: ctx.userId,
       scope: 'user',
       category: 'workflow_rule',
+      entityType: null,
+      entityId: null,
       keyText,
       valueJson,
       embedding,
       source: 'manual',
       confidence: 1,
+      createdAt: now,
       updatedAt: now,
       expiresAt,
     };
 
-    const [row] = existing
-      ? await db
-        .update(aiMemory)
-        .set(values)
-        .where(and(eq(aiMemory.tenantId, ctx.tenantId), eq(aiMemory.id, existing.id)))
-        .returning()
-      : await db.insert(aiMemory).values({
-        ...values,
-        createdAt: now,
-      }).returning();
+    const row = await db.transaction(async (tx) => {
+      const [upserted] = await tx
+        .insert(aiMemory)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [
+            aiMemory.tenantId,
+            aiMemory.scope,
+            aiMemory.category,
+            aiMemory.keyText,
+            aiMemory.userId,
+            aiMemory.entityType,
+            aiMemory.entityId,
+          ],
+          set: {
+            valueJson,
+            embedding,
+            source: 'manual',
+            confidence: 1,
+            updatedAt: now,
+            expiresAt,
+          },
+        })
+        .returning();
 
-    if (!row) {
-      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao ativar quiet mode' });
-    }
+      if (!upserted) {
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Falha ao ativar quiet mode' });
+      }
+
+      await enforceTenantCapTx(tx, ctx.tenantId);
+      return upserted;
+    });
 
     void logAudit({
       tenantId: ctx.tenantId,

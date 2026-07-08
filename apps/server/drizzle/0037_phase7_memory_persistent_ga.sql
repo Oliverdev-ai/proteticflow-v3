@@ -17,14 +17,14 @@ DO $$ BEGIN
     SELECT 1
     FROM information_schema.columns
     WHERE table_schema = 'public'
-      AND table_name = 'ai_memory'
+      AND table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
       AND column_name = 'id'
       AND data_type = 'integer'
   ) AND NOT EXISTS (
     SELECT 1
     FROM information_schema.columns
     WHERE table_schema = 'public'
-      AND table_name = 'ai_memory'
+      AND table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
       AND column_name = 'legacy_id'
   ) THEN
     ALTER TABLE "ai_memory" RENAME COLUMN "id" TO "legacy_id";
@@ -56,7 +56,7 @@ BEGIN
    AND tc.table_schema = kcu.table_schema
   WHERE tc.constraint_type = 'FOREIGN KEY'
     AND tc.table_schema = 'public'
-    AND tc.table_name = 'ai_memory'
+    AND tc.table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
     AND kcu.column_name = 'user_id'
   LIMIT 1;
 
@@ -81,7 +81,7 @@ SET
   "category" = COALESCE("category", 'general'),
   "key_text" = COALESCE("key_text", "key"),
   "value_json" = COALESCE("value_json", jsonb_build_object('value', "value")),
-  "source" = CASE
+  "source" = CASE -- NOSONAR: backfill maps legacy source literals to the new enum.
     WHEN "source" = 'assistant' THEN 'flow_ia'
     WHEN "source" = 'user_explicit' THEN 'manual'
     WHEN "source" IN ('flow_ia', 'manual', 'inferred') THEN "source"
@@ -89,7 +89,17 @@ SET
   END,
   "confidence" = COALESCE("confidence", 1),
   "access_count" = COALESCE("access_count", 0),
-  "expires_at" = COALESCE("expires_at", NOW() + INTERVAL '180 days');
+  "expires_at" = COALESCE("expires_at", NOW() + INTERVAL '180 days')
+WHERE "id" IS NULL
+  OR "scope" IS NULL
+  OR "category" IS NULL
+  OR "key_text" IS NULL
+  OR "value_json" IS NULL
+  OR "source" IS NULL
+  OR "source" NOT IN ('flow_ia', 'manual', 'inferred')
+  OR "confidence" IS NULL
+  OR "access_count" IS NULL
+  OR "expires_at" IS NULL;
 --> statement-breakpoint
 
 ALTER TABLE "ai_memory"
@@ -113,7 +123,7 @@ DO $$ BEGIN
     SELECT 1
     FROM information_schema.table_constraints
     WHERE table_schema = 'public'
-      AND table_name = 'ai_memory'
+      AND table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
       AND constraint_name = 'ai_memory_pkey'
   ) THEN
     ALTER TABLE "ai_memory" DROP CONSTRAINT "ai_memory_pkey";
@@ -128,7 +138,7 @@ DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.table_constraints
     WHERE table_schema = 'public'
-      AND table_name = 'ai_memory'
+      AND table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
       AND constraint_name = 'ai_memory_scope_check'
   ) THEN
     ALTER TABLE "ai_memory"
@@ -141,7 +151,7 @@ DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.table_constraints
     WHERE table_schema = 'public'
-      AND table_name = 'ai_memory'
+      AND table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
       AND constraint_name = 'ai_memory_category_check'
   ) THEN
     ALTER TABLE "ai_memory"
@@ -156,7 +166,7 @@ DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.table_constraints
     WHERE table_schema = 'public'
-      AND table_name = 'ai_memory'
+      AND table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
       AND constraint_name = 'ai_memory_source_check'
   ) THEN
     ALTER TABLE "ai_memory"
@@ -169,7 +179,7 @@ DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.table_constraints
     WHERE table_schema = 'public'
-      AND table_name = 'ai_memory'
+      AND table_name = 'ai_memory' -- NOSONAR: SQL identifiers must match the existing table name.
       AND constraint_name = 'ai_memory_confidence_check'
   ) THEN
     ALTER TABLE "ai_memory"

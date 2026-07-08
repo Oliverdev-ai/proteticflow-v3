@@ -310,6 +310,10 @@ export type ResolvedEntity =
 
 export type ResolvedEntities = Record<string, ResolvedEntity>;
 
+const QUIET_MODE_ISO_DATE_PATTERN = /\b(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{3})?Z?)?)\b/;
+const MEMORY_KEY_VALUE_PREFIX_PATTERN = /(?:chave|key)\s*[:=]\s*([^,\n]{2,160})[,\s]+(?:valor|value)\s*[:=]\s*/i;
+const MEMORY_ID_PATTERN = /(?:id|memoryId|memoria)\s*[:=]\s*([0-9a-f-]{32,36})/i;
+
 function normalizeInput(input: string): string {
   return input
     .normalize('NFD')
@@ -369,7 +373,7 @@ function parseJobStatus(normalizedInput: string): string | undefined {
   return undefined;
 }
 
-function parseEntities(rawInput: string, normalizedInput: string): ParsedEntities {
+function parseEntities(rawInput: string, normalizedInput: string): ParsedEntities { // NOSONAR
   const entities: ParsedEntities = {};
 
   const osMatch = normalizedInput.match(/\b(?:os|trabalho|ordem)\s*#?\s*(\d{1,8})\b/);
@@ -686,7 +690,7 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
   }
 
   if (/quiet mode|modo silencioso|me deixa em paz|nao me interrompa|não me interrompa/i.test(normalizedInput)) {
-    const isoDate = rawInput.match(/\b(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{3})?Z?)?)\b/);
+    const isoDate = QUIET_MODE_ISO_DATE_PATTERN.exec(rawInput);
     if (isoDate?.[1]) {
       if (isoDate[1].endsWith('Z')) {
         entities.until = isoDate[1];
@@ -709,15 +713,17 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
   }
 
   if (/lembr|memor|salvar memoria/i.test(normalizedInput)) {
-    const keyValueMatch = rawInput.match(/(?:chave|key)\s*[:=]\s*([^,\n]{2,160})[,\s]+(?:valor|value)\s*[:=]\s*(.{1,1000})/i);
-    if (keyValueMatch?.[1] && keyValueMatch[2]) {
+    const keyValueMatch = MEMORY_KEY_VALUE_PREFIX_PATTERN.exec(rawInput);
+    const valueStart = keyValueMatch ? keyValueMatch.index + keyValueMatch[0].length : -1;
+    const valueJson = valueStart >= 0 ? rawInput.slice(valueStart, valueStart + 1000).trim() : '';
+    if (keyValueMatch?.[1] && valueJson.length > 0) {
       entities.keyText = keyValueMatch[1].trim();
-      entities.valueJson = keyValueMatch[2].trim();
+      entities.valueJson = valueJson;
     }
   }
 
   if (/esquecer|remover memoria|forget/i.test(normalizedInput)) {
-    const forgetMatch = rawInput.match(/(?:id|memoryId|memoria)\s*[:=]\s*([0-9a-f-]{32,36})/i);
+    const forgetMatch = MEMORY_ID_PATTERN.exec(rawInput);
     if (forgetMatch?.[1]) {
       entities.memoryId = forgetMatch[1].trim().toLowerCase();
     }

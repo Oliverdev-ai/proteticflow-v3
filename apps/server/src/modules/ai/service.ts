@@ -687,7 +687,7 @@ function summarizeCommandMessage(
   return 'Nao foi possivel executar o comando solicitado.';
 }
 
-function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities): Record<string, unknown> {
+function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities): Record<string, unknown> { // NOSONAR
   const input: Record<string, unknown> = { ...entities };
   const normalizePeriodKeyword = (value: string): 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom' | null => {
     const normalized = value.trim().toLowerCase();

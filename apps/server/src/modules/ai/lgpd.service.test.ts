@@ -9,7 +9,9 @@ import { aiMemory, AI_MEMORY_EMBEDDING_DIMENSIONS, lgpdRequests } from '../../db
 import { alertLog } from '../../db/schema/proactive.js';
 import { tenantMembers, tenants } from '../../db/schema/tenants.js';
 import { users } from '../../db/schema/users.js';
+import type { TrpcContext } from '../../trpc/context.js';
 import { setEmbeddingsProviderForTests } from './embeddings.provider.js';
+import { aiRouter } from './router.js';
 import { requestLgpdDelete, requestLgpdExport } from './lgpd.service.js';
 import { memoryService, setMemory } from './memory.service.js';
 
@@ -123,6 +125,33 @@ describe('lgpd.service', () => {
     expect(result.payload.aiCommandRuns[0]?.rawInput).toBe('mostrar jobs');
     expect(result.payload.alerts).toHaveLength(1);
     expect(result.payload.alerts[0]?.alertType).toBe('deadline_24h');
+  }, 20_000);
+
+  it('router LGPD requestDelete bloqueia usuario nao-admin', async () => {
+    const owner = await createTestUser('lgpd-router-owner@test.com');
+    const member = await createTestUser('lgpd-router-member@test.com');
+    const tenant = await createTestTenant(owner.id, 'Lab LGPD Router');
+
+    await db.update(tenants).set({ plan: 'enterprise' }).where(eq(tenants.id, tenant.id));
+    await db.insert(tenantMembers).values({
+      tenantId: tenant.id,
+      userId: member.id,
+      role: 'producao',
+    });
+
+    const caller = aiRouter.createCaller({
+      req: {} as TrpcContext['req'],
+      res: {} as TrpcContext['res'],
+      db,
+      user: {
+        id: member.id,
+        tenantId: tenant.id,
+        role: 'producao',
+      },
+      tenantId: tenant.id,
+    });
+
+    await expect(caller.lgpd.requestDelete()).rejects.toMatchObject({ code: 'FORBIDDEN' });
   }, 20_000);
 
   it('delete limpa ai_memory mas preserva lgpd_requests (audit trail)', async () => {

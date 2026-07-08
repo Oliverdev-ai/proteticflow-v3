@@ -83,10 +83,15 @@ export async function* streamAiResponse(
 
   const context = await buildLabContext(tenantId);
   const baseSystemPrompt = buildSystemPrompt(context, userRole);
-  const memoryContext = buildMemoryBlock(await memoryService.recall(
-    { tenantId, userId, role: userRole },
-    { text: userMessage, limit: 5 },
-  ));
+  let memoryContext = '';
+  try {
+    memoryContext = buildMemoryBlock(await memoryService.recall(
+      { tenantId, userId, role: userRole },
+      { text: userMessage, limit: 5 },
+    ));
+  } catch (error) {
+    logger.warn({ err: error, tenantId, userId }, 'ai.memory.recall_failed');
+  }
   const systemPrompt = `${baseSystemPrompt}${memoryContext}`;
   const llmTools = buildLlmTools(userRole);
   const llmHistory = toProviderHistory(history);

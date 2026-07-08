@@ -40,19 +40,26 @@ function assertEmbeddingDimensions(values: number[]): number[] {
   return values;
 }
 
-class GeminiEmbeddingsProvider implements EmbeddingsProvider {
-  constructor(private readonly apiKey: string | undefined = env.GEMINI_API_KEY) {}
+export class GeminiEmbeddingsProvider implements EmbeddingsProvider {
+  constructor(
+    private readonly apiKey: string | undefined = env.GEMINI_API_KEY,
+    private readonly nodeEnv: string = env.NODE_ENV,
+  ) {}
 
   async embed(text: string): Promise<number[]> {
     if (!this.apiKey) {
+      if (this.nodeEnv === 'production') {
+        throw new Error('GEMINI_API_KEY obrigatoria para embeddings em producao');
+      }
       return deterministicEmbedding(text);
     }
 
-    const url = `${GEMINI_API_BASE}/models/${GEMINI_EMBEDDING_MODEL}:embedContent?key=${this.apiKey}`;
+    const url = `${GEMINI_API_BASE}/models/${GEMINI_EMBEDDING_MODEL}:embedContent`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': this.apiKey,
       },
       body: JSON.stringify({
         content: {
@@ -72,7 +79,7 @@ class GeminiEmbeddingsProvider implements EmbeddingsProvider {
     const payload = await response.json() as GeminiEmbeddingResponse;
     const values = payload.embedding?.values;
     if (!Array.isArray(values)) {
-      throw new Error('Gemini embedding response sem vetor');
+      throw new TypeError('Gemini embedding response sem vetor');
     }
 
     return assertEmbeddingDimensions(values);

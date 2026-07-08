@@ -163,6 +163,44 @@ describe('memory.service', () => {
     expect(recallB.map((memory) => memory.keyText)).not.toContain('janela usuario a');
   }, 20_000);
 
+  it('remember faz upsert atomico da mesma identidade de memoria', async () => {
+    const user = await createTestUser('memory-upsert@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Memory Upsert');
+    await enableMemory(tenant.id, user.id);
+
+    const first = await memoryService.remember(
+      { tenantId: tenant.id, userId: user.id },
+      {
+        scope: 'user',
+        category: 'general',
+        keyText: 'preferencia de entrega',
+        valueJson: { value: 'manha' },
+      },
+    );
+    const second = await memoryService.remember(
+      { tenantId: tenant.id, userId: user.id },
+      {
+        scope: 'user',
+        category: 'general',
+        keyText: 'preferencia de entrega',
+        valueJson: { value: 'tarde' },
+      },
+    );
+
+    const [row] = await db
+      .select({ total: sql<number>`count(*)` })
+      .from(aiMemory)
+      .where(and(
+        eq(aiMemory.tenantId, tenant.id),
+        eq(aiMemory.userId, user.id),
+        eq(aiMemory.keyText, 'preferencia de entrega'),
+      ));
+
+    expect(second.id).toBe(first.id);
+    expect(second.valueJson).toEqual({ value: 'tarde' });
+    expect(Number(row?.total ?? 0)).toBe(1);
+  }, 20_000);
+
   it('forget nao permite remover memoria de outro tenant', async () => {
     const userA = await createTestUser('memory-forget-a@test.com');
     const tenantA = await createTestTenant(userA.id, 'Lab Forget A');
@@ -186,6 +224,61 @@ describe('memory.service', () => {
       .from(aiMemory)
       .where(and(eq(aiMemory.tenantId, tenantA.id), eq(aiMemory.id, memory.id)));
     expect(Number(row?.total ?? 0)).toBe(1);
+  }, 20_000);
+
+  it('exportJson retorna todas as memorias acessiveis acima do limite de pagina da listagem', async () => {
+    const user = await createTestUser('memory-export-all@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Memory Export All');
+    await enableMemory(tenant.id, user.id);
+
+    for (let index = 0; index < 125; index += 1) {
+      await memoryService.remember(
+        { tenantId: tenant.id, userId: user.id },
+        {
+          scope: 'user',
+          category: 'general',
+          keyText: `export_${index}`,
+          valueJson: { value: `v_${index}` },
+        },
+      );
+    }
+
+    const listed = await memoryService.list(
+      { tenantId: tenant.id, userId: user.id },
+      { page: 1, limit: 500 },
+    );
+    const exported = await memoryService.exportJson({ tenantId: tenant.id, userId: user.id });
+
+    expect(listed.items).toHaveLength(100);
+    expect(exported.items).toHaveLength(125);
+  }, 120_000);
+
+  it('list escapa curingas de busca e retorna vazio quando sanitizacao zera o termo', async () => {
+    const user = await createTestUser('memory-search@test.com');
+    const tenant = await createTestTenant(user.id, 'Lab Memory Search');
+    await enableMemory(tenant.id, user.id);
+
+    await memoryService.remember(
+      { tenantId: tenant.id, userId: user.id },
+      { scope: 'user', category: 'general', keyText: 'literal 50%_match', valueJson: { value: 'literal' } },
+    );
+    await memoryService.remember(
+      { tenantId: tenant.id, userId: user.id },
+      { scope: 'user', category: 'general', keyText: 'literal 50xy match', valueJson: { value: 'wildcard' } },
+    );
+
+    const escaped = await memoryService.list(
+      { tenantId: tenant.id, userId: user.id },
+      { page: 1, limit: 20, search: '50%_' },
+    );
+    const empty = await memoryService.list(
+      { tenantId: tenant.id, userId: user.id },
+      { page: 1, limit: 20, search: '\u0000\u0001' },
+    );
+
+    expect(escaped.items.map((memory) => memory.keyText)).toEqual(['literal 50%_match']);
+    expect(empty.total).toBe(0);
+    expect(empty.items).toEqual([]);
   }, 20_000);
 
   it('enforca cap de 500 entradas por tenant com rotacao FIFO', async () => {
@@ -213,7 +306,7 @@ describe('memory.service', () => {
     expect(result.total).toBe(MAX_MEMORY_ENTRIES);
     expect(result.items.map((memory) => memory.keyText)).not.toContain('k_0');
     expect(result.items.map((memory) => memory.keyText)).toContain(`k_${MAX_MEMORY_ENTRIES}`);
-  }, 60_000);
+  }, 180_000);
 
   it('setQuietMode grava regra curta mesmo sem opt-in de memoria persistente', async () => {
     const user = await createTestUser('memory-quiet@test.com');

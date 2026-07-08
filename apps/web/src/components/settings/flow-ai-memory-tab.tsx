@@ -45,6 +45,29 @@ type EditMemory = DraftMemory & {
   memoryId: string;
 };
 
+type Feedback = { kind: 'success' | 'error'; message: string };
+type CategoryFilter = 'all' | MemoryCategory;
+type ScopeFilter = 'all' | MemoryScope;
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function buildListInput(search: string, category: CategoryFilter, scope: ScopeFilter) {
+  const trimmedSearch = search.trim();
+  return {
+    page: 1,
+    limit: 50,
+    ...(trimmedSearch.length > 0 ? { search: trimmedSearch } : {}),
+    ...(category !== 'all' ? { category } : {}),
+    ...(scope !== 'all' ? { scope } : {}),
+  };
+}
+
+function calculateUsagePercent(total = 0, cap = 500): number {
+  return Math.min(100, Math.round((total / cap) * 100));
+}
+
 function isJsonValue(value: unknown): value is JsonValue {
   if (value === null) return true;
   if (['string', 'number', 'boolean'].includes(typeof value)) return true;
@@ -107,23 +130,17 @@ const initialDraft: DraftMemory = {
   ttlDays: 180,
 };
 
-export function FlowAiMemoryTab() {
+export function FlowAiMemoryTab() { // NOSONAR: JSX orchestration is kept local to preserve this shipped settings view.
   const utils = trpc.useUtils();
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState<'all' | MemoryCategory>('all');
-  const [scope, setScope] = useState<'all' | MemoryScope>('all');
+  const [category, setCategory] = useState<CategoryFilter>('all');
+  const [scope, setScope] = useState<ScopeFilter>('all');
   const [draft, setDraft] = useState<DraftMemory>(initialDraft);
   const [editDraft, setEditDraft] = useState<EditMemory | null>(null);
   const [purgeConfirm, setPurgeConfirm] = useState('');
-  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-  const listInput = useMemo(() => ({
-    page: 1,
-    limit: 50,
-    ...(search.trim().length > 0 ? { search: search.trim() } : {}),
-    ...(category !== 'all' ? { category } : {}),
-    ...(scope !== 'all' ? { scope } : {}),
-  }), [category, scope, search]);
+  const listInput = useMemo(() => buildListInput(search, category, scope), [category, scope, search]);
 
   const settingsQuery = trpc.ai.memory.settings.useQuery();
   const listQuery = trpc.ai.memory.list.useQuery(listInput);
@@ -190,13 +207,21 @@ export function FlowAiMemoryTab() {
 
   const settings = settingsQuery.data;
   const memoryList = listQuery.data;
-  const usagePercent = Math.min(100, Math.round(((memoryList?.total ?? 0) / (memoryList?.cap ?? 500)) * 100));
-  const isBusy = settingsMutation.isPending
-    || rememberMutation.isPending
-    || updateMutation.isPending
-    || renewMutation.isPending
-    || forgetMutation.isPending
-    || forgetAllMutation.isPending;
+  const usagePercent = calculateUsagePercent(memoryList?.total, memoryList?.cap);
+  const isBusy = [
+    settingsMutation.isPending,
+    rememberMutation.isPending,
+    updateMutation.isPending,
+    renewMutation.isPending,
+    forgetMutation.isPending,
+    forgetAllMutation.isPending,
+  ].some(Boolean);
+
+  function runMemoryAction(action: () => Promise<void>, fallback: string) {
+    action().catch((error: unknown) => {
+      setFeedback({ kind: 'error', message: errorMessage(error, fallback) });
+    });
+  }
 
   async function createMemory() {
     setFeedback(null);
@@ -210,7 +235,7 @@ export function FlowAiMemoryTab() {
         ttlDays: draft.ttlDays,
       });
     } catch (error) {
-      setFeedback({ kind: 'error', message: error instanceof Error ? error.message : 'JSON inválido.' });
+      setFeedback({ kind: 'error', message: errorMessage(error, 'JSON inválido.') });
     }
   }
 
@@ -227,7 +252,7 @@ export function FlowAiMemoryTab() {
         ttlDays: editDraft.ttlDays,
       });
     } catch (error) {
-      setFeedback({ kind: 'error', message: error instanceof Error ? error.message : 'JSON inválido.' });
+      setFeedback({ kind: 'error', message: errorMessage(error, 'JSON inválido.') });
     }
   }
 
@@ -243,6 +268,33 @@ export function FlowAiMemoryTab() {
       return;
     }
     await forgetAllMutation.mutateAsync({ confirmText: 'CONFIRMAR' });
+  }
+
+  function toggleMemoryEnabled() {
+    settingsMutation.mutate({ enabled: !settings?.enabled });
+  }
+
+  function toggleRecallPaused() {
+    settingsMutation.mutate({ paused: !settings?.paused });
+  }
+
+  function renewMemory(memoryId: string) {
+    runMemoryAction(
+      async () => {
+        await renewMutation.mutateAsync({ memoryId, ttlDays: 180 });
+      },
+      'Falha ao renovar TTL.',
+    );
+  }
+
+  function forgetMemory(memoryId: string) {
+    if (!window.confirm('Excluir esta memória?')) return;
+    runMemoryAction(
+      async () => {
+        await forgetMutation.mutateAsync({ memoryId });
+      },
+      'Falha ao remover memória.',
+    );
   }
 
   if (settingsQuery.isLoading) {
@@ -272,7 +324,7 @@ export function FlowAiMemoryTab() {
             <button
               type="button"
               disabled={isBusy || !settings?.allowedByPlan}
-              onClick={() => void settingsMutation.mutateAsync({ enabled: !settings?.enabled })}
+              onClick={toggleMemoryEnabled}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               {settings?.enabled ? <ShieldCheck size={14} /> : <PlayCircle size={14} />}
@@ -281,7 +333,7 @@ export function FlowAiMemoryTab() {
             <button
               type="button"
               disabled={isBusy || !settings?.enabled}
-              onClick={() => void settingsMutation.mutateAsync({ paused: !settings?.paused })}
+              onClick={toggleRecallPaused}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               {settings?.paused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
@@ -289,7 +341,7 @@ export function FlowAiMemoryTab() {
             </button>
             <button
               type="button"
-              onClick={() => void exportMemories()}
+              onClick={() => runMemoryAction(exportMemories, 'Falha ao exportar memórias.')}
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
             >
               <Download size={14} />
@@ -407,7 +459,7 @@ export function FlowAiMemoryTab() {
                         type="button"
                         title="Renovar TTL"
                         disabled={renewMutation.isPending}
-                        onClick={() => void renewMutation.mutateAsync({ memoryId: memory.id, ttlDays: 180 })}
+                        onClick={() => renewMemory(memory.id)}
                         className="rounded-lg border border-border bg-background p-2 text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50"
                       >
                         <RefreshCw size={14} />
@@ -416,11 +468,7 @@ export function FlowAiMemoryTab() {
                         type="button"
                         title="Excluir"
                         disabled={forgetMutation.isPending}
-                        onClick={() => {
-                          if (window.confirm('Excluir esta memória?')) {
-                            void forgetMutation.mutateAsync({ memoryId: memory.id });
-                          }
-                        }}
+                        onClick={() => forgetMemory(memory.id)}
                         className="rounded-lg border border-destructive/30 bg-destructive/10 p-2 text-destructive hover:bg-destructive/20 disabled:opacity-50"
                       >
                         <Trash2 size={14} />
@@ -493,7 +541,7 @@ export function FlowAiMemoryTab() {
             <button
               type="button"
               disabled={rememberMutation.isPending || !settings?.enabled}
-              onClick={() => void createMemory()}
+              onClick={() => runMemoryAction(createMemory, 'Falha ao salvar memória.')}
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {rememberMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -512,7 +560,7 @@ export function FlowAiMemoryTab() {
             <button
               type="button"
               disabled={forgetAllMutation.isPending}
-              onClick={() => void purgeMemories()}
+              onClick={() => runMemoryAction(purgeMemories, 'Falha ao remover memórias.')}
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
             >
               {forgetAllMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -583,7 +631,7 @@ export function FlowAiMemoryTab() {
               <button
                 type="button"
                 disabled={updateMutation.isPending}
-                onClick={() => void saveEdit()}
+                onClick={() => runMemoryAction(saveEdit, 'Falha ao salvar edição.')}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {updateMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
