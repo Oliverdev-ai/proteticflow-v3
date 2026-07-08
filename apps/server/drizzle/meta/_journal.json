@@ -253,6 +253,20 @@
                         "when":  1777420800000,
                         "tag":  "0036_ci_schema_drift_backfill",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  36,
+                        "version":  "7",
+                        "when":  1777507200000,
+                        "tag":  "0037_phase7_memory_persistent_ga",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  37,
+                        "version":  "7",
+                        "when":  1777507260000,
+                        "tag":  "0038_phase7_memory_drop_legacy_columns",
+                        "breakpoints":  true
                     }
                 ]
 }

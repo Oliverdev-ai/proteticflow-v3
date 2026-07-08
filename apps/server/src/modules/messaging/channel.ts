@@ -29,6 +29,7 @@ import {
   isWithinQuietHours,
   type ProactiveUserPreferences,
 } from '../proactive/preferences.service.js';
+import { memoryService } from '../ai/memory.service.js';
 
 export type MessagePriority = 'low' | 'normal' | 'urgent';
 export type ChannelName = 'push' | 'email' | 'whatsapp' | 'in_app';
@@ -135,6 +136,16 @@ export class ChannelRouter {
     msg: OutboundMessage,
     priority: MessagePriority,
   ): Promise<SendResult[]> {
+    if (priority !== 'urgent') {
+      const memoryReleaseAt = await memoryService.getQuietModeReleaseAt({
+        tenantId: ctx.tenantId,
+        userId: to.userId,
+      });
+      if (memoryReleaseAt) {
+        throw new QuietHoursDeferredError(memoryReleaseAt);
+      }
+    }
+
     if (priority !== 'urgent' && isWithinQuietHours(to.preferences)) {
       throw new QuietHoursDeferredError(getQuietHoursReleaseAt(to.preferences));
     }

@@ -23,7 +23,7 @@ const COMMAND_FREE_TEXT_FIELDS: Partial<Record<FlowCommandName, string[]>> = {
   'jobs.finalize': ['notes'],
   'jobs.statusUpdate': ['note', 'cancelReason'],
   'messages.draftToClient': ['messageContext'],
-  'memory.remember': ['value'],
+  remember_fact: ['keyText', 'valueJson'],
   'purchases.create': ['notes'],
 };
 

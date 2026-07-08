@@ -154,6 +154,18 @@ export const FLOW_COMMANDS = {
     patterns: [/silenc(iar|ie).*(alerta|notifica)/i, /mute.*(alerta|notifica)/i, /nao me avise/i],
     requiredFields: ['alertTypes'],
   },
+  mute_alerts: {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
+    patterns: [/silenc(iar|ie).*(alerta|notifica)/i, /mute.*(alerta|notifica)/i, /nao me avise/i],
+    requiredFields: ['alertTypes'],
+  },
+  set_quiet_mode: {
+    risk: 'transactional',
+    roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
+    patterns: [/quiet mode/i, /modo silencioso/i, /me deixa em paz/i, /nao me interrompa/i],
+    requiredFields: ['until'],
+  },
   send_whatsapp_template: {
     risk: 'transactional',
     roles: ['superadmin', 'gerente', 'recepcao'],
@@ -200,7 +212,7 @@ export const FLOW_COMMANDS = {
       /mensagens?.*whatsapp.*cliente/i,
     ],
   },
-  'memory.remember': {
+  remember_fact: {
     risk: 'transactional',
     roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
     patterns: [
@@ -208,17 +220,28 @@ export const FLOW_COMMANDS = {
       /salv(e|ar).*(memoria|memória)/i,
       /memorize/i,
     ],
-    requiredFields: ['key', 'value'],
+    requiredFields: ['keyText', 'valueJson'],
   },
-  'memory.forget': {
-    risk: 'transactional',
+  recall_memory: {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
+    patterns: [/buscar.*memoria/i, /recall.*memory/i, /o que voce lembra/i],
+    requiredFields: ['text'],
+  },
+  forget_memory: {
+    risk: 'critical',
     roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
     patterns: [
       /esqu(e|ecer).*(memoria|memória)/i,
       /remov(a|er).*(memoria|memória)/i,
       /forget/i,
     ],
-    requiredFields: ['key'],
+    requiredFields: ['memoryId'],
+  },
+  list_memories: {
+    risk: 'read_only',
+    roles: ['superadmin', 'gerente', 'recepcao', 'producao', 'contabil'],
+    patterns: [/listar.*memorias?/i, /ver.*memorias?/i, /memorias?.*salvas/i],
   },
   'clients.createDraft': {
     risk: 'transactional',
@@ -662,18 +685,41 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
     }
   }
 
+  if (/quiet mode|modo silencioso|me deixa em paz|nao me interrompa|não me interrompa/i.test(normalizedInput)) {
+    const isoDate = rawInput.match(/\b(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{3})?Z?)?)\b/);
+    if (isoDate?.[1]) {
+      if (isoDate[1].endsWith('Z')) {
+        entities.until = isoDate[1];
+      } else if (/\d{2}:\d{2}$/.test(isoDate[1])) {
+        entities.until = `${isoDate[1]}:00.000Z`;
+      } else if (/\.\d{3}$/.test(isoDate[1])) {
+        entities.until = `${isoDate[1]}Z`;
+      } else {
+        entities.until = `${isoDate[1]}.000Z`;
+      }
+    } else if (normalizedInput.includes('amanha') || normalizedInput.includes('amanhã')) {
+      const releaseAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      releaseAt.setHours(14, 0, 0, 0);
+      entities.until = releaseAt.toISOString();
+    } else if (normalizedInput.includes('hoje')) {
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      entities.until = endOfDay.toISOString();
+    }
+  }
+
   if (/lembr|memor|salvar memoria/i.test(normalizedInput)) {
-    const keyValueMatch = rawInput.match(/(?:chave|key)\s*[:=]\s*([a-z0-9_]{2,100})[,\s]+(?:valor|value)\s*[:=]\s*(.{1,500})/i);
+    const keyValueMatch = rawInput.match(/(?:chave|key)\s*[:=]\s*([^,\n]{2,160})[,\s]+(?:valor|value)\s*[:=]\s*(.{1,1000})/i);
     if (keyValueMatch?.[1] && keyValueMatch[2]) {
-      entities.key = keyValueMatch[1].trim().toLowerCase();
-      entities.value = keyValueMatch[2].trim();
+      entities.keyText = keyValueMatch[1].trim();
+      entities.valueJson = keyValueMatch[2].trim();
     }
   }
 
   if (/esquecer|remover memoria|forget/i.test(normalizedInput)) {
-    const forgetMatch = rawInput.match(/(?:chave|key)\s*[:=]\s*([a-z0-9_]{2,100})/i);
+    const forgetMatch = rawInput.match(/(?:id|memoryId|memoria)\s*[:=]\s*([0-9a-f-]{32,36})/i);
     if (forgetMatch?.[1]) {
-      entities.key = forgetMatch[1].trim().toLowerCase();
+      entities.memoryId = forgetMatch[1].trim().toLowerCase();
     }
   }
 

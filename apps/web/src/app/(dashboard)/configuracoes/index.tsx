@@ -10,7 +10,11 @@ export default function SettingsPage() {
   const location = useLocation();
   const { hasAccess, isLoading: permsLoading } = usePermissions();
   const { overview } = useSettings();
-  const initialTabId = location.pathname === '/configuracoes/preferencias' ? 'preferencias' : undefined;
+  const initialTabId = location.pathname === '/configuracoes/preferencias'
+    ? 'preferencias'
+    : location.pathname === '/configuracoes/flow-ia/memoria'
+      ? 'flow-ia-memory'
+      : undefined;
 
   if (permsLoading || overview.isLoading) {
     return (
