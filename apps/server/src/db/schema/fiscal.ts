@@ -8,6 +8,7 @@ import {
   pgEnum,
   numeric,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { tenants } from './tenants';
 import { clients } from './clients';
@@ -47,6 +48,17 @@ export const boletos = pgTable('boletos', {
   index('boletos_client_idx').on(table.clientId),
   index('boletos_gateway_idx').on(table.gatewayId),
   index('boletos_status_idx').on(table.status),
+]);
+
+export const asaasWebhookEvents = pgTable('asaas_webhook_events', {
+  id: serial('id').primaryKey(),
+  eventId: varchar('event_id', { length: 128 }).notNull(),
+  eventType: varchar('event_type', { length: 64 }),
+  receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true }),
+}, (table) => [
+  uniqueIndex('asaas_webhook_events_event_id_unique').on(table.eventId),
+  index('asaas_webhook_events_received_at_idx').on(table.receivedAt),
 ]);
 
 export const nfseStatusEnum = pgEnum('nfse_status', [
