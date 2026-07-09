@@ -26,8 +26,5 @@ CREATE TABLE IF NOT EXISTS "login_attempts" (
 CREATE UNIQUE INDEX IF NOT EXISTS "login_attempts_email_ip_unique"
   ON "login_attempts" ("email", "ip");
 
-CREATE INDEX IF NOT EXISTS "login_attempts_email_ip_idx"
-  ON "login_attempts" ("email", "ip");
-
 CREATE INDEX IF NOT EXISTS "login_attempts_locked_until_idx"
   ON "login_attempts" ("locked_until");

@@ -260,6 +260,56 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
     await db.delete(users).where(eq(users.id, userA.user.id));
     await db.delete(users).where(eq(users.id, userB.user.id));
   });
+
+  it('26. Should escalate login lockout to 30 minutes after six failures', async () => {
+    const email = uniqueEmail('lockout-six');
+    const password = 'Password123!';
+    const ip = '10.0.0.26';
+    const registered = await authService.register({ name: 'Lockout Six', email, password });
+
+    for (let i = 0; i < 6; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+
+      if (i < 5) {
+        await expireLoginLock(email, ip);
+      }
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    const lockMs = attempt?.lockedUntil ? attempt.lockedUntil.getTime() - Date.now() : 0;
+
+    expect(attempt?.failureCount).toBe(6);
+    expect(lockMs).toBeGreaterThan(29 * 60 * 1000);
+    expect(lockMs).toBeLessThanOrEqual((30 * 60 * 1000) + 5000);
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('27. Should escalate login lockout to 24 hours after eight failures', async () => {
+    const email = uniqueEmail('lockout-eight');
+    const password = 'Password123!';
+    const ip = '10.0.0.27';
+    const registered = await authService.register({ name: 'Lockout Eight', email, password });
+
+    for (let i = 0; i < 8; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+
+      if (i < 7) {
+        await expireLoginLock(email, ip);
+      }
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    const lockMs = attempt?.lockedUntil ? attempt.lockedUntil.getTime() - Date.now() : 0;
+
+    expect(attempt?.failureCount).toBe(8);
+    expect(lockMs).toBeGreaterThan(23 * 60 * 60 * 1000);
+    expect(lockMs).toBeLessThanOrEqual((24 * 60 * 60 * 1000) + 5000);
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
 });
 
 function uniqueEmail(prefix: string): string {
@@ -273,4 +323,20 @@ async function rejectionMessage(promise: Promise<unknown>): Promise<string> {
   } catch (error) {
     return error instanceof Error ? error.message : String(error);
   }
+}
+
+async function expireLoginLock(email: string, ip: string): Promise<void> {
+  await db
+    .update(loginAttempts)
+    .set({ lockedUntil: new Date(Date.now() - 1000) })
+    .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+}
+
+async function getLoginAttempt(email: string, ip: string) {
+  const [attempt] = await db
+    .select()
+    .from(loginAttempts)
+    .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+
+  return attempt;
 }

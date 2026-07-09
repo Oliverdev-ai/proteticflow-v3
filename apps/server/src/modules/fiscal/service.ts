@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import type {
   Boleto,
@@ -642,19 +642,42 @@ export async function handleAsaasWebhook(rawBody: string): Promise<void> {
   });
 }
 
+const ASAAS_WEBHOOK_CLAIM_STALE_MS = 5 * 60 * 1000;
+
 async function claimAsaasWebhookEvent(eventId: string, eventType: string | null): Promise<number | null> {
+  const now = new Date();
   const inserted = await db
     .insert(asaasWebhookEvents)
     .values({
       eventId,
-      eventType,
+      eventType: eventType ?? null,
+      receivedAt: now,
     })
     .onConflictDoNothing({
       target: asaasWebhookEvents.eventId,
     })
     .returning({ id: asaasWebhookEvents.id });
 
-  return inserted[0]?.id ?? null;
+  const insertedId = inserted[0]?.id;
+  if (insertedId !== undefined) {
+    return insertedId;
+  }
+
+  const staleBefore = new Date(now.getTime() - ASAAS_WEBHOOK_CLAIM_STALE_MS);
+  const reclaimed = await db
+    .update(asaasWebhookEvents) // tenant-isolation-ok external Asaas event log is keyed before tenant resolution
+    .set({
+      eventType: eventType ?? null,
+      receivedAt: now,
+    })
+    .where(and(
+      eq(asaasWebhookEvents.eventId, eventId),
+      isNull(asaasWebhookEvents.processedAt),
+      lt(asaasWebhookEvents.receivedAt, staleBefore),
+    ))
+    .returning({ id: asaasWebhookEvents.id });
+
+  return reclaimed[0]?.id ?? null;
 }
 
 async function markAsaasWebhookProcessed(eventRowId: number): Promise<void> {

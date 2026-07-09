@@ -283,6 +283,80 @@ describe('fiscal service', () => {
     expect(parseAsaasWebhookPayment).toHaveBeenCalledTimes(1);
   });
 
+  it('reprocessa claim Asaas orfao antigo antes de marcar replay', async () => {
+    const user = await createTestUser(`${uid('fiscal-asaas-stale')}@test.com`);
+    const tenant = await createTestTenant(user.id, 'Lab Fiscal Asaas Stale');
+    const client = await createTestClient(tenant.id, user.id);
+    const ar = await createAr(tenant.id, client.id, 18_000);
+
+    const [boleto] = await db.insert(boletos).values({
+      tenantId: tenant.id,
+      arId: ar.id,
+      clientId: client.id,
+      gatewayId: 'pay_webhook_stale_1',
+      amountCents: 18_000,
+      dueDate: new Date(),
+      status: 'pending',
+    }).returning();
+
+    await db.insert(asaasWebhookEvents).values({
+      eventId: 'evt_stale_claim_1',
+      eventType: 'PAYMENT_CONFIRMED',
+      receivedAt: new Date(Date.now() - (6 * 60 * 1000)),
+      processedAt: null,
+    });
+
+    vi.mocked(parseAsaasWebhookPayment).mockReturnValue({
+      gatewayId: 'pay_webhook_stale_1',
+      status: 'CONFIRMED',
+      paidAt: new Date('2026-03-01T10:00:00.000Z'),
+      paidValueCents: 18_000,
+    });
+
+    const result = await fiscalService.handleAuthenticatedAsaasWebhook({
+      rawBody: JSON.stringify({
+        id: 'evt_stale_claim_1',
+        event: 'PAYMENT_CONFIRMED',
+        payment: { id: 'pay_webhook_stale_1', status: 'CONFIRMED' },
+      }),
+      accessToken: 'test-asaas-webhook-token',
+    });
+
+    const [updatedBoleto] = await db.select().from(boletos).where(eq(boletos.id, boleto!.id));
+    const [eventRow] = await db
+      .select()
+      .from(asaasWebhookEvents)
+      .where(eq(asaasWebhookEvents.eventId, 'evt_stale_claim_1'));
+    const cashbook = await db.select().from(cashbookEntries).where(eq(cashbookEntries.arId, ar.id));
+
+    expect(result).toEqual({ accepted: true, replay: false });
+    expect(updatedBoleto?.status).toBe('paid');
+    expect(eventRow?.processedAt).toBeInstanceOf(Date);
+    expect(cashbook).toHaveLength(1);
+    expect(parseAsaasWebhookPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it('mantem replay para claim Asaas recente ainda nao processado', async () => {
+    await db.insert(asaasWebhookEvents).values({
+      eventId: 'evt_recent_claim_1',
+      eventType: 'PAYMENT_CONFIRMED',
+      receivedAt: new Date(),
+      processedAt: null,
+    });
+
+    const result = await fiscalService.handleAuthenticatedAsaasWebhook({
+      rawBody: JSON.stringify({
+        id: 'evt_recent_claim_1',
+        event: 'PAYMENT_CONFIRMED',
+        payment: { id: 'pay_recent_claim_1', status: 'CONFIRMED' },
+      }),
+      accessToken: 'test-asaas-webhook-token',
+    });
+
+    expect(result).toEqual({ accepted: true, replay: true });
+    expect(parseAsaasWebhookPayment).not.toHaveBeenCalled();
+  });
+
   it('retorna 400 para payload Asaas malformado com token valido', async () => {
     await expect(fiscalService.handleAuthenticatedAsaasWebhook({
       rawBody: '{not-json',

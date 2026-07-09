@@ -76,7 +76,6 @@ export const loginAttempts = pgTable('login_attempts', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   uniqueIndex('login_attempts_email_ip_unique').on(table.email, table.ip),
-  index('login_attempts_email_ip_idx').on(table.email, table.ip),
   index('login_attempts_locked_until_idx').on(table.lockedUntil),
 ]);
 
