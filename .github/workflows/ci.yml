@@ -116,8 +116,8 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: Audit dependencies
-        run: pnpm audit --audit-level=critical
-        # SEC-02 raises this gate to high severity after dependency triage.
+        run: pnpm audit --audit-level=high
+        # SEC-02 blocks high-severity advisories unless explicitly triaged in auditConfig.ignoreGhsas.
 
   build:
     name: Build
