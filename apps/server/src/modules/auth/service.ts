@@ -180,6 +180,7 @@ export async function login(input: LoginInput, meta: { userAgent?: string; ip?: 
     }
     const isTotpValid = verify2faCode(user.twoFactorSecret!, input.totpCode);
     if (!isTotpValid) {
+      await recordLoginFailure(email, ip, now);
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Código 2FA inválido' });
     }
   }

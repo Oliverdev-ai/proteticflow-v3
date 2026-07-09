@@ -135,6 +135,48 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
     await db.update(users).set({ twoFactorEnabled: false }).where(eq(users.id, createdUserId)); // Re-disable
   });
 
+  it('18A. Should not count missing 2fa code toward login lockout', async () => {
+    const email = uniqueEmail('totp-missing');
+    const password = 'Password123!';
+    const ip = '10.0.0.181';
+    const registered = await authService.register({ name: 'Totp Missing', email, password });
+    await db
+      .update(users)
+      .set({ twoFactorEnabled: true, twoFactorSecret: 'abcd' })
+      .where(eq(users.id, registered.user.id));
+
+    for (let i = 0; i < 3; i += 1) {
+      await expect(authService.login({ email, password }, { ip })).rejects.toThrow('Código 2FA obrigatório');
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    expect(attempt).toBeUndefined();
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('18B. Should count invalid 2fa code toward login lockout', async () => {
+    const email = uniqueEmail('totp-invalid');
+    const password = 'Password123!';
+    const ip = '10.0.0.182';
+    const registered = await authService.register({ name: 'Totp Invalid', email, password });
+    await db
+      .update(users)
+      .set({ twoFactorEnabled: true, twoFactorSecret: 'abcd' })
+      .where(eq(users.id, registered.user.id));
+
+    for (let i = 0; i < 4; i += 1) {
+      await expect(authService.login({ email, password, totpCode: '000000' }, { ip })).rejects.toThrow('Código 2FA inválido');
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    expect(attempt?.failureCount).toBe(4);
+    expect(attempt?.lockedUntil?.getTime()).toBeGreaterThan(Date.now());
+    await expect(authService.login({ email, password, totpCode: '000000' }, { ip })).rejects.toThrow('Email ou senha inválidos');
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
   it('19. Should allow password change', async () => {
     await authService.changePassword(createdUserId, testPassword, 'NewPassword123!');
     const [u] = await db.select().from(users).where(eq(users.id, createdUserId));
