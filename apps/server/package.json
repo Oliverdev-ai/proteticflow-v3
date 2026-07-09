@@ -25,6 +25,7 @@
     "db:migrate": "tsx ../../scripts/baseline-drizzle-migrations.ts && drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
+    "backfill:2fa-secrets": "tsx ../../scripts/backfill-2fa-secrets.ts",
     "check:tenant-isolation": "tsx ../../scripts/check-tenant-isolation.ts"
   },
   "dependencies": {

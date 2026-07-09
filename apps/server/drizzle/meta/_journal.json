@@ -281,6 +281,13 @@
                         "when":  1783574400000,
                         "tag":  "0040_sec01_webhook_lockout",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  40,
+                        "version":  "7",
+                        "when":  1783578060000,
+                        "tag":  "0041_sec02_totp_secret_text",
+                        "breakpoints":  true
                     }
                 ]
 }

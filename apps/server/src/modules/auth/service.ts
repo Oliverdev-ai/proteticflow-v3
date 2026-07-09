@@ -18,6 +18,7 @@ import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import { sendPasswordResetEmail } from '../notifications/email.js';
 import { dispatchByPreference } from '../notifications/service.js';
+import { decryptTotpSecretAtRest, encryptTotpSecret } from '../../core/crypto.js';
 import {
   registerSchema,
   loginSchema,
@@ -178,7 +179,12 @@ export async function login(input: LoginInput, meta: { userAgent?: string; ip?: 
     if (!input.totpCode) {
       throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Código 2FA obrigatório' });
     }
-    const isTotpValid = verify2faCode(user.twoFactorSecret!, input.totpCode);
+    const storedTotpSecret = user.twoFactorSecret;
+    if (!storedTotpSecret) {
+      await recordLoginFailure(email, ip, now);
+      invalidCredentials();
+    }
+    const isTotpValid = verify2faCode(decryptTotpSecretAtRest(storedTotpSecret), input.totpCode);
     if (!isTotpValid) {
       await recordLoginFailure(email, ip, now);
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Código 2FA inválido' });
@@ -397,14 +403,14 @@ export async function verify2fa(userId: number, code: string, secret: string) {
   const isValid = verify2faCode(secret, code);
   if (!isValid) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Código TOTP inválido' });
 
-  await db.update(users).set({ twoFactorSecret: secret, twoFactorEnabled: true }).where(eq(users.id, userId));
+  await db.update(users).set({ twoFactorSecret: encryptTotpSecret(secret), twoFactorEnabled: true }).where(eq(users.id, userId));
   logger.info({ action: 'auth.2fa_enabled', userId }, '2FA Enabled');
 }
 
 export async function disable2fa(userId: number, code: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user || !user.twoFactorSecret) throw new TRPCError({ code: 'NOT_FOUND', message: '2FA nao configurado' });
-  const isValid = verify2faCode(user.twoFactorSecret!, code);
+  const isValid = verify2faCode(decryptTotpSecretAtRest(user.twoFactorSecret), code);
   if (!isValid) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Código TOTP inválido' });
 
   await db.update(users).set({ twoFactorSecret: null, twoFactorEnabled: false }).where(eq(users.id, userId));

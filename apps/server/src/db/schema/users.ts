@@ -32,7 +32,7 @@ export const users = pgTable('users', {
   themePreference: varchar('theme_preference', { length: 8 }).notNull().default('system'),
   avatarUrl: text('avatar_url'),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  twoFactorSecret: varchar('two_factor_secret', { length: 128 }),
+  twoFactorSecret: text('two_factor_secret'),
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
   role: userRoleEnum('role').default('user').notNull(),
   activeTenantId: integer('active_tenant_id'),

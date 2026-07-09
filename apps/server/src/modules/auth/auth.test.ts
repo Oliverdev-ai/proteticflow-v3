@@ -2,7 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../db/index.js';
 import { users, refreshTokens, loginAttempts } from '../../db/schema/users.js';
 import * as authService from './service.js';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { generate } from 'otplib';
+import { decryptTotpSecretAtRest, encryptTotpSecret, isEncryptedTotpSecret } from '../../core/crypto.js';
 
 describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
   let createdUserId: number;
@@ -10,6 +12,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
   const testPassword = 'Password123!';
 
   beforeAll(async () => {
+    await db.execute(sql`ALTER TABLE users ALTER COLUMN two_factor_secret TYPE text`);
     // Cleanup
     await db.delete(loginAttempts).where(eq(loginAttempts.email, testEmail));
     await db.delete(users).where(eq(users.email, testEmail));
@@ -120,13 +123,36 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
 
   it('16. Should setup and verify 2fa successfully', async () => {
     const auth = await authService.setup2fa(createdUserId);
-    // Note: Can't easily mock OTP in integration without installing speakeasy or similar in test file. 
+    // Note: Can't easily mock OTP in integration without installing speakeasy or similar in test file.
     // We will assume failure for arbitrary string.
     await expect(authService.verify2fa(createdUserId, '000000', auth.secret)).rejects.toThrow('Código TOTP inválido');
   });
 
+  it('16A. Should persist 2fa secret encrypted at rest and still verify login/disable', async () => {
+    const auth = await authService.setup2fa(createdUserId);
+    await authService.verify2fa(createdUserId, await generate({ secret: auth.secret }), auth.secret);
+
+    const [u] = await db.select().from(users).where(eq(users.id, createdUserId));
+    if (!u?.twoFactorSecret) throw new Error('2FA secret not persisted in test');
+    expect(u.twoFactorSecret).not.toBe(auth.secret);
+    expect(isEncryptedTotpSecret(u.twoFactorSecret)).toBe(true);
+    expect(decryptTotpSecretAtRest(u.twoFactorSecret)).toBe(auth.secret);
+
+    const login = await authService.login({
+      email: testEmail,
+      password: testPassword,
+      totpCode: await generate({ secret: auth.secret }),
+    }, {});
+    expect(login.accessToken).toBeDefined();
+
+    await authService.disable2fa(createdUserId, await generate({ secret: auth.secret }));
+    const [disabled] = await db.select().from(users).where(eq(users.id, createdUserId));
+    expect(disabled?.twoFactorSecret).toBeNull();
+    expect(disabled?.twoFactorEnabled).toBe(false);
+  });
+
   it('17. Should require 2fa code on login if enabled', async () => {
-    await db.update(users).set({ twoFactorEnabled: true, twoFactorSecret: 'abcd' }).where(eq(users.id, createdUserId));
+    await db.update(users).set({ twoFactorEnabled: true, twoFactorSecret: encryptTotpSecret('abcd') }).where(eq(users.id, createdUserId));
     await expect(authService.login({ email: testEmail, password: testPassword }, {})).rejects.toThrow('Código 2FA obrigatório');
   });
 
@@ -142,7 +168,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
     const registered = await authService.register({ name: 'Totp Missing', email, password });
     await db
       .update(users)
-      .set({ twoFactorEnabled: true, twoFactorSecret: 'abcd' })
+      .set({ twoFactorEnabled: true, twoFactorSecret: encryptTotpSecret('abcd') })
       .where(eq(users.id, registered.user.id));
 
     for (let i = 0; i < 3; i += 1) {
@@ -162,7 +188,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
     const registered = await authService.register({ name: 'Totp Invalid', email, password });
     await db
       .update(users)
-      .set({ twoFactorEnabled: true, twoFactorSecret: 'abcd' })
+      .set({ twoFactorEnabled: true, twoFactorSecret: encryptTotpSecret('abcd') })
       .where(eq(users.id, registered.user.id));
 
     for (let i = 0; i < 4; i += 1) {
