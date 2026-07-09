@@ -1,5 +1,6 @@
+import crypto from 'node:crypto';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import type {
   Boleto,
@@ -21,6 +22,7 @@ import { db } from '../../db/index.js';
 import { env } from '../../env.js';
 import { logger } from '../../logger.js';
 import {
+  asaasWebhookEvents,
   boletos,
   fiscalSettings,
   nfseList,
@@ -47,6 +49,17 @@ type ListNfseInput = z.infer<typeof listNfseSchema>;
 type CancelNfseInput = z.infer<typeof cancelNfseSchema>;
 type UpsertFiscalSettingsInput = z.infer<typeof upsertFiscalSettingsSchema>;
 type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type JsonRecord = Record<string, unknown>;
+
+export class AsaasWebhookError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode: number,
+  ) {
+    super(message);
+    this.name = 'AsaasWebhookError';
+  }
+}
 
 function toIso(value: Date | null): string | null {
   return value ? value.toISOString() : null;
@@ -144,6 +157,65 @@ function mapAsaasStatus(status: string): 'pending' | 'paid' | 'overdue' | 'cance
 function parseSandboxFlag(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined || value === null || value.length === 0) return fallback;
   return value !== 'false';
+}
+
+function asRecord(value: unknown): JsonRecord | null {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return value as JsonRecord;
+  }
+  return null;
+}
+
+function pickString(source: JsonRecord, key: string): string | null {
+  const value = source[key];
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value.trim();
+  }
+  return null;
+}
+
+function toPaddedBuffer(source: Buffer, length: number): Buffer {
+  const padded = Buffer.alloc(length);
+  source.copy(padded, 0, 0, Math.min(source.length, length));
+  return padded;
+}
+
+export function verifyAsaasWebhookToken(receivedToken: string, expectedToken = env.ASAAS_WEBHOOK_TOKEN): boolean {
+  const received = Buffer.from(receivedToken.trim(), 'utf8');
+  const expected = Buffer.from(expectedToken.trim(), 'utf8');
+  const compareLength = Math.max(received.length, expected.length, 1);
+  const receivedBuffer = toPaddedBuffer(received, compareLength);
+  const expectedBuffer = toPaddedBuffer(expected, compareLength);
+  return crypto.timingSafeEqual(receivedBuffer, expectedBuffer) && received.length === expected.length;
+}
+
+function assertAsaasWebhookToken(accessToken: string | undefined): void {
+  if (!accessToken || !verifyAsaasWebhookToken(accessToken)) {
+    throw new AsaasWebhookError('Unauthorized', 401);
+  }
+}
+
+function parseAsaasWebhookEnvelope(rawBody: string): {
+  eventId: string;
+  eventType: string | null;
+} {
+  let payload: JsonRecord;
+  try {
+    const parsed = JSON.parse(rawBody) as unknown;
+    payload = asRecord(parsed) ?? {};
+  } catch {
+    throw new AsaasWebhookError('Webhook error', 400);
+  }
+
+  const eventId = pickString(payload, 'id');
+  if (!eventId || eventId.length > 128) {
+    throw new AsaasWebhookError('Webhook error', 400);
+  }
+
+  return {
+    eventId,
+    eventType: pickString(payload, 'event')?.slice(0, 64) ?? null,
+  };
 }
 
 async function getFiscalSettingsRow(tenantId: number) {
@@ -568,6 +640,82 @@ export async function handleAsaasWebhook(rawBody: string): Promise<void> {
         .where(eq(boletos.id, boleto.id));
     }
   });
+}
+
+const ASAAS_WEBHOOK_CLAIM_STALE_MS = 5 * 60 * 1000;
+
+async function claimAsaasWebhookEvent(eventId: string, eventType: string | null): Promise<number | null> {
+  const now = new Date();
+  const inserted = await db
+    .insert(asaasWebhookEvents)
+    .values({
+      eventId,
+      eventType: eventType ?? null,
+      receivedAt: now,
+    })
+    .onConflictDoNothing({
+      target: asaasWebhookEvents.eventId,
+    })
+    .returning({ id: asaasWebhookEvents.id });
+
+  const insertedId = inserted[0]?.id;
+  if (insertedId !== undefined) {
+    return insertedId;
+  }
+
+  const staleBefore = new Date(now.getTime() - ASAAS_WEBHOOK_CLAIM_STALE_MS);
+  const reclaimed = await db
+    .update(asaasWebhookEvents) // tenant-isolation-ok external Asaas event log is keyed before tenant resolution
+    .set({
+      eventType: eventType ?? null,
+      receivedAt: now,
+    })
+    .where(and(
+      eq(asaasWebhookEvents.eventId, eventId),
+      isNull(asaasWebhookEvents.processedAt),
+      lt(asaasWebhookEvents.receivedAt, staleBefore),
+    ))
+    .returning({ id: asaasWebhookEvents.id });
+
+  return reclaimed[0]?.id ?? null;
+}
+
+async function markAsaasWebhookProcessed(eventRowId: number): Promise<void> {
+  await db
+    .update(asaasWebhookEvents) // tenant-isolation-ok external Asaas event log is keyed before tenant resolution
+    .set({ processedAt: new Date() })
+    .where(eq(asaasWebhookEvents.id, eventRowId));
+}
+
+async function releaseAsaasWebhookClaim(eventRowId: number): Promise<void> {
+  await db
+    .delete(asaasWebhookEvents) // tenant-isolation-ok external Asaas event log is keyed before tenant resolution
+    .where(eq(asaasWebhookEvents.id, eventRowId));
+}
+
+export async function handleAuthenticatedAsaasWebhook(input: {
+  rawBody: string;
+  accessToken?: string;
+}): Promise<{ accepted: true; replay: boolean }> {
+  assertAsaasWebhookToken(input.accessToken);
+  const envelope = parseAsaasWebhookEnvelope(input.rawBody);
+  const claimId = await claimAsaasWebhookEvent(envelope.eventId, envelope.eventType);
+
+  if (claimId === null) {
+    return { accepted: true, replay: true };
+  }
+
+  try {
+    await handleAsaasWebhook(input.rawBody);
+    await markAsaasWebhookProcessed(claimId);
+    return { accepted: true, replay: false };
+  } catch (error) {
+    await releaseAsaasWebhookClaim(claimId);
+    if (error instanceof TRPCError && error.code === 'BAD_REQUEST') {
+      throw new AsaasWebhookError('Webhook error', 400);
+    }
+    throw error;
+  }
 }
 
 export async function emitNfse(tenantId: number, _userId: number, input: EmitNfseInput): Promise<Nfse> {

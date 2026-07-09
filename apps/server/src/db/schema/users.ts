@@ -65,6 +65,20 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const loginAttempts = pgTable('login_attempts', {
+  id: serial('id').primaryKey(),
+  email: varchar('email', { length: 320 }).notNull(),
+  ip: varchar('ip', { length: 64 }).notNull(),
+  failureCount: integer('failure_count').notNull().default(0),
+  lastFailedAt: timestamp('last_failed_at', { withTimezone: true }),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('login_attempts_email_ip_unique').on(table.email, table.ip),
+  index('login_attempts_locked_until_idx').on(table.lockedUntil),
+]);
+
 // ─── API Keys (01.14) ───────────────────────────────────────
 // Prefixo ptf_, hash bcrypt (nunca plaintext), exibida uma única vez na criação.
 // Disponível apenas nos planos Pro e Enterprise (enforcement na Fase 23).

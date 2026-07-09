@@ -274,6 +274,13 @@
                         "when":  1783488000000,
                         "tag":  "0039_phase7_memory_unique_upsert",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  39,
+                        "version":  "7",
+                        "when":  1783574400000,
+                        "tag":  "0040_sec01_webhook_lockout",
+                        "breakpoints":  true
                     }
                 ]
 }
