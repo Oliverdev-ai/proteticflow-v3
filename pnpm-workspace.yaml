@@ -1,3 +1,25 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+overrides:
+  basic-ftp: ^5.3.0
+  express@4>path-to-regexp: 0.1.12
+  path-to-regexp: ^8.4.0
+  picomatch: ^4.0.4
+
+allowBuilds:
+  # bcrypt builds native auth bindings required by server runtime and tests.
+  bcrypt: true
+  # core-js ships runtime files prebuilt; its postinstall is not required by jspdf/canvg usage.
+  core-js: false
+  # esbuild powers Vite, tsx, Storybook and Drizzle tooling across the monorepo.
+  esbuild: true
+  # msgpackr-extract is optional native acceleration for BullMQ/msgpackr; JS fallback is validated by tests.
+  msgpackr-extract: false
+
+strictDepBuilds: true
+
+auditConfig:
+  # SEC-02 will add reviewed GHSA exceptions here only if upgrades cannot remove a finding.
+  ignoreGhsas: []

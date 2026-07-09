@@ -35,7 +35,7 @@ proteticflow-v3/
 ## Desenvolvimento
 
 ```bash
-# Pré-requisitos: Node.js 22+, pnpm 9+, Docker
+# Pré-requisitos: Node.js 22+, pnpm 11.10.0+, Docker
 
 git clone git@github.com:Oliverdev-ai/proteticflow-v3.git
 cd proteticflow-v3
