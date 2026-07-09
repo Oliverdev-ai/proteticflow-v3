@@ -14,6 +14,7 @@ import {
   jobsStatusUpdateSchema,
   listArSchema,
   muteAlertsSchema,
+  proactiveAlertTypeSchema,
   listClientsSchema,
   listJobsSchema,
   messagesDraftToClientSchema,
@@ -35,10 +36,9 @@ import { generateAbcCurveReport } from '../reports/abc-curve.service.js';
 import { getDashboardSummary } from '../dashboard/service.js';
 import { parseNaturalDate } from './resolvers.js';
 import {
-  countMemoryKeys,
-  deleteMemoryKey,
-  MAX_MEMORY_KEYS,
-  setMemory,
+  MEMORY_CATEGORIES,
+  MEMORY_SCOPES,
+  memoryService,
 } from './memory.service.js';
 import {
   FLOW_COMMANDS,
@@ -170,13 +170,58 @@ const accountsReceivableSchema = listArSchema.partial().extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-const memoryRememberSchema = z.object({
-  key: z.string().trim().min(2).max(100).regex(/^[a-z0-9_]+$/),
-  value: z.string().trim().min(1).max(500),
+const memoryCategorySchema = z.enum(MEMORY_CATEGORIES);
+const memoryScopeSchema = z.enum(MEMORY_SCOPES);
+
+const memoryValueJsonSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? { value } : value),
+  z.record(z.string(), z.unknown()),
+);
+
+const rememberFactSchema = z.object({
+  scope: memoryScopeSchema.default('user'),
+  category: memoryCategorySchema.default('general'),
+  keyText: z.string().trim().min(2).max(500),
+  valueJson: memoryValueJsonSchema,
+  entityType: z.string().trim().min(1).max(64).nullable().optional(),
+  entityId: z.coerce.number().int().positive().nullable().optional(),
+  ttlDays: z.coerce.number().int().min(1).max(365).optional(),
+  confidence: z.coerce.number().min(0).max(1).optional(),
 });
 
-const memoryForgetSchema = z.object({
-  key: z.string().trim().min(2).max(100).regex(/^[a-z0-9_]+$/),
+const recallMemorySchema = z.object({
+  text: z.string().trim().min(1).max(1000),
+  category: memoryCategorySchema.optional(),
+  entityType: z.string().trim().min(1).max(64).optional(),
+  entityId: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(20).optional(),
+});
+
+const forgetMemorySchema = z.object({
+  memoryId: z.string().uuid(),
+});
+
+const listMemoriesToolSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  category: memoryCategorySchema.optional(),
+  scope: memoryScopeSchema.optional(),
+  entityType: z.string().trim().min(1).max(64).optional(),
+  entityId: z.coerce.number().int().positive().optional(),
+  search: z.string().trim().min(1).max(500).optional(),
+});
+
+const muteAlertsToolSchema = muteAlertsSchema.extend({
+  alertTypes: z.preprocess(
+    (value) => (typeof value === 'string'
+      ? value.split(',').map((item) => item.trim()).filter(Boolean)
+      : value),
+    z.array(proactiveAlertTypeSchema).min(1),
+  ),
+});
+
+const setQuietModeSchema = z.object({
+  until: z.string().datetime(),
 });
 
 export type ToolContext = {
@@ -561,6 +606,21 @@ export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
     execute: async (ctx, input) =>
       executeMessagesMuteAlerts(ctx, muteAlertsSchema.parse(input)),
   },
+  mute_alerts: {
+    name: 'mute_alerts',
+    inputSchema: muteAlertsToolSchema,
+    execute: async (ctx, input) =>
+      executeMessagesMuteAlerts(ctx, muteAlertsToolSchema.parse(input)),
+  },
+  set_quiet_mode: {
+    name: 'set_quiet_mode',
+    inputSchema: setQuietModeSchema,
+    execute: async (ctx, input) => {
+      const parsed = setQuietModeSchema.parse(input);
+      const memory = await memoryService.setQuietMode(ctx, new Date(parsed.until));
+      return { success: true, memory };
+    },
+  },
   send_whatsapp_template: {
     name: 'send_whatsapp_template',
     inputSchema: sendWhatsappTemplateSchema,
@@ -591,27 +651,43 @@ export const TOOL_REGISTRY: Record<FlowCommandName, GenericToolHandler> = {
     execute: async (ctx, input) =>
       executeGetWhatsappConversation(ctx, getWhatsappConversationSchema.parse(input)),
   },
-  'memory.remember': {
-    name: 'memory.remember',
-    inputSchema: memoryRememberSchema,
+  remember_fact: {
+    name: 'remember_fact',
+    inputSchema: rememberFactSchema,
     execute: async (ctx, input) => {
-      const parsed = memoryRememberSchema.parse(input);
-      const count = await countMemoryKeys(ctx.tenantId, ctx.userId);
-      if (count >= MAX_MEMORY_KEYS) {
-        return { success: false, reason: 'limite de memoria atingido' };
-      }
-      await setMemory(ctx.tenantId, ctx.userId, parsed.key, parsed.value, 'assistant');
+      const parsed = rememberFactSchema.parse(input);
+      const memory = await memoryService.remember(ctx, {
+        scope: parsed.scope,
+        category: parsed.category,
+        keyText: parsed.keyText,
+        valueJson: parsed.valueJson,
+        entityType: parsed.entityType ?? null,
+        entityId: parsed.entityId ?? null,
+        source: 'flow_ia',
+        confidence: parsed.confidence,
+        ttlDays: parsed.ttlDays,
+      });
+      return { success: true, memory };
+    },
+  },
+  recall_memory: {
+    name: 'recall_memory',
+    inputSchema: recallMemorySchema,
+    execute: async (ctx, input) => memoryService.recall(ctx, recallMemorySchema.parse(input)),
+  },
+  forget_memory: {
+    name: 'forget_memory',
+    inputSchema: forgetMemorySchema,
+    execute: async (ctx, input) => {
+      const parsed = forgetMemorySchema.parse(input);
+      await memoryService.forget(ctx, parsed.memoryId);
       return { success: true };
     },
   },
-  'memory.forget': {
-    name: 'memory.forget',
-    inputSchema: memoryForgetSchema,
-    execute: async (ctx, input) => {
-      const parsed = memoryForgetSchema.parse(input);
-      await deleteMemoryKey(ctx.tenantId, ctx.userId, parsed.key);
-      return { success: true };
-    },
+  list_memories: {
+    name: 'list_memories',
+    inputSchema: listMemoriesToolSchema,
+    execute: async (ctx, input) => memoryService.list(ctx, listMemoriesToolSchema.parse(input)),
   },
   'clients.createDraft': {
     name: 'clients.createDraft',

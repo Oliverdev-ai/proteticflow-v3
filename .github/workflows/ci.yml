@@ -39,7 +39,7 @@ jobs:
     needs: lint-and-typecheck
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: proteticflow_test
           POSTGRES_DB: proteticflow_test

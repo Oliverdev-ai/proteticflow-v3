@@ -28,6 +28,11 @@ import { applyRateLimitHeaders, checkTtsRateLimit } from './rate-limit.js';
 import { assertTtsPlanEnabled, logTtsUsage, synthesize, type TtsVoice } from './tts.service.js';
 import { transcribeAudio } from './voice.service.js';
 import * as lgpdService from './lgpd.service.js';
+import {
+  MEMORY_CATEGORIES,
+  MEMORY_SCOPES,
+  memoryService,
+} from './memory.service.js';
 import { getUserPreferences, isWithinQuietHours } from '../proactive/preferences.service.js';
 
 const getSessionSchema = z.object({
@@ -70,6 +75,69 @@ const ttsSchema = z.object({
   voice: z.enum(['female', 'male']).optional(),
   speakingRate: z.number().min(0.25).max(4).optional(),
   ssml: z.boolean().default(false),
+});
+
+const memoryCategorySchema = z.enum(MEMORY_CATEGORIES);
+const memoryScopeSchema = z.enum(MEMORY_SCOPES);
+const memoryValueJsonSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? { value } : value),
+  z.record(z.string(), z.unknown()),
+);
+
+const memorySettingsSchema = z.object({
+  enabled: z.boolean().optional(),
+  paused: z.boolean().optional(),
+});
+
+const memoryListSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  category: memoryCategorySchema.optional(),
+  scope: memoryScopeSchema.optional(),
+  entityType: z.string().trim().min(1).max(64).optional(),
+  entityId: z.coerce.number().int().positive().optional(),
+  search: z.string().trim().min(1).max(500).optional(),
+});
+
+const memoryRememberSchema = z.object({
+  scope: memoryScopeSchema.default('user'),
+  category: memoryCategorySchema.default('general'),
+  keyText: z.string().trim().min(2).max(500),
+  valueJson: memoryValueJsonSchema,
+  entityType: z.string().trim().min(1).max(64).nullable().optional(),
+  entityId: z.coerce.number().int().positive().nullable().optional(),
+  ttlDays: z.coerce.number().int().min(1).max(365).optional(),
+  confidence: z.coerce.number().min(0).max(1).optional(),
+});
+
+const memoryRecallSchema = z.object({
+  text: z.string().trim().min(1).max(1000),
+  category: memoryCategorySchema.optional(),
+  entityType: z.string().trim().min(1).max(64).optional(),
+  entityId: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(20).optional(),
+});
+
+const memoryIdSchema = z.object({
+  memoryId: z.string().uuid(),
+});
+
+const memoryUpdateSchema = memoryIdSchema.extend({
+  keyText: z.string().trim().min(2).max(500).optional(),
+  valueJson: memoryValueJsonSchema.optional(),
+  category: memoryCategorySchema.optional(),
+  entityType: z.string().trim().min(1).max(64).nullable().optional(),
+  entityId: z.coerce.number().int().positive().nullable().optional(),
+  ttlDays: z.coerce.number().int().min(1).max(365).optional(),
+  confidence: z.coerce.number().min(0).max(1).optional(),
+});
+
+const memoryRenewSchema = memoryIdSchema.extend({
+  ttlDays: z.coerce.number().int().min(1).max(365).default(180),
+});
+
+const memoryForgetAllSchema = z.object({
+  confirmText: z.literal('CONFIRMAR'),
 });
 
 async function assertAssistantOutOfQuietMode(tenantId: number, userId: number): Promise<void> {
@@ -167,8 +235,86 @@ export const aiRouter = router({
     requestExport: tenantProcedure
       .mutation(({ ctx }) => lgpdService.requestLgpdExport(ctx.tenantId!, ctx.user!.id)),
 
-    requestDelete: tenantProcedure
+    requestDelete: aiAdminProcedure
       .mutation(({ ctx }) => lgpdService.requestLgpdDelete(ctx.tenantId!, ctx.user!.id)),
+  }),
+
+  memory: router({
+    settings: tenantProcedure
+      .query(({ ctx }) => memoryService.getSettings({ tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role })),
+
+    updateSettings: aiAdminProcedure
+      .input(memorySettingsSchema)
+      .mutation(({ ctx, input }) =>
+        memoryService.updateSettings({ tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role }, input)),
+
+    list: tenantProcedure
+      .input(memoryListSchema)
+      .query(({ ctx, input }) =>
+        memoryService.list({ tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role }, input)),
+
+    recall: tenantProcedure
+      .input(memoryRecallSchema)
+      .query(({ ctx, input }) =>
+        memoryService.recall({ tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role }, input)),
+
+    remember: aiAdminProcedure
+      .input(memoryRememberSchema)
+      .mutation(({ ctx, input }) =>
+        memoryService.remember(
+          { tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role },
+          {
+            scope: input.scope,
+            category: input.category,
+            keyText: input.keyText,
+            valueJson: input.valueJson,
+            entityType: input.entityType ?? null,
+            entityId: input.entityId ?? null,
+            source: 'manual',
+            confidence: input.confidence,
+            ttlDays: input.ttlDays,
+          },
+        )),
+
+    update: aiAdminProcedure
+      .input(memoryUpdateSchema)
+      .mutation(({ ctx, input }) =>
+        memoryService.update(
+          { tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role },
+          input.memoryId,
+          {
+            keyText: input.keyText,
+            valueJson: input.valueJson,
+            category: input.category,
+            entityType: input.entityType,
+            entityId: input.entityId,
+            confidence: input.confidence,
+            ttlDays: input.ttlDays,
+          },
+        )),
+
+    renew: aiAdminProcedure
+      .input(memoryRenewSchema)
+      .mutation(({ ctx, input }) =>
+        memoryService.renew(
+          { tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role },
+          input.memoryId,
+          input.ttlDays,
+        )),
+
+    forget: aiAdminProcedure
+      .input(memoryIdSchema)
+      .mutation(async ({ ctx, input }) => {
+        await memoryService.forget({ tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role }, input.memoryId);
+        return { success: true };
+      }),
+
+    forgetAll: aiAdminProcedure
+      .input(memoryForgetAllSchema)
+      .mutation(({ ctx }) => memoryService.forgetAll({ tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role })),
+
+    exportJson: tenantProcedure
+      .query(({ ctx }) => memoryService.exportJson({ tenantId: ctx.tenantId!, userId: ctx.user!.id, role: ctx.user!.role })),
   }),
 
   resolveCommandStep: aiProcedure

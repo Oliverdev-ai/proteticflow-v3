@@ -57,6 +57,8 @@ export const aiTenantSettings = pgTable('ai_tenant_settings', {
   recommendationEnabled: boolean('recommendation_enabled').notNull().default(true),
   riskCommercialEnabled: boolean('risk_commercial_enabled').notNull().default(false),
   autoExecutionEnabled: boolean('auto_execution_enabled').notNull().default(false),
+  memoryEnabled: boolean('memory_enabled').notNull().default(false),
+  memoryInjectionPaused: boolean('memory_injection_paused').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [

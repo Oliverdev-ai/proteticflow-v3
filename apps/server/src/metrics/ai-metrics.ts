@@ -287,6 +287,36 @@ export const aiMemoryCleanupTotal = new CounterMetric({
   help: 'Total memory rows deleted by scheduled cleanup',
 });
 
+export const aiMemoryTotal = new GaugeMetric({
+  name: 'ai_memory_total',
+  help: 'Current AI memory entries by tenant, scope and category',
+  labelNames: ['tenant_id', 'scope', 'category'],
+});
+
+export const aiMemoryRecallLatencyMs = new HistogramMetric({
+  name: 'ai_memory_recall_latency_ms',
+  help: 'Latency of AI memory recall queries',
+  buckets: [25, 50, 100, 250, 500, 1000, 2000, 5000],
+});
+
+export const aiMemoryRecallHitRate = new GaugeMetric({
+  name: 'ai_memory_recall_hit_rate',
+  help: 'Ratio of AI memory recall queries returning at least one result',
+  labelNames: ['tenant_id'],
+});
+
+export const aiMemoryCapFifoEvictionsTotal = new CounterMetric({
+  name: 'ai_memory_cap_fifo_evictions_total',
+  help: 'Total AI memory entries evicted by FIFO cap enforcement',
+  labelNames: ['tenant_id'],
+});
+
+export const aiMemoryForgetTotal = new CounterMetric({
+  name: 'ai_memory_forget_total',
+  help: 'Total AI memory entries deleted by reason',
+  labelNames: ['tenant_id', 'reason'],
+});
+
 export const flowBriefingSentTotal = new CounterMetric({
   name: 'flow_briefing_sent_total',
   help: 'Total de briefings proativos enviados',
@@ -406,6 +436,47 @@ export function addAiMemoryCleanup(deletedRows: number): void {
   aiMemoryCleanupTotal.inc({}, deletedRows);
 }
 
+const memoryRecallStats = new Map<number, { total: number; hits: number }>();
+
+export function setAiMemoryTotal(input: {
+  tenantId: number;
+  scope: string;
+  category: string;
+  total: number;
+}): void {
+  aiMemoryTotal.set({
+    tenant_id: input.tenantId,
+    scope: input.scope,
+    category: input.category,
+  }, input.total);
+}
+
+export function observeAiMemoryRecallLatency(latencyMs: number): void {
+  aiMemoryRecallLatencyMs.observe({}, latencyMs);
+}
+
+export function recordAiMemoryRecallResult(tenantId: number, hit: boolean): void {
+  const stats = memoryRecallStats.get(tenantId) ?? { total: 0, hits: 0 };
+  stats.total += 1;
+  if (hit) stats.hits += 1;
+  memoryRecallStats.set(tenantId, stats);
+  aiMemoryRecallHitRate.set({ tenant_id: tenantId }, stats.total > 0 ? stats.hits / stats.total : 0);
+}
+
+export function recordAiMemoryCapEviction(tenantId: number, count: number): void {
+  if (!Number.isFinite(count) || count <= 0) return;
+  aiMemoryCapFifoEvictionsTotal.inc({ tenant_id: tenantId }, count);
+}
+
+export function recordAiMemoryForget(
+  tenantId: number,
+  reason: 'user_explicit' | 'ttl_expired' | 'cap_fifo' | 'cascade_delete',
+  count = 1,
+): void {
+  if (!Number.isFinite(count) || count <= 0) return;
+  aiMemoryForgetTotal.inc({ tenant_id: tenantId, reason }, count);
+}
+
 export function recordFlowBriefingSent(tenantId: number, status: 'sent' | 'skipped'): void {
   flowBriefingSentTotal.inc({
     tenant_id: tenantId,
@@ -463,6 +534,11 @@ export function renderMetrics(): string {
     ttsCharactersBilled.render(),
     aiIdempotencyCleanupTotal.render(),
     aiMemoryCleanupTotal.render(),
+    aiMemoryTotal.render(),
+    aiMemoryRecallLatencyMs.render(),
+    aiMemoryRecallHitRate.render(),
+    aiMemoryCapFifoEvictionsTotal.render(),
+    aiMemoryForgetTotal.render(),
     flowBriefingSentTotal.render(),
     flowAlertTriggeredTotal.render(),
     flowChannelSendTotal.render(),

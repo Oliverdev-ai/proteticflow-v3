@@ -23,6 +23,6 @@
   "devDependencies": {
     "drizzle-orm": "^0.45.2",
     "typescript": "*",
-    "vitest": "*"
+    "vitest": "^3.2.6"
   }
 }

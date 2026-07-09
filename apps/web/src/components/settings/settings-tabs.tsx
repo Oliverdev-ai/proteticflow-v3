@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   User, Building2, Users, ShieldCheck,
   CreditCard, Bell, Receipt, ChevronLeft,
-  ChevronRight, Settings2, Activity, Mic,
+  ChevronRight, Settings2, Activity, Mic, Brain,
 } from 'lucide-react';
 import { ProfileForm } from './profile-form';
 import { LabTab } from './lab-tab';
@@ -11,6 +11,7 @@ import { AuthorizationsTab } from './authorizations-tab';
 import { PlansTab } from './plans-tab';
 import { NotificationsTab } from './notifications-tab';
 import { FlowAiTab } from './flow-ai-tab';
+import { FlowAiMemoryTab } from './flow-ai-memory-tab';
 import { ProactivePreferencesTab } from './proactive-preferences-tab';
 import { FiscalSettingsForm } from '../fiscal/fiscal-settings-form';
 import { cn } from '../../lib/utils';
@@ -33,6 +34,7 @@ const SETTINGS_TABS: TabItem[] = [
   { id: 'notificacoes', label: 'Notificações', icon: Bell, component: <NotificationsTab /> },
   { id: 'preferencias', label: 'Preferências', icon: Bell, component: <ProactivePreferencesTab /> },
   { id: 'flow-ia', label: 'Flow IA', icon: Mic, component: <FlowAiTab /> },
+  { id: 'flow-ia-memory', label: 'Memória IA', icon: Brain, component: <FlowAiMemoryTab /> },
   { id: 'fiscal', label: 'Fiscal & Gateway', icon: Receipt, component: <FiscalSettingsForm />, roles: ['superadmin'] },
 ];
 

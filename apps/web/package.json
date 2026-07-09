@@ -60,11 +60,11 @@
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.183.1",
     "@vitejs/plugin-react": "^4.0.0",
-    "@vitest/coverage-v8": "^2.0.0",
+    "@vitest/coverage-v8": "^3.2.6",
     "storybook": "^8.6.0",
     "tailwindcss": "^4.2.2",
     "typescript": "*",
     "vite": "^7.3.2",
-    "vitest": "^2.0.0"
+    "vitest": "^3.2.6"
   }
 }
