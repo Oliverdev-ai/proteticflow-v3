@@ -116,7 +116,7 @@ export const authRouter = router({
     return authService.getPermissions(ctx.user!.id, tenantId);
   }),
   exportData: protectedProcedure.query(async ({ ctx }) => {
-    return authService.exportUserData(ctx.user!.id);
+    return authService.exportUserData(ctx.user!.id, ctx.tenantId!);
   }),
   setup2fa: protectedProcedure.mutation(async ({ ctx }) => {
     return authService.setup2fa(ctx.user!.id);
