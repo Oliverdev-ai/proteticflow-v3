@@ -26,3 +26,23 @@ export const ROLE_PERMISSIONS: Record<Role, { modules: string[] }> = {
   recepcao: { modules: ['dashboard', 'clients', 'jobs.create', 'jobs.view', 'agenda', 'deliveries', 'pricing.view'] },
   contabil: { modules: ['dashboard', 'financial', 'reports', 'payroll', 'fiscal'] },
 };
+
+const ADMIN_PROCEDURE_ROLES: ReadonlySet<Role> = new Set([ROLES.SUPERADMIN, ROLES.GERENTE]);
+
+export function canAccessModule(role: Role | null | undefined, moduleName: string): boolean {
+  const requestedModule = moduleName.trim();
+  if (!role || requestedModule.length === 0) return false;
+  const permissions = ROLE_PERMISSIONS[role];
+  if (!permissions) return false;
+
+  return permissions.modules.some((allowedModule) =>
+    allowedModule === '*'
+    || allowedModule === requestedModule
+    || requestedModule.startsWith(`${allowedModule}.`)
+    || allowedModule.startsWith(`${requestedModule}.`),
+  );
+}
+
+export function canUseAdminProcedure(role: Role | null | undefined): boolean {
+  return Boolean(role && ADMIN_PROCEDURE_ROLES.has(role));
+}

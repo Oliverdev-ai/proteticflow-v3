@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { ZodError } from 'zod';
+import { canUseAdminProcedure } from '@proteticflow/shared';
 import { db } from '../db/index.js';
 import { tenantMembers } from '../db/schema/tenants.js';
 import {
@@ -119,7 +120,7 @@ const enforceAdmin = t.middleware(async ({ ctx, next }) => {
     ))
     .limit(1);
 
-  if (!member || !['superadmin', 'gerente'].includes(member.role)) {
+  if (!member || !canUseAdminProcedure(member.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito a administradores' });
   }
   return next({ ctx: { ...ctx, user: ctx.user, tenantId: ctx.tenantId } });

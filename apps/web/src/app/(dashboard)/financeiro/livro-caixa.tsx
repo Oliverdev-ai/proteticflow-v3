@@ -20,8 +20,9 @@ import {
   FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { parseBRL } from '@proteticflow/shared';
+import { canAccessModule, canUseAdminProcedure, parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
+import { usePermissions } from '../../../hooks/use-permissions';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
@@ -36,8 +37,116 @@ function createEmptyForm() {
   };
 }
 
+type CashbookBalance = {
+  totalCredits: number;
+  totalDebits: number;
+  netBalance: number;
+};
+
+function BalanceSummaryCards({ balance }: Readonly<{ balance: CashbookBalance | undefined }>) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <ScaleIn className="premium-card p-6 flex flex-col gap-6 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-success/5 rounded-full blur-3xl -mr-8 -mt-8" />
+        <div className="flex items-center justify-between relative">
+          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-success/10 text-success shadow-inner border border-success/10">
+            <TrendingUp size={20} strokeWidth={2.5} />
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-normal text-success/60">
+            Total Créditos
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 relative">
+          <Large className="text-3xl font-semibold tracking-tighter text-success tabular-nums">
+            {balance ? formatBRL(balance.totalCredits) : '—'}
+          </Large>
+          <Muted className="text-[9px] font-bold uppercase tracking-normal">
+            Entradas acumuladas
+          </Muted>
+        </div>
+      </ScaleIn>
+
+      <ScaleIn
+        delay={0.1}
+        className="premium-card p-6 flex flex-col gap-6 relative overflow-hidden group"
+      >
+        <div className="absolute top-0 right-0 w-24 h-24 bg-destructive/5 rounded-full blur-3xl -mr-8 -mt-8" />
+        <div className="flex items-center justify-between relative">
+          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-destructive/10 text-destructive shadow-inner border border-destructive/10">
+            <TrendingDown size={20} strokeWidth={2.5} />
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-normal text-destructive/60">
+            Total Débitos
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 relative">
+          <Large className="text-3xl font-semibold tracking-tighter text-destructive tabular-nums">
+            {balance ? formatBRL(balance.totalDebits) : '—'}
+          </Large>
+          <Muted className="text-[9px] font-bold uppercase tracking-normal">
+            Saídas acumuladas
+          </Muted>
+        </div>
+      </ScaleIn>
+
+      <ScaleIn
+        delay={0.2}
+        className={cn(
+          'premium-card p-6 flex flex-col gap-6 relative overflow-hidden',
+          (balance?.netBalance ?? 0) >= 0
+            ? 'bg-success/[0.03] border-success/20 shadow-sm shadow-md'
+            : 'bg-destructive/[0.03] border-destructive/20 shadow-sm shadow-md',
+        )}
+      >
+        <div className="flex items-center justify-between relative">
+          <div
+            className={cn(
+              'w-12 h-12 flex items-center justify-center rounded-[var(--radius-lg)] shadow-lg transition-transform duration-500 hover:rotate-12',
+              (balance?.netBalance ?? 0) >= 0
+                ? 'bg-success text-white'
+                : 'bg-destructive text-white',
+            )}
+          >
+            <Activity size={24} strokeWidth={2.5} />
+          </div>
+          <div
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-semibold uppercase tracking-normal',
+              (balance?.netBalance ?? 0) >= 0
+                ? 'bg-success/10 text-success border-success/20'
+                : 'bg-destructive/10 text-destructive border-destructive/20',
+            )}
+          >
+            {(balance?.netBalance ?? 0) >= 0 ? (
+              <ArrowUpRight size={10} strokeWidth={3} />
+            ) : (
+              <ArrowDownRight size={10} strokeWidth={3} />
+            )}
+            Saldo Real
+          </div>
+        </div>
+        <div className="flex flex-col gap-0.5 relative">
+          <Large
+            className={cn(
+              'text-3xl font-semibold tracking-tighter tabular-nums',
+              (balance?.netBalance ?? 0) >= 0 ? 'text-success' : 'text-destructive',
+            )}
+          >
+            {balance ? formatBRL(balance.netBalance) : '—'}
+          </Large>
+          <Muted className="text-[9px] font-semibold uppercase tracking-normal opacity-60">
+            Disponibilidade líquida
+          </Muted>
+        </div>
+      </ScaleIn>
+    </div>
+  );
+}
+
 export default function LivroCaixaPage() {
   const utils = trpc.useUtils();
+  const { role } = usePermissions();
+  const canCreateManualEntry = canAccessModule(role, 'financial') && canUseAdminProcedure(role);
   const [typeFilter, setTypeFilter] = useState<'credit' | 'debit' | undefined>(undefined);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(createEmptyForm());
@@ -63,6 +172,11 @@ export default function LivroCaixaPage() {
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all shadow-inner';
   const labelClass =
     'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
+  const openCreateModal = () => {
+    if (!canCreateManualEntry) return;
+    setForm(createEmptyForm());
+    setShowCreate(true);
+  };
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
@@ -81,113 +195,18 @@ export default function LivroCaixaPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            setForm(createEmptyForm());
-            setShowCreate(true);
-          }}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
-        >
-          <Plus size={16} strokeWidth={3} /> Lançamento Avulso
-        </button>
+        {canCreateManualEntry && (
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
+          >
+            <Plus size={16} strokeWidth={3} /> Lançamento Avulso
+          </button>
+        )}
       </div>
 
       {/* Balance Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ScaleIn className="premium-card p-6 flex flex-col gap-6 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-success/5 rounded-full blur-3xl -mr-8 -mt-8" />
-          <div className="flex items-center justify-between relative">
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-success/10 text-success shadow-inner border border-success/10">
-              <TrendingUp size={20} strokeWidth={2.5} />
-            </div>
-            <span className="text-[10px] font-semibold uppercase tracking-normal text-success/60">
-              Total Créditos
-            </span>
-          </div>
-          <div className="flex flex-col gap-0.5 relative">
-            <Large className="text-3xl font-semibold tracking-tighter text-success tabular-nums">
-              {balance ? formatBRL(balance.totalCredits) : '—'}
-            </Large>
-            <Muted className="text-[9px] font-bold uppercase tracking-normal">
-              Entradas acumuladas
-            </Muted>
-          </div>
-        </ScaleIn>
-
-        <ScaleIn
-          delay={0.1}
-          className="premium-card p-6 flex flex-col gap-6 relative overflow-hidden group"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-destructive/5 rounded-full blur-3xl -mr-8 -mt-8" />
-          <div className="flex items-center justify-between relative">
-            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-destructive/10 text-destructive shadow-inner border border-destructive/10">
-              <TrendingDown size={20} strokeWidth={2.5} />
-            </div>
-            <span className="text-[10px] font-semibold uppercase tracking-normal text-destructive/60">
-              Total Débitos
-            </span>
-          </div>
-          <div className="flex flex-col gap-0.5 relative">
-            <Large className="text-3xl font-semibold tracking-tighter text-destructive tabular-nums">
-              {balance ? formatBRL(balance.totalDebits) : '—'}
-            </Large>
-            <Muted className="text-[9px] font-bold uppercase tracking-normal">
-              Saídas acumuladas
-            </Muted>
-          </div>
-        </ScaleIn>
-
-        <ScaleIn
-          delay={0.2}
-          className={cn(
-            'premium-card p-6 flex flex-col gap-6 relative overflow-hidden',
-            (balance?.netBalance ?? 0) >= 0
-              ? 'bg-success/[0.03] border-success/20 shadow-sm shadow-md'
-              : 'bg-destructive/[0.03] border-destructive/20 shadow-sm shadow-md',
-          )}
-        >
-          <div className="flex items-center justify-between relative">
-            <div
-              className={cn(
-                'w-12 h-12 flex items-center justify-center rounded-[var(--radius-lg)] shadow-lg transition-transform duration-500 hover:rotate-12',
-                (balance?.netBalance ?? 0) >= 0
-                  ? 'bg-success text-white'
-                  : 'bg-destructive text-white',
-              )}
-            >
-              <Activity size={24} strokeWidth={2.5} />
-            </div>
-            <div
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-semibold uppercase tracking-normal',
-                (balance?.netBalance ?? 0) >= 0
-                  ? 'bg-success/10 text-success border-success/20'
-                  : 'bg-destructive/10 text-destructive border-destructive/20',
-              )}
-            >
-              {(balance?.netBalance ?? 0) >= 0 ? (
-                <ArrowUpRight size={10} strokeWidth={3} />
-              ) : (
-                <ArrowDownRight size={10} strokeWidth={3} />
-              )}
-              Saldo Real
-            </div>
-          </div>
-          <div className="flex flex-col gap-0.5 relative">
-            <Large
-              className={cn(
-                'text-3xl font-semibold tracking-tighter tabular-nums',
-                (balance?.netBalance ?? 0) >= 0 ? 'text-success' : 'text-destructive',
-              )}
-            >
-              {balance ? formatBRL(balance.netBalance) : '—'}
-            </Large>
-            <Muted className="text-[9px] font-semibold uppercase tracking-normal opacity-60">
-              Disponibilidade líquida
-            </Muted>
-          </div>
-        </ScaleIn>
-      </div>
+      <BalanceSummaryCards balance={balance} />
 
       {/* Filters Area */}
       <div className="flex flex-wrap items-center gap-3 bg-card/30 backdrop-blur-sm p-2 rounded-[var(--radius-lg)] border border-border w-fit">
@@ -351,7 +370,7 @@ export default function LivroCaixaPage() {
       </ScaleIn>
 
       {/* Premium Create Manual Entry Modal */}
-      {showCreate && (
+      {canCreateManualEntry && showCreate && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
             <div
@@ -499,6 +518,7 @@ export default function LivroCaixaPage() {
                     createEntry.isPending
                   }
                   onClick={() =>
+                    canCreateManualEntry &&
                     createEntry.mutate({
                       type: form.type,
                       amountCents: parseBRL(form.amountCents),

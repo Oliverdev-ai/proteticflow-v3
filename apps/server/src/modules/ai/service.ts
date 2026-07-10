@@ -687,7 +687,7 @@ function summarizeCommandMessage(
   return 'Nao foi possivel executar o comando solicitado.';
 }
 
-function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities): Record<string, unknown> { // NOSONAR
+function toolInputFromEntities(intent: FlowCommandName, entities: ParsedEntities): Record<string, unknown> { // NOSONAR: S3776 maps many command intents in one audited switch to preserve tool input parity. 2026-07-10.
   const input: Record<string, unknown> = { ...entities };
   const normalizePeriodKeyword = (value: string): 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom' | null => {
     const normalized = value.trim().toLowerCase();

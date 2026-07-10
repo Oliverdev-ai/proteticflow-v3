@@ -1,6 +1,6 @@
 import { trpc } from '../lib/trpc';
 import { useTenant } from './use-tenant';
-import { ROLE_PERMISSIONS } from '@proteticflow/shared';
+import { ROLE_PERMISSIONS, canAccessModule } from '@proteticflow/shared';
 import type { Role } from '@proteticflow/shared';
 
 export function usePermissions() {
@@ -13,10 +13,7 @@ export function usePermissions() {
   const permissions = data ?? (ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.recepcao);
 
   const hasAccess = (module: string): boolean => {
-    if (permissions.modules.includes('*' as never)) return true;
-    return permissions.modules.some(
-      (m: string) => m === module || module.startsWith(m + '.') || m.startsWith(module + '.'),
-    );
+    return canAccessModule(role, module);
   };
 
   return { role, modules: permissions.modules, hasAccess, isLoading };
