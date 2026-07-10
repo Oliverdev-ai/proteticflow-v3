@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import { env } from '../env.js';
+import { logger } from '../logger.js';
 
 const ALGO = 'aes-256-gcm';
 const TOTP_SECRET_V1_PREFIX = `totp:v1:${ALGO}`;
@@ -69,5 +70,13 @@ export function decryptTotpSecret(ciphertext: string): string {
 }
 
 export function decryptTotpSecretAtRest(value: string): string {
-  return isEncryptedTotpSecret(value) ? decryptTotpSecret(value) : value;
+  if (isEncryptedTotpSecret(value)) {
+    return decryptTotpSecret(value);
+  }
+
+  logger.warn(
+    { action: 'auth.2fa_secret.legacy_plaintext_detected', format: 'legacy_plaintext' },
+    'Plaintext TOTP secret detected; run backfill:2fa-secrets',
+  );
+  return value;
 }

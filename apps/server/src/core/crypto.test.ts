@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   decryptSecret,
   decryptTotpSecretAtRest,
@@ -6,6 +6,7 @@ import {
   encryptTotpSecret,
   isEncryptedTotpSecret,
 } from './crypto.js';
+import { logger } from '../logger.js';
 
 describe('crypto settings secrets', () => {
   it('encrypt/decrypt roundtrip', () => {
@@ -41,7 +42,14 @@ describe('crypto totp secrets', () => {
   it('mantem compatibilidade com segredo TOTP legado em plaintext', () => {
     const legacySecret = 'JBSWY3DPEHPK3PXP';
 
+    const warn = vi.spyOn(logger, 'warn');
     expect(isEncryptedTotpSecret(legacySecret)).toBe(false);
     expect(decryptTotpSecretAtRest(legacySecret)).toBe(legacySecret);
+    expect(warn).toHaveBeenCalledWith(
+      { action: 'auth.2fa_secret.legacy_plaintext_detected', format: 'legacy_plaintext' },
+      'Plaintext TOTP secret detected; run backfill:2fa-secrets',
+    );
+    expect(JSON.stringify(warn.mock.calls)).not.toContain(legacySecret);
+    warn.mockRestore();
   });
 });

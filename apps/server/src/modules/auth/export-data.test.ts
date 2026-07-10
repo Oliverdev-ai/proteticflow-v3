@@ -7,6 +7,8 @@ import { aiMemory } from '../../db/schema/ai-memory.js';
 import { alertLog } from '../../db/schema/proactive.js';
 import { tenantMembers, tenants } from '../../db/schema/tenants.js';
 import { users } from '../../db/schema/users.js';
+import type { TrpcContext } from '../../trpc/context.js';
+import { authRouter } from './router.js';
 import { exportUserData } from './service.js';
 
 async function createTestUser(email: string) {
@@ -147,5 +149,23 @@ describe('auth exportUserData LGPD', () => {
     expect(exported.ai.alerts[0]?.alertType).toBe('deadline_24h');
 
     await expect(exportUserData(userA.id, tenantB.id)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  }, 20_000);
+
+  it('router exportData requires an active tenant context', async () => {
+    const user = await createTestUser('auth-lgpd-no-tenant@test.com');
+
+    const caller = authRouter.createCaller({
+      req: {} as TrpcContext['req'],
+      res: {} as TrpcContext['res'],
+      db,
+      user: {
+        id: user.id,
+        tenantId: 0,
+        role: 'recepcao',
+      },
+      tenantId: null,
+    });
+
+    await expect(caller.exportData()).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' });
   }, 20_000);
 });
