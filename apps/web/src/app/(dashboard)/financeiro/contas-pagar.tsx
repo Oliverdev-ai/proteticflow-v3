@@ -133,6 +133,41 @@ export default function ContasPagarPage() {
     });
   };
 
+  const renderTableState = () => {
+    if (isLoading) {
+      return (
+        <tr>
+          <td colSpan={6} className="py-24 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="animate-spin text-primary/40" size={48} />
+              <Muted className="animate-pulse font-semibold uppercase tracking-normal">
+                Sincronizando contas do passivo...
+              </Muted>
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    if (rows.length === 0) {
+      return (
+        <tr>
+          <td colSpan={6} className="p-0">
+            <div className="p-20">
+              <EmptyState
+                icon={Landmark}
+                title="Sem compromissos em aberto"
+                description="Suas despesas e obrigações operacionais agendadas aparecerão aqui."
+              />
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    return null;
+  };
+
   const inputClass =
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all';
   const labelClass =
@@ -209,30 +244,7 @@ export default function ContasPagarPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-24 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="animate-spin text-primary/40" size={48} />
-                        <Muted className="animate-pulse font-semibold uppercase tracking-normal">
-                          Sincronizando contas do passivo...
-                        </Muted>
-                      </div>
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-0">
-                      <div className="p-20">
-                        <EmptyState
-                          icon={Landmark}
-                          title="Sem compromissos em aberto"
-                          description="Suas despesas e obrigações operacionais agendadas aparecerão aqui."
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
+                {renderTableState() ??
                   rows.map((ap) => (
                     <tr key={ap.id} className="group hover:bg-primary/[0.02] transition-colors">
                       <td className="px-6 py-5">
@@ -301,8 +313,7 @@ export default function ContasPagarPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ))}
               </tbody>
             </table>
           </div>

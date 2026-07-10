@@ -90,6 +90,45 @@ export default function FechamentoPage() {
     setShowModal(true);
   };
 
+  const renderTableState = () => {
+    if (isLoading) {
+      return (
+        <tr>
+          <td colSpan={6} className="py-24 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="animate-spin text-primary/30" size={48} />
+              <Muted className="animate-pulse font-semibold uppercase tracking-normal">
+                Consolidando faturas mensais...
+              </Muted>
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    if (rows.length === 0) {
+      return (
+        <tr>
+          <td colSpan={6} className="p-0">
+            <div className="p-20">
+              <EmptyState
+                icon={DollarSign}
+                title="Nenhum balanço gerado"
+                description={
+                  canGenerateClosing
+                    ? "Clique em 'Gerar Fechamento' para processar o faturamento de um período específico."
+                    : 'Fechamentos processados por administradores aparecerão aqui.'
+                }
+              />
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
       {/* Header Area */}
@@ -145,32 +184,7 @@ export default function FechamentoPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-24 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="animate-spin text-primary/30" size={48} />
-                        <Muted className="animate-pulse font-semibold uppercase tracking-normal">
-                          Consolidando faturas mensais...
-                        </Muted>
-                      </div>
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-0">
-                      <div className="p-20">
-                        <EmptyState
-                          icon={DollarSign}
-                          title="Nenhum balanço gerado"
-                          description={canGenerateClosing
-                            ? "Clique em 'Gerar Fechamento' para processar o faturamento de um período específico."
-                            : 'Fechamentos processados por administradores aparecerão aqui.'}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
+                {renderTableState() ??
                   rows.map((c) => (
                     <tr key={c.id} className="group hover:bg-primary/[0.01] transition-colors">
                       <td className="px-8 py-6">
@@ -223,8 +237,7 @@ export default function FechamentoPage() {
                         <StatusBadge status={c.status} />
                       </td>
                     </tr>
-                  ))
-                )}
+                  ))}
               </tbody>
             </table>
           </div>

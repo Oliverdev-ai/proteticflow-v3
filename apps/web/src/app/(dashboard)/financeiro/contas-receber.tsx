@@ -103,6 +103,41 @@ export default function ContasReceberPage() {
     setCancelId(id);
   };
 
+  const renderTableState = () => {
+    if (isLoading) {
+      return (
+        <tr>
+          <td colSpan={6} className="py-24 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="animate-spin text-primary/40" size={48} />
+              <Muted className="animate-pulse font-semibold uppercase tracking-normal">
+                Consultando livro registro...
+              </Muted>
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    if (rows.length === 0) {
+      return (
+        <tr>
+          <td colSpan={6} className="p-0">
+            <div className="p-20">
+              <EmptyState
+                icon={Receipt}
+                title="Sem lançamentos encontrados"
+                description="As faturas aparecerão aqui conforme as ordens de serviço forem faturadas ou liquidadas."
+              />
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
       {/* Header Area */}
@@ -165,30 +200,7 @@ export default function ContasReceberPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-24 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="animate-spin text-primary/40" size={48} />
-                        <Muted className="animate-pulse font-semibold uppercase tracking-normal">
-                          Consultando livro registro...
-                        </Muted>
-                      </div>
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-0">
-                      <div className="p-20">
-                        <EmptyState
-                          icon={Receipt}
-                          title="Sem lançamentos encontrados"
-                          description="As faturas aparecerão aqui conforme as ordens de serviço forem faturadas ou liquidadas."
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
+                {renderTableState() ??
                   rows.map(({ ar, clientName }) => (
                     <tr key={ar.id} className="group hover:bg-primary/[0.02] transition-colors">
                       <td className="px-6 py-5">
@@ -262,8 +274,7 @@ export default function ContasReceberPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ))}
               </tbody>
             </table>
           </div>

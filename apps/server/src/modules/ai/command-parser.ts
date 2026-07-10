@@ -315,7 +315,7 @@ const MEMORY_KEY_VALUE_PREFIX_PATTERN = /(?:chave|key)\s*[:=]\s*([^,\n]{2,160})[
 const MEMORY_ID_PREFIXES = ['id', 'memoryid', 'memoria'] as const;
 
 function isWhitespace(char: string | undefined): boolean {
-  return Boolean(char && char.trim().length === 0);
+  return char?.trim().length === 0;
 }
 
 function isMemoryIdChar(char: string | undefined): boolean {
