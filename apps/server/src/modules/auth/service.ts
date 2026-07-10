@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { eq, and, desc, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { users, refreshTokens, passwordResetTokens, loginAttempts } from '../../db/schema/users.js';
-import { tenantMembers } from '../../db/schema/tenants.js';
+import { tenantMembers, tenants } from '../../db/schema/tenants.js';
 import { randomBytes } from 'crypto';
 import {
   hashPassword,
@@ -18,6 +18,8 @@ import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import { sendPasswordResetEmail } from '../notifications/email.js';
 import { dispatchByPreference } from '../notifications/service.js';
+import { decryptTotpSecretAtRest, encryptTotpSecret } from '../../core/crypto.js';
+import { buildLgpdExportPayload } from '../ai/lgpd.service.js';
 import {
   registerSchema,
   loginSchema,
@@ -178,8 +180,14 @@ export async function login(input: LoginInput, meta: { userAgent?: string; ip?: 
     if (!input.totpCode) {
       throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Código 2FA obrigatório' });
     }
-    const isTotpValid = verify2faCode(user.twoFactorSecret!, input.totpCode);
+    const storedTotpSecret = user.twoFactorSecret;
+    if (!storedTotpSecret) {
+      await recordLoginFailure(email, ip, now);
+      invalidCredentials();
+    }
+    const isTotpValid = verify2faCode(decryptTotpSecretAtRest(storedTotpSecret), input.totpCode);
     if (!isTotpValid) {
+      await recordLoginFailure(email, ip, now);
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Código 2FA inválido' });
     }
   }
@@ -396,14 +404,14 @@ export async function verify2fa(userId: number, code: string, secret: string) {
   const isValid = verify2faCode(secret, code);
   if (!isValid) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Código TOTP inválido' });
 
-  await db.update(users).set({ twoFactorSecret: secret, twoFactorEnabled: true }).where(eq(users.id, userId));
+  await db.update(users).set({ twoFactorSecret: encryptTotpSecret(secret), twoFactorEnabled: true }).where(eq(users.id, userId));
   logger.info({ action: 'auth.2fa_enabled', userId }, '2FA Enabled');
 }
 
 export async function disable2fa(userId: number, code: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user || !user.twoFactorSecret) throw new TRPCError({ code: 'NOT_FOUND', message: '2FA nao configurado' });
-  const isValid = verify2faCode(user.twoFactorSecret!, code);
+  const isValid = verify2faCode(decryptTotpSecretAtRest(user.twoFactorSecret), code);
   if (!isValid) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Código TOTP inválido' });
 
   await db.update(users).set({ twoFactorSecret: null, twoFactorEnabled: false }).where(eq(users.id, userId));
@@ -527,13 +535,83 @@ export async function createUser(tenantId: number, input: CreateUserInput) {
   return created;
 }
 
-export async function exportUserData(userId: number) {
-  const [profile] = await db.select().from(users).where(eq(users.id, userId));
-  // Gather other data associated with the user for LGPD compliance points (stub for now).
+function toIso(value: Date | null): string | null {
+  return value ? value.toISOString() : null;
+}
+
+export async function exportUserData(userId: number, tenantId: number) {
+  const [profile] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+      phoneE164: users.phoneE164,
+      phoneVerified: users.phoneVerified,
+      whatsappOptIn: users.whatsappOptIn,
+      aiVoiceEnabled: users.aiVoiceEnabled,
+      aiVoiceGender: users.aiVoiceGender,
+      aiVoiceSpeed: users.aiVoiceSpeed,
+      themePreference: users.themePreference,
+      avatarUrl: users.avatarUrl,
+      role: users.role,
+      activeTenantId: users.activeTenantId,
+      isActive: users.isActive,
+      twoFactorEnabled: users.twoFactorEnabled,
+      lastSignedIn: users.lastSignedIn,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+    })
+    .from(users)
+    .innerJoin(tenantMembers, and(
+      eq(tenantMembers.userId, users.id),
+      eq(tenantMembers.tenantId, tenantId),
+    ))
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!profile) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Usuario nao pertence ao tenant informado' });
+  }
+
+  const memberships = await db
+    .select({
+      tenantId: tenantMembers.tenantId,
+      tenantName: tenants.name,
+      tenantSlug: tenants.slug,
+      role: tenantMembers.role,
+      isActive: tenantMembers.isActive,
+      blockedAt: tenantMembers.blockedAt,
+      blockedReason: tenantMembers.blockedReason,
+      joinedAt: tenantMembers.joinedAt,
+      updatedAt: tenantMembers.updatedAt,
+    })
+    .from(tenantMembers)
+    .innerJoin(tenants, eq(tenants.id, tenantMembers.tenantId))
+    .where(and(
+      eq(tenantMembers.userId, userId),
+      eq(tenantMembers.tenantId, tenantId),
+    ));
+
+  const ai = await buildLgpdExportPayload(tenantId, userId);
+
   return {
-    profile,
-    memberships: [],
-    exportDate: new Date().toISOString(),
+    generatedAt: new Date().toISOString(),
+    tenantId,
+    userId,
+    profile: {
+      ...profile,
+      lastSignedIn: toIso(profile.lastSignedIn),
+      createdAt: profile.createdAt.toISOString(),
+      updatedAt: profile.updatedAt.toISOString(),
+    },
+    memberships: memberships.map((membership) => ({
+      ...membership,
+      blockedAt: toIso(membership.blockedAt),
+      joinedAt: membership.joinedAt.toISOString(),
+      updatedAt: membership.updatedAt.toISOString(),
+    })),
+    ai,
   };
 }
 

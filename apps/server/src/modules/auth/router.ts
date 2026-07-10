@@ -1,4 +1,4 @@
-import { router, publicProcedure, protectedProcedure, adminProcedure } from '../../trpc/trpc.js';
+import { router, publicProcedure, protectedProcedure, tenantProcedure, adminProcedure } from '../../trpc/trpc.js';
 import {
   registerSchema,
   loginSchema,
@@ -115,8 +115,12 @@ export const authRouter = router({
     const tenantId = input?.tenantId ?? ctx.tenantId!;
     return authService.getPermissions(ctx.user!.id, tenantId);
   }),
-  exportData: protectedProcedure.query(async ({ ctx }) => {
-    return authService.exportUserData(ctx.user!.id);
+  exportData: tenantProcedure.query(async ({ ctx }) => {
+    const { user, tenantId } = ctx;
+    if (!user || !tenantId) {
+      throw new Error('Tenant context missing after tenantProcedure');
+    }
+    return authService.exportUserData(user.id, tenantId);
   }),
   setup2fa: protectedProcedure.mutation(async ({ ctx }) => {
     return authService.setup2fa(ctx.user!.id);
