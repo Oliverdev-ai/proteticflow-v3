@@ -312,7 +312,44 @@ export type ResolvedEntities = Record<string, ResolvedEntity>;
 
 const QUIET_MODE_ISO_DATE_PATTERN = /\b(20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{3})?Z?)?)\b/;
 const MEMORY_KEY_VALUE_PREFIX_PATTERN = /(?:chave|key)\s*[:=]\s*([^,\n]{2,160})[,\s]+(?:valor|value)\s*[:=]\s*/i;
-const MEMORY_ID_PATTERN = /(?:id|memoryId|memoria)\s*[:=]\s*([0-9a-f-]{32,36})/i;
+const MEMORY_ID_PREFIXES = ['id', 'memoryid', 'memoria'] as const;
+
+function isWhitespace(char: string | undefined): boolean {
+  return Boolean(char && char.trim().length === 0);
+}
+
+function isMemoryIdChar(char: string | undefined): boolean {
+  if (!char) return false;
+  const lower = char.toLowerCase();
+  return lower === '-' || (lower >= '0' && lower <= '9') || (lower >= 'a' && lower <= 'f');
+}
+
+function extractMemoryId(rawInput: string): string | undefined {
+  const lowerInput = rawInput.toLowerCase();
+
+  for (let index = 0; index < lowerInput.length; index += 1) {
+    const prefix = MEMORY_ID_PREFIXES.find((candidate) => lowerInput.startsWith(candidate, index));
+    if (!prefix) continue;
+
+    let cursor = index + prefix.length;
+    while (isWhitespace(rawInput[cursor])) cursor += 1;
+    if (rawInput[cursor] !== ':' && rawInput[cursor] !== '=') continue;
+    cursor += 1;
+    while (isWhitespace(rawInput[cursor])) cursor += 1;
+
+    let candidate = '';
+    while (candidate.length < 36 && isMemoryIdChar(rawInput[cursor])) {
+      candidate += rawInput[cursor];
+      cursor += 1;
+    }
+
+    if (candidate.length >= 32) {
+      return candidate.toLowerCase();
+    }
+  }
+
+  return undefined;
+}
 
 function normalizeInput(input: string): string {
   return input
@@ -373,7 +410,7 @@ function parseJobStatus(normalizedInput: string): string | undefined {
   return undefined;
 }
 
-function parseEntities(rawInput: string, normalizedInput: string): ParsedEntities { // NOSONAR
+function parseEntities(rawInput: string, normalizedInput: string): ParsedEntities { // NOSONAR: S3776 central parser keeps cross-intent extraction order stable; splitting risks behavior drift. 2026-07-10.
   const entities: ParsedEntities = {};
 
   const osMatch = normalizedInput.match(/\b(?:os|trabalho|ordem)\s*#?\s*(\d{1,8})\b/);
@@ -723,10 +760,8 @@ function parseEntities(rawInput: string, normalizedInput: string): ParsedEntitie
   }
 
   if (/esquecer|remover memoria|forget/i.test(normalizedInput)) {
-    const forgetMatch = MEMORY_ID_PATTERN.exec(rawInput);
-    if (forgetMatch?.[1]) {
-      entities.memoryId = forgetMatch[1].trim().toLowerCase();
-    }
+    const memoryId = extractMemoryId(rawInput);
+    if (memoryId) entities.memoryId = memoryId;
   }
 
   return entities;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   User, Building2, Users, ShieldCheck,
   CreditCard, Bell, Receipt, ChevronLeft,
@@ -14,6 +14,9 @@ import { FlowAiTab } from './flow-ai-tab';
 import { FlowAiMemoryTab } from './flow-ai-memory-tab';
 import { ProactivePreferencesTab } from './proactive-preferences-tab';
 import { FiscalSettingsForm } from '../fiscal/fiscal-settings-form';
+import { usePermissions } from '../../hooks/use-permissions';
+import { canAccessModule, canUseAdminProcedure } from '@proteticflow/shared';
+import type { Role } from '@proteticflow/shared';
 import { cn } from '../../lib/utils';
 import { PageTransition } from '../shared/page-transition';
 
@@ -22,7 +25,9 @@ type TabItem = {
   label: string;
   icon: React.ElementType;
   component: React.ReactNode;
-  roles?: string[];
+  roles?: Role[];
+  module?: string;
+  adminOnly?: boolean;
 };
 
 const SETTINGS_TABS: TabItem[] = [
@@ -34,7 +39,7 @@ const SETTINGS_TABS: TabItem[] = [
   { id: 'notificacoes', label: 'Notificações', icon: Bell, component: <NotificationsTab /> },
   { id: 'preferencias', label: 'Preferências', icon: Bell, component: <ProactivePreferencesTab /> },
   { id: 'flow-ia', label: 'Flow IA', icon: Mic, component: <FlowAiTab /> },
-  { id: 'flow-ia-memory', label: 'Memória IA', icon: Brain, component: <FlowAiMemoryTab /> },
+  { id: 'flow-ia-memory', label: 'Memória IA', icon: Brain, component: <FlowAiMemoryTab />, module: 'ai', adminOnly: true },
   { id: 'fiscal', label: 'Fiscal & Gateway', icon: Receipt, component: <FiscalSettingsForm />, roles: ['superadmin'] },
 ];
 
@@ -43,16 +48,32 @@ type SettingsTabsProps = {
 };
 
 export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
+  const { role } = usePermissions();
   const [collapsed, setCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState(initialTabId ?? SETTINGS_TABS[0]?.id ?? 'perfil');
+  const visibleTabs = useMemo(
+    () => SETTINGS_TABS.filter((tab) => {
+      if (tab.adminOnly && !canUseAdminProcedure(role)) return false;
+      if (tab.module && !canAccessModule(role, tab.module)) return false;
+      if (tab.roles && !tab.roles.includes(role)) return false;
+      return true;
+    }),
+    [role],
+  );
 
   useEffect(() => {
     if (!initialTabId) return;
-    if (!SETTINGS_TABS.some((tab) => tab.id === initialTabId)) return;
+    if (!visibleTabs.some((tab) => tab.id === initialTabId)) return;
     setActiveTab(initialTabId);
-  }, [initialTabId]);
+  }, [initialTabId, visibleTabs]);
 
-  const selectedTab = SETTINGS_TABS.find((tab) => tab.id === activeTab) ?? SETTINGS_TABS[0];
+  useEffect(() => {
+    if (visibleTabs.length === 0) return;
+    if (visibleTabs.some((tab) => tab.id === activeTab)) return;
+    setActiveTab(visibleTabs[0]?.id ?? 'perfil');
+  }, [activeTab, visibleTabs]);
+
+  const selectedTab = visibleTabs.find((tab) => tab.id === activeTab) ?? visibleTabs[0];
   if (!selectedTab) return null;
 
   return (
@@ -78,7 +99,7 @@ export function SettingsTabs({ initialTabId }: SettingsTabsProps) {
           </button>
 
           <div className="flex flex-col gap-1.5">
-            {SETTINGS_TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"

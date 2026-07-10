@@ -20,8 +20,9 @@ import {
   FileText,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { parseBRL } from '@proteticflow/shared';
+import { canAccessModule, canUseAdminProcedure, parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
+import { usePermissions } from '../../../hooks/use-permissions';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
@@ -38,6 +39,8 @@ function createEmptyForm() {
 
 export default function LivroCaixaPage() {
   const utils = trpc.useUtils();
+  const { role } = usePermissions();
+  const canCreateManualEntry = canAccessModule(role, 'financial') && canUseAdminProcedure(role);
   const [typeFilter, setTypeFilter] = useState<'credit' | 'debit' | undefined>(undefined);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(createEmptyForm());
@@ -63,6 +66,11 @@ export default function LivroCaixaPage() {
     'w-full bg-muted border border-border rounded-xl px-4 py-2.5 text-sm font-semibold placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all shadow-inner';
   const labelClass =
     'block text-[10px] font-semibold text-muted-foreground uppercase tracking-normal mb-1.5 ml-1';
+  const openCreateModal = () => {
+    if (!canCreateManualEntry) return;
+    setForm(createEmptyForm());
+    setShowCreate(true);
+  };
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
@@ -81,15 +89,14 @@ export default function LivroCaixaPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            setForm(createEmptyForm());
-            setShowCreate(true);
-          }}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
-        >
-          <Plus size={16} strokeWidth={3} /> Lançamento Avulso
-        </button>
+        {canCreateManualEntry && (
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
+          >
+            <Plus size={16} strokeWidth={3} /> Lançamento Avulso
+          </button>
+        )}
       </div>
 
       {/* Balance Summary Cards */}
@@ -351,7 +358,7 @@ export default function LivroCaixaPage() {
       </ScaleIn>
 
       {/* Premium Create Manual Entry Modal */}
-      {showCreate && (
+      {canCreateManualEntry && showCreate && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
             <div
@@ -499,6 +506,7 @@ export default function LivroCaixaPage() {
                     createEntry.isPending
                   }
                   onClick={() =>
+                    canCreateManualEntry &&
                     createEntry.mutate({
                       type: form.type,
                       amountCents: parseBRL(form.amountCents),

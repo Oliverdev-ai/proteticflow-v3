@@ -16,7 +16,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { canAccessModule, canUseAdminProcedure } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
+import { usePermissions } from '../../../hooks/use-permissions';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { PageTitle, Subtitle, Muted } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
@@ -65,6 +67,8 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function FechamentoPage() {
   const utils = trpc.useUtils();
+  const { role } = usePermissions();
+  const canGenerateClosing = canAccessModule(role, 'financial') && canUseAdminProcedure(role);
   const [showModal, setShowModal] = useState(false);
   const [period, setPeriod] = useState(() => {
     const d = new Date();
@@ -81,6 +85,10 @@ export default function FechamentoPage() {
   });
 
   const rows = data?.data ?? [];
+  const openGenerateModal = () => {
+    if (!canGenerateClosing) return;
+    setShowModal(true);
+  };
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
@@ -99,12 +107,14 @@ export default function FechamentoPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
-        >
-          <Plus size={16} strokeWidth={3} /> Gerar Fechamento
-        </button>
+        {canGenerateClosing && (
+          <button
+            onClick={openGenerateModal}
+            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
+          >
+            <Plus size={16} strokeWidth={3} /> Gerar Fechamento
+          </button>
+        )}
       </div>
 
       {/* Table Area */}
@@ -153,7 +163,9 @@ export default function FechamentoPage() {
                         <EmptyState
                           icon={DollarSign}
                           title="Nenhum balanço gerado"
-                          description="Clique em 'Gerar Fechamento' para processar o faturamento de um período específico."
+                          description={canGenerateClosing
+                            ? "Clique em 'Gerar Fechamento' para processar o faturamento de um período específico."
+                            : 'Fechamentos processados por administradores aparecerão aqui.'}
                         />
                       </div>
                     </td>
@@ -220,7 +232,7 @@ export default function FechamentoPage() {
       </ScaleIn>
 
       {/* Generate Fechamento Modal */}
-      {showModal && (
+      {canGenerateClosing && showModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-lg">
             <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-primary/20 overflow-hidden">

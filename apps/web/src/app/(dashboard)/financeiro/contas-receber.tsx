@@ -15,7 +15,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { canAccessModule, canUseAdminProcedure } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
+import { usePermissions } from '../../../hooks/use-permissions';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
@@ -63,6 +65,9 @@ function StatusBadge({ status }: { status: ArStatus }) {
 
 export default function ContasReceberPage() {
   const utils = trpc.useUtils();
+  const { role } = usePermissions();
+  const canManageFinancial = canAccessModule(role, 'financial');
+  const canManageFinancialAdmin = canManageFinancial && canUseAdminProcedure(role);
   const [statusFilter, setStatusFilter] = useState<ArStatus | undefined>(undefined);
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -93,6 +98,10 @@ export default function ContasReceberPage() {
   ];
 
   const rows = data?.data ?? [];
+  const openCancelModal = (id: number) => {
+    if (!canManageFinancialAdmin) return;
+    setCancelId(id);
+  };
 
   return (
     <PageTransition className="flex flex-col gap-8 h-full overflow-auto p-4 md:p-1 max-w-6xl mx-auto pb-12">
@@ -223,20 +232,24 @@ export default function ContasReceberPage() {
                         <div className="flex items-center justify-end gap-2 group-hover:translate-x-0 translate-x-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
                           {(ar.status === 'pending' || ar.status === 'overdue') && (
                             <>
-                              <button
-                                onClick={() => markPaid.mutate({ id: ar.id, paymentMethod: 'PIX' })}
-                                disabled={markPaid.isPending}
-                                className="h-10 flex items-center gap-2 px-4 bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 rounded-xl text-[10px] font-semibold uppercase tracking-normal transition-all  shadow-sm"
-                              >
-                                <CheckCircle2 size={14} strokeWidth={3} /> Liquidar
-                              </button>
-                              <button
-                                onClick={() => setCancelId(ar.id)}
-                                className="h-10 w-10 flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 rounded-xl transition-all  shadow-sm"
-                                title="Cancelar título"
-                              >
-                                <Ban size={16} strokeWidth={3} />
-                              </button>
+                              {canManageFinancial && (
+                                <button
+                                  onClick={() => markPaid.mutate({ id: ar.id, paymentMethod: 'PIX' })}
+                                  disabled={markPaid.isPending}
+                                  className="h-10 flex items-center gap-2 px-4 bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 rounded-xl text-[10px] font-semibold uppercase tracking-normal transition-all  shadow-sm"
+                                >
+                                  <CheckCircle2 size={14} strokeWidth={3} /> Liquidar
+                                </button>
+                              )}
+                              {canManageFinancialAdmin && (
+                                <button
+                                  onClick={() => openCancelModal(ar.id)}
+                                  className="h-10 w-10 flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 rounded-xl transition-all  shadow-sm"
+                                  title="Cancelar título"
+                                >
+                                  <Ban size={16} strokeWidth={3} />
+                                </button>
+                              )}
                             </>
                           )}
                           <Link
@@ -258,7 +271,7 @@ export default function ContasReceberPage() {
       </ScaleIn>
 
       {/* Cancel Modal with Premium Styling */}
-      {cancelId !== null && (
+      {canManageFinancialAdmin && cancelId !== null && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
             <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-destructive/20 overflow-hidden">

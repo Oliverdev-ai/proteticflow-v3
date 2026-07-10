@@ -199,16 +199,19 @@ export async function cancelAr(tenantId: number, input: CancelArInput, userId: n
 
   if (ar.status === 'cancelled') return ar;
 
-  const [cancelled] = await db.update(accountsReceivable)
-    .set({
-      status: 'cancelled',
-      cancelReason: input.cancelReason,
-      cancelledBy: userId,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.id, input.id)))
-    .returning();
-  if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a receber nao encontrada' });
+  const cancelled = await db.transaction(async (tx) => {
+    const [updated] = await tx.update(accountsReceivable)
+      .set({
+        status: 'cancelled',
+        cancelReason: input.cancelReason,
+        cancelledBy: userId,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(accountsReceivable.tenantId, tenantId), eq(accountsReceivable.id, input.id)))
+      .returning();
+    if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a receber nao encontrada' });
+    return updated;
+  });
 
   logger.info({ action: 'financial.ar.cancelled', tenantId, arId: ar.id, reason: input.cancelReason }, 'Conta a receber cancelada');
   void logAudit({
@@ -344,16 +347,19 @@ export async function cancelAp(tenantId: number, input: CancelApInput, userId: n
 
   if (ap.status === 'cancelled') return ap;
 
-  const [cancelled] = await db.update(accountsPayable)
-    .set({
-      status: 'cancelled',
-      cancelReason: input.cancelReason,
-      cancelledBy: userId,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.id, input.id)))
-    .returning();
-  if (!cancelled) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a pagar nao encontrada' });
+  const cancelled = await db.transaction(async (tx) => {
+    const [updated] = await tx.update(accountsPayable)
+      .set({
+        status: 'cancelled',
+        cancelReason: input.cancelReason,
+        cancelledBy: userId,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(accountsPayable.tenantId, tenantId), eq(accountsPayable.id, input.id)))
+      .returning();
+    if (!updated) throw new TRPCError({ code: 'NOT_FOUND', message: 'Conta a pagar nao encontrada' });
+    return updated;
+  });
 
   logger.info({ action: 'financial.ap.cancelled', tenantId, apId: ap.id, reason: input.cancelReason }, 'Conta a pagar cancelada');
   void logAudit({
