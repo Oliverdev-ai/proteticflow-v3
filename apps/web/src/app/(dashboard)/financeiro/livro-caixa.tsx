@@ -43,7 +43,7 @@ type CashbookBalance = {
   netBalance: number;
 };
 
-function BalanceSummaryCards({ balance }: { balance: CashbookBalance | undefined }) {
+function BalanceSummaryCards({ balance }: Readonly<{ balance: CashbookBalance | undefined }>) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <ScaleIn className="premium-card p-6 flex flex-col gap-6 relative overflow-hidden group">
