@@ -9,6 +9,7 @@ export * from './constants/boleto-status-chip';
 export * from './constants/ar-ap-status-chip';
 export * from './constants/scan-status-chip';
 export * from './constants/plans';
+export * from './constants/ddd-br';
 export * from './utils/errors';
 export * from './utils/format';
 export * from './db/mixins';

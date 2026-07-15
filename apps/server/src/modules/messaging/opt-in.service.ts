@@ -1,8 +1,11 @@
+import { BR_VALID_DDD } from '@proteticflow/shared';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { whatsappOptIns } from '../../db/schema/whatsapp.js';
 
-const E164_RE = /^[1-9]\d{9,14}$/;
+const INTERNATIONAL_E164_RE = /^[1-9]\d{7,14}$/;
+const BR_LOCAL_RE = /^[1-9]\d{9,10}$/;
+const BR_WITH_COUNTRY_CODE_RE = /^55[1-9]\d{9,10}$/;
 const OPT_OUT_KEYWORDS = new Set([
   'PARAR',
   'SAIR',
@@ -14,9 +17,33 @@ const OPT_OUT_KEYWORDS = new Set([
 
 export type WhatsappOptInStatus = 'pending' | 'opted_in' | 'opted_out';
 
+function hasValidBrazilianDdd(digits: string, hasCountryCode: boolean): boolean {
+  const ddd = hasCountryCode ? digits.slice(2, 4) : digits.slice(0, 2);
+  return BR_VALID_DDD.has(ddd);
+}
+
 export function normalizePhoneE164(raw: string): string | null {
   const digits = raw.replace(/\D/g, '');
-  return E164_RE.test(digits) ? digits : null;
+  if (!digits) return null;
+
+  if (raw.trim().startsWith('+')) {
+    if (digits.startsWith('55')) {
+      return BR_WITH_COUNTRY_CODE_RE.test(digits) && hasValidBrazilianDdd(digits, true)
+        ? digits
+        : null;
+    }
+    return INTERNATIONAL_E164_RE.test(digits) ? digits : null;
+  }
+
+  if (BR_WITH_COUNTRY_CODE_RE.test(digits)) {
+    return hasValidBrazilianDdd(digits, true) ? digits : null;
+  }
+
+  if (BR_LOCAL_RE.test(digits)) {
+    return hasValidBrazilianDdd(digits, false) ? `55${digits}` : null;
+  }
+
+  return null;
 }
 
 export function sanitizeWhatsappBody(raw: string): string {
