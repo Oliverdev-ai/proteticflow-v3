@@ -2,7 +2,7 @@
 
 ## 1. Requisitos
 - Node.js 22 LTS
-- pnpm 9 (via Corepack)
+- pnpm 11.10.0 (via Corepack)
 - Docker + Docker Compose
 - PostgreSQL 16
 - Redis 7
@@ -13,7 +13,7 @@ git clone https://github.com/Oliverdev-ai/proteticflow-v3.git
 cd proteticflow-v3
 
 corepack enable
-corepack prepare pnpm@9 --activate
+corepack prepare pnpm@11.10.0 --activate
 pnpm install
 
 docker compose -f docker/docker-compose.dev.yml up -d

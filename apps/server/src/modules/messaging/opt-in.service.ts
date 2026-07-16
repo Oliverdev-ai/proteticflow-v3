@@ -22,17 +22,21 @@ function hasValidBrazilianDdd(digits: string, hasCountryCode: boolean): boolean 
   return BR_VALID_DDD.has(ddd);
 }
 
+function normalizeExplicitInternationalPhone(digits: string): string | null {
+  if (digits.startsWith('55')) {
+    return BR_WITH_COUNTRY_CODE_RE.test(digits) && hasValidBrazilianDdd(digits, true)
+      ? digits
+      : null;
+  }
+  return INTERNATIONAL_E164_RE.test(digits) ? digits : null;
+}
+
 export function normalizePhoneE164(raw: string): string | null {
   const digits = raw.replace(/\D/g, '');
   if (!digits) return null;
 
   if (raw.trim().startsWith('+')) {
-    if (digits.startsWith('55')) {
-      return BR_WITH_COUNTRY_CODE_RE.test(digits) && hasValidBrazilianDdd(digits, true)
-        ? digits
-        : null;
-    }
-    return INTERNATIONAL_E164_RE.test(digits) ? digits : null;
+    return normalizeExplicitInternationalPhone(digits);
   }
 
   if (BR_WITH_COUNTRY_CODE_RE.test(digits)) {

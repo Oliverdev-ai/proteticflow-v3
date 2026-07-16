@@ -45,6 +45,8 @@ export async function sendEmail(payload: EmailPayload) {
     text: payload.text,
     html: payload.html,
     attachments: payload.attachments,
+    disableFileAccess: true,
+    disableUrlAccess: true,
   });
 
   logger.info(

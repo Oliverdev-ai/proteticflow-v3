@@ -18,8 +18,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { parseBRL } from '@proteticflow/shared';
+import { canAccessModule, canUseAdminProcedure, parseBRL } from '@proteticflow/shared';
 import { formatBRL } from '../../../lib/format';
+import { usePermissions } from '../../../hooks/use-permissions';
 import { PageTransition, ScaleIn } from '../../../components/shared/page-transition';
 import { PageTitle, Subtitle, Muted, Large } from '../../../components/shared/typography';
 import { EmptyState } from '../../../components/shared/empty-state';
@@ -69,6 +70,9 @@ const EMPTY_FORM = { description: '', amountCents: '', dueDate: '', supplier: ''
 
 export default function ContasPagarPage() {
   const utils = trpc.useUtils();
+  const { role } = usePermissions();
+  const canManageFinancial = canAccessModule(role, 'financial');
+  const canManageFinancialAdmin = canManageFinancial && canUseAdminProcedure(role);
   const [statusFilter, setStatusFilter] = useState<ApStatus | undefined>(undefined);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -107,7 +111,18 @@ export default function ContasPagarPage() {
 
   const rows = data?.data ?? [];
 
+  const openCreateModal = () => {
+    if (!canManageFinancial) return;
+    setShowCreate(true);
+  };
+
+  const openCancelModal = (id: number) => {
+    if (!canManageFinancialAdmin) return;
+    setCancelId(id);
+  };
+
   const handleCreate = () => {
+    if (!canManageFinancial) return;
     if (!form.description || !form.amountCents || !form.dueDate) return;
     createAp.mutate({
       description: form.description,
@@ -116,6 +131,41 @@ export default function ContasPagarPage() {
       supplier: form.supplier || undefined,
       notes: form.notes || undefined,
     });
+  };
+
+  const renderTableState = () => {
+    if (isLoading) {
+      return (
+        <tr>
+          <td colSpan={6} className="py-24 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="animate-spin text-primary/40" size={48} />
+              <Muted className="animate-pulse font-semibold uppercase tracking-normal">
+                Sincronizando contas do passivo...
+              </Muted>
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    if (rows.length === 0) {
+      return (
+        <tr>
+          <td colSpan={6} className="p-0">
+            <div className="p-20">
+              <EmptyState
+                icon={Landmark}
+                title="Sem compromissos em aberto"
+                description="Suas despesas e obrigações operacionais agendadas aparecerão aqui."
+              />
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    return null;
   };
 
   const inputClass =
@@ -140,12 +190,14 @@ export default function ContasPagarPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
-        >
-          <Plus size={16} strokeWidth={3} /> Registrar Despesa
-        </button>
+        {canManageFinancial && (
+          <button
+            onClick={openCreateModal}
+            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-normal rounded-lg transition-all shadow-lg shadow-sm hover:brightness-110 "
+          >
+            <Plus size={16} strokeWidth={3} /> Registrar Despesa
+          </button>
+        )}
       </div>
 
       {/* Filters & Navigation */}
@@ -192,30 +244,7 @@ export default function ContasPagarPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-24 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="animate-spin text-primary/40" size={48} />
-                        <Muted className="animate-pulse font-semibold uppercase tracking-normal">
-                          Sincronizando contas do passivo...
-                        </Muted>
-                      </div>
-                    </td>
-                  </tr>
-                ) : rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-0">
-                      <div className="p-20">
-                        <EmptyState
-                          icon={Landmark}
-                          title="Sem compromissos em aberto"
-                          description="Suas despesas e obrigações operacionais agendadas aparecerão aqui."
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
+                {renderTableState() ??
                   rows.map((ap) => (
                     <tr key={ap.id} className="group hover:bg-primary/[0.02] transition-colors">
                       <td className="px-6 py-5">
@@ -259,29 +288,32 @@ export default function ContasPagarPage() {
                         <div className="flex items-center justify-end gap-2 group-hover:translate-x-0 translate-x-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
                           {(ap.status === 'pending' || ap.status === 'overdue') && (
                             <>
-                              <button
-                                onClick={() =>
-                                  markPaid.mutate({ id: ap.id, paymentMethod: 'Transferência' })
-                                }
-                                disabled={markPaid.isPending}
-                                className="h-10 flex items-center gap-2 px-4 bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 rounded-xl text-[10px] font-semibold uppercase tracking-normal transition-all  shadow-sm"
-                              >
-                                <CheckCircle2 size={14} strokeWidth={3} /> Quitar
-                              </button>
-                              <button
-                                onClick={() => setCancelId(ap.id)}
-                                className="h-10 w-10 flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 rounded-xl transition-all  shadow-sm"
-                                title="Anular despesa"
-                              >
-                                <Ban size={16} strokeWidth={3} />
-                              </button>
+                              {canManageFinancial && (
+                                <button
+                                  onClick={() =>
+                                    markPaid.mutate({ id: ap.id, paymentMethod: 'Transferência' })
+                                  }
+                                  disabled={markPaid.isPending}
+                                  className="h-10 flex items-center gap-2 px-4 bg-success/10 text-success hover:bg-success hover:text-white border border-success/20 rounded-xl text-[10px] font-semibold uppercase tracking-normal transition-all  shadow-sm"
+                                >
+                                  <CheckCircle2 size={14} strokeWidth={3} /> Quitar
+                                </button>
+                              )}
+                              {canManageFinancialAdmin && (
+                                <button
+                                  onClick={() => openCancelModal(ap.id)}
+                                  className="h-10 w-10 flex items-center justify-center bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/20 rounded-xl transition-all  shadow-sm"
+                                  title="Anular despesa"
+                                >
+                                  <Ban size={16} strokeWidth={3} />
+                                </button>
+                              )}
                             </>
                           )}
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ))}
               </tbody>
             </table>
           </div>
@@ -289,7 +321,7 @@ export default function ContasPagarPage() {
       </ScaleIn>
 
       {/* Premium Create Modal */}
-      {showCreate && (
+      {canManageFinancial && showCreate && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
             <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-primary/20 overflow-hidden">
@@ -433,7 +465,7 @@ export default function ContasPagarPage() {
       )}
 
       {/* Cancel Modal (Consistent with Ar) */}
-      {cancelId !== null && (
+      {canManageFinancialAdmin && cancelId !== null && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in duration-300">
           <ScaleIn className="w-full max-w-xl">
             <div className="premium-card p-10 flex flex-col gap-10 relative shadow-md border-destructive/20 overflow-hidden">

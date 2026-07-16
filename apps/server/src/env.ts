@@ -68,6 +68,7 @@ const envSchema = z.object({
   STRIPE_PRICE_ENTERPRISE: optionalText(),
   ASAAS_API_KEY: optionalText(),
   ASAAS_SANDBOX: optionalText(),
+  ASAAS_WEBHOOK_TOKEN: optionalText(),
   FOCUS_NFE_TOKEN: optionalText(),
   FOCUS_NFE_SANDBOX: optionalText(),
   SENTRY_DSN: optionalUrl(),
@@ -83,4 +84,17 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-export const env = parsed.data;
+const parsedEnv = parsed.data;
+const asaasWebhookToken = parsedEnv.ASAAS_WEBHOOK_TOKEN
+  ?? (parsedEnv.NODE_ENV === 'production' ? undefined : 'test-asaas-webhook-token');
+
+if (!asaasWebhookToken) {
+  console.error('Variaveis de ambiente invalidas:');
+  console.error({ ASAAS_WEBHOOK_TOKEN: ['Obrigatoria em producao'] });
+  process.exit(1);
+}
+
+export const env = {
+  ...parsedEnv,
+  ASAAS_WEBHOOK_TOKEN: asaasWebhookToken,
+};

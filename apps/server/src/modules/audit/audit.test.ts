@@ -102,7 +102,7 @@ async function ensureAuditSchema() {
       phone varchar(32),
       avatar_url text,
       password_hash varchar(255) NOT NULL,
-      two_factor_secret varchar(128),
+      two_factor_secret text,
       two_factor_enabled boolean NOT NULL DEFAULT false,
       role user_role NOT NULL DEFAULT 'user',
       active_tenant_id integer,
@@ -115,7 +115,8 @@ async function ensureAuditSchema() {
 
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone varchar(32)`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text`);
-  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret varchar(128)`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret text`);
+  await db.execute(sql`ALTER TABLE users ALTER COLUMN two_factor_secret TYPE text`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled boolean NOT NULL DEFAULT false`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS active_tenant_id integer`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL DEFAULT true`);

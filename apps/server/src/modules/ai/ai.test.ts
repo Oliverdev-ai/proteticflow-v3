@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   aiFeatureFlagsSchema,
   listAiPredictionsSchema,
@@ -9,6 +9,7 @@ import { detectCommand } from './commands.js';
 import { setAnthropicClientForTests, streamAiResponse } from './flow-engine.js';
 import { buildSystemPrompt } from './context-builder.js';
 import * as aiService from './service.js';
+import { memoryService } from './memory.service.js';
 
 describe('ai commands RBAC', () => {
   it('T01 detecta trabalhos pendentes para producao', () => {
@@ -29,6 +30,7 @@ describe('ai commands RBAC', () => {
 
 describe('ai prompts e fallback', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     setAnthropicClientForTests(undefined);
   });
 
@@ -59,6 +61,24 @@ describe('ai prompts e fallback', () => {
     expect(first?.type).toBe('delta');
     expect(first && 'text' in first ? first.text : '').toContain('configure GEMINI_API_KEY ou ANTHROPIC_API_KEY');
     expect(last?.type).toBe('done');
+  });
+
+  it('recall de memoria falhando nao derruba streamAiResponse', async () => {
+    vi.spyOn(memoryService, 'recall').mockRejectedValueOnce(new Error('Gemini embeddings indisponivel'));
+    setAnthropicClientForTests(null);
+
+    const chunks = [];
+    for await (const chunk of streamAiResponse(1, 'gerente', 'oi', [], 1)) {
+      chunks.push(chunk);
+    }
+
+    const deltaText = chunks
+      .map((chunk) => (chunk.type === 'delta' ? chunk.text : ''))
+      .join('');
+
+    expect(deltaText).toContain('configure GEMINI_API_KEY ou ANTHROPIC_API_KEY');
+    expect(deltaText).not.toContain('<memory>');
+    expect(chunks[chunks.length - 1]?.type).toBe('done');
   });
 });
 

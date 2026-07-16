@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, or } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { db } from '../../db/index.js';
 import { aiCommandRuns } from '../../db/schema/ai.js';
@@ -65,12 +65,20 @@ export type LgpdExportPayload = {
   tenantId: number;
   userId: number;
   memory: Array<{
-    key: string;
-    value: string;
+    id: string;
+    scope: string;
+    category: string;
+    entityType: string | null;
+    entityId: number | null;
+    keyText: string;
+    valueJson: Record<string, unknown>;
     source: string;
+    confidence: number;
     expiresAt: string | null;
     createdAt: string;
     updatedAt: string;
+    lastAccessedAt: string | null;
+    accessCount: number;
   }>;
   aiCommandRuns: Array<{
     id: number;
@@ -101,17 +109,25 @@ export async function buildLgpdExportPayload(
   const [memoryRows, commandRows, alertRows] = await Promise.all([
     db
       .select({
-        key: aiMemory.key,
-        value: aiMemory.value,
+        id: aiMemory.id,
+        scope: aiMemory.scope,
+        category: aiMemory.category,
+        entityType: aiMemory.entityType,
+        entityId: aiMemory.entityId,
+        keyText: aiMemory.keyText,
+        valueJson: aiMemory.valueJson,
         source: aiMemory.source,
+        confidence: aiMemory.confidence,
         expiresAt: aiMemory.expiresAt,
         createdAt: aiMemory.createdAt,
         updatedAt: aiMemory.updatedAt,
+        lastAccessedAt: aiMemory.lastAccessedAt,
+        accessCount: aiMemory.accessCount,
       })
       .from(aiMemory)
       .where(and(
         eq(aiMemory.tenantId, tenantId),
-        eq(aiMemory.userId, userId),
+        or(eq(aiMemory.userId, userId), eq(aiMemory.scope, 'tenant')),
       ))
       .orderBy(desc(aiMemory.id)),
     db
@@ -155,12 +171,20 @@ export async function buildLgpdExportPayload(
     tenantId,
     userId,
     memory: memoryRows.map((row) => ({
-      key: row.key,
-      value: row.value,
+      id: row.id,
+      scope: row.scope,
+      category: row.category,
+      entityType: row.entityType,
+      entityId: row.entityId,
+      keyText: row.keyText,
+      valueJson: row.valueJson,
       source: row.source,
+      confidence: row.confidence,
       expiresAt: toIso(row.expiresAt),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
+      lastAccessedAt: toIso(row.lastAccessedAt),
+      accessCount: row.accessCount,
     })),
     aiCommandRuns: commandRows.map((row) => ({
       id: row.id,
@@ -233,8 +257,8 @@ export async function requestLgpdDelete(tenantId: number, userId: number): Promi
   try {
     await db.transaction(async (tx) => {
       await tx
-        .delete(aiMemory)
-        .where(and(
+        .delete(aiMemory) // tenant-isolation-ok: solicitacao LGPD purga memoria do tenant ativo e memorias do usuario.
+        .where(or(
           eq(aiMemory.tenantId, tenantId),
           eq(aiMemory.userId, userId),
         ));
