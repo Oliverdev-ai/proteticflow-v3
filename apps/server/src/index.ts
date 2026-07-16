@@ -17,6 +17,7 @@ import { requestLogger } from './middleware/request-logger.js';
 import { initSentry } from './core/sentry.js';
 import { ensureBucket } from './core/storage-bootstrap.js';
 import { handleWhatsappWebhook, WhatsappWebhookError } from './modules/messaging/webhook.service.js';
+import { AsaasWebhookError } from './modules/fiscal/service.js';
 
 const app = express();
 initSentry();
@@ -51,11 +52,20 @@ app.post(
   express.raw({ type: 'application/json' }),
   async (req, res) => {
     try {
-      await fiscalService.handleAsaasWebhook(req.body.toString());
-      return res.json({ received: true });
+      const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : String(req.body ?? '');
+      const webhookInput: Parameters<typeof fiscalService.handleAuthenticatedAsaasWebhook>[0] = {
+        rawBody,
+      };
+      const accessToken = req.header('asaas-access-token');
+      if (accessToken) webhookInput.accessToken = accessToken;
+      const result = await fiscalService.handleAuthenticatedAsaasWebhook(webhookInput);
+      return res.status(200).json({ received: result.accepted, replay: result.replay });
     } catch (error) {
+      if (error instanceof AsaasWebhookError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
       logger.error({ err: error }, 'Asaas webhook error');
-      return res.status(400).send('Webhook error');
+      return res.status(500).json({ error: 'Webhook error' });
     }
   },
 );

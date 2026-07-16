@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { eq, and, desc, isNull } from 'drizzle-orm';
+import { eq, and, desc, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { users, refreshTokens, passwordResetTokens } from '../../db/schema/users.js';
-import { tenantMembers } from '../../db/schema/tenants.js';
+import { users, refreshTokens, passwordResetTokens, loginAttempts } from '../../db/schema/users.js';
+import { tenantMembers, tenants } from '../../db/schema/tenants.js';
 import { randomBytes } from 'crypto';
 import {
   hashPassword,
@@ -18,6 +18,8 @@ import { logger } from '../../logger.js';
 import { TRPCError } from '@trpc/server';
 import { sendPasswordResetEmail } from '../notifications/email.js';
 import { dispatchByPreference } from '../notifications/service.js';
+import { decryptTotpSecretAtRest, encryptTotpSecret } from '../../core/crypto.js';
+import { buildLgpdExportPayload } from '../ai/lgpd.service.js';
 import {
   registerSchema,
   loginSchema,
@@ -32,6 +34,88 @@ type RegisterInput = z.infer<typeof registerSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
 type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 type CreateUserInput = z.infer<typeof createUserSchema>;
+
+const INVALID_CREDENTIALS_MESSAGE = 'Email ou senha inválidos';
+const UNKNOWN_LOGIN_IP = 'unknown';
+
+function normalizeLoginEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function normalizeLoginIp(ip: string | undefined): string {
+  const normalized = ip?.trim();
+  return (normalized && normalized.length > 0 ? normalized : UNKNOWN_LOGIN_IP).slice(0, 64);
+}
+
+function invalidCredentials(): never {
+  throw new TRPCError({ code: 'UNAUTHORIZED', message: INVALID_CREDENTIALS_MESSAGE });
+}
+
+function calculateLockedUntil(failureCount: number, now: Date): Date | null {
+  if (failureCount >= 8) return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  if (failureCount >= 6) return new Date(now.getTime() + 30 * 60 * 1000);
+  if (failureCount >= 4) return new Date(now.getTime() + 5 * 60 * 1000);
+  return null;
+}
+
+async function getLoginAttempt(email: string, ip: string) {
+  const [attempt] = await db
+    .select()
+    .from(loginAttempts) // tenant-isolation-ok pre-auth login throttle keyed by email+ip
+    .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)))
+    .limit(1);
+  return attempt ?? null;
+}
+
+async function assertLoginNotLocked(email: string, ip: string, now: Date): Promise<void> {
+  const attempt = await getLoginAttempt(email, ip);
+  if (attempt?.lockedUntil && attempt.lockedUntil > now) {
+    invalidCredentials();
+  }
+}
+
+async function recordLoginFailure(email: string, ip: string, now: Date): Promise<void> {
+  const [attempt] = await db
+    .insert(loginAttempts)
+    .values({
+      email,
+      ip,
+      failureCount: 1,
+      lastFailedAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [loginAttempts.email, loginAttempts.ip],
+      set: {
+        failureCount: sql`${loginAttempts.failureCount} + 1`,
+        lastFailedAt: now,
+        updatedAt: now,
+      },
+    })
+    .returning({
+      id: loginAttempts.id,
+      failureCount: loginAttempts.failureCount,
+    });
+
+  if (!attempt) return;
+  const lockedUntil = calculateLockedUntil(attempt.failureCount, now);
+  await db
+    .update(loginAttempts) // tenant-isolation-ok pre-auth login throttle keyed by email+ip
+    .set({ lockedUntil, updatedAt: now })
+    .where(eq(loginAttempts.id, attempt.id));
+}
+
+async function resetLoginAttempts(email: string, ip: string, now: Date): Promise<void> {
+  await db
+    .update(loginAttempts) // tenant-isolation-ok pre-auth login throttle keyed by email+ip
+    .set({
+      failureCount: 0,
+      lastFailedAt: null,
+      lockedUntil: null,
+      updatedAt: now,
+    })
+    .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+}
 
 export async function register(input: RegisterInput) {
   const existingUser = await db.select().from(users).where(eq(users.email, input.email));
@@ -73,22 +157,37 @@ export async function register(input: RegisterInput) {
 }
 
 export async function login(input: LoginInput, meta: { userAgent?: string; ip?: string }) {
-  const [user] = await db.select().from(users).where(eq(users.email, input.email));
+  const email = normalizeLoginEmail(input.email);
+  const lookupEmail = input.email.trim();
+  const ip = normalizeLoginIp(meta.ip);
+  const now = new Date();
+
+  await assertLoginNotLocked(email, ip, now);
+
+  const [user] = await db.select().from(users).where(eq(users.email, lookupEmail));
   if (!user || !user.isActive) {
-    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Credenciais inválidas' });
+    await recordLoginFailure(email, ip, now);
+    invalidCredentials();
   }
 
   const isPasswordValid = await verifyPassword(input.password, user.passwordHash);
   if (!isPasswordValid) {
-    throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Credenciais inválidas' });
+    await recordLoginFailure(email, ip, now);
+    invalidCredentials();
   }
 
   if (user.twoFactorEnabled) {
     if (!input.totpCode) {
       throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Código 2FA obrigatório' });
     }
-    const isTotpValid = verify2faCode(user.twoFactorSecret!, input.totpCode);
+    const storedTotpSecret = user.twoFactorSecret;
+    if (!storedTotpSecret) {
+      await recordLoginFailure(email, ip, now);
+      invalidCredentials();
+    }
+    const isTotpValid = verify2faCode(decryptTotpSecretAtRest(storedTotpSecret), input.totpCode);
     if (!isTotpValid) {
+      await recordLoginFailure(email, ip, now);
       throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Código 2FA inválido' });
     }
   }
@@ -115,6 +214,7 @@ export async function login(input: LoginInput, meta: { userAgent?: string; ip?: 
   await db.insert(refreshTokens).values(loginTokenData);
 
   await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+  await resetLoginAttempts(email, ip, new Date());
 
   logger.info({ action: 'auth.login', userId: user.id }, 'Login success');
 
@@ -304,14 +404,14 @@ export async function verify2fa(userId: number, code: string, secret: string) {
   const isValid = verify2faCode(secret, code);
   if (!isValid) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Código TOTP inválido' });
 
-  await db.update(users).set({ twoFactorSecret: secret, twoFactorEnabled: true }).where(eq(users.id, userId));
+  await db.update(users).set({ twoFactorSecret: encryptTotpSecret(secret), twoFactorEnabled: true }).where(eq(users.id, userId));
   logger.info({ action: 'auth.2fa_enabled', userId }, '2FA Enabled');
 }
 
 export async function disable2fa(userId: number, code: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user || !user.twoFactorSecret) throw new TRPCError({ code: 'NOT_FOUND', message: '2FA nao configurado' });
-  const isValid = verify2faCode(user.twoFactorSecret!, code);
+  const isValid = verify2faCode(decryptTotpSecretAtRest(user.twoFactorSecret), code);
   if (!isValid) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Código TOTP inválido' });
 
   await db.update(users).set({ twoFactorSecret: null, twoFactorEnabled: false }).where(eq(users.id, userId));
@@ -435,13 +535,83 @@ export async function createUser(tenantId: number, input: CreateUserInput) {
   return created;
 }
 
-export async function exportUserData(userId: number) {
-  const [profile] = await db.select().from(users).where(eq(users.id, userId));
-  // Gather other data associated with the user for LGPD compliance points (stub for now).
+function toIso(value: Date | null): string | null {
+  return value ? value.toISOString() : null;
+}
+
+export async function exportUserData(userId: number, tenantId: number) {
+  const [profile] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      phone: users.phone,
+      phoneE164: users.phoneE164,
+      phoneVerified: users.phoneVerified,
+      whatsappOptIn: users.whatsappOptIn,
+      aiVoiceEnabled: users.aiVoiceEnabled,
+      aiVoiceGender: users.aiVoiceGender,
+      aiVoiceSpeed: users.aiVoiceSpeed,
+      themePreference: users.themePreference,
+      avatarUrl: users.avatarUrl,
+      role: users.role,
+      activeTenantId: users.activeTenantId,
+      isActive: users.isActive,
+      twoFactorEnabled: users.twoFactorEnabled,
+      lastSignedIn: users.lastSignedIn,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+    })
+    .from(users)
+    .innerJoin(tenantMembers, and(
+      eq(tenantMembers.userId, users.id),
+      eq(tenantMembers.tenantId, tenantId),
+    ))
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!profile) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Usuario nao pertence ao tenant informado' });
+  }
+
+  const memberships = await db
+    .select({
+      tenantId: tenantMembers.tenantId,
+      tenantName: tenants.name,
+      tenantSlug: tenants.slug,
+      role: tenantMembers.role,
+      isActive: tenantMembers.isActive,
+      blockedAt: tenantMembers.blockedAt,
+      blockedReason: tenantMembers.blockedReason,
+      joinedAt: tenantMembers.joinedAt,
+      updatedAt: tenantMembers.updatedAt,
+    })
+    .from(tenantMembers)
+    .innerJoin(tenants, eq(tenants.id, tenantMembers.tenantId))
+    .where(and(
+      eq(tenantMembers.userId, userId),
+      eq(tenantMembers.tenantId, tenantId),
+    ));
+
+  const ai = await buildLgpdExportPayload(tenantId, userId);
+
   return {
-    profile,
-    memberships: [],
-    exportDate: new Date().toISOString(),
+    generatedAt: new Date().toISOString(),
+    tenantId,
+    userId,
+    profile: {
+      ...profile,
+      lastSignedIn: toIso(profile.lastSignedIn),
+      createdAt: profile.createdAt.toISOString(),
+      updatedAt: profile.updatedAt.toISOString(),
+    },
+    memberships: memberships.map((membership) => ({
+      ...membership,
+      blockedAt: toIso(membership.blockedAt),
+      joinedAt: membership.joinedAt.toISOString(),
+      updatedAt: membership.updatedAt.toISOString(),
+    })),
+    ai,
   };
 }
 

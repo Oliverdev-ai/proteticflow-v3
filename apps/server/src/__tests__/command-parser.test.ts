@@ -193,4 +193,16 @@ describe('F38 O1 - command parser', () => {
     expect(parsed.entities.clientName).toBe('Ana');
     expect(parsed.entities.messageContext).toContain('sua OS #12 ficou pronta');
   });
+
+  it('14. extrai memoryId de forma linear mesmo com prefixo adversarial', async () => {
+    const memoryId = '123e4567-e89b-12d3-a456-426614174000';
+    const adversarialPrefix = `${'memoria '.repeat(4000)} id = `;
+    const parsed = await parseIntent(
+      `esquecer memoria ${adversarialPrefix}${memoryId}`,
+      1,
+    );
+
+    expect(parsed.intent).toBe('forget_memory');
+    expect(parsed.entities.memoryId).toBe(memoryId);
+  });
 });

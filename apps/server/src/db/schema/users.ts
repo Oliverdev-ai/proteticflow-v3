@@ -32,7 +32,7 @@ export const users = pgTable('users', {
   themePreference: varchar('theme_preference', { length: 8 }).notNull().default('system'),
   avatarUrl: text('avatar_url'),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  twoFactorSecret: varchar('two_factor_secret', { length: 128 }),
+  twoFactorSecret: text('two_factor_secret'),
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
   role: userRoleEnum('role').default('user').notNull(),
   activeTenantId: integer('active_tenant_id'),
@@ -64,6 +64,20 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   usedAt: timestamp('used_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const loginAttempts = pgTable('login_attempts', {
+  id: serial('id').primaryKey(),
+  email: varchar('email', { length: 320 }).notNull(),
+  ip: varchar('ip', { length: 64 }).notNull(),
+  failureCount: integer('failure_count').notNull().default(0),
+  lastFailedAt: timestamp('last_failed_at', { withTimezone: true }),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('login_attempts_email_ip_unique').on(table.email, table.ip),
+  index('login_attempts_locked_until_idx').on(table.lockedUntil),
+]);
 
 // ─── API Keys (01.14) ───────────────────────────────────────
 // Prefixo ptf_, hash bcrypt (nunca plaintext), exibida uma única vez na criação.

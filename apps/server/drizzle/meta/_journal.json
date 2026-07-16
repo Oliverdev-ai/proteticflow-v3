@@ -253,6 +253,41 @@
                         "when":  1777420800000,
                         "tag":  "0036_ci_schema_drift_backfill",
                         "breakpoints":  true
+                    },
+                    {
+                        "idx":  36,
+                        "version":  "7",
+                        "when":  1777507200000,
+                        "tag":  "0037_phase7_memory_persistent_ga",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  37,
+                        "version":  "7",
+                        "when":  1777507260000,
+                        "tag":  "0038_phase7_memory_drop_legacy_columns",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  38,
+                        "version":  "7",
+                        "when":  1783488000000,
+                        "tag":  "0039_phase7_memory_unique_upsert",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  39,
+                        "version":  "7",
+                        "when":  1783574400000,
+                        "tag":  "0040_sec01_webhook_lockout",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  40,
+                        "version":  "7",
+                        "when":  1783578060000,
+                        "tag":  "0041_sec02_totp_secret_text",
+                        "breakpoints":  true
                     }
                 ]
 }

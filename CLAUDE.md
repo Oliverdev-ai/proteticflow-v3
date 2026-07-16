@@ -124,12 +124,12 @@ pnpm --filter server db:migrate    # aplica em ordem (usa baseline script)
 ## 6. AMBIENTE LOCAL (DESENVOLVIMENTO)
 
 ### Pré-requisitos
-- Node.js 22+, pnpm 9+, Docker Desktop
+- Node.js 22+, pnpm 11.10.0+, Docker Desktop
 
 ### Setup inicial (primeira vez)
 ```bash
 # 1. Instalar dependências
-corepack enable && corepack prepare pnpm@9 --activate
+corepack enable && corepack prepare pnpm@11.10.0 --activate
 pnpm install
 
 # 2. Configurar variáveis de ambiente

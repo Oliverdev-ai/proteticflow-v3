@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '../../db/index.js';
-import { users, refreshTokens } from '../../db/schema/users.js';
+import { users, refreshTokens, loginAttempts } from '../../db/schema/users.js';
 import * as authService from './service.js';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
+import { generate } from 'otplib';
+import { decryptTotpSecretAtRest, encryptTotpSecret, isEncryptedTotpSecret } from '../../core/crypto.js';
 
 describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
   let createdUserId: number;
@@ -10,11 +12,14 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
   const testPassword = 'Password123!';
 
   beforeAll(async () => {
+    await db.execute(sql`ALTER TABLE users ALTER COLUMN two_factor_secret TYPE text`);
     // Cleanup
+    await db.delete(loginAttempts).where(eq(loginAttempts.email, testEmail));
     await db.delete(users).where(eq(users.email, testEmail));
   });
 
   afterAll(async () => {
+    await db.delete(loginAttempts);
     if (createdUserId) await db.delete(users).where(eq(users.id, createdUserId));
   });
 
@@ -45,12 +50,12 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
 
   it('5. Should reject login with invalid password', async () => {
     await expect(authService.login({ email: testEmail, password: 'wrong' }, {}))
-      .rejects.toThrow('Credenciais inválidas');
+      .rejects.toThrow('Email ou senha inválidos');
   });
 
   it('6. Should reject login with unexisting user', async () => {
     await expect(authService.login({ email: 'fake@example.com', password: testPassword }, {}))
-      .rejects.toThrow('Credenciais inválidas');
+      .rejects.toThrow('Email ou senha inválidos');
   });
 
   it('7. Should return access and refresh tokens on login', async () => {
@@ -97,7 +102,7 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
 
   it('13. Should reject login for disabled account', async () => {
     await db.update(users).set({ isActive: false }).where(eq(users.id, createdUserId));
-    await expect(authService.login({ email: testEmail, password: testPassword }, {})).rejects.toThrow('Credenciais inválidas');
+    await expect(authService.login({ email: testEmail, password: testPassword }, {})).rejects.toThrow('Email ou senha inválidos');
     await db.update(users).set({ isActive: true }).where(eq(users.id, createdUserId)); // Re-enable
   });
 
@@ -118,19 +123,84 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
 
   it('16. Should setup and verify 2fa successfully', async () => {
     const auth = await authService.setup2fa(createdUserId);
-    // Note: Can't easily mock OTP in integration without installing speakeasy or similar in test file. 
+    // Note: Can't easily mock OTP in integration without installing speakeasy or similar in test file.
     // We will assume failure for arbitrary string.
     await expect(authService.verify2fa(createdUserId, '000000', auth.secret)).rejects.toThrow('Código TOTP inválido');
   });
 
+  it('16A. Should persist 2fa secret encrypted at rest and still verify login/disable', async () => {
+    const auth = await authService.setup2fa(createdUserId);
+    await authService.verify2fa(createdUserId, await generate({ secret: auth.secret }), auth.secret);
+
+    const [u] = await db.select().from(users).where(eq(users.id, createdUserId));
+    if (!u?.twoFactorSecret) throw new Error('2FA secret not persisted in test');
+    expect(u.twoFactorSecret).not.toBe(auth.secret);
+    expect(isEncryptedTotpSecret(u.twoFactorSecret)).toBe(true);
+    expect(decryptTotpSecretAtRest(u.twoFactorSecret)).toBe(auth.secret);
+
+    const login = await authService.login({
+      email: testEmail,
+      password: testPassword,
+      totpCode: await generate({ secret: auth.secret }),
+    }, {});
+    expect(login.accessToken).toBeDefined();
+
+    await authService.disable2fa(createdUserId, await generate({ secret: auth.secret }));
+    const [disabled] = await db.select().from(users).where(eq(users.id, createdUserId));
+    expect(disabled?.twoFactorSecret).toBeNull();
+    expect(disabled?.twoFactorEnabled).toBe(false);
+  });
+
   it('17. Should require 2fa code on login if enabled', async () => {
-    await db.update(users).set({ twoFactorEnabled: true, twoFactorSecret: 'abcd' }).where(eq(users.id, createdUserId));
+    await db.update(users).set({ twoFactorEnabled: true, twoFactorSecret: encryptTotpSecret('abcd') }).where(eq(users.id, createdUserId));
     await expect(authService.login({ email: testEmail, password: testPassword }, {})).rejects.toThrow('Código 2FA obrigatório');
   });
 
   it('18. Should reject login if 2fa code invalid', async () => {
     await expect(authService.login({ email: testEmail, password: testPassword, totpCode: '000000' }, {})).rejects.toThrow('Código 2FA inválido');
     await db.update(users).set({ twoFactorEnabled: false }).where(eq(users.id, createdUserId)); // Re-disable
+  });
+
+  it('18A. Should not count missing 2fa code toward login lockout', async () => {
+    const email = uniqueEmail('totp-missing');
+    const password = 'Password123!';
+    const ip = '10.0.0.181';
+    const registered = await authService.register({ name: 'Totp Missing', email, password });
+    await db
+      .update(users)
+      .set({ twoFactorEnabled: true, twoFactorSecret: encryptTotpSecret('abcd') })
+      .where(eq(users.id, registered.user.id));
+
+    for (let i = 0; i < 3; i += 1) {
+      await expect(authService.login({ email, password }, { ip })).rejects.toThrow('Código 2FA obrigatório');
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    expect(attempt).toBeUndefined();
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('18B. Should count invalid 2fa code toward login lockout', async () => {
+    const email = uniqueEmail('totp-invalid');
+    const password = 'Password123!';
+    const ip = '10.0.0.182';
+    const registered = await authService.register({ name: 'Totp Invalid', email, password });
+    await db
+      .update(users)
+      .set({ twoFactorEnabled: true, twoFactorSecret: encryptTotpSecret('abcd') })
+      .where(eq(users.id, registered.user.id));
+
+    for (let i = 0; i < 4; i += 1) {
+      await expect(authService.login({ email, password, totpCode: '000000' }, { ip })).rejects.toThrow('Código 2FA inválido');
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    expect(attempt?.failureCount).toBe(4);
+    expect(attempt?.lockedUntil?.getTime()).toBeGreaterThan(Date.now());
+    await expect(authService.login({ email, password, totpCode: '000000' }, { ip })).rejects.toThrow('Email ou senha inválidos');
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
   });
 
   it('19. Should allow password change', async () => {
@@ -147,4 +217,194 @@ describe('Auth Module - PRD Phase 2 (20 Integration Tests)', () => {
     const sessions = await authService.getSessions(createdUserId, '');
     expect(sessions.length).toBe(0);
   });
+
+  it('21. Should reset login failure count after successful password auth', async () => {
+    const email = uniqueEmail('lockout-reset');
+    const password = 'Password123!';
+    const ip = '10.0.0.21';
+    const registered = await authService.register({ name: 'Lockout Reset', email, password });
+
+    for (let i = 0; i < 3; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+    }
+
+    await authService.login({ email, password }, { ip });
+
+    const [attempt] = await db
+      .select()
+      .from(loginAttempts)
+      .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+
+    expect(attempt?.failureCount).toBe(0);
+    expect(attempt?.lockedUntil).toBeNull();
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('22. Should lock account key for 5 minutes after five failures', async () => {
+    const email = uniqueEmail('lockout-five');
+    const password = 'Password123!';
+    const ip = '10.0.0.22';
+    const registered = await authService.register({ name: 'Lockout Five', email, password });
+
+    for (let i = 0; i < 5; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+    }
+
+    const [attempt] = await db
+      .select()
+      .from(loginAttempts)
+      .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+
+    expect(attempt?.lockedUntil?.getTime()).toBeGreaterThan(Date.now());
+    await expect(authService.login({ email, password }, { ip }))
+      .rejects.toThrow('Email ou senha inválidos');
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('23. Should allow login after lockout expiration', async () => {
+    const email = uniqueEmail('lockout-expire');
+    const password = 'Password123!';
+    const ip = '10.0.0.23';
+    const registered = await authService.register({ name: 'Lockout Expire', email, password });
+
+    for (let i = 0; i < 5; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+    }
+
+    await db
+      .update(loginAttempts)
+      .set({ lockedUntil: new Date(Date.now() - 1000) })
+      .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+
+    const result = await authService.login({ email, password }, { ip });
+    expect(result.accessToken).toBeDefined();
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('24. Should keep invalid, missing, and locked responses identical', async () => {
+    const email = uniqueEmail('lockout-message');
+    const password = 'Password123!';
+    const ip = '10.0.0.24';
+    const registered = await authService.register({ name: 'Lockout Message', email, password });
+
+    const wrongPassword = await rejectionMessage(authService.login({ email, password: 'wrong' }, { ip: '10.0.0.240' }));
+    const missingUser = await rejectionMessage(authService.login({ email: uniqueEmail('missing'), password }, { ip }));
+
+    for (let i = 0; i < 5; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+    }
+    const locked = await rejectionMessage(authService.login({ email, password }, { ip }));
+
+    expect(new Set([wrongPassword, missingUser, locked])).toEqual(new Set(['Email ou senha inválidos']));
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('25. Should isolate lockout by email for the same IP', async () => {
+    const password = 'Password123!';
+    const ip = '10.0.0.25';
+    const emailA = uniqueEmail('lockout-a');
+    const emailB = uniqueEmail('lockout-b');
+    const userA = await authService.register({ name: 'Lockout A', email: emailA, password });
+    const userB = await authService.register({ name: 'Lockout B', email: emailB, password });
+
+    for (let i = 0; i < 5; i += 1) {
+      await expect(authService.login({ email: emailA, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+    }
+
+    await expect(authService.login({ email: emailA, password }, { ip }))
+      .rejects.toThrow('Email ou senha inválidos');
+    const loginB = await authService.login({ email: emailB, password }, { ip });
+    expect(loginB.accessToken).toBeDefined();
+
+    await db.delete(users).where(eq(users.id, userA.user.id));
+    await db.delete(users).where(eq(users.id, userB.user.id));
+  });
+
+  it('26. Should escalate login lockout to 30 minutes after six failures', async () => {
+    const email = uniqueEmail('lockout-six');
+    const password = 'Password123!';
+    const ip = '10.0.0.26';
+    const registered = await authService.register({ name: 'Lockout Six', email, password });
+
+    for (let i = 0; i < 6; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+
+      if (i < 5) {
+        await expireLoginLock(email, ip);
+      }
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    const lockMs = attempt?.lockedUntil ? attempt.lockedUntil.getTime() - Date.now() : 0;
+
+    expect(attempt?.failureCount).toBe(6);
+    expect(lockMs).toBeGreaterThan(29 * 60 * 1000);
+    expect(lockMs).toBeLessThanOrEqual((30 * 60 * 1000) + 5000);
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
+
+  it('27. Should escalate login lockout to 24 hours after eight failures', async () => {
+    const email = uniqueEmail('lockout-eight');
+    const password = 'Password123!';
+    const ip = '10.0.0.27';
+    const registered = await authService.register({ name: 'Lockout Eight', email, password });
+
+    for (let i = 0; i < 8; i += 1) {
+      await expect(authService.login({ email, password: 'wrong' }, { ip }))
+        .rejects.toThrow('Email ou senha inválidos');
+
+      if (i < 7) {
+        await expireLoginLock(email, ip);
+      }
+    }
+
+    const attempt = await getLoginAttempt(email, ip);
+    const lockMs = attempt?.lockedUntil ? attempt.lockedUntil.getTime() - Date.now() : 0;
+
+    expect(attempt?.failureCount).toBe(8);
+    expect(lockMs).toBeGreaterThan(23 * 60 * 60 * 1000);
+    expect(lockMs).toBeLessThanOrEqual((24 * 60 * 60 * 1000) + 5000);
+
+    await db.delete(users).where(eq(users.id, registered.user.id));
+  });
 });
+
+function uniqueEmail(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}@proteticflow.test`;
+}
+
+async function rejectionMessage(promise: Promise<unknown>): Promise<string> {
+  try {
+    await promise;
+    return '';
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
+
+async function expireLoginLock(email: string, ip: string): Promise<void> {
+  await db
+    .update(loginAttempts)
+    .set({ lockedUntil: new Date(Date.now() - 1000) })
+    .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+}
+
+async function getLoginAttempt(email: string, ip: string) {
+  const [attempt] = await db
+    .select()
+    .from(loginAttempts)
+    .where(and(eq(loginAttempts.email, email), eq(loginAttempts.ip, ip)));
+
+  return attempt;
+}

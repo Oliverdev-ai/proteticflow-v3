@@ -25,6 +25,7 @@
     "db:migrate": "tsx ../../scripts/baseline-drizzle-migrations.ts && drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
+    "backfill:2fa-secrets": "tsx ../../scripts/backfill-2fa-secrets.ts",
     "check:tenant-isolation": "tsx ../../scripts/check-tenant-isolation.ts"
   },
   "dependencies": {
@@ -41,14 +42,14 @@
     "drizzle-orm": "^0.45.2",
     "express": "^5.0.0",
     "express-rate-limit": "^8.3.1",
-    "fast-xml-parser": "^5.5.8",
+    "fast-xml-parser": "^5.9.3",
     "helmet": "^8.1.0",
     "ioredis": "^5.10.1",
     "jose": "^6.2.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.10",
+    "nodemailer": "^9.0.1",
     "otplib": "^13.4.0",
     "pg": "^8.13.0",
     "pino": "^9.0.0",
@@ -70,11 +71,11 @@
     "@types/pg": "^8.11.0",
     "@types/qrcode": "^1.5.6",
     "@types/web-push": "^3.6.4",
-    "@vitest/coverage-v8": "^2.0.0",
+    "@vitest/coverage-v8": "^3.2.6",
     "dotenv": "^17.3.1",
     "drizzle-kit": "^0.28.0",
     "tsx": "^4.0.0",
     "typescript": "*",
-    "vitest": "^2.0.0"
+    "vitest": "^3.2.6"
   }
 }
